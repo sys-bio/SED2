@@ -1,0 +1,12 @@
+{
+    "className": "DataImport",
+    "typeName": "dataImport",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "location", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "format", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true}
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "className": "ModelImport",
+    "typeName": "modelImport",
+    "parent": "SEDBase",
+    "dotAccessors": ["model"],
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "location", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "language", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true}
+    ]
+}

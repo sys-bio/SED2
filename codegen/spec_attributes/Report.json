@@ -1,0 +1,12 @@
+{
+    "className": "Report",
+    "typeName": "report",
+    "parent": "SEDBase",
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "outputParameters", "kind": "ownedArray", "itemType": "OutputParameter", "itemName": "outputParameter", "required": false},
+        {"name": "data", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true}
+    ]
+}

@@ -1,0 +1,9 @@
+{
+    "className": "Span",
+    "typeName": "span",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "start", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": true, "isRef": true},
+        {"name": "end", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": true, "isRef": true}
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "className": "Plot2D",
+    "typeName": "plot2D",
+    "parent": "SEDBase",
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "outputParameters", "kind": "ownedArray", "itemType": "OutputParameter", "itemName": "outputParameter", "required": false},
+        {"name": "legend", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true},
+        {"name": "height", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "width", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "xAxis", "kind": "owned", "itemType": "Axis", "required": false},
+        {"name": "yAxis", "kind": "owned", "itemType": "Axis", "required": false},
+        {"name": "rightYAxis", "kind": "owned", "itemType": "Axis", "required": false},
+        {"name": "curves", "itemName": "curve", "kind": "polymorphicList", "itemType": "Curve", "required": true}
+    ]
+}

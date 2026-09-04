@@ -1,0 +1,11 @@
+{
+    "className": "CreateDataBlock",
+    "typeName": "createDataBlock",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "data", "kind": "scalar", "cppType": "Json", "required": true}
+    ]
+}

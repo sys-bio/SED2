@@ -1,0 +1,12 @@
+{
+    "className": "RelabelData",
+    "typeName": "relabelData",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "input", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "labels", "itemName": "label", "kind": "scalarList", "cppType": "std::string", "required": true, "singleRefAllowed": true, "isRef": true}
+    ]
+}

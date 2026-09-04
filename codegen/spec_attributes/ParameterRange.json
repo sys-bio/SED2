@@ -1,0 +1,17 @@
+{
+    "className": "ParameterRange",
+    "typeName": "parameterRange",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "modelElement", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "start", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "end", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "interval", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "numberOfSteps", "kind": "scalar", "cppType": "sed2::IntegerOrRef", "required": false, "isRef": true},
+        {"name": "scale", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "values", "itemName": "value", "kind": "scalarList", "cppType": "sed2::NumberOrRef", "required": false, "singleRefAllowed": true, "isRef": true}
+    ]
+}

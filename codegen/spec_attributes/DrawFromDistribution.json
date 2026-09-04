@@ -1,0 +1,12 @@
+{
+    "className": "DrawFromDistribution",
+    "typeName": "drawFromDistribution",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "arguments", "kind": "scalar", "cppType": "Json", "required": true},
+        {"name": "outputPersistent", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true}
+    ]
+}

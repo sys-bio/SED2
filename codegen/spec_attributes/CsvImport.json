@@ -1,0 +1,18 @@
+{
+    "className": "CsvImport",
+    "typeName": "csvImport",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "location", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "organization", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "separator", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "headers", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true},
+        {"name": "columnNames", "itemName": "columnName", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "ncols", "kind": "scalar", "cppType": "sed2::IntegerOrRef", "required": false, "isRef": true},
+        {"name": "nrows", "kind": "scalar", "cppType": "sed2::IntegerOrRef", "required": false, "isRef": true},
+        {"name": "units", "itemName": "unit", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true}
+    ]
+}

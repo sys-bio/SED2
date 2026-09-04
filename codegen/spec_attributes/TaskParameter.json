@@ -1,0 +1,11 @@
+{
+    "className": "TaskParameter",
+    "typeName": "taskParameter",
+    "parent": "SEDBase",
+    "registerType": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "value", "kind": "scalar", "cppType": "Json", "required": true}
+    ]
+}

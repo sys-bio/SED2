@@ -1,0 +1,18 @@
+{
+    "versionStr": "SED v2.0 alpha",
+    "versionNum": 2.0,
+    "tasks": {
+        "sim1": {
+            "_type": "explicitODESimulation",
+            "kisaoID": "KISAO:0000694",
+            "independentVariable": "urn:sedml:symbol:time",
+            "independentVariableRange": {
+                "_type": "numericRange",
+                "start": 0,
+                "end": 20,
+                "numberOfSteps": 100
+            },
+            "outputVariables": ["S1"]
+        }
+    }
+}

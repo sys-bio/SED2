@@ -1,0 +1,14 @@
+{
+    "className": "Surface",
+    "typeName": "surface",
+    "parent": "SEDBase",
+    "registerType": false,
+    "attributes": [
+        {"name": "surfaceType", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "x", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "y", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "z", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "style", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "order", "kind": "scalar", "cppType": "sed2::IntegerOrRef", "required": false, "isRef": true}
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "className": "Loop",
+    "typeName": "loop",
+    "parent": "SEDBase",
+    "dotAccessors": ["aggregates", "range", "index"],
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "subTasks", "itemName": "subTask", "kind": "polymorphicList", "required": true, "testItemType": "ModelImport"},
+        {"name": "outputVariableMap", "kind": "scalar", "cppType": "Json", "required": false},
+        {"name": "aggregateOutputVariables", "itemName": "aggregateOutputVariable", "kind": "polymorphicList", "required": false, "testItemType": "AggregationCalculation"},
+        {"name": "range", "kind": "owned", "required": false, "testItemType": "NumericRange"},
+        {"name": "loopVariables", "itemName": "loopVariable", "kind": "polymorphicList", "itemType": "LoopVariable", "required": true}
+    ]
+}

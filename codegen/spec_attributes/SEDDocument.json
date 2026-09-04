@@ -1,0 +1,15 @@
+{
+    "className": "SEDDocument",
+    "typeName": "sedDocument",
+    "parent": "SEDBase",
+    "generateBaseOnly": true,
+    "registerType": false,
+    "attributes": [
+        {"name": "versionStr", "kind": "scalar", "cppType": "std::string", "required": true},
+        {"name": "versionNum", "kind": "scalar", "cppType": "double", "required": true},
+        {"name": "constants", "kind": "map", "required": false},
+        {"name": "tasks", "itemName": "task", "kind": "polymorphicList", "required": false, "testItemType": "ModelImport"},
+        {"name": "outputs", "itemName": "output", "kind": "polymorphicList", "required": false, "testItemType": "Report"},
+        {"name": "styles", "itemName": "style", "kind": "polymorphicList", "required": false}
+    ]
+}

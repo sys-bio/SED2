@@ -1,0 +1,57 @@
+{
+    "versionStr": "SED v2.0 alpha",
+    "versionNum": 2.0,
+    "tasks": {
+        "model1": {
+            "_type": "modelImport",
+            "location": "three_species_chain.xml",
+            "language": "urn:sedml:language:sbml"
+        },
+        "sim1": {
+            "_type": "steadyState",
+            "kisaoID": "KISAO:0000407",
+            "model": "#tasks:model1.model",
+            "outputVariables": ["S1"]
+        },
+        "scan1": {
+            "_type": "parameterScan",
+            "subTasks": {
+                "scanSim": {
+                    "_type": "steadyState",
+                    "kisaoID": "KISAO:0000407",
+                    "model": "#tasks:model1.model",
+                    "outputVariables": ["S1"]
+                }
+            },
+            "model": "#tasks:model1.model",
+            "parameterRanges": [
+                {
+                    "_type": "parameterRange",
+                    "modelElement": "#tasks:model1['k1']",
+                    "start": 0,
+                    "end": 10,
+                    "numberOfSteps": 5
+                }
+            ],
+            "outputVariableMap": "#tasks:scanSim.model['S1']"
+        }
+    },
+    "outputs": {
+        "report1": {
+            "_type": "report",
+            "data": "#tasks:sim1"
+        },
+        "plot1": {
+            "_type": "plot2D",
+            "xAxis": {"scale": "linear"},
+            "yAxis": {"scale": "linear"},
+            "curves": {
+                "curve1": {
+                    "curveType": "points",
+                    "x": "#tasks:sim1.model['time']",
+                    "y": "#tasks:sim1.model['S1']"
+                }
+            }
+        }
+    }
+}

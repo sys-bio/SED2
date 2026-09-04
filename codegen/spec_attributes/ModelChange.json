@@ -1,0 +1,17 @@
+{
+    "className": "ModelChange",
+    "typeName": "modelChange",
+    "parent": "SEDBase",
+    "dotAccessors": ["model"],
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "inputModel", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "setValues", "kind": "scalar", "cppType": "Json", "required": false},
+        {"name": "removeElements", "itemName": "removeElement", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "addElements", "itemName": "addElement", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "replaceElements", "kind": "scalar", "cppType": "Json", "required": false}
+    ]
+}

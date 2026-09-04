@@ -1,0 +1,12 @@
+{
+    "className": "AggregationCalculation",
+    "typeName": "aggregationCalculation",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "input", "kind": "scalar", "cppType": "Json", "required": true},
+        {"name": "appliedDimensions", "itemName": "appliedDimension", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true}
+    ]
+}

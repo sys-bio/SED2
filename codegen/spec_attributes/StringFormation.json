@@ -1,0 +1,13 @@
+{
+    "className": "StringFormation",
+    "typeName": "stringFormation",
+    "parent": "SEDBase",
+    "dotAccessors": ["strings"],
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "concatenate", "kind": "scalar", "cppType": "Json", "required": true}
+    ]
+}

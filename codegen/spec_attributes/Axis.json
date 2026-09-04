@@ -1,0 +1,14 @@
+{
+    "className": "Axis",
+    "typeName": "axis",
+    "parent": "SEDBase",
+    "registerType": false,
+    "attributes": [
+        {"name": "scale", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "min", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "max", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "grid", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true},
+        {"name": "style", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "reverse", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true}
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "className": "LoopVariable",
+    "typeName": "loopVariable",
+    "parent": "SEDBase",
+    "registerType": false,
+    "attributes": [
+        {"name": "initialValue", "kind": "scalar", "cppType": "Json", "required": true},
+        {"name": "subsequentValues", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true}
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "className": "Range",
+    "typeName": "range",
+    "parent": "SEDBase",
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "values", "itemName": "value", "kind": "scalarList", "cppType": "Json", "required": false, "singleRefAllowed": true, "isRef": true}
+    ]
+}

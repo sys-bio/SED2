@@ -1,0 +1,20 @@
+{
+    "className": "Curve",
+    "typeName": "curve",
+    "parent": "SEDBase",
+    "registerType": false,
+    "attributes": [
+        {"name": "curveType", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "x", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "y", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "order", "kind": "scalar", "cppType": "sed2::IntegerOrRef", "required": false, "isRef": true},
+        {"name": "style", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "yAxis", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "xErrorUpper", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "xErrorLower", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "yErrorUpper", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "yErrorLower", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "yFrom", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "yTo", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true}
+    ]
+}

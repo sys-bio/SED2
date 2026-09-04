@@ -1,0 +1,1165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/sed2.schema.json",
+  "title": "SED2 Document",
+  "description": "JSON Schema for the SED2 (Simulation Experiment Description language, version 2) document format. Based on the draft SED2 2026 specification.",
+
+  "$ref": "#/$defs/SEDDocument",
+
+  "$defs": {
+    "_____________PRIMITIVES_____________": { "description": "Reusable primitive types and reference helpers" },
+
+    "SId": {
+      "description": "An identifier: starts with an English letter or underscore, may be followed by alphanumerics or underscores.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+
+    "SIdRef": {
+      "description": "A reference to another SED element. Always starts with '#'. May include a colon-delimited path, dot-accessors (e.g. .model, .strings, .aggregates), and indexing ([n], [-n], ['label'], [a:b]).",
+      "type": "string",
+      "pattern": "^#[A-Za-z_][A-Za-z0-9_]*((:[A-Za-z_][A-Za-z0-9_]*)|(\\.[A-Za-z_][A-Za-z0-9_]*)|(\\[(-?[0-9]+(:-?[0-9]+)?|'[^']*')\\]))*$"
+    },
+
+    "KISAOId": {
+      "description": "A KiSAO identifier of the form KISAO:nnnnnnn (7 digits).",
+      "type": "string",
+      "pattern": "^KISAO:[0-9]{7}$"
+    },
+
+    "URI": {
+      "description": "A URI string. Can be absolute or relative.",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "URN": {
+      "description": "A URN string.",
+      "type": "string",
+      "pattern": "^urn:.+$"
+    },
+
+    "MarkdownString": {
+      "description": "A CommonMark-formatted markdown string.",
+      "type": "string"
+    },
+
+    "NumberWithNaN": {
+      "description": "A number, Boolean, or one of the special strings nan / inf / -inf (case-insensitive), which represent NaN, +Infinity, and -Infinity respectively.",
+      "anyOf": [
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "string", "pattern": "^([Nn][Aa][Nn]|[+-]?[Ii][Nn][Ff])$" }
+      ]
+    },
+
+    "ScaleType": {
+      "type": "string",
+      "enum": ["linear", "log10"]
+    },
+
+    "CurveType": {
+      "type": "string",
+      "enum": ["points", "bar", "barStacked", "horizontalBar", "horizontalBarStacked", "shadedArea"]
+    },
+
+    "SurfaceType": {
+      "type": "string",
+      "enum": ["parametricCurve", "surfaceMesh", "surfaceContour", "contour", "heatMap", "stackedCurves", "bar"]
+    },
+
+    "Qualifier": {
+      "description": "A 'namespace:term' qualifier string (e.g., 'bqbiol:hasPart', 'dc:title').",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*:[A-Za-z_][A-Za-z0-9_.-]*$"
+    },
+
+    "_____________REF_HELPERS_____________": { "description": "Per the spec: any value-typed field may be replaced by an SIdRef (a string starting with '#')." },
+
+    "StringOrRef": {
+      "description": "Any string. Note: any string starting with '#' is treated as an SIdRef.",
+      "type": "string"
+    },
+    "NumberOrRef": {
+      "anyOf": [
+        { "type": "number" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "IntegerOrRef": {
+      "anyOf": [
+        { "type": "integer" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "PositiveIntegerOrRef": {
+      "anyOf": [
+        { "type": "integer", "exclusiveMinimum": 0 },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "NonNegativeIntegerOrRef": {
+      "anyOf": [
+        { "type": "integer", "minimum": 0 },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "PositiveDoubleOrRef": {
+      "anyOf": [
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "BooleanOrRef": {
+      "anyOf": [
+        { "type": "boolean" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "URIOrRef": {
+      "anyOf": [
+        { "$ref": "#/$defs/URI" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "URNOrRef": {
+      "anyOf": [
+        { "type": "string", "minLength": 1 },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "KISAOIdOrRef": {
+      "anyOf": [
+        { "$ref": "#/$defs/KISAOId" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "ScaleTypeOrRef": {
+      "anyOf": [
+        { "$ref": "#/$defs/ScaleType" },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "ListOfStringsOrRef": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/$defs/StringOrRef" } },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "ListOfNumbersOrRef": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/$defs/NumberOrRef" } },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "ListOfAnyOrRef": {
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/$defs/AnyValueOrRef" } },
+        { "$ref": "#/$defs/SIdRef" }
+      ]
+    },
+    "AnyValueOrRef": {
+      "description": "Any JSON value. Per the SED2 spec, an SIdRef string may substitute for any value.",
+      "anyOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "array", "items": { "$ref": "#/$defs/AnyValueOrRef" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/$defs/AnyValueOrRef" } },
+        { "type": "null" }
+      ]
+    },
+
+    "_____________SEDBASE_____________": { "description": "SEDBase: common fields inherited by every SED element." },
+
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "qualifier": { "$ref": "#/$defs/Qualifier" },
+        "value": { "$ref": "#/$defs/AnyValueOrRef" }
+      },
+      "required": ["qualifier", "value"],
+      "unevaluatedProperties": false
+    },
+
+    "SEDBaseFields": {
+      "description": "The optional name/description/notes/annotations fields inherited by every SED element. Used via allOf in concrete classes.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "notes": { "$ref": "#/$defs/MarkdownString" },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Annotation" }
+        }
+      }
+    },
+
+    "TaskParameter": {
+      "description": "An algorithm/task parameter. Inherits from SEDBase.",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        {
+          "type": "object",
+          "properties": {
+            "kisaoID": { "$ref": "#/$defs/KISAOIdOrRef" },
+            "altDefinition": { "$ref": "#/$defs/URIOrRef" },
+            "value": { "$ref": "#/$defs/AnyValueOrRef" }
+          },
+          "required": ["value"]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+
+    "OutputParameter": {
+      "description": "An output parameter. Inherits from SEDBase.",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        {
+          "type": "object",
+          "properties": {
+            "kisaoID": { "$ref": "#/$defs/KISAOIdOrRef" },
+            "altDefinition": { "$ref": "#/$defs/URIOrRef" },
+            "value": { "$ref": "#/$defs/AnyValueOrRef" }
+          },
+          "required": ["value"]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+
+    "_____________DOCUMENT_____________": { "description": "The top-level SEDDocument." },
+
+    "SEDDocument": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "versionStr": { "type": "string" },
+        "versionNum": { "type": "number" },
+        "constants": {
+          "description": "Predefined constants. Keys are SIds; values may be any JSON value.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/AnyValueOrRef" }
+        },
+        "tasks": {
+          "description": "Tasks describe how to do things (simulations, calculations, imports, conversions, etc.).",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/AbstractTask" }
+        },
+        "outputs": {
+          "description": "Outputs describe how to package results (reports, plots).",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/AbstractOutput" }
+        },
+        "styles": {
+          "description": "Styles used by plots. Permissive placeholder; the formal Style spec is TBD.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/Style" }
+        }
+      },
+      "required": ["versionStr", "versionNum"],
+      "additionalProperties": false
+    },
+
+    "Style": {
+      "description": "Placeholder for the Style class. The spec is incomplete; for now allow any object with SEDBase fields plus arbitrary additional properties.",
+      "type": "object"
+    },
+
+    "_____________ABSTRACT_TASK_____________": { "description": "AbstractTask discriminated union by _type." },
+
+    "AbstractTask": {
+      "description": "Any concrete task type. Discriminated by the _type field.",
+      "oneOf": [
+        { "$ref": "#/$defs/ModelImport" },
+        { "$ref": "#/$defs/DataImport" },
+        { "$ref": "#/$defs/CsvImport" },
+        { "$ref": "#/$defs/Range" },
+        { "$ref": "#/$defs/NumericRange" },
+        { "$ref": "#/$defs/ParameterRange" },
+        { "$ref": "#/$defs/ModelChange" },
+        { "$ref": "#/$defs/ModelElementList" },
+        { "$ref": "#/$defs/CreateDataBlock" },
+        { "$ref": "#/$defs/RelabelData" },
+        { "$ref": "#/$defs/StringFormation" },
+        { "$ref": "#/$defs/Calculation" },
+        { "$ref": "#/$defs/AggregationCalculation" },
+        { "$ref": "#/$defs/DrawFromDistribution" },
+        { "$ref": "#/$defs/Jacobian" },
+        { "$ref": "#/$defs/ExplicitODESimulation" },
+        { "$ref": "#/$defs/BoundedODESimulation" },
+        { "$ref": "#/$defs/ExplicitStochasticSimulation" },
+        { "$ref": "#/$defs/BoundedStochasticSimulation" },
+        { "$ref": "#/$defs/OneStepODE" },
+        { "$ref": "#/$defs/OneStepStochastic" },
+        { "$ref": "#/$defs/SteadyState" },
+        { "$ref": "#/$defs/FluxBalanceAnalysis" },
+        { "$ref": "#/$defs/Scatter" },
+        { "$ref": "#/$defs/Loop" },
+        { "$ref": "#/$defs/ParameterScan" }
+      ]
+    },
+
+    "AbstractTaskCommon": {
+      "description": "Fields inherited by every AbstractTask (in addition to SEDBase). Used via allOf.",
+      "type": "object",
+      "properties": {
+        "kisaoID": { "$ref": "#/$defs/KISAOIdOrRef" },
+        "altDefinition": { "$ref": "#/$defs/URIOrRef" },
+        "taskParameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TaskParameter" }
+        }
+      }
+    },
+
+    "_____________IMPORT_TASKS_____________": {},
+
+    "ModelImport": {
+      "description": "Import a model from an external file.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "modelImport" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "location": { "$ref": "#/$defs/URIOrRef" },
+        "language": { "$ref": "#/$defs/URNOrRef" }
+      },
+      "required": ["_type", "location", "language"],
+      "additionalProperties": false
+    },
+
+    "DataImport": {
+      "description": "Import data from an external file into an AnnotatedData object.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "dataImport" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "location": { "$ref": "#/$defs/URIOrRef" },
+        "format": { "$ref": "#/$defs/URIOrRef" }
+      },
+      "required": ["_type", "location", "format"],
+      "additionalProperties": false
+    },
+
+    "CsvImport": {
+      "description": "Import a CSV (or other delimiter-separated values) file as an AnnotatedData(numbers). The id of the task refers to the imported data.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "csvImport" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "location": { "$ref": "#/$defs/URIOrRef" },
+        "organization": { "$ref": "#/$defs/StringOrRef" },
+        "separator": { "$ref": "#/$defs/StringOrRef" },
+        "headers": { "$ref": "#/$defs/BooleanOrRef" },
+        "columnNames": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "ncols": { "$ref": "#/$defs/PositiveIntegerOrRef" },
+        "nrows": { "$ref": "#/$defs/PositiveIntegerOrRef" },
+        "units": { "$ref": "#/$defs/ListOfStringsOrRef" }
+      },
+      "required": ["_type", "location"],
+      "additionalProperties": false
+    },
+
+    "_____________RANGES_____________": {},
+
+    "Range": {
+      "description": "A list of values to be taken in sequence. _type is required; may appear as a task or as a named child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "range" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "values": {
+          "anyOf": [
+            { "type": "array", "items": { "$ref": "#/$defs/AnyValueOrRef" } },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        }
+      },
+      "required": ["_type"],
+      "additionalProperties": false
+    },
+
+    "NumericRange": {
+      "description": "A range of numeric values defined by some combination of start/end/interval/numberOfSteps/scale, or an explicit values list.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "numericRange" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "start": { "$ref": "#/$defs/NumberOrRef" },
+        "end": { "$ref": "#/$defs/NumberOrRef" },
+        "interval": { "$ref": "#/$defs/PositiveDoubleOrRef" },
+        "numberOfSteps": { "$ref": "#/$defs/PositiveIntegerOrRef" },
+        "scale": { "$ref": "#/$defs/ScaleTypeOrRef" },
+        "values": {
+          "anyOf": [
+            { "type": "array", "items": { "$ref": "#/$defs/NumberOrRef" } },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        }
+      },
+      "required": ["_type"],
+      "additionalProperties": false
+    },
+
+    "ParameterRange": {
+      "description": "A numeric range scanned over a model element. Used in ParameterScan.parameterRanges.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "parameterRange" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "modelElement": { "$ref": "#/$defs/StringOrRef" },
+        "start": { "$ref": "#/$defs/NumberOrRef" },
+        "end": { "$ref": "#/$defs/NumberOrRef" },
+        "interval": { "$ref": "#/$defs/PositiveDoubleOrRef" },
+        "numberOfSteps": { "$ref": "#/$defs/PositiveIntegerOrRef" },
+        "scale": { "$ref": "#/$defs/ScaleTypeOrRef" },
+        "values": {
+          "anyOf": [
+            { "type": "array", "items": { "$ref": "#/$defs/NumberOrRef" } },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        }
+      },
+      "required": ["_type", "modelElement"],
+      "additionalProperties": false
+    },
+
+    "Span": {
+      "description": "A simple start/end range used in BoundedODESimulation and BoundedStochasticSimulation.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "_type": { "const": "span" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "start": { "$ref": "#/$defs/NumberOrRef" },
+        "end": { "$ref": "#/$defs/NumberOrRef" }
+      },
+      "required": ["_type", "start", "end"],
+      "additionalProperties": false
+    },
+
+    "_____________MODEL_TASKS_____________": {},
+
+    "ModelChange": {
+      "description": "Modify a model and output the new model.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "modelChange" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "inputModel": { "$ref": "#/$defs/SIdRef" },
+        "setValues": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/AnyValueOrRef" }
+            },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "removeElements": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "addElements": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "replaceElements": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/StringOrRef" }
+            },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        }
+      },
+      "required": ["_type", "inputModel"],
+      "additionalProperties": false
+    },
+
+    "ModelElementList": {
+      "description": "Return a list of element ids from a model.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "modelElementList" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": { "$ref": "#/$defs/SIdRef" },
+        "includeElements": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "includeTypes": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "excludeElements": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "excludeTypes": { "$ref": "#/$defs/ListOfStringsOrRef" }
+      },
+      "required": ["_type", "model"],
+      "additionalProperties": false
+    },
+
+    "CreateDataBlock": {
+      "description": "Create a new AnnotatedData object from a dictionary of named values.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "createDataBlock" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "data": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/AnyValueOrRef" }
+            },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        }
+      },
+      "required": ["_type", "data"],
+      "additionalProperties": false
+    },
+
+    "RelabelData": {
+      "description": "Replace the labels of the topmost dimension of a referenced AnnotatedData.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "relabelData" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "input": { "$ref": "#/$defs/SIdRef" },
+        "labels": { "$ref": "#/$defs/ListOfStringsOrRef" }
+      },
+      "required": ["_type", "input", "labels"],
+      "additionalProperties": false
+    },
+
+    "StringFormation": {
+      "description": "Concatenate strings (and stringified numbers/lists) into a single string or list of strings.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "stringFormation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "concatenate": { "$ref": "#/$defs/ListOfAnyOrRef" }
+      },
+      "required": ["_type", "concatenate"],
+      "additionalProperties": false
+    },
+
+    "_____________SIMULATION_TASKS_____________": {},
+
+    "SimulationCommon": {
+      "description": "Fields shared by ODE and stochastic simulation tasks.",
+      "type": "object",
+      "properties": {
+        "model": { "$ref": "#/$defs/SIdRef" },
+        "independentVariable": { "$ref": "#/$defs/StringOrRef" },
+        "independentVariableInit": { "$ref": "#/$defs/NumberOrRef" },
+        "outputVariables": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "outputModel": { "$ref": "#/$defs/BooleanOrRef" }
+      }
+    },
+
+    "ExplicitODESimulation": {
+      "description": "ODE simulation with explicit output points defined by a NumericRange. kisaoID must be KISAO:0000694 (ODE solver) or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "explicitODESimulation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentVariableRange": { "$ref": "#/$defs/NumericRangeInline" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables", "independentVariableRange"],
+      "additionalProperties": false
+    },
+
+    "BoundedODESimulation": {
+      "description": "ODE simulation with only a start/end Span; the solver chooses output points. kisaoID must be KISAO:0000694 or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "boundedODESimulation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentVariableSpan": { "$ref": "#/$defs/SpanInline" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables", "independentVariableSpan"],
+      "additionalProperties": false
+    },
+
+    "ExplicitStochasticSimulation": {
+      "description": "Stochastic simulation with explicit output points. kisaoID must be KISAO:0000319 (Monte Carlo) or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "explicitStochasticSimulation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentVariableRange": { "$ref": "#/$defs/NumericRangeInline" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables", "independentVariableRange"],
+      "additionalProperties": false
+    },
+
+    "BoundedStochasticSimulation": {
+      "description": "Stochastic simulation with a Span; the algorithm chooses output points. kisaoID must be KISAO:0000319 or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "boundedStochasticSimulation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentVariableSpan": { "$ref": "#/$defs/SpanInline" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables", "independentVariableSpan"],
+      "additionalProperties": false
+    },
+
+    "OneStepODE": {
+      "description": "An ODE simulation that takes exactly one step of size `independentStep`. kisaoID must be KISAO:0000694 or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "oneStepODE" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentStep": { "$ref": "#/$defs/NumberOrRef" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables", "independentStep"],
+      "additionalProperties": false
+    },
+
+    "OneStepStochastic": {
+      "description": "A stochastic simulation that takes one step; `independentStep` may be omitted to mean 'run until the next event'. kisaoID must be KISAO:0000319 or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "oneStepStochastic" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true,
+        "independentStep": { "$ref": "#/$defs/NumberOrRef" }
+      },
+      "required": ["_type", "kisaoID", "model", "independentVariable", "outputVariables"],
+      "additionalProperties": false
+    },
+
+    "SteadyState": {
+      "description": "Compute the steady state of a model. kisaoID must be KISAO:0000407 or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/SimulationCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "steadyState" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": true, "independentVariable": true, "independentVariableInit": true,
+        "outputVariables": true, "outputModel": true
+      },
+      "required": ["_type", "kisaoID", "model", "outputVariables"],
+      "additionalProperties": false
+    },
+
+    "FluxBalanceAnalysis": {
+      "description": "Flux balance analysis. kisaoID must be KISAO:0000437 (FBA) or a child.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "fluxBalanceAnalysis" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "model": { "$ref": "#/$defs/SIdRef" },
+        "outputVariables": { "$ref": "#/$defs/ListOfStringsOrRef" },
+        "outputModel": { "$ref": "#/$defs/BooleanOrRef" }
+      },
+      "required": ["_type", "kisaoID", "model", "outputVariables"],
+      "additionalProperties": false
+    },
+
+    "_____________COMPUTATIONAL_TASKS_____________": {},
+
+    "Calculation": {
+      "description": "Perform an infix calculation defined in `math`.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "calculation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "math": { "$ref": "#/$defs/StringOrRef" }
+      },
+      "required": ["_type", "math"],
+      "additionalProperties": false
+    },
+
+    "AggregationCalculation": {
+      "description": "Aggregate values over a dimension. kisaoID must be a child of KISAO:0000824 (aggregation function).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "aggregationCalculation" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "input": { "$ref": "#/$defs/AnyValueOrRef" },
+        "appliedDimensions": { "$ref": "#/$defs/ListOfStringsOrRef" }
+      },
+      "required": ["_type", "kisaoID", "input"],
+      "additionalProperties": false
+    },
+
+    "DrawFromDistribution": {
+      "description": "Draw a value from a distribution defined by altDefinition.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "drawFromDistribution" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "arguments": { "$ref": "#/$defs/ListOfAnyOrRef" },
+        "outputPersistent": { "$ref": "#/$defs/BooleanOrRef" }
+      },
+      "required": ["_type", "altDefinition", "arguments"],
+      "additionalProperties": false
+    },
+
+    "Jacobian": {
+      "description": "Compute the Jacobian matrix of a model. kisaoID must be KISAO:0000812 (full) or KISAO:0000809 (reduced).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "jacobian" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": {
+          "anyOf": [
+            { "enum": ["KISAO:0000812", "KISAO:0000809"] },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "altDefinition": true, "taskParameters": true,
+        "model": { "$ref": "#/$defs/SIdRef" },
+        "isFull": { "$ref": "#/$defs/BooleanOrRef" }
+      },
+      "required": ["_type", "kisaoID", "model"],
+      "additionalProperties": false
+    },
+
+    "_____________REPEATS_____________": {},
+
+    "RepeatCommon": {
+      "description": "Fields shared by Scatter, Loop, and ParameterScan (all Repeat subclasses).",
+      "type": "object",
+      "properties": {
+        "subTasks": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/AbstractTask" }
+        },
+        "outputVariableMap": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/SId" },
+              "additionalProperties": { "$ref": "#/$defs/SIdRef" }
+            },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "aggregateOutputVariables": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/AggregationCalculation" }
+        }
+      },
+      "anyOf": [
+        { "required": ["outputVariableMap"] },
+        { "required": ["aggregateOutputVariables"] }
+      ]
+    },
+
+    "Scatter": {
+      "description": "A Repeat in which each iteration is independent (may be parallelized).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/RepeatCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "scatter" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "subTasks": true, "outputVariableMap": true, "aggregateOutputVariables": true,
+        "range": { "$ref": "#/$defs/RangeInline" }
+      },
+      "required": ["_type", "subTasks"],
+      "additionalProperties": false
+    },
+
+    "Loop": {
+      "description": "A Repeat in which each iteration's input depends on the previous iteration's output.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/RepeatCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "loop" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "subTasks": true, "outputVariableMap": true, "aggregateOutputVariables": true,
+        "range": { "$ref": "#/$defs/RangeInline" },
+        "loopVariables": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/LoopVariable" }
+        }
+      },
+      "required": ["_type", "subTasks", "loopVariables"],
+      "additionalProperties": false
+    },
+
+    "LoopVariable": {
+      "description": "A variable whose value is the initialValue on the first iteration and `subsequentValues` thereafter.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "initialValue": { "$ref": "#/$defs/AnyValueOrRef" },
+        "subsequentValues": { "$ref": "#/$defs/SIdRef" }
+      },
+      "required": ["initialValue", "subsequentValues"],
+      "additionalProperties": false
+    },
+
+    "ParameterScan": {
+      "description": "Scan a model over one or more ParameterRanges. Inherits from Repeat (subTasks, outputVariableMap, aggregateOutputVariables).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractTaskCommon" },
+        { "$ref": "#/$defs/RepeatCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "parameterScan" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "taskParameters": true,
+        "subTasks": true, "outputVariableMap": true, "aggregateOutputVariables": true,
+        "model": { "$ref": "#/$defs/SIdRef" },
+        "parameterRanges": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ParameterRangeInline" }
+        }
+      },
+      "required": ["_type", "model", "parameterRanges", "subTasks"],
+      "additionalProperties": false
+    },
+
+    "_____________RANGE_INLINE_____________": { "description": "Inline (named-child) variants of range/span used inside other tasks. _type is still required per user decision; these inline variants are identical to the top-level forms, but defined here for clarity / future relaxation." },
+
+    "RangeInline": {
+      "description": "A Range/NumericRange/ParameterRange as a named child of a Repeat. _type required, discriminated.",
+      "oneOf": [
+        { "$ref": "#/$defs/Range" },
+        { "$ref": "#/$defs/NumericRange" },
+        { "$ref": "#/$defs/ParameterRange" }
+      ]
+    },
+
+    "NumericRangeInline": {
+      "description": "A NumericRange used as a named child (e.g., independentVariableRange).",
+      "oneOf": [
+        { "$ref": "#/$defs/NumericRange" }
+      ]
+    },
+
+    "ParameterRangeInline": {
+      "description": "A ParameterRange used inside ParameterScan.parameterRanges.",
+      "oneOf": [
+        { "$ref": "#/$defs/ParameterRange" }
+      ]
+    },
+
+    "SpanInline": {
+      "description": "A Span used as a named child (e.g., independentVariableSpan).",
+      "oneOf": [
+        { "$ref": "#/$defs/Span" }
+      ]
+    },
+
+    "_____________ABSTRACT_OUTPUT_____________": {},
+
+    "AbstractOutput": {
+      "oneOf": [
+        { "$ref": "#/$defs/Report" },
+        { "$ref": "#/$defs/Plot2D" },
+        { "$ref": "#/$defs/Plot3D" }
+      ]
+    },
+
+    "AbstractOutputCommon": {
+      "description": "Fields inherited by every AbstractOutput (in addition to SEDBase).",
+      "type": "object",
+      "properties": {
+        "kisaoID": { "$ref": "#/$defs/KISAOIdOrRef" },
+        "altDefinition": { "$ref": "#/$defs/URIOrRef" },
+        "outputParameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OutputParameter" }
+        }
+      }
+    },
+
+    "Report": {
+      "description": "A report packages a single AnnotatedData reference for export. The 'data' attribute is an SIdRef to the data to be reported (it can point to a whole task, a model, a constant, or any subset of those via the standard SIdRef indexing syntax).",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractOutputCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "report" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "outputParameters": true,
+        "data": { "$ref": "#/$defs/SIdRef" }
+      },
+      "required": ["_type", "data"],
+      "additionalProperties": false
+    },
+
+    "PlotCommon": {
+      "description": "Fields shared by Plot2D and Plot3D.",
+      "type": "object",
+      "properties": {
+        "legend": { "$ref": "#/$defs/BooleanOrRef" },
+        "height": { "$ref": "#/$defs/NumberOrRef" },
+        "width": { "$ref": "#/$defs/NumberOrRef" },
+        "xAxis": { "$ref": "#/$defs/Axis" },
+        "yAxis": { "$ref": "#/$defs/Axis" }
+      }
+    },
+
+    "Plot2D": {
+      "description": "A 2D plot with one or more curves.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractOutputCommon" },
+        { "$ref": "#/$defs/PlotCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "plot2D" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "outputParameters": true,
+        "legend": true, "height": true, "width": true, "xAxis": true, "yAxis": true,
+        "rightYAxis": { "$ref": "#/$defs/Axis" },
+        "curves": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/Curve" }
+        }
+      },
+      "required": ["_type", "curves"],
+      "additionalProperties": false
+    },
+
+    "Plot3D": {
+      "description": "A 3D plot with one or more surfaces.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/SEDBaseFields" },
+        { "$ref": "#/$defs/AbstractOutputCommon" },
+        { "$ref": "#/$defs/PlotCommon" }
+      ],
+      "properties": {
+        "_type": { "const": "plot3D" },
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "kisaoID": true, "altDefinition": true, "outputParameters": true,
+        "legend": true, "height": true, "width": true, "xAxis": true, "yAxis": true,
+        "zAxis": { "$ref": "#/$defs/Axis" },
+        "surfaces": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/SId" },
+          "additionalProperties": { "$ref": "#/$defs/Surface" }
+        }
+      },
+      "required": ["_type", "surfaces"],
+      "additionalProperties": false
+    },
+
+    "Axis": {
+      "description": "An axis of a plot.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "scale": { "$ref": "#/$defs/ScaleTypeOrRef" },
+        "min": { "$ref": "#/$defs/NumberOrRef" },
+        "max": { "$ref": "#/$defs/NumberOrRef" },
+        "grid": { "$ref": "#/$defs/BooleanOrRef" },
+        "style": { "$ref": "#/$defs/SIdRef" },
+        "reverse": { "$ref": "#/$defs/BooleanOrRef" }
+      },
+      "additionalProperties": false
+    },
+
+    "Curve": {
+      "description": "A 2D curve on a Plot2D. (AbstractCurve has only one concrete subclass, Curve, so no _type is required.)",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "curveType": {
+          "anyOf": [
+            { "$ref": "#/$defs/CurveType" },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "x": { "$ref": "#/$defs/SIdRef" },
+        "y": { "$ref": "#/$defs/SIdRef" },
+        "order": { "$ref": "#/$defs/NonNegativeIntegerOrRef" },
+        "style": { "$ref": "#/$defs/SIdRef" },
+        "yAxis": {
+          "anyOf": [
+            { "type": "string", "enum": ["right", "left"] },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "xErrorUpper": { "$ref": "#/$defs/SIdRef" },
+        "xErrorLower": { "$ref": "#/$defs/SIdRef" },
+        "yErrorUpper": { "$ref": "#/$defs/SIdRef" },
+        "yErrorLower": { "$ref": "#/$defs/SIdRef" },
+        "yFrom": { "$ref": "#/$defs/SIdRef" },
+        "yTo": { "$ref": "#/$defs/SIdRef" }
+      },
+      "required": ["curveType", "x", "y"],
+      "additionalProperties": false
+    },
+
+    "Surface": {
+      "description": "A 3D surface on a Plot3D.",
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/SEDBaseFields" }],
+      "properties": {
+        "name": true, "description": true, "notes": true, "annotations": true,
+        "surfaceType": {
+          "anyOf": [
+            { "$ref": "#/$defs/SurfaceType" },
+            { "$ref": "#/$defs/SIdRef" }
+          ]
+        },
+        "x": { "$ref": "#/$defs/SIdRef" },
+        "y": { "$ref": "#/$defs/SIdRef" },
+        "z": { "$ref": "#/$defs/SIdRef" },
+        "style": { "$ref": "#/$defs/SIdRef" },
+        "order": { "$ref": "#/$defs/NonNegativeIntegerOrRef" }
+      },
+      "required": ["surfaceType", "x", "y", "z"],
+      "additionalProperties": false
+    }
+  }
+}

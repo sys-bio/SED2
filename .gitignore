@@ -1,0 +1,9 @@
+build/
+generated/
+__pycache__/
+*.pyc
+.vs/
+.vscode/
+CMakeUserPresets.json
+*.egg-info/
+dist/

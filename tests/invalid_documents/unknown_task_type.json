@@ -1,0 +1,10 @@
+{
+    "versionStr": "SED v2.0 alpha",
+    "versionNum": 2.0,
+    "tasks": {
+        "task1": {
+            "_type": "notARealSedTaskType",
+            "someField": 42
+        }
+    }
+}

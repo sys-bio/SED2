@@ -1,0 +1,17 @@
+{
+    "className": "ModelElementList",
+    "typeName": "modelElementList",
+    "parent": "SEDBase",
+    "dotAccessors": ["strings"],
+    "bareReferenceValid": false,
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "model", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "includeElements", "itemName": "includeElement", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "includeTypes", "itemName": "includeType", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "excludeElements", "itemName": "excludeElement", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true},
+        {"name": "excludeTypes", "itemName": "excludeType", "kind": "scalarList", "cppType": "std::string", "required": false, "singleRefAllowed": true, "isRef": true}
+    ]
+}

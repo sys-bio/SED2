@@ -1,0 +1,16 @@
+{
+    "className": "SteadyState",
+    "typeName": "steadyState",
+    "parent": "SEDBase",
+    "dotAccessors": ["model"],
+    "attributes": [
+        {"name": "kisaoID", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "altDefinition", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "taskParameters", "kind": "ownedArray", "itemType": "TaskParameter", "itemName": "taskParameter", "required": false},
+        {"name": "model", "kind": "scalar", "cppType": "std::string", "required": true, "isRef": true},
+        {"name": "independentVariable", "kind": "scalar", "cppType": "std::string", "required": false, "isRef": true},
+        {"name": "independentVariableInit", "kind": "scalar", "cppType": "sed2::NumberOrRef", "required": false, "isRef": true},
+        {"name": "outputVariables", "itemName": "outputVariable", "kind": "scalarList", "cppType": "std::string", "required": true, "singleRefAllowed": true, "isRef": true},
+        {"name": "outputModel", "kind": "scalar", "cppType": "sed2::BooleanOrRef", "required": false, "isRef": true}
+    ]
+}
