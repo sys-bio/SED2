@@ -8,28 +8,60 @@
       "type": "object",
       "properties": {
         "seed": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0001",
+            "AbstractStochasticSimulation-0002"
+          ]
         },
         "timeDependentRelativeTolerance": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0003",
+            "AbstractStochasticSimulation-0004"
+          ]
         },
         "variableStepSize": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0005",
+            "AbstractStochasticSimulation-0006"
+          ]
         },
         "minimumTimeStep": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0007",
+            "AbstractStochasticSimulation-0008"
+          ]
         },
         "maximumTimeStep": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0009",
+            "AbstractStochasticSimulation-0010"
+          ]
         },
         "nonNegative": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0011",
+            "AbstractStochasticSimulation-0012"
+          ]
         },
         "maxOutputRows": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0013",
+            "AbstractStochasticSimulation-0014"
+          ]
         },
         "maxNumSteps": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef",
+          "x-rule-id": [
+            "AbstractStochasticSimulation-0015",
+            "AbstractStochasticSimulation-0016"
+          ]
         }
       }
     }

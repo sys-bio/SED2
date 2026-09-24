@@ -19,6 +19,9 @@
       "required": [
         "value"
       ],
+      "x-required-rule-ids": {
+        "value": "OutputParameter-0001"
+      },
       "unevaluatedProperties": false
     }
   },

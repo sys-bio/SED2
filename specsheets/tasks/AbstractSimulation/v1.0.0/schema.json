@@ -8,22 +8,36 @@
       "type": "object",
       "properties": {
         "model": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "AbstractSimulation-0001"
         },
         "independentVariable": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": [
+            "AbstractSimulation-0002",
+            "AbstractSimulation-0003"
+          ]
         },
         "independentVariableInit": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "AbstractSimulation-0004",
+            "AbstractSimulation-0005"
+          ]
         },
         "outputVariables": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "AbstractSimulation-0006",
+            "AbstractSimulation-0007"
+          ]
         },
         "workingAlgorithms": {
           "type": "array",
           "items": {
             "$ref": "../../../auxiliary/WorkingAlgorithm/v1.0.0/schema.json#/$defs/WorkingAlgorithm"
-          }
+          },
+          "x-rule-id": "AbstractSimulation-0008"
         }
       }
     }

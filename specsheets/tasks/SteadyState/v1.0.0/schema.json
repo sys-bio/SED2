@@ -16,19 +16,25 @@
       ],
       "properties": {
         "_type": {
-          "const": "steadyState"
+          "const": "steadyState",
+          "x-rule-id": "SteadyState-0003"
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
         },
         "independentVariable": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": "SteadyState-0004"
         },
         "outputVariables": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
         },
         "outputModel": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "SteadyState-0005",
+            "SteadyState-0006"
+          ]
         }
       },
       "required": [
@@ -36,6 +42,10 @@
         "model",
         "outputVariables"
       ],
+      "x-required-rule-ids": {
+        "model": "SteadyState-0001",
+        "outputVariables": "SteadyState-0002"
+      },
       "unevaluatedProperties": false
     }
   },

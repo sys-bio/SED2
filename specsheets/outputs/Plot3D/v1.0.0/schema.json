@@ -19,10 +19,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "plot3D"
+          "const": "plot3D",
+          "x-rule-id": "Plot3D-0004"
         },
         "zAxis": {
-          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis",
+          "x-rule-id": "Plot3D-0003"
         },
         "surfaces": {
           "type": "object",
@@ -31,13 +33,17 @@
           },
           "additionalProperties": {
             "$ref": "../../../outputs/Surface/v1.0.0/schema.json#/$defs/Surface"
-          }
+          },
+          "x-rule-id": "Plot3D-0002"
         }
       },
       "required": [
         "_type",
         "surfaces"
       ],
+      "x-required-rule-ids": {
+        "surfaces": "Plot3D-0001"
+      },
       "unevaluatedProperties": false
     }
   },

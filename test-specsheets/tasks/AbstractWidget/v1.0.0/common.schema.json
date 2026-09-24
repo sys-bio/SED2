@@ -8,7 +8,8 @@
       "type": "object",
       "properties": {
         "label": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": "AbstractWidget-0001"
         }
       }
     }

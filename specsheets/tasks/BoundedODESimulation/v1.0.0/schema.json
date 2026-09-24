@@ -22,10 +22,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "boundedODESimulation"
+          "const": "boundedODESimulation",
+          "x-rule-id": "BoundedODESimulation-0006"
         },
         "independentVariableSpan": {
-          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline"
+          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
+          "x-rule-id": "BoundedODESimulation-0005"
         }
       },
       "required": [
@@ -35,6 +37,12 @@
         "outputVariables",
         "independentVariableSpan"
       ],
+      "x-required-rule-ids": {
+        "model": "BoundedODESimulation-0001",
+        "independentVariable": "BoundedODESimulation-0002",
+        "outputVariables": "BoundedODESimulation-0003",
+        "independentVariableSpan": "BoundedODESimulation-0004"
+      },
       "unevaluatedProperties": false
     }
   },

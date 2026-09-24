@@ -22,7 +22,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "oneStepODE"
+          "const": "oneStepODE",
+          "x-rule-id": "OneStepODESimulation-0007"
         },
         "independentStep": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
@@ -35,6 +36,12 @@
         "outputVariables",
         "independentStep"
       ],
+      "x-required-rule-ids": {
+        "model": "OneStepODESimulation-0001",
+        "independentVariable": "OneStepODESimulation-0002",
+        "outputVariables": "OneStepODESimulation-0003",
+        "independentStep": "OneStepODESimulation-0004"
+      },
       "unevaluatedProperties": false
     }
   },

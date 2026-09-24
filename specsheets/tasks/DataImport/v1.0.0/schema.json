@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "dataImport"
+          "const": "dataImport",
+          "x-rule-id": "DataImport-0007"
         },
         "location": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
@@ -30,6 +31,10 @@
         "location",
         "format"
       ],
+      "x-required-rule-ids": {
+        "location": "DataImport-0001",
+        "format": "DataImport-0004"
+      },
       "unevaluatedProperties": false
     }
   },

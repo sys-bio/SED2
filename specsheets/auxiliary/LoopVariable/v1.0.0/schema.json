@@ -23,6 +23,10 @@
         "initialValue",
         "subsequentValues"
       ],
+      "x-required-rule-ids": {
+        "initialValue": "LoopVariable-0001",
+        "subsequentValues": "LoopVariable-0002"
+      },
       "unevaluatedProperties": false
     }
   },

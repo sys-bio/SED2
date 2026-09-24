@@ -22,10 +22,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "explicitODESimulation"
+          "const": "explicitODESimulation",
+          "x-rule-id": "ExplicitODESimulation-0006"
         },
         "independentVariableRange": {
-          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline"
+          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline",
+          "x-rule-id": "ExplicitODESimulation-0005"
         }
       },
       "required": [
@@ -35,6 +37,12 @@
         "outputVariables",
         "independentVariableRange"
       ],
+      "x-required-rule-ids": {
+        "model": "ExplicitODESimulation-0001",
+        "independentVariable": "ExplicitODESimulation-0002",
+        "outputVariables": "ExplicitODESimulation-0003",
+        "independentVariableRange": "ExplicitODESimulation-0004"
+      },
       "unevaluatedProperties": false
     }
   },

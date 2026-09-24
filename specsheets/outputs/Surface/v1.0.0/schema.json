@@ -32,10 +32,15 @@
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
         },
         "style": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Surface-0010"
         },
         "order": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef",
+          "x-rule-id": [
+            "Surface-0011",
+            "Surface-0012"
+          ]
         }
       },
       "required": [
@@ -44,6 +49,12 @@
         "y",
         "z"
       ],
+      "x-required-rule-ids": {
+        "surfaceType": "Surface-0001",
+        "x": "Surface-0004",
+        "y": "Surface-0006",
+        "z": "Surface-0008"
+      },
       "unevaluatedProperties": false
     }
   },

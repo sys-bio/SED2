@@ -19,13 +19,17 @@
       ],
       "properties": {
         "_type": {
-          "const": "scatter"
+          "const": "scatter",
+          "x-rule-id": "Scatter-0003"
         }
       },
       "required": [
         "_type",
         "subTasks"
       ],
+      "x-required-rule-ids": {
+        "subTasks": "Scatter-0001"
+      },
       "unevaluatedProperties": false
     }
   },

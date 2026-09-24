@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "modelChange"
+          "const": "modelChange",
+          "x-rule-id": "ModelChange-0011"
         },
         "inputModel": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -32,13 +33,25 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "ModelChange-0003",
+            "ModelChange-0004"
           ]
         },
         "removeElements": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelChange-0005",
+            "ModelChange-0006"
+          ]
         },
         "addElements": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelChange-0007",
+            "ModelChange-0008"
+          ]
         },
         "replaceElements": {
           "anyOf": [
@@ -51,6 +64,10 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "ModelChange-0009",
+            "ModelChange-0010"
           ]
         }
       },
@@ -58,6 +75,9 @@
         "_type",
         "inputModel"
       ],
+      "x-required-rule-ids": {
+        "inputModel": "ModelChange-0001"
+      },
       "unevaluatedProperties": false
     }
   },

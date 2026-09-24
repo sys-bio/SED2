@@ -9,11 +9,13 @@
       "properties": {
         "retries": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "x-rule-id": "WidgetOptions-0001"
         },
         "timeoutSeconds": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "x-rule-id": "WidgetOptions-0002"
         }
       }
     }

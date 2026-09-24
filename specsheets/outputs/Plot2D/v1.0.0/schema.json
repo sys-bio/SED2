@@ -19,10 +19,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "plot2D"
+          "const": "plot2D",
+          "x-rule-id": "Plot2D-0004"
         },
         "rightYAxis": {
-          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis",
+          "x-rule-id": "Plot2D-0003"
         },
         "curves": {
           "type": "object",
@@ -31,13 +33,17 @@
           },
           "additionalProperties": {
             "$ref": "../../../auxiliary/Curve/v1.0.0/schema.json#/$defs/Curve"
-          }
+          },
+          "x-rule-id": "Plot2D-0002"
         }
       },
       "required": [
         "_type",
         "curves"
       ],
+      "x-required-rule-ids": {
+        "curves": "Plot2D-0001"
+      },
       "unevaluatedProperties": false
     }
   },

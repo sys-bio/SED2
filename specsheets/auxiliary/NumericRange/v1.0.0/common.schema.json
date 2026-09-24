@@ -8,19 +8,39 @@
       "type": "object",
       "properties": {
         "start": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "NumericRange-0001",
+            "NumericRange-0002"
+          ]
         },
         "end": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "NumericRange-0003",
+            "NumericRange-0004"
+          ]
         },
         "interval": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveDoubleOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveDoubleOrRef",
+          "x-rule-id": [
+            "NumericRange-0005",
+            "NumericRange-0006"
+          ]
         },
         "numberOfSteps": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef",
+          "x-rule-id": [
+            "NumericRange-0007",
+            "NumericRange-0008"
+          ]
         },
         "scale": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef",
+          "x-rule-id": [
+            "NumericRange-0009",
+            "NumericRange-0010"
+          ]
         },
         "values": {
           "anyOf": [
@@ -33,6 +53,10 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "NumericRange-0011",
+            "NumericRange-0012"
           ]
         }
       }

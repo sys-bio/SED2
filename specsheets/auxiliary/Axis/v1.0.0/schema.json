@@ -13,22 +13,43 @@
       ],
       "properties": {
         "scale": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef",
+          "x-rule-id": [
+            "Axis-0001",
+            "Axis-0002"
+          ]
         },
         "min": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "Axis-0003",
+            "Axis-0004"
+          ]
         },
         "max": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "Axis-0005",
+            "Axis-0006"
+          ]
         },
         "grid": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "Axis-0007",
+            "Axis-0008"
+          ]
         },
         "style": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Axis-0009"
         },
         "reverse": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "Axis-0010",
+            "Axis-0011"
+          ]
         }
       },
       "unevaluatedProperties": false

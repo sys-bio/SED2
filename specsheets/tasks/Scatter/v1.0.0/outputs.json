@@ -1,0 +1,58 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "range.numberOfSteps"
+          },
+          "labels": null,
+          "note": "one row per value in range; formula assumes range resolves to a NumericRange-family object with numberOfSteps - a bare Range's step count is len(range.values) instead"
+        },
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(outputVariableMap)"
+          },
+          "labels": null,
+          "note": "one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here"
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    },
+    "[id].aggregates": {
+      "valid": "provided(aggregateOutputVariables)",
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(aggregateOutputVariables)"
+          },
+          "labels": null,
+          "note": "each entry collapses the range dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Scatter's own range), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"
+        }
+      ]
+    },
+    "[id].range": {
+      "valid": "provided(range)",
+      "type": "annotatedData",
+      "dimensions": [],
+      "note": "the current value of range, within each iteration"
+    },
+    "[id].index": {
+      "valid": "provided(range)",
+      "type": "annotatedData",
+      "dimensions": [],
+      "note": "the current index into range, within each iteration"
+    }
+  }
+}

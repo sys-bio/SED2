@@ -8,19 +8,23 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "x-rule-id": "SEDBase-0001"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "x-rule-id": "SEDBase-0002"
         },
         "notes": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/MarkdownString"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/MarkdownString",
+          "x-rule-id": "SEDBase-0003"
         },
         "annotations": {
           "type": "array",
           "items": {
             "$ref": "../../../auxiliary/Annotation/v1.0.0/schema.json#/$defs/Annotation"
-          }
+          },
+          "x-rule-id": "SEDBase-0004"
         }
       }
     }

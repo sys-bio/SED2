@@ -18,6 +18,10 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "Range-0001",
+            "Range-0002"
           ]
         }
       }

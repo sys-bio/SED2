@@ -1,0 +1,39 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "input-file",
+            "from": "location",
+            "extract": "rowCount",
+            "note": "row count, read from the CSV file at location"
+          },
+          "labels": null
+        },
+        {
+          "size": {
+            "source": "input-file",
+            "from": "location",
+            "extract": "columnCount",
+            "note": "column count, read from the CSV file at location together with organization/headers/ncols"
+          },
+          "labels": {
+            "source": "input-file",
+            "from": "location",
+            "extract": "columnHeaders",
+            "note": "column labels, read from the CSV header row when headers is true, else from columnNames"
+          }
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

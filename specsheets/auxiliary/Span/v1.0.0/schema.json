@@ -13,7 +13,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "span"
+          "const": "span",
+          "x-rule-id": "Span-0007"
         },
         "start": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
@@ -27,6 +28,10 @@
         "start",
         "end"
       ],
+      "x-required-rule-ids": {
+        "start": "Span-0001",
+        "end": "Span-0004"
+      },
       "unevaluatedProperties": false
     }
   },

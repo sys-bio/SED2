@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "simpleReport"
+          "const": "simpleReport",
+          "x-rule-id": "SimpleReport-0002"
         },
         "source": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -26,6 +27,9 @@
         "_type",
         "source"
       ],
+      "x-required-rule-ids": {
+        "source": "SimpleReport-0001"
+      },
       "unevaluatedProperties": false
     }
   },

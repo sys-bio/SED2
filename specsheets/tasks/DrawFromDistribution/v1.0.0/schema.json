@@ -16,19 +16,27 @@
       ],
       "properties": {
         "_type": {
-          "const": "drawFromDistribution"
+          "const": "drawFromDistribution",
+          "x-rule-id": "DrawFromDistribution-0006"
         },
         "arguments": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
         },
         "outputPersistent": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "DrawFromDistribution-0004",
+            "DrawFromDistribution-0005"
+          ]
         }
       },
       "required": [
         "_type",
         "arguments"
       ],
+      "x-required-rule-ids": {
+        "arguments": "DrawFromDistribution-0001"
+      },
       "unevaluatedProperties": false
     }
   },

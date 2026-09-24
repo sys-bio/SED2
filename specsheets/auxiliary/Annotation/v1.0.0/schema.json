@@ -17,6 +17,10 @@
         "qualifier",
         "value"
       ],
+      "x-required-rule-ids": {
+        "qualifier": "Annotation-0001",
+        "value": "Annotation-0003"
+      },
       "unevaluatedProperties": false
     }
   },

@@ -22,10 +22,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "boundedStochasticSimulation"
+          "const": "boundedStochasticSimulation",
+          "x-rule-id": "BoundedStochasticSimulation-0006"
         },
         "independentVariableSpan": {
-          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline"
+          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
+          "x-rule-id": "BoundedStochasticSimulation-0005"
         }
       },
       "required": [
@@ -35,6 +37,12 @@
         "outputVariables",
         "independentVariableSpan"
       ],
+      "x-required-rule-ids": {
+        "model": "BoundedStochasticSimulation-0001",
+        "independentVariable": "BoundedStochasticSimulation-0002",
+        "outputVariables": "BoundedStochasticSimulation-0003",
+        "independentVariableSpan": "BoundedStochasticSimulation-0004"
+      },
       "unevaluatedProperties": false
     }
   },

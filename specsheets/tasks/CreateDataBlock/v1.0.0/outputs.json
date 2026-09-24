@@ -1,0 +1,24 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(data)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "keys(data)"
+          },
+          "note": "base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case"
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": false
+    }
+  }
+}

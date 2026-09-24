@@ -16,19 +16,27 @@
       ],
       "properties": {
         "_type": {
-          "const": "aggregationCalculation"
+          "const": "aggregationCalculation",
+          "x-rule-id": "AggregationCalculation-0004"
         },
         "input": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
         },
         "appliedDimensions": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "AggregationCalculation-0002",
+            "AggregationCalculation-0003"
+          ]
         }
       },
       "required": [
         "_type",
         "input"
       ],
+      "x-required-rule-ids": {
+        "input": "AggregationCalculation-0001"
+      },
       "unevaluatedProperties": false
     }
   },

@@ -1,0 +1,44 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": {
+        "source": "runtime",
+        "note": "2D or more: first dimension = one row per iteration (iteration count is not knowable ahead of the loop actually running - Loop's exact termination condition is an open design question, see core-spec.md Section 10); remaining dimension(s) = one column per entry of outputVariableMap"
+      }
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    },
+    "[id].aggregates": {
+      "valid": "provided(aggregateOutputVariables)",
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(aggregateOutputVariables)"
+          },
+          "labels": null,
+          "note": "each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"
+        }
+      ]
+    },
+    "[id].range": {
+      "valid": "provided(range)",
+      "type": "annotatedData",
+      "dimensions": [],
+      "note": "the current value of range, within the loop"
+    },
+    "[id].index": {
+      "valid": "provided(range)",
+      "type": "annotatedData",
+      "dimensions": [],
+      "note": "the current index into range, within the loop"
+    }
+  }
+}

@@ -22,7 +22,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "numericRange"
+          "const": "numericRange",
+          "x-rule-id": "NumericRange-0013"
         }
       },
       "required": [

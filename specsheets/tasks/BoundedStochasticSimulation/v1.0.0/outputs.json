@@ -1,0 +1,34 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "runtime",
+            "note": "row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)"
+          },
+          "labels": null
+        },
+        {
+          "size": {
+            "source": "static",
+            "expr": "1 + len(outputVariables)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "[independentVariable] + outputVariables"
+          }
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": true,
+      "type": "model"
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

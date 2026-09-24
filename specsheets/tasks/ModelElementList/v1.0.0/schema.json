@@ -16,28 +16,48 @@
       ],
       "properties": {
         "_type": {
-          "const": "modelElementList"
+          "const": "modelElementList",
+          "x-rule-id": "ModelElementList-0011"
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
         },
         "includeElements": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelElementList-0003",
+            "ModelElementList-0004"
+          ]
         },
         "includeTypes": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelElementList-0005",
+            "ModelElementList-0006"
+          ]
         },
         "excludeElements": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelElementList-0007",
+            "ModelElementList-0008"
+          ]
         },
         "excludeTypes": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "ModelElementList-0009",
+            "ModelElementList-0010"
+          ]
         }
       },
       "required": [
         "_type",
         "model"
       ],
+      "x-required-rule-ids": {
+        "model": "ModelElementList-0001"
+      },
       "unevaluatedProperties": false
     }
   },

@@ -1,0 +1,19 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": {
+        "source": "static",
+        "expr": "shapeOf(input) - dim(appliedDimensions or outermost)",
+        "note": "shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is"
+      }
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "stringFormation"
+          "const": "stringFormation",
+          "x-rule-id": "StringFormation-0004"
         },
         "concatenate": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
@@ -26,6 +27,9 @@
         "_type",
         "concatenate"
       ],
+      "x-required-rule-ids": {
+        "concatenate": "StringFormation-0001"
+      },
       "unevaluatedProperties": false
     }
   },

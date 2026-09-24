@@ -1,0 +1,44 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "reducedFloatingSpeciesIds",
+            "note": "row count = number of species in the referenced model's reduced species set"
+          },
+          "labels": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "reducedFloatingSpeciesIds",
+            "note": "row labels = the model's ordered, reduced species list"
+          }
+        },
+        {
+          "size": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "reducedFloatingSpeciesIds",
+            "note": "column count = number of species in the referenced model's reduced species set"
+          },
+          "labels": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "reducedFloatingSpeciesIds",
+            "note": "column labels = the model's ordered, reduced species list"
+          }
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

@@ -14,7 +14,8 @@
           },
           "additionalProperties": {
             "$ref": "../../../tasks/AbstractTask/v1.0.0/schema.json#/$defs/AbstractTask"
-          }
+          },
+          "x-rule-id": "Repeat-0001"
         },
         "outputVariableMap": {
           "anyOf": [
@@ -30,6 +31,10 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "Repeat-0002",
+            "Repeat-0003"
           ]
         },
         "aggregateOutputVariables": {
@@ -39,10 +44,12 @@
           },
           "additionalProperties": {
             "$ref": "../../../tasks/AggregationCalculation/v1.0.0/schema.json#/$defs/AggregationCalculation"
-          }
+          },
+          "x-rule-id": "Repeat-0004"
         },
         "range": {
-          "$ref": "../../../auxiliary/Range/v1.0.0/inline.schema.json#/$defs/RangeInline"
+          "$ref": "../../../auxiliary/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
+          "x-rule-id": "Repeat-0005"
         }
       },
       "anyOf": [

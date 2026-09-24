@@ -24,7 +24,8 @@
           },
           "additionalProperties": {
             "$ref": "../../../tasks/AbstractWidget/v1.0.0/schema.json#/$defs/AbstractWidget"
-          }
+          },
+          "x-rule-id": "TestDocument-0002"
         },
         "reports": {
           "description": "AbstractReport branches, keyed by SId.",
@@ -34,12 +35,16 @@
           },
           "additionalProperties": {
             "$ref": "../../../outputs/AbstractReport/v1.0.0/schema.json#/$defs/AbstractReport"
-          }
+          },
+          "x-rule-id": "TestDocument-0003"
         }
       },
       "required": [
         "version"
       ],
+      "x-required-rule-ids": {
+        "version": "TestDocument-0001"
+      },
       "unevaluatedProperties": false
     }
   },

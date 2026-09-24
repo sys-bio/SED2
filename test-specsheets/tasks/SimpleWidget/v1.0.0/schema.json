@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "simpleWidget"
+          "const": "simpleWidget",
+          "x-rule-id": "SimpleWidget-0002"
         },
         "value": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
@@ -26,6 +27,9 @@
         "_type",
         "value"
       ],
+      "x-required-rule-ids": {
+        "value": "SimpleWidget-0001"
+      },
       "unevaluatedProperties": false
     }
   },

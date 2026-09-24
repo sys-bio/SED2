@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "weightedChoice"
+          "const": "weightedChoice",
+          "x-rule-id": "WeightedChoice-0002"
         },
         "weight": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
@@ -26,6 +27,9 @@
         "_type",
         "weight"
       ],
+      "x-required-rule-ids": {
+        "weight": "WeightedChoice-0001"
+      },
       "unevaluatedProperties": false
     }
   },

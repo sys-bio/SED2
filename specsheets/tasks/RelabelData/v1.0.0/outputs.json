@@ -1,0 +1,16 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": {
+        "source": "static",
+        "expr": "shapeOf(input)",
+        "note": "same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape"
+      }
+    },
+    "[id].model": {
+      "valid": false
+    }
+  }
+}

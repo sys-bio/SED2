@@ -1,0 +1,34 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "independentVariableRange.numberOfSteps"
+          },
+          "labels": null
+        },
+        {
+          "size": {
+            "source": "static",
+            "expr": "1 + len(outputVariables)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "[independentVariable] + outputVariables"
+          }
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": true,
+      "type": "model"
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

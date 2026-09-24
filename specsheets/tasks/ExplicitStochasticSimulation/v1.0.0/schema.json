@@ -22,10 +22,12 @@
       ],
       "properties": {
         "_type": {
-          "const": "explicitStochasticSimulation"
+          "const": "explicitStochasticSimulation",
+          "x-rule-id": "ExplicitStochasticSimulation-0006"
         },
         "independentVariableRange": {
-          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline"
+          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline",
+          "x-rule-id": "ExplicitStochasticSimulation-0005"
         }
       },
       "required": [
@@ -35,6 +37,12 @@
         "outputVariables",
         "independentVariableRange"
       ],
+      "x-required-rule-ids": {
+        "model": "ExplicitStochasticSimulation-0001",
+        "independentVariable": "ExplicitStochasticSimulation-0002",
+        "outputVariables": "ExplicitStochasticSimulation-0003",
+        "independentVariableRange": "ExplicitStochasticSimulation-0004"
+      },
       "unevaluatedProperties": false
     }
   },

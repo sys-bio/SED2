@@ -1,0 +1,23 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": {
+        "source": "runtime",
+        "note": "scalar when no element of concatenate is itself a list; otherwise N-D matching the shape of the list element(s) within concatenate (1D for one list element, higher-D when several list elements are combined pairwise, all sharing the same length/shape per dimension) - not derivable without evaluating concatenate's actual element values"
+      }
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": true,
+      "type": "stringList",
+      "dimensions": {
+        "source": "runtime",
+        "note": "same as [id]'s dimensions above; not derivable without evaluating concatenate"
+      }
+    }
+  }
+}

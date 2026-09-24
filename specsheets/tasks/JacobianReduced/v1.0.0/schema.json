@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "jacobianReduced"
+          "const": "jacobianReduced",
+          "x-rule-id": "JacobianReduced-0003"
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -26,6 +27,9 @@
         "_type",
         "model"
       ],
+      "x-required-rule-ids": {
+        "model": "JacobianReduced-0001"
+      },
       "unevaluatedProperties": false
     }
   },

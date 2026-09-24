@@ -1,0 +1,30 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": false
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": true,
+      "type": "stringList",
+      "dimensions": [
+        {
+          "size": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "matchedElementIds",
+            "note": "length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering"
+          },
+          "labels": {
+            "source": "input-file",
+            "from": "model",
+            "extract": "matchedElementIds",
+            "note": "the matched element ids themselves"
+          }
+        }
+      ]
+    }
+  }
+}

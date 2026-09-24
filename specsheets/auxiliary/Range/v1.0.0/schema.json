@@ -19,7 +19,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "range"
+          "const": "range",
+          "x-rule-id": "Range-0003"
         }
       },
       "required": [

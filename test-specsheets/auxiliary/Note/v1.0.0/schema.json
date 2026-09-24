@@ -19,6 +19,9 @@
       "required": [
         "text"
       ],
+      "x-required-rule-ids": {
+        "text": "Note-0001"
+      },
       "unevaluatedProperties": false
     }
   },

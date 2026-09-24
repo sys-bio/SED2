@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "createDataBlock"
+          "const": "createDataBlock",
+          "x-rule-id": "CreateDataBlock-0004"
         },
         "data": {
           "anyOf": [
@@ -36,6 +37,9 @@
         "_type",
         "data"
       ],
+      "x-required-rule-ids": {
+        "data": "CreateDataBlock-0001"
+      },
       "unevaluatedProperties": false
     }
   },

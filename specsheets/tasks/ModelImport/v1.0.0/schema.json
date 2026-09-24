@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "modelImport"
+          "const": "modelImport",
+          "x-rule-id": "ModelImport-0007"
         },
         "location": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
@@ -30,6 +31,10 @@
         "location",
         "language"
       ],
+      "x-required-rule-ids": {
+        "location": "ModelImport-0001",
+        "language": "ModelImport-0004"
+      },
       "unevaluatedProperties": false
     }
   },

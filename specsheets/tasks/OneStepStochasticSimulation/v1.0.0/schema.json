@@ -22,10 +22,15 @@
       ],
       "properties": {
         "_type": {
-          "const": "oneStepStochastic"
+          "const": "oneStepStochastic",
+          "x-rule-id": "OneStepStochasticSimulation-0006"
         },
         "independentStep": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "OneStepStochasticSimulation-0004",
+            "OneStepStochasticSimulation-0005"
+          ]
         }
       },
       "required": [
@@ -34,6 +39,11 @@
         "independentVariable",
         "outputVariables"
       ],
+      "x-required-rule-ids": {
+        "model": "OneStepStochasticSimulation-0001",
+        "independentVariable": "OneStepStochasticSimulation-0002",
+        "outputVariables": "OneStepStochasticSimulation-0003"
+      },
       "unevaluatedProperties": false
     }
   },

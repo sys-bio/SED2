@@ -19,7 +19,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "loop"
+          "const": "loop",
+          "x-rule-id": "Loop-0005"
         },
         "loopVariables": {
           "type": "object",
@@ -28,7 +29,8 @@
           },
           "additionalProperties": {
             "$ref": "../../../auxiliary/LoopVariable/v1.0.0/schema.json#/$defs/LoopVariable"
-          }
+          },
+          "x-rule-id": "Loop-0003"
         }
       },
       "required": [
@@ -36,6 +38,10 @@
         "subTasks",
         "loopVariables"
       ],
+      "x-required-rule-ids": {
+        "subTasks": "Loop-0001",
+        "loopVariables": "Loop-0002"
+      },
       "unevaluatedProperties": false
     }
   },

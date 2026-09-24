@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "report"
+          "const": "report",
+          "x-rule-id": "Report-0003"
         },
         "data": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -26,6 +27,9 @@
         "_type",
         "data"
       ],
+      "x-required-rule-ids": {
+        "data": "Report-0001"
+      },
       "unevaluatedProperties": false
     }
   },

@@ -8,19 +8,33 @@
       "type": "object",
       "properties": {
         "legend": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "Plot-0001",
+            "Plot-0002"
+          ]
         },
         "height": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "Plot-0003",
+            "Plot-0004"
+          ]
         },
         "width": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "Plot-0005",
+            "Plot-0006"
+          ]
         },
         "xAxis": {
-          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis",
+          "x-rule-id": "Plot-0007"
         },
         "yAxis": {
-          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis",
+          "x-rule-id": "Plot-0008"
         }
       }
     }

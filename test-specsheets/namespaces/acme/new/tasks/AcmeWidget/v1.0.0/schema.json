@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "acme@acmeWidget"
+          "const": "acme@acmeWidget",
+          "x-rule-id": "acme-AcmeWidget-0002"
         },
         "acme@acmeLevel": {
           "$ref": "../../../../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
@@ -26,6 +27,9 @@
         "_type",
         "acme@acmeLevel"
       ],
+      "x-required-rule-ids": {
+        "acme@acmeLevel": "acme-AcmeWidget-0001"
+      },
       "unevaluatedProperties": false
     }
   },

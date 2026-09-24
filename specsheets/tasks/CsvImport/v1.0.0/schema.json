@@ -16,37 +16,69 @@
       ],
       "properties": {
         "_type": {
-          "const": "csvImport"
+          "const": "csvImport",
+          "x-rule-id": "CsvImport-0018"
         },
         "location": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
         },
         "organization": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": [
+            "CsvImport-0004",
+            "CsvImport-0005"
+          ]
         },
         "separator": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": [
+            "CsvImport-0006",
+            "CsvImport-0007"
+          ]
         },
         "headers": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "CsvImport-0008",
+            "CsvImport-0009"
+          ]
         },
         "columnNames": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "CsvImport-0010",
+            "CsvImport-0011"
+          ]
         },
         "ncols": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef",
+          "x-rule-id": [
+            "CsvImport-0012",
+            "CsvImport-0013"
+          ]
         },
         "nrows": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef",
+          "x-rule-id": [
+            "CsvImport-0014",
+            "CsvImport-0015"
+          ]
         },
         "units": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "CsvImport-0016",
+            "CsvImport-0017"
+          ]
         }
       },
       "required": [
         "_type",
         "location"
       ],
+      "x-required-rule-ids": {
+        "location": "CsvImport-0001"
+      },
       "unevaluatedProperties": false
     }
   },

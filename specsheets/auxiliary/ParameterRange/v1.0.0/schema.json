@@ -22,7 +22,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "parameterRange"
+          "const": "parameterRange",
+          "x-rule-id": "ParameterRange-0016"
         },
         "modelElement": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
@@ -32,6 +33,9 @@
         "_type",
         "modelElement"
       ],
+      "x-required-rule-ids": {
+        "modelElement": "ParameterRange-0001"
+      },
       "unevaluatedProperties": false
     }
   },

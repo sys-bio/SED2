@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "fluxBalanceAnalysis"
+          "const": "fluxBalanceAnalysis",
+          "x-rule-id": "FluxBalanceAnalysis-0008"
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -25,7 +26,11 @@
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
         },
         "outputModel": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": [
+            "FluxBalanceAnalysis-0006",
+            "FluxBalanceAnalysis-0007"
+          ]
         }
       },
       "required": [
@@ -33,6 +38,10 @@
         "model",
         "outputVariables"
       ],
+      "x-required-rule-ids": {
+        "model": "FluxBalanceAnalysis-0001",
+        "outputVariables": "FluxBalanceAnalysis-0003"
+      },
       "unevaluatedProperties": false
     }
   },

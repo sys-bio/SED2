@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "choice"
+          "const": "choice",
+          "x-rule-id": "Choice-0002"
         }
       },
       "required": [

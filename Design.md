@@ -60,7 +60,7 @@ SED2/
 |-- core-spec.md                     canonical spec: overall shape/design of a SED2 document
 |-- specsheets/                      canonical per-class Data Sheets (schema + diagram + description)
 |   |-- core/, tasks/, outputs/, auxiliary/
-|   |   `-- <ClassName>/v1.0.0/      schema.json (+ inline./common.schema.json where merged), <ClassName>.png or DIAGRAM-PENDING.md, description.md, validation/*.md
+|   |   `-- <ClassName>/v1.0.0/      schema.json (+ inline./common.schema.json where merged), <ClassName>.png or DIAGRAM-PENDING.md, description.md, validation/*.md, outputs.json (tasks/ concrete classes only - see core-spec.md Section 8)
 |-- test-specsheets/                 synthetic generator-test fixtures, same shape as specsheets/ + namespaces/ - see README.md there and Design.md's Testing section
 |-- tools/
 |   `-- build_specification.py       assembles core-spec.md + specsheets/ into SPECIFICATION.md on demand (see Specification Assembly)
@@ -73,7 +73,8 @@ SED2/
 |           `-- core/, tasks/, outputs/, auxiliary/
 |               `-- <ClassName>/<namespace-version>/   schema.json, description.md, validation/*.md (IDs: <ClassName>-<prefix>-NNNN)
 |-- schema/
-|   `-- predefined-functions.json    math function/constant registry (MathML + distrib + SED2-specific)
+|   |-- predefined-functions.json    math function/constant registry (MathML + distrib + SED2-specific)
+|   `-- outputs-meta.schema.json   validates every tasks/ class's outputs.json envelope (see core-spec.md Section 8)
 |-- generator/                       the generator's own hand-written source
 |-- templates/
 |   |-- cpp/                         hand-written C++-only code

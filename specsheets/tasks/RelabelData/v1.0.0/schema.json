@@ -16,7 +16,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "relabelData"
+          "const": "relabelData",
+          "x-rule-id": "RelabelData-0006"
         },
         "input": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -30,6 +31,10 @@
         "input",
         "labels"
       ],
+      "x-required-rule-ids": {
+        "input": "RelabelData-0001",
+        "labels": "RelabelData-0003"
+      },
       "unevaluatedProperties": false
     }
   },

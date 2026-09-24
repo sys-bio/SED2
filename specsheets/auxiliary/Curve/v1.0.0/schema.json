@@ -29,10 +29,15 @@
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
         },
         "order": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef",
+          "x-rule-id": [
+            "Curve-0008",
+            "Curve-0009"
+          ]
         },
         "style": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0010"
         },
         "yAxis": {
           "anyOf": [
@@ -46,25 +51,35 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "Curve-0011",
+            "Curve-0018"
           ]
         },
         "xErrorUpper": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0012"
         },
         "xErrorLower": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0013"
         },
         "yErrorUpper": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0014"
         },
         "yErrorLower": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0015"
         },
         "yFrom": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0016"
         },
         "yTo": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0017"
         }
       },
       "required": [
@@ -72,6 +87,11 @@
         "x",
         "y"
       ],
+      "x-required-rule-ids": {
+        "curveType": "Curve-0001",
+        "x": "Curve-0004",
+        "y": "Curve-0006"
+      },
       "unevaluatedProperties": false
     }
   },

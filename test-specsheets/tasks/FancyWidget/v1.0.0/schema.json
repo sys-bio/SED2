@@ -19,7 +19,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "fancyWidget"
+          "const": "fancyWidget",
+          "x-rule-id": "FancyWidget-0002"
         },
         "value": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
@@ -29,6 +30,9 @@
         "_type",
         "value"
       ],
+      "x-required-rule-ids": {
+        "value": "FancyWidget-0001"
+      },
       "unevaluatedProperties": false
     }
   },

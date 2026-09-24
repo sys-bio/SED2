@@ -19,7 +19,8 @@
       ],
       "properties": {
         "_type": {
-          "const": "parameterScan"
+          "const": "parameterScan",
+          "x-rule-id": "ParameterScan-0006"
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
@@ -38,6 +39,11 @@
         "parameterRanges",
         "subTasks"
       ],
+      "x-required-rule-ids": {
+        "model": "ParameterScan-0001",
+        "parameterRanges": "ParameterScan-0003",
+        "subTasks": "ParameterScan-0005"
+      },
       "unevaluatedProperties": false
     }
   },

@@ -1,0 +1,42 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(outputVariables)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "outputVariables"
+          },
+          "note": "a single point, not a series"
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": true,
+      "type": "model"
+    },
+    "[id].strings": {
+      "valid": false
+    },
+    "[id].independentStep": {
+      "valid": "!provided(independentStep)",
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "1"
+          },
+          "labels": null
+        }
+      ],
+      "note": "the actual elapsed step; present only when independentStep was NOT given as input"
+    }
+  }
+}

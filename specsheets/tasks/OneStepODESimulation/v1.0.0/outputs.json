@@ -1,0 +1,28 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(outputVariables)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "outputVariables"
+          },
+          "note": "a single point, not a series"
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": true,
+      "type": "model"
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

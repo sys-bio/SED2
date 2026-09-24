@@ -1,0 +1,15 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": {
+        "source": "runtime",
+        "note": "shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values"
+      }
+    },
+    "[id].model": {
+      "valid": false
+    }
+  }
+}
