@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/outputs/Surface/v1.0.0/schema.json",
+  "title": "SED2 Surface",
+  "$defs": {
+    "Surface": {
+      "description": "A 3D surface on a Plot3D.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "surfaceType": {
+          "anyOf": [
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SurfaceType"
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        },
+        "x": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "y": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "z": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "style": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "order": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef"
+        }
+      },
+      "required": [
+        "surfaceType",
+        "x",
+        "y",
+        "z"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Surface"
+}

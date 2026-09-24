@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Span/v1.0.0/schema.json",
+  "title": "SED2 Span",
+  "$defs": {
+    "Span": {
+      "description": "A simple start/end range used in BoundedODESimulation and BoundedStochasticSimulation.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "span"
+        },
+        "start": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "end": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "start",
+        "end"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Span"
+}

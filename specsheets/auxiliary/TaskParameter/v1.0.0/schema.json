@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/TaskParameter/v1.0.0/schema.json",
+  "title": "SED2 TaskParameter",
+  "$defs": {
+    "TaskParameter": {
+      "description": "An algorithm/task parameter. Inherits from SEDBase.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "value": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/TaskParameter"
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Curve/v1.0.0/schema.json",
+  "title": "SED2 Curve",
+  "$defs": {
+    "Curve": {
+      "description": "A 2D curve on a Plot2D. (AbstractCurve has only one concrete subclass, Curve, so no _type is required.)",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "curveType": {
+          "anyOf": [
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/CurveType"
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        },
+        "x": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "y": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "order": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef"
+        },
+        "style": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "yAxis": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "right",
+                "left"
+              ]
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        },
+        "xErrorUpper": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "xErrorLower": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "yErrorUpper": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "yErrorLower": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "yFrom": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "yTo": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        }
+      },
+      "required": [
+        "curveType",
+        "x",
+        "y"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Curve"
+}

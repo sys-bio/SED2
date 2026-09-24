@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Span/v1.0.0/inline.schema.json",
+  "title": "SED2 SpanInline",
+  "$defs": {
+    "SpanInline": {
+      "description": "A Span used as a named child (e.g., independentVariableSpan).",
+      "oneOf": [
+        {
+          "$ref": "../../../auxiliary/Span/v1.0.0/schema.json#/$defs/Span"
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/SpanInline"
+}

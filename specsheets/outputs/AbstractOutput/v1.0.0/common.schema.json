@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/outputs/AbstractOutput/v1.0.0/common.schema.json",
+  "title": "SED2 AbstractOutputCommon",
+  "$defs": {
+    "AbstractOutputCommon": {
+      "description": "Fields inherited by every AbstractOutput (in addition to SEDBase).",
+      "type": "object",
+      "properties": {
+        "outputParameters": {
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/OutputParameter/v1.0.0/schema.json#/$defs/OutputParameter"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractOutputCommon"
+}

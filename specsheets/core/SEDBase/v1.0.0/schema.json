@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/core/SEDBase/v1.0.0/schema.json",
+  "title": "SED2 SEDBase",
+  "$defs": {
+    "SEDBaseFields": {
+      "description": "The optional name/description/notes/annotations fields inherited by every SED element. Used via allOf in concrete classes.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "notes": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/MarkdownString"
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/Annotation/v1.0.0/schema.json#/$defs/Annotation"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/SEDBaseFields"
+}

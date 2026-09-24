@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/JacobianFull/v1.0.0/schema.json",
+  "title": "SED2 JacobianFull",
+  "$defs": {
+    "JacobianFull": {
+      "description": "Compute the full Jacobian matrix of a model.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "jacobianFull"
+        },
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/JacobianFull"
+}

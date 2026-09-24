@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AbstractStochasticSimulation/v1.0.0/schema.json",
+  "title": "SED2 AbstractStochasticSimulation",
+  "$defs": {
+    "AbstractStochasticSimulation": {
+      "description": "Stochastic-solver tuning fields shared by ExplicitStochasticSimulation, BoundedStochasticSimulation, and OneStepStochasticSimulation. A schema-only mixin composed via allOf; never instantiated on its own, no _type or diagram box of its own.",
+      "type": "object",
+      "properties": {
+        "seed": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "timeDependentRelativeTolerance": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "variableStepSize": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "minimumTimeStep": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "maximumTimeStep": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "nonNegative": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "maxOutputRows": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        },
+        "maxNumSteps": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractStochasticSimulation"
+}

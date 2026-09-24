@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/Repeat/v1.0.0/schema.json",
+  "title": "SED2 Repeat",
+  "$defs": {
+    "Repeat": {
+      "description": "Fields shared by Scatter, Loop, and ParameterScan (all Repeat subclasses).",
+      "type": "object",
+      "properties": {
+        "subTasks": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../tasks/AbstractTask/v1.0.0/schema.json#/$defs/AbstractTask"
+          }
+        },
+        "outputVariableMap": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+              },
+              "additionalProperties": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        },
+        "aggregateOutputVariables": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../tasks/AggregationCalculation/v1.0.0/schema.json#/$defs/AggregationCalculation"
+          }
+        },
+        "range": {
+          "$ref": "../../../auxiliary/Range/v1.0.0/inline.schema.json#/$defs/RangeInline"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "outputVariableMap"
+          ]
+        },
+        {
+          "required": [
+            "aggregateOutputVariables"
+          ]
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/Repeat"
+}

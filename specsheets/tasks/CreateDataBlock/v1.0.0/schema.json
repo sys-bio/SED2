@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/CreateDataBlock/v1.0.0/schema.json",
+  "title": "SED2 CreateDataBlock",
+  "$defs": {
+    "CreateDataBlock": {
+      "description": "Create a new AnnotatedData object from a dictionary of named values.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "createDataBlock"
+        },
+        "data": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        }
+      },
+      "required": [
+        "_type",
+        "data"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/CreateDataBlock"
+}

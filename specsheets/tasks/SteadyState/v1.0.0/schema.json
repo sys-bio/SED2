@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/SteadyState/v1.0.0/schema.json",
+  "title": "SED2 SteadyState",
+  "$defs": {
+    "SteadyState": {
+      "description": "Compute the steady state of a model. kisaoID must be KISAO:0000407 or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "steadyState"
+        },
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "independentVariable": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        },
+        "outputVariables": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "outputModel": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "outputVariables"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/SteadyState"
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/ParameterScan/v1.0.0/schema.json",
+  "title": "SED2 ParameterScan",
+  "$defs": {
+    "ParameterScan": {
+      "description": "Scan a model over one or more ParameterRanges. Inherits from Repeat (subTasks, outputVariableMap, aggregateOutputVariables).",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/Repeat/v1.0.0/schema.json#/$defs/Repeat"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "parameterScan"
+        },
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "parameterRanges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "../../../auxiliary/ParameterRange/v1.0.0/inline.schema.json#/$defs/ParameterRangeInline"
+          }
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "parameterRanges",
+        "subTasks"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ParameterScan"
+}

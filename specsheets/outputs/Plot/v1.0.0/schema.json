@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/outputs/Plot/v1.0.0/schema.json",
+  "title": "SED2 Plot",
+  "$defs": {
+    "Plot": {
+      "description": "Fields shared by Plot2D and Plot3D.",
+      "type": "object",
+      "properties": {
+        "legend": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "height": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "width": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "xAxis": {
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+        },
+        "yAxis": {
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/Plot"
+}

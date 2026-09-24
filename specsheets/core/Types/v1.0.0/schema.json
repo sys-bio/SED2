@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/core/Types/v1.0.0/schema.json",
+  "title": "SED2 Core Types",
+  "description": "Primitive and reference-helper types shared across every SED2 Data Sheet schema. Every other per-class schema $refs into this file for these definitions rather than redefining them.",
+  "$defs": {
+    "SId": {
+      "description": "An identifier: starts with an English letter or underscore, may be followed by alphanumerics or underscores.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "SIdRef": {
+      "description": "A reference to another SED element. Always starts with '#'. May include a colon-delimited path, dot-accessors (e.g. .model, .strings, .aggregates), and indexing ([n], [-n], ['label'], [a:b]).",
+      "type": "string",
+      "pattern": "^#[A-Za-z_][A-Za-z0-9_]*((:[A-Za-z_][A-Za-z0-9_]*)|(\\.[A-Za-z_][A-Za-z0-9_]*)|(\\[(-?[0-9]+(:-?[0-9]+)?|'[^']*')\\]))*$"
+    },
+    "KISAOId": {
+      "description": "A KiSAO identifier of the form KISAO:nnnnnnn (7 digits).",
+      "type": "string",
+      "pattern": "^KISAO:[0-9]{7}$"
+    },
+    "URI": {
+      "description": "A URI string. Can be absolute or relative.",
+      "type": "string",
+      "minLength": 1
+    },
+    "URN": {
+      "description": "A URN string.",
+      "type": "string",
+      "pattern": "^urn:.+$"
+    },
+    "MarkdownString": {
+      "description": "A CommonMark-formatted markdown string.",
+      "type": "string"
+    },
+    "NumberWithNaN": {
+      "description": "A number, Boolean, or one of the special strings nan / inf / -inf (case-insensitive), which represent NaN, +Infinity, and -Infinity respectively.",
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "pattern": "^([Nn][Aa][Nn]|[+-]?[Ii][Nn][Ff])$"
+        }
+      ]
+    },
+    "ScaleType": {
+      "type": "string",
+      "enum": [
+        "linear",
+        "log10"
+      ]
+    },
+    "CurveType": {
+      "type": "string",
+      "enum": [
+        "points",
+        "bar",
+        "barStacked",
+        "horizontalBar",
+        "horizontalBarStacked",
+        "shadedArea"
+      ]
+    },
+    "SurfaceType": {
+      "type": "string",
+      "enum": [
+        "parametricCurve",
+        "surfaceMesh",
+        "surfaceContour",
+        "contour",
+        "heatMap",
+        "stackedCurves",
+        "bar"
+      ]
+    },
+    "Qualifier": {
+      "description": "A 'namespace:term' qualifier string (e.g., 'bqbiol:hasPart', 'dc:title').",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*:[A-Za-z_][A-Za-z0-9_.-]*$"
+    },
+    "StringOrRef": {
+      "description": "Any string. Note: any string starting with '#' is treated as an SIdRef.",
+      "type": "string"
+    },
+    "NumberOrRef": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "IntegerOrRef": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "PositiveIntegerOrRef": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "NonNegativeIntegerOrRef": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "PositiveDoubleOrRef": {
+      "anyOf": [
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "BooleanOrRef": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "URIOrRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/URI"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "URNOrRef": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "KISAOIdOrRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/KISAOId"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "ScaleTypeOrRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ScaleType"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "ListOfStringsOrRef": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StringOrRef"
+          }
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "ListOfNumbersOrRef": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NumberOrRef"
+          }
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "ListOfAnyOrRef": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AnyValueOrRef"
+          }
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "AnyValueOrRef": {
+      "description": "Any JSON value. Per the SED2 spec, an SIdRef string may substitute for any value.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AnyValueOrRef"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/AnyValueOrRef"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

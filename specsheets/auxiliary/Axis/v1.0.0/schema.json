@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Axis/v1.0.0/schema.json",
+  "title": "SED2 Axis",
+  "$defs": {
+    "Axis": {
+      "description": "An axis of a plot.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "scale": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef"
+        },
+        "min": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "max": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "grid": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "style": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "reverse": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Axis"
+}

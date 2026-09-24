@@ -1,0 +1,48 @@
+class,accessor,dim,shape_type,dim_name,index_kind,label_source,size_source,confidence,notes_or_question,spec_line
+ModelImport,,,none,,,,,,Output is the model via .model; the bare id means nothing at all. Excluded - no AnnotatedData produced.,148
+ModelChange,,,none,,,,,,Output is a Model via .model. Excluded.,258
+DataImport,,0,dynamic,imported data,either,,runtime (file-dependent),guess,"Shape depends entirely on the imported file's contents. Assume 1D unless you know otherwise, or leave fully unvalidated?",159-161
+CsvImport,,0,conditional,columns,either,columnNames,ncols,inferred,"Only knowable when columnNames/ncols are literal (not references). Worth validating, or too rare to bother with?",schema.json:362 (not in prose spec)
+CsvImport,,1,conditional,rows,integer,,nrows,inferred,Same caveat as dim 0 - only when nrows is a literal integer.,schema.json:362
+Range,,0,static,values,integer,literal,values,guess,"Is a bare Range task ever referenced directly for its own AnnotatedData, or only used as a child (e.g. Loop.range)?",184-186
+NumericRange,,0,conditional,values / generated points,integer,values (if given),"values, or computed from start/end/interval/numberOfSteps when all literal",guess,"Same question as Range. Also: should we compute the generated length from start/end/interval formulas, or only trust a literal 'values' array / 'numberOfSteps'?",188-198
+ParameterRange,,0,conditional,values / generated points,integer,values (if given),same as NumericRange,guess,"Is a ParameterRange's own id ever referenced directly, or only used inside ParameterScan.parameterRanges?",202
+ModelElementList,.strings,0,dynamic,model elements,integer,,runtime (model-dependent),high,,291-293
+CreateDataBlock,,0,static,data keys,label,literal (keys of 'data'),literal (keys of 'data'),high,,305-307
+CreateDataBlock,,1+,transform,per-key content shape,either,,,n/a,"Each value under a key in 'data' can independently be a number, list, or AnnotatedData of its own shape. Worth validating past dim 0 at all?",305-307
+RelabelData,,0,static,labels,label,literal ('labels' attribute),literal (len of 'labels'),high,,323-325
+RelabelData,,1+,transform,pass-through from 'input',,,,n/a,"Dimensions beyond 0 mirror whatever 'input' resolves to. Chain into input's own declared shape, or leave unvalidated for now?",323-325
+StringFormation,.strings,0,conditional,per nesting level of 'concatenate',integer,,computed from literal nesting of 'concatenate',guess,"Shape mirrors the literal list-of-lists structure of 'concatenate' - only computable when its list members are themselves literal (not references). Worth the effort, or skip?",335-341
+Calculation,,,dynamic,,,,,n/a,Shape is inherited from whatever the referenced operands in 'math' resolve to - not statically knowable without a shape-inference pass over the expression. Skip for now?,525-542
+AggregationCalculation,,,transform,,,,,n/a,"Shape = input's shape with 'appliedDimensions' reduced away (or the outermost dimension, by default). Needs input's own declared shape - a transform case, same family as RelabelData/AggregationCalculation.",555-559
+DrawFromDistribution,,0,static (for now),draw,integer,,1 (fixed),inferred,"Spec: 'usually a single number, accessible with id[0]... potentially multidimensional [for future correlated draws]'. OK to pin this to size 1 today and revisit later?",571-579
+Jacobian,,0,dynamic,row species,label,,runtime (model-dependent),high,,591-593
+Jacobian,,1,dynamic,column species,label,,runtime (model-dependent),guess,Typically the same label set as dim 0 per spec ('those lists are typically identical') - confirm?,591-593
+ExplicitODESimulation,,0,static,variables,?,outputVariables (+ independentVariable?),"outputVariables (literal list, maybe +1)",guess,"YOUR EXAMPLE: is dim 0 exactly outputVariables, or outputVariables plus the independentVariable's own name (i.e. is '#tasks:sim1[""time""]' valid)? Also: is an integer position into outputVariables valid too, or labels only?","363, 366-368"
+ExplicitODESimulation,,1,conditional,time/step index,integer,,point count of independentVariableRange (literal only),high,"YOUR EXAMPLE, confirmed: 'the indexes of the child Range object'. Compute a concrete bound when the Range's own parameters are all literal, or just check 'must be an integer' with no bound?",366-368
+BoundedODESimulation,,0,static,variables,?,outputVariables,outputVariables,guess,Same dim-0 question as ExplicitODESimulation.,391-393
+BoundedODESimulation,,1,dynamic,time/step index,integer,,"runtime (simulator-determined - only a Span, no fixed step count)",high,,391-393
+ExplicitStochasticSimulation,,0,static,variables,?,outputVariables,outputVariables,guess,Same dim-0 question as ExplicitODESimulation.,419-421
+ExplicitStochasticSimulation,,1,conditional,time/step index,integer,,point count of independentVariableRange (literal only),high,,419-421
+BoundedStochasticSimulation,,0,static,variables,?,outputVariables,outputVariables,guess,Same dim-0 question.,440-442
+BoundedStochasticSimulation,,1,dynamic,time/step index,integer,,runtime,high,,440-442
+OneStepODE,,0,static,variables,?,outputVariables,outputVariables,guess,Same dim-0 question.,460-463
+OneStepODE,,1,static,step index,integer,,1 (fixed - exactly one output point),inferred,Confirm: always exactly 1?,460-463
+OneStepStochastic,,0,static,variables,?,outputVariables,outputVariables,guess,Same dim-0 question.,477-480
+OneStepStochastic,,1,static,step index,integer,,1 (fixed),inferred,"Confirm: always exactly 1, even though the step size itself ([id].independentStep) varies?",477-480
+SteadyState,,0,static (inferred),variables,?,outputVariables,outputVariables,guess,"Spec doesn't restate the '2D matrix' framing here like it does for ODESimulation/OneStep. Guessing 1D - no time axis, single equilibrium point, no separate index dimension. Confirm?",493-495
+FluxBalanceAnalysis,,0,static,variables,?,outputVariables,outputVariables,guess,"Same dim-0 question as the others - label, integer position, or either?",508-510
+Loop,,0,static,columns,label,literal: 'range' plus keys of outputVariableMap,same,guess,"Confirm the exact label set - is the range column literally named 'range', or unlabeled/positional?","607-624, 670-672"
+Loop,,1,conditional,iteration index,integer,,point count of 'range' child (literal only),high,,607-624
+Loop,.aggregates,0,static,aggregate keys,label,literal: keys of aggregateOutputVariables,same,high,,622
+Loop,.range,,scalar,,,,,high,"Per spec, only valid inside a child subTask; resolves to a single scalar value (this iteration's range value), not AnnotatedData. No dimension needed unless you disagree.",672
+Loop,.index,,scalar,,,,,high,Same as .range - a scalar per iteration.,624
+Scatter,,0,static,columns,label,literal: 'range' plus keys of outputVariableMap,same,guess,Same as Loop.,625-627
+Scatter,,1,conditional,iteration index,integer,,point count of 'range' child (literal only),high,,625-627
+Scatter,.aggregates,0,static,aggregate keys,label,literal: keys of aggregateOutputVariables,same,high,,638-649
+ParameterScan,,0..N-1,transform / variable-arity,one dim per parameterRanges entry,?,,count = len(parameterRanges); per-dim size = each range's own point count,n/a,"The big special case: N dimensions, N = number of parameterRanges entries, in array order. Indexed by integer position, or by the actual scanned value at that point? Is there also a trailing 'columns' dimension like Loop/Scatter?",706-712
+ParameterScan,,N,transform,columns (same as Loop/Scatter),label,outputVariableMap keys,,n/a,"The dimension after the scan dimensions, same idea as Loop/Scatter's own columns dimension.",706-712
+ParameterScan,.aggregates,,transform / variable-arity,,,,,n/a,"Same variable-arity concern as the bare id, applied to aggregateOutputVariables.",706-712
+Report,,,none,,,,,high,Terminal - AbstractOutput objects may not be referenced by anything else. Excluded.,762
+Plot2D,,,none,,,,,high,"Terminal - excluded, same as Report.",762
+Plot3D,,,none,,,,,high,"Terminal - excluded, same as Report.",762

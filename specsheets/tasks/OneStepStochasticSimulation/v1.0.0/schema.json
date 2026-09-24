@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/OneStepStochasticSimulation/v1.0.0/schema.json",
+  "title": "SED2 OneStepStochasticSimulation",
+  "$defs": {
+    "OneStepStochasticSimulation": {
+      "description": "A stochastic simulation that takes exactly one step, of size `independentStep` if provided, or until the next stochastic event otherwise. kisaoID must be KISAO:0000319 or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        },
+        {
+          "$ref": "../../../tasks/AbstractStochasticSimulation/v1.0.0/schema.json#/$defs/AbstractStochasticSimulation"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "oneStepStochastic"
+        },
+        "independentStep": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "independentVariable",
+        "outputVariables"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/OneStepStochasticSimulation"
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/NumericRange/v1.0.0/common.schema.json",
+  "title": "SED2 NumericRangeCommon",
+  "$defs": {
+    "NumericRangeCommon": {
+      "description": "Fields inherited by every NumericRange subtype (in addition to Range). Used via allOf. Narrows values to numeric-only.",
+      "type": "object",
+      "properties": {
+        "start": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "end": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "interval": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveDoubleOrRef"
+        },
+        "numberOfSteps": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        },
+        "scale": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ScaleTypeOrRef"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/NumericRangeCommon"
+}

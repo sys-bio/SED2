@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Range/v1.0.0/schema.json",
+  "title": "SED2 Range",
+  "$defs": {
+    "Range": {
+      "description": "A list of values to be taken in sequence. _type is required; may appear as a task or as a named child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "common.schema.json#/$defs/RangeCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "range"
+        }
+      },
+      "required": [
+        "_type"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Range"
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/OneStepODESimulation/v1.0.0/schema.json",
+  "title": "SED2 OneStepODESimulation",
+  "$defs": {
+    "OneStepODESimulation": {
+      "description": "An ODE simulation that takes exactly one step of size `independentStep`. kisaoID must be KISAO:0000694 or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        },
+        {
+          "$ref": "../../../tasks/AbstractODESimulation/v1.0.0/schema.json#/$defs/AbstractODESimulation"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "oneStepODE"
+        },
+        "independentStep": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "independentVariable",
+        "outputVariables",
+        "independentStep"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/OneStepODESimulation"
+}

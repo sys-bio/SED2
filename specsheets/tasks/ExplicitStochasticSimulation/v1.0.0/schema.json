@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/ExplicitStochasticSimulation/v1.0.0/schema.json",
+  "title": "SED2 ExplicitStochasticSimulation",
+  "$defs": {
+    "ExplicitStochasticSimulation": {
+      "description": "Stochastic simulation with explicit output points defined by a NumericRange. kisaoID must be KISAO:0000319 (Monte Carlo method) or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        },
+        {
+          "$ref": "../../../tasks/AbstractStochasticSimulation/v1.0.0/schema.json#/$defs/AbstractStochasticSimulation"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "explicitStochasticSimulation"
+        },
+        "independentVariableRange": {
+          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "independentVariable",
+        "outputVariables",
+        "independentVariableRange"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ExplicitStochasticSimulation"
+}

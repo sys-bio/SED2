@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/Scatter/v1.0.0/schema.json",
+  "title": "SED2 Scatter",
+  "$defs": {
+    "Scatter": {
+      "description": "A Repeat in which each iteration is independent (may be parallelized).",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/Repeat/v1.0.0/schema.json#/$defs/Repeat"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "scatter"
+        }
+      },
+      "required": [
+        "_type",
+        "subTasks"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Scatter"
+}

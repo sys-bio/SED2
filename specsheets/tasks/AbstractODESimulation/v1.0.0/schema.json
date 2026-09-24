@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AbstractODESimulation/v1.0.0/schema.json",
+  "title": "SED2 AbstractODESimulation",
+  "$defs": {
+    "AbstractODESimulation": {
+      "description": "ODE-solver tuning fields shared by ExplicitODESimulation, BoundedODESimulation, and OneStepODESimulation. A schema-only mixin composed via allOf; never instantiated on its own, no _type or diagram box of its own.",
+      "type": "object",
+      "properties": {
+        "relativeTolerance": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "absoluteTolerance": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "absoluteToleranceVector": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfNumbersOrRef"
+        },
+        "absoluteToleranceAdjustmentFactor": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "toleranceForRootFinder": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "initialStepSize": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "maxNumberOfSteps": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "maxInternalSteps": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/IntegerOrRef"
+        },
+        "maxInternalStepSize": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "minInternalStepSize": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "forcePhysicalCorrectness": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "integrateReducedModel": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "useReducedModel": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "useStiffSolver": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "maxBDForder": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        },
+        "maxAdamsOrder": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        },
+        "variableStepSize": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        },
+        "maxOutputRows": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/PositiveIntegerOrRef"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractODESimulation"
+}

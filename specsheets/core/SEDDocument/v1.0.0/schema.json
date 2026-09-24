@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/core/SEDDocument/v1.0.0/schema.json",
+  "title": "SED2 SEDDocument",
+  "$defs": {
+    "SEDDocument": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+\\.\\d+\\.\\d+$"
+        },
+        "constants": {
+          "description": "Predefined constants. Keys are SIds; values may be any JSON value.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+          }
+        },
+        "tasks": {
+          "description": "Tasks describe how to do things (simulations, calculations, imports, conversions, etc.).",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../tasks/AbstractTask/v1.0.0/schema.json#/$defs/AbstractTask"
+          }
+        },
+        "outputs": {
+          "description": "Outputs describe how to package results (reports, plots).",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../outputs/AbstractOutput/v1.0.0/schema.json#/$defs/AbstractOutput"
+          }
+        },
+        "styles": {
+          "description": "Styles used by plots. Permissive placeholder; the formal Style spec is TBD.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../core/Style/v1.0.0/schema.json#/$defs/Style"
+          }
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/SEDDocument"
+}

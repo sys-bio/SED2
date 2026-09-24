@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AggregationCalculation/v1.0.0/schema.json",
+  "title": "SED2 AggregationCalculation",
+  "$defs": {
+    "AggregationCalculation": {
+      "description": "Aggregate values over a dimension. kisaoID must be a child of KISAO:0000824 (aggregation function).",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "aggregationCalculation"
+        },
+        "input": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+        },
+        "appliedDimensions": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "input"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/AggregationCalculation"
+}

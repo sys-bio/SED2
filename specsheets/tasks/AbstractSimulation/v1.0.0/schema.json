@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AbstractSimulation/v1.0.0/schema.json",
+  "title": "SED2 AbstractSimulation",
+  "$defs": {
+    "AbstractSimulation": {
+      "description": "Fields shared by AbstractODESimulation and AbstractStochasticSimulation (and, through them, every ODE/stochastic simulation task). A schema-only mixin composed via allOf; never instantiated on its own, no _type or diagram box of its own.",
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "independentVariable": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        },
+        "independentVariableInit": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        },
+        "outputVariables": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "workingAlgorithms": {
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/WorkingAlgorithm/v1.0.0/schema.json#/$defs/WorkingAlgorithm"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractSimulation"
+}

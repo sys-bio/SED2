@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AbstractTask/v1.0.0/common.schema.json",
+  "title": "SED2 AbstractTaskCommon",
+  "$defs": {
+    "AbstractTaskCommon": {
+      "description": "Fields inherited by every AbstractTask (in addition to SEDBase). Used via allOf.",
+      "type": "object",
+      "properties": {
+        "taskParameters": {
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/TaskParameter/v1.0.0/schema.json#/$defs/TaskParameter"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractTaskCommon"
+}

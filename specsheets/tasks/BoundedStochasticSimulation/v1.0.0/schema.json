@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/BoundedStochasticSimulation/v1.0.0/schema.json",
+  "title": "SED2 BoundedStochasticSimulation",
+  "$defs": {
+    "BoundedStochasticSimulation": {
+      "description": "Stochastic simulation with only a start/end Span; the simulator chooses output points. kisaoID must be KISAO:0000319 or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        },
+        {
+          "$ref": "../../../tasks/AbstractStochasticSimulation/v1.0.0/schema.json#/$defs/AbstractStochasticSimulation"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "boundedStochasticSimulation"
+        },
+        "independentVariableSpan": {
+          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "independentVariable",
+        "outputVariables",
+        "independentVariableSpan"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/BoundedStochasticSimulation"
+}

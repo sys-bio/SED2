@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/ModelElementList/v1.0.0/schema.json",
+  "title": "SED2 ModelElementList",
+  "$defs": {
+    "ModelElementList": {
+      "description": "Return a list of element ids from a model.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "modelElementList"
+        },
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "includeElements": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "includeTypes": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "excludeElements": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "excludeTypes": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ModelElementList"
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/FluxBalanceAnalysis/v1.0.0/schema.json",
+  "title": "SED2 FluxBalanceAnalysis",
+  "$defs": {
+    "FluxBalanceAnalysis": {
+      "description": "Flux balance analysis. kisaoID must be KISAO:0000437 (FBA) or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "fluxBalanceAnalysis"
+        },
+        "model": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "outputVariables": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "outputModel": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "outputVariables"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/FluxBalanceAnalysis"
+}

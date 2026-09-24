@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/ParameterRange/v1.0.0/schema.json",
+  "title": "SED2 ParameterRange",
+  "$defs": {
+    "ParameterRange": {
+      "description": "A numeric range scanned over a model element. Inherits from NumericRange. Used in ParameterScan.parameterRanges.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../auxiliary/Range/v1.0.0/common.schema.json#/$defs/RangeCommon"
+        },
+        {
+          "$ref": "../../../auxiliary/NumericRange/v1.0.0/common.schema.json#/$defs/NumericRangeCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "parameterRange"
+        },
+        "modelElement": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "modelElement"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ParameterRange"
+}

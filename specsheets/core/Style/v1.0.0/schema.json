@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/core/Style/v1.0.0/schema.json",
+  "title": "SED2 Style",
+  "$defs": {
+    "Style": {
+      "description": "Placeholder for the Style class. The spec is incomplete; for now allow any object with SEDBase fields plus arbitrary additional properties.",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/Style"
+}

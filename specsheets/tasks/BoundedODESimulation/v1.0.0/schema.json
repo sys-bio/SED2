@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/BoundedODESimulation/v1.0.0/schema.json",
+  "title": "SED2 BoundedODESimulation",
+  "$defs": {
+    "BoundedODESimulation": {
+      "description": "ODE simulation with only a start/end Span; the solver chooses output points. kisaoID must be KISAO:0000694 or a child.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        },
+        {
+          "$ref": "../../../tasks/AbstractODESimulation/v1.0.0/schema.json#/$defs/AbstractODESimulation"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "boundedODESimulation"
+        },
+        "independentVariableSpan": {
+          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline"
+        }
+      },
+      "required": [
+        "_type",
+        "model",
+        "independentVariable",
+        "outputVariables",
+        "independentVariableSpan"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/BoundedODESimulation"
+}

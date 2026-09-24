@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/NumericRange/v1.0.0/inline.schema.json",
+  "title": "SED2 NumericRangeInline",
+  "$defs": {
+    "NumericRangeInline": {
+      "description": "A NumericRange used as a named child (e.g., independentVariableRange).",
+      "oneOf": [
+        {
+          "$ref": "../../../auxiliary/NumericRange/v1.0.0/schema.json#/$defs/NumericRange"
+        }
+      ]
+    }
+  },
+  "$ref": "#/$defs/NumericRangeInline"
+}

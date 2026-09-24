@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/NumericRange/v1.0.0/schema.json",
+  "title": "SED2 NumericRange",
+  "$defs": {
+    "NumericRange": {
+      "description": "A range of numeric values defined by some combination of start/end/interval/numberOfSteps/scale, or an explicit values list. Inherits from Range.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../auxiliary/Range/v1.0.0/common.schema.json#/$defs/RangeCommon"
+        },
+        {
+          "$ref": "common.schema.json#/$defs/NumericRangeCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "numericRange"
+        }
+      },
+      "required": [
+        "_type"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/NumericRange"
+}

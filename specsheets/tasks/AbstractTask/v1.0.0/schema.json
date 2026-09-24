@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/AbstractTask/v1.0.0/schema.json",
+  "title": "SED2 AbstractTask",
+  "$defs": {
+    "AbstractTask": {
+      "description": "Any concrete task type. Discriminated by the _type field. oneOf is generated - never hand-edited; see Design.md's Classes section.",
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractTaskCommon"
+    }
+  },
+  "$ref": "#/$defs/AbstractTask"
+}

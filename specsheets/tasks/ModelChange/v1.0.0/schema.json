@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/ModelChange/v1.0.0/schema.json",
+  "title": "SED2 ModelChange",
+  "$defs": {
+    "ModelChange": {
+      "description": "Modify a model and output the new model.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "modelChange"
+        },
+        "inputModel": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        },
+        "setValues": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        },
+        "removeElements": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "addElements": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+        },
+        "replaceElements": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ]
+        }
+      },
+      "required": [
+        "_type",
+        "inputModel"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ModelChange"
+}

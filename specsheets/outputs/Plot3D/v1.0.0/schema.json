@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/outputs/Plot3D/v1.0.0/schema.json",
+  "title": "SED2 Plot3D",
+  "$defs": {
+    "Plot3D": {
+      "description": "A 3D plot with one or more surfaces.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../outputs/AbstractOutput/v1.0.0/common.schema.json#/$defs/AbstractOutputCommon"
+        },
+        {
+          "$ref": "../../../outputs/Plot/v1.0.0/schema.json#/$defs/Plot"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "plot3D"
+        },
+        "zAxis": {
+          "$ref": "../../../auxiliary/Axis/v1.0.0/schema.json#/$defs/Axis"
+        },
+        "surfaces": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../outputs/Surface/v1.0.0/schema.json#/$defs/Surface"
+          }
+        }
+      },
+      "required": [
+        "_type",
+        "surfaces"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Plot3D"
+}

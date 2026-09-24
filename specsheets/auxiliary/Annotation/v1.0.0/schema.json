@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Annotation/v1.0.0/schema.json",
+  "title": "SED2 Annotation",
+  "$defs": {
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "qualifier": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/Qualifier"
+        },
+        "value": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+        }
+      },
+      "required": [
+        "qualifier",
+        "value"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Annotation"
+}

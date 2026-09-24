@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/WorkingAlgorithm/v1.0.0/schema.json",
+  "title": "SED2 WorkingAlgorithm",
+  "$defs": {
+    "WorkingAlgorithm": {
+      "description": "An algorithm used internally by a simulation task, referenced via AbstractSimulation's workingAlgorithms list. Inherits from SEDBase.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "algorithm": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      },
+      "required": [
+        "algorithm"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/WorkingAlgorithm"
+}

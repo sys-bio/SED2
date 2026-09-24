@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/outputs/Report/v1.0.0/schema.json",
+  "title": "SED2 Report",
+  "$defs": {
+    "Report": {
+      "description": "A report packages a single AnnotatedData reference for export. The 'data' attribute is an SIdRef to the data to be reported (it can point to a whole task, a model, a constant, or any subset of those via the standard SIdRef indexing syntax).",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../outputs/AbstractOutput/v1.0.0/common.schema.json#/$defs/AbstractOutputCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "report"
+        },
+        "data": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        }
+      },
+      "required": [
+        "_type",
+        "data"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Report"
+}
