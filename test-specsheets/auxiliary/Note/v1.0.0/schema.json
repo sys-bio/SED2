@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/auxiliary/Note/v1.0.0/schema.json",
+  "title": "Test Fixture Note",
+  "$defs": {
+    "Note": {
+      "description": "A simple embedded helper object, not a discriminated branch of anything (no _type). Trimmed analog of specsheets/auxiliary/TaskParameter or WorkingAlgorithm.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        }
+      ],
+      "properties": {
+        "text": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/Note"
+}

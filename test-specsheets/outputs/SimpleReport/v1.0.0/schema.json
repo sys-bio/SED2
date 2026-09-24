@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/outputs/SimpleReport/v1.0.0/schema.json",
+  "title": "Test Fixture SimpleReport",
+  "$defs": {
+    "SimpleReport": {
+      "description": "Plain leaf AbstractReport branch: TestBaseFields + AbstractReportCommon, one required attribute.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../outputs/AbstractReport/v1.0.0/common.schema.json#/$defs/AbstractReportCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "simpleReport"
+        },
+        "source": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+        }
+      },
+      "required": [
+        "_type",
+        "source"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/SimpleReport"
+}

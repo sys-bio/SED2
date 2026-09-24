@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/core/TestBase/v1.0.0/schema.json",
+  "title": "Test Fixture Base",
+  "$defs": {
+    "TestBaseFields": {
+      "description": "Optional name/description fields inherited by every test-specsheets/ element. Used via allOf in concrete classes - trimmed analog of specsheets/core/SEDBase's SEDBaseFields.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/TestBaseFields"
+}

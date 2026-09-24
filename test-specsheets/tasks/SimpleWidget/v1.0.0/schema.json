@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/SimpleWidget/v1.0.0/schema.json",
+  "title": "Test Fixture SimpleWidget",
+  "$defs": {
+    "SimpleWidget": {
+      "description": "Plain leaf AbstractWidget branch: TestBaseFields + AbstractWidgetCommon, one required attribute.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractWidget/v1.0.0/common.schema.json#/$defs/AbstractWidgetCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "simpleWidget"
+        },
+        "value": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "value"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/SimpleWidget"
+}

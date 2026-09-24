@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/core/TestDocument/v1.0.0/schema.json",
+  "title": "Test Fixture Document",
+  "$defs": {
+    "TestDocument": {
+      "description": "Root document class for the test-specsheets/ fixture tree. Trimmed analog of specsheets/core/SEDDocument.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        }
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+\\.\\d+\\.\\d+$"
+        },
+        "widgets": {
+          "description": "AbstractWidget branches, keyed by SId.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../tasks/AbstractWidget/v1.0.0/schema.json#/$defs/AbstractWidget"
+          }
+        },
+        "reports": {
+          "description": "AbstractReport branches, keyed by SId.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../outputs/AbstractReport/v1.0.0/schema.json#/$defs/AbstractReport"
+          }
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/TestDocument"
+}

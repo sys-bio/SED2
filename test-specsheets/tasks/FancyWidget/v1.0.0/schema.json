@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/FancyWidget/v1.0.0/schema.json",
+  "title": "Test Fixture FancyWidget",
+  "$defs": {
+    "FancyWidget": {
+      "description": "Leaf AbstractWidget branch that also composes the WidgetOptions mixin, to exercise a class with more than one composed-in mixin.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractWidget/v1.0.0/common.schema.json#/$defs/AbstractWidgetCommon"
+        },
+        {
+          "$ref": "../../../tasks/WidgetOptions/v1.0.0/schema.json#/$defs/WidgetOptions"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "fancyWidget"
+        },
+        "value": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "value"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/FancyWidget"
+}

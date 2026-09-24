@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/auxiliary/WeightedChoice/v1.0.0/schema.json",
+  "title": "Test Fixture WeightedChoice",
+  "$defs": {
+    "WeightedChoice": {
+      "description": "A Choice subtype adding a required weight. Terminal leaf, not further subclassed, so it needs no common.schema.json of its own.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../auxiliary/Choice/v1.0.0/common.schema.json#/$defs/ChoiceCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "weightedChoice"
+        },
+        "weight": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "weight"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/WeightedChoice"
+}

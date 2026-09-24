@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/AbstractWidget/v1.0.0/common.schema.json",
+  "title": "Test Fixture AbstractWidgetCommon",
+  "$defs": {
+    "AbstractWidgetCommon": {
+      "description": "Fields inherited by every AbstractWidget (in addition to TestBase). Used via allOf.",
+      "type": "object",
+      "properties": {
+        "label": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractWidgetCommon"
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/AbstractWidget/v1.0.0/schema.json",
+  "title": "Test Fixture AbstractWidget",
+  "$defs": {
+    "AbstractWidget": {
+      "description": "Any concrete widget type. Discriminated by _type. oneOf is generated - never hand-edited; see Design.md's Classes section. Trimmed analog of specsheets/tasks/AbstractTask.",
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractWidgetCommon"
+    }
+  },
+  "$ref": "#/$defs/AbstractWidget"
+}

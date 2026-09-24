@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/auxiliary/Choice/v1.0.0/inline.schema.json",
+  "title": "Test Fixture ChoiceInline",
+  "$defs": {
+    "ChoiceInline": {
+      "description": "A Choice/WeightedChoice as a named embedded child. _type required, discriminated. oneOf is generated - never hand-edited.",
+      "x-generated-oneOf": "common.schema.json#/$defs/ChoiceCommon"
+    }
+  },
+  "$ref": "#/$defs/ChoiceInline"
+}

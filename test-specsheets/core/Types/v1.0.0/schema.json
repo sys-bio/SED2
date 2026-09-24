@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/core/Types/v1.0.0/schema.json",
+  "title": "Test Fixture Types",
+  "description": "Primitive/reference-helper types shared across test-specsheets/. Trimmed analog of specsheets/core/Types - see Design.md's Specification Assembly / Classes sections for what this fixture tree is for.",
+  "$defs": {
+    "SId": {
+      "description": "An identifier.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "SIdRef": {
+      "description": "A reference to another element, always starting with '#'.",
+      "type": "string",
+      "pattern": "^#.*$"
+    },
+    "StringOrRef": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "NumberOrRef": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    }
+  }
+}

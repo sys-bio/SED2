@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/outputs/AbstractReport/v1.0.0/schema.json",
+  "title": "Test Fixture AbstractReport",
+  "$defs": {
+    "AbstractReport": {
+      "description": "Any concrete report type. Discriminated by _type. oneOf is generated - never hand-edited. Trimmed analog of specsheets/outputs/AbstractOutput - exercises the same discriminator pattern on the outputs/ side of the tree.",
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractReportCommon"
+    }
+  },
+  "$ref": "#/$defs/AbstractReport"
+}

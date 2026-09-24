@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/namespaces/acme/new/tasks/AcmeWidget/v1.0.0/schema.json",
+  "title": "Test Fixture acme@AcmeWidget (namespace new/ example)",
+  "$defs": {
+    "AcmeWidget": {
+      "description": "A wholly new task type contributed by the 'acme' namespace - discovered as an AbstractWidget branch by the same scan that finds built-in branches (see Design.md's Namespaces section). _type is the namespaced form 'acme@acmeWidget'.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../../../../tasks/AbstractWidget/v1.0.0/common.schema.json#/$defs/AbstractWidgetCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "acme@acmeWidget"
+        },
+        "acme@acmeLevel": {
+          "$ref": "../../../../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      },
+      "required": [
+        "_type",
+        "acme@acmeLevel"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/AcmeWidget"
+}

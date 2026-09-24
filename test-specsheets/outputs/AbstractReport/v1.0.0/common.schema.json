@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/outputs/AbstractReport/v1.0.0/common.schema.json",
+  "title": "Test Fixture AbstractReportCommon",
+  "$defs": {
+    "AbstractReportCommon": {
+      "description": "Fields inherited by every AbstractReport (in addition to TestBase). Used via allOf.",
+      "type": "object",
+      "properties": {
+        "format": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractReportCommon"
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/namespaces/acme/updated/tasks/SimpleWidget/v1.0.0/schema.json",
+  "title": "Test Fixture acme updates to SimpleWidget (namespace updated/ example)",
+  "$defs": {
+    "SimpleWidget": {
+      "description": "Attributes the 'acme' namespace adds to the existing SimpleWidget class (see Design.md's Namespaces section). Composed by the generator into a third, generated schema alongside tasks/SimpleWidget/v1.0.0/schema.json#/$defs/SimpleWidget via allOf - this fragment declares only the additions, never the base class's own fields.",
+      "type": "object",
+      "properties": {
+        "acme@priority": {
+          "$ref": "../../../../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/SimpleWidget"
+}
