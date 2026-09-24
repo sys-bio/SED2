@@ -17,7 +17,7 @@ This is an implementation of KISAO:0000824 (aggregation function).
 
 ## Attributes
 
-All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md). `kisaoID`/`altDefinition` have been rolled into the `_type` discriminator and are no longer separate attributes.
+All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md).
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
@@ -46,3 +46,4 @@ The aggregated value, accessible as `[id]`.
 ## Open issues / notes
 
 - A COMBINE 2026 meeting note in the spec flags a desired future capability: letting `AggregationCalculation` define an objective function, so a ParameterScan/Repeat could, e.g., 'fit and return the best' result - not yet designed.
+- No attribute currently selects which KISAO:0000824 aggregation function (sum, mean, standard deviation, ...) this instance computes - `kisaoID` was rolled into `_type` (see `tasks/AbstractTask`) without a replacement, and `_type` itself is a fixed `"aggregationCalculation"` const. Expected fix: split into one concrete class per aggregation function, the way `Jacobian` was split into `JacobianFull`/`JacobianReduced` - see core-spec.md Section 10. Not yet designed.

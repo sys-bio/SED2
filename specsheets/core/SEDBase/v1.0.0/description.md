@@ -16,7 +16,7 @@ Every other Data Sheet's schema composes `SEDBaseFields` via `allOf` to pick up 
 
 ## Attributes
 
-All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md). `kisaoID`/`altDefinition` have been rolled into the `_type` discriminator and are no longer separate attributes.
+All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md).
 
 _This class defines no additional attributes beyond `SEDBaseFields`._
 

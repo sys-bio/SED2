@@ -107,6 +107,3 @@ Not attributes of a class - `Types` instead bundles the following primitive/refe
 
 Not applicable - `Types` bundles primitive/reference-helper definitions; it is not itself an element with an id.
 
-## Open issues / notes
-
-- The spec text leaves open whether SIdRef indexing supports Python-style ranges (`[0:5]`) or negative/end-of-list indices (`[-1]`); the combined schema's `SIdRef` pattern currently allows both forms speculatively - this should be resolved and the pattern tightened or loosened to match the final decision.

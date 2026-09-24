@@ -4,7 +4,7 @@
   "title": "SED2 DrawFromDistribution",
   "$defs": {
     "DrawFromDistribution": {
-      "description": "Draw a value from a distribution defined by altDefinition.",
+      "description": "Draw a value from a distribution named by the distribution attribute.",
       "type": "object",
       "allOf": [
         {
@@ -19,8 +19,19 @@
           "const": "drawFromDistribution",
           "x-rule-id": "DrawFromDistribution-0006"
         },
-        "arguments": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/DistributionURI"
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ],
+          "x-rule-id": [
+            "DrawFromDistribution-0008",
+            "DrawFromDistribution-0009"
+          ]
         },
         "outputPersistent": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
@@ -28,13 +39,18 @@
             "DrawFromDistribution-0004",
             "DrawFromDistribution-0005"
           ]
+        },
+        "arguments": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
         }
       },
       "required": [
         "_type",
+        "distribution",
         "arguments"
       ],
       "x-required-rule-ids": {
+        "distribution": "DrawFromDistribution-0007",
         "arguments": "DrawFromDistribution-0001"
       },
       "unevaluatedProperties": false

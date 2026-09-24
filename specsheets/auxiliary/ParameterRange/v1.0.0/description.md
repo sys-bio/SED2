@@ -15,7 +15,7 @@ A `NumericRange` (its subclass) for when a range of values over a specific model
 
 ## Attributes
 
-All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md). `kisaoID`/`altDefinition` have been rolled into the `_type` discriminator and are no longer separate attributes.
+All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md).
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
