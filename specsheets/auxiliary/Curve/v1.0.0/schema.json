@@ -20,13 +20,19 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "Curve-0002",
+            "Curve-0003"
           ]
         },
         "x": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0005"
         },
         "y": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Curve-0007"
         },
         "order": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef",

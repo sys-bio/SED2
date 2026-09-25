@@ -20,7 +20,11 @@
           "x-rule-id": "Calculation-0004"
         },
         "math": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": [
+            "Calculation-0002",
+            "Calculation-0003"
+          ]
         }
       },
       "required": [

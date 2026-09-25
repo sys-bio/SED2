@@ -20,7 +20,8 @@
           "x-rule-id": "Report-0003"
         },
         "data": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Report-0002"
         }
       },
       "required": [

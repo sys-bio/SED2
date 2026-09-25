@@ -7,7 +7,8 @@
       "type": "object",
       "properties": {
         "qualifier": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/Qualifier"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/Qualifier",
+          "x-rule-id": "Annotation-0002"
         },
         "value": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"

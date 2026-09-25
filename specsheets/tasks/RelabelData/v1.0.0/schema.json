@@ -20,10 +20,15 @@
           "x-rule-id": "RelabelData-0006"
         },
         "input": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "RelabelData-0002"
         },
         "labels": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "RelabelData-0004",
+            "RelabelData-0005"
+          ]
         }
       },
       "required": [

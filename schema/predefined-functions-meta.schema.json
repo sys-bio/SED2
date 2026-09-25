@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/meta/predefined-functions-meta.schema.json",
+  "title": "SED2 predefined-functions.json meta-schema",
+  "description": "Validates the envelope shape of schema/predefined-functions.json - the registry of every name callable/usable from SED2 infix math (operators, call-style functions, constants, and distrib draw functions). Does not validate the math grammar itself (see Design.md's Math section for the EBNF).",
+  "$defs": {
+    "arity": {
+      "description": "How many arguments a function/operator takes. An exact count, a fixed set of allowed counts (e.g. log's 1- or 2-argument forms), or a {min,max} range for n-ary operators (max: null means unbounded).",
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "operatorEntry": {
+      "type": "object",
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arity": {
+          "$ref": "#/$defs/arity"
+        },
+        "associativity": {
+          "enum": [
+            "left",
+            "right",
+            "none"
+          ]
+        },
+        "category": {
+          "enum": [
+            "arithmetic",
+            "relational",
+            "logical"
+          ]
+        },
+        "source": {
+          "enum": [
+            "sbml-core",
+            "sed2-proposed"
+          ]
+        },
+        "attested": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol",
+        "name",
+        "arity",
+        "associativity",
+        "category",
+        "source",
+        "attested"
+      ],
+      "additionalProperties": false
+    },
+    "functionEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arity": {
+          "$ref": "#/$defs/arity"
+        },
+        "category": {
+          "enum": [
+            "arithmetic",
+            "trigonometric",
+            "conditional",
+            "reduction",
+            "relational",
+            "logical"
+          ]
+        },
+        "source": {
+          "enum": [
+            "sbml-core",
+            "sed2",
+            "sed2-proposed"
+          ]
+        },
+        "attested": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "arity",
+        "category",
+        "source",
+        "attested"
+      ],
+      "additionalProperties": false
+    },
+    "constantEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "enum": [
+            "sbml-core"
+          ]
+        },
+        "attested": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "source",
+        "attested"
+      ],
+      "additionalProperties": false
+    },
+    "distribEntry": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "definitionURL": {
+          "type": "string",
+          "format": "uri"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "minItems": 1
+        },
+        "bounds": {
+          "enum": [
+            "continuous",
+            "discrete"
+          ]
+        },
+        "attested": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "definitionURL",
+        "variants",
+        "bounds",
+        "attested"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "operators": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/operatorEntry"
+      },
+      "minItems": 1
+    },
+    "functions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/functionEntry"
+      },
+      "minItems": 1
+    },
+    "constants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constantEntry"
+      },
+      "minItems": 1
+    },
+    "distrib": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/distribEntry"
+      },
+      "minItems": 1
+    },
+    "notes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "operators",
+    "functions",
+    "constants",
+    "distrib"
+  ],
+  "additionalProperties": false
+}

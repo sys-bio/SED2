@@ -20,7 +20,11 @@
           "x-rule-id": "StringFormation-0004"
         },
         "concatenate": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef",
+          "x-rule-id": [
+            "StringFormation-0002",
+            "StringFormation-0003"
+          ]
         }
       },
       "required": [

@@ -20,16 +20,23 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "Surface-0002",
+            "Surface-0003"
           ]
         },
         "x": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Surface-0005"
         },
         "y": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Surface-0007"
         },
         "z": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "Surface-0009"
         },
         "style": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",

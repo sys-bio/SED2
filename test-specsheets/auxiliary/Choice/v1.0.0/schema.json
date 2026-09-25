@@ -4,7 +4,7 @@
   "title": "Test Fixture Choice",
   "$defs": {
     "Choice": {
-      "description": "Directly instantiable and the root of further subclasses (WeightedChoice). _type required. Trimmed analog of specsheets/auxiliary/Range.",
+      "description": "Directly instantiable and the root of further subclasses (WeightedChoice). _type required. Trimmed analog of specsheets/tasks/Range.",
       "type": "object",
       "allOf": [
         {

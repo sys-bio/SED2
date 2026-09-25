@@ -16,7 +16,8 @@
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
         },
         "subsequentValues": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "LoopVariable-0003"
         }
       },
       "required": [

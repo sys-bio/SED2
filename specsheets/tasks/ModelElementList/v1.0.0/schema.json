@@ -20,7 +20,8 @@
           "x-rule-id": "ModelElementList-0011"
         },
         "model": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "ModelElementList-0002"
         },
         "includeElements": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",

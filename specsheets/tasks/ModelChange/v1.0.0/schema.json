@@ -20,7 +20,8 @@
           "x-rule-id": "ModelChange-0011"
         },
         "inputModel": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "ModelChange-0002"
         },
         "setValues": {
           "anyOf": [

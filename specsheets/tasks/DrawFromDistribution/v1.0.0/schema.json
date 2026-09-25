@@ -41,7 +41,11 @@
           ]
         },
         "arguments": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfAnyOrRef",
+          "x-rule-id": [
+            "DrawFromDistribution-0002",
+            "DrawFromDistribution-0003"
+          ]
         }
       },
       "required": [

@@ -5,7 +5,8 @@
   "$defs": {
     "AbstractTask": {
       "description": "Any concrete task type. Discriminated by the _type field. oneOf is generated - never hand-edited; see Design.md's Classes section.",
-      "x-generated-oneOf": "common.schema.json#/$defs/AbstractTaskCommon"
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractTaskCommon",
+      "x-missing-type-rule-id": "AbstractTask-0002"
     }
   },
   "$ref": "#/$defs/AbstractTask"

@@ -5,7 +5,8 @@
   "$defs": {
     "AbstractOutput": {
       "description": "Any concrete output type. Discriminated by the _type field. oneOf is generated - never hand-edited; see Design.md's Classes section.",
-      "x-generated-oneOf": "common.schema.json#/$defs/AbstractOutputCommon"
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractOutputCommon",
+      "x-missing-type-rule-id": "AbstractOutput-0002"
     }
   },
   "$ref": "#/$defs/AbstractOutput"

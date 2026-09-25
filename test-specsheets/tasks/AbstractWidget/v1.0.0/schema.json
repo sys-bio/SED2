@@ -5,7 +5,8 @@
   "$defs": {
     "AbstractWidget": {
       "description": "Any concrete widget type. Discriminated by _type. oneOf is generated - never hand-edited; see Design.md's Classes section. Trimmed analog of specsheets/tasks/AbstractTask.",
-      "x-generated-oneOf": "common.schema.json#/$defs/AbstractWidgetCommon"
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractWidgetCommon",
+      "x-missing-type-rule-id": "AbstractWidget-0002"
     }
   },
   "$ref": "#/$defs/AbstractWidget"

@@ -26,7 +26,7 @@
           "x-rule-id": "ExplicitODESimulation-0006"
         },
         "independentVariableRange": {
-          "$ref": "../../../auxiliary/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline",
+          "$ref": "../../../tasks/NumericRange/v1.0.0/inline.schema.json#/$defs/NumericRangeInline",
           "x-rule-id": "ExplicitODESimulation-0005"
         }
       },

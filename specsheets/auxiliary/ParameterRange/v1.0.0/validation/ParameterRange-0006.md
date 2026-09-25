@@ -1,9 +1,0 @@
----
-id: ParameterRange-0006
-rule: When the value of end of a ParameterRange is provided directly, it must be a number.
-message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number."
-severity: error
-status: active
----
-
-`end` is `NumberOrRef`: the value, when not a reference, must be a number.

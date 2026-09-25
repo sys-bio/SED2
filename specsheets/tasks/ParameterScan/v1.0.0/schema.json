@@ -23,14 +23,16 @@
           "x-rule-id": "ParameterScan-0006"
         },
         "model": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "ParameterScan-0002"
         },
         "parameterRanges": {
           "type": "array",
           "minItems": 1,
           "items": {
-            "$ref": "../../../auxiliary/ParameterRange/v1.0.0/inline.schema.json#/$defs/ParameterRangeInline"
-          }
+            "$ref": "../../../tasks/ParameterRange/v1.0.0/inline.schema.json#/$defs/ParameterRangeInline"
+          },
+          "x-rule-id": "ParameterScan-0004"
         }
       },
       "required": [

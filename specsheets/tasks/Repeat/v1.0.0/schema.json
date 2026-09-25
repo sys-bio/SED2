@@ -48,7 +48,7 @@
           "x-rule-id": "Repeat-0004"
         },
         "range": {
-          "$ref": "../../../auxiliary/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
+          "$ref": "../../../tasks/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
           "x-rule-id": "Repeat-0005"
         }
       },
@@ -63,7 +63,8 @@
             "aggregateOutputVariables"
           ]
         }
-      ]
+      ],
+      "x-anyof-required-rule-id": "Repeat-0006"
     }
   },
   "$ref": "#/$defs/Repeat"

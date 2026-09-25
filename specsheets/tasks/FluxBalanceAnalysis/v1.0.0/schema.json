@@ -20,10 +20,15 @@
           "x-rule-id": "FluxBalanceAnalysis-0008"
         },
         "model": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "FluxBalanceAnalysis-0002"
         },
         "outputVariables": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ListOfStringsOrRef",
+          "x-rule-id": [
+            "FluxBalanceAnalysis-0004",
+            "FluxBalanceAnalysis-0005"
+          ]
         },
         "outputModel": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",

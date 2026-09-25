@@ -1,0 +1,13 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": false
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

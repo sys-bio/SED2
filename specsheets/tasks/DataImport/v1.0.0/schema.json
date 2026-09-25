@@ -20,10 +20,18 @@
           "x-rule-id": "DataImport-0007"
         },
         "location": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef",
+          "x-rule-id": [
+            "DataImport-0002",
+            "DataImport-0003"
+          ]
         },
         "format": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef",
+          "x-rule-id": [
+            "DataImport-0005",
+            "DataImport-0006"
+          ]
         }
       },
       "required": [

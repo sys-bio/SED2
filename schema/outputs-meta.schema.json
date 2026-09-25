@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/meta/outputs-meta.schema.json",
+  "title": "SED2 outputs.json meta-schema",
+  "description": "Validates the ENVELOPE shape of a per-class outputs.json file (specsheets/tasks/<ClassName>/v1.0.0/outputs.json) - not the internal syntax of its 'expr'/'note' strings, which is documented in prose (see Design.md's Task Output Shapes section) rather than formally parsed here.",
+  "$defs": {
+    "sourced": {
+      "description": "How a size, label set, or whole dimensions list is known.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": { "const": "static" },
+            "expr": { "type": "string", "minLength": 1 },
+            "note": { "type": "string" }
+          },
+          "required": ["source", "expr"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": { "const": "input-file" },
+            "from": { "type": "string", "minLength": 1 },
+            "extract": { "type": "string", "minLength": 1 },
+            "note": { "type": "string" }
+          },
+          "required": ["source", "from", "extract", "note"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": { "const": "runtime" },
+            "note": { "type": "string", "minLength": 1 }
+          },
+          "required": ["source", "note"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "labels": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "array", "items": { "type": "string" } },
+        { "$ref": "#/$defs/sourced" }
+      ]
+    },
+    "dimensionEntry": {
+      "type": "object",
+      "properties": {
+        "size": { "$ref": "#/$defs/sourced" },
+        "labels": { "$ref": "#/$defs/labels" },
+        "note": { "type": "string" }
+      },
+      "required": ["size", "labels"],
+      "additionalProperties": false
+    },
+    "dimensions": {
+      "description": "Either a fixed-length array of per-dimension entries (when the dimension COUNT itself is fixed), or a single sourced object describing the whole shape's derivation (when the dimension count is itself variable/data-dependent, e.g. ParameterScan).",
+      "anyOf": [
+        { "type": "array", "items": { "$ref": "#/$defs/dimensionEntry" } },
+        { "$ref": "#/$defs/sourced" }
+      ]
+    },
+    "outputEntry": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "description": "true, false, or a boolean expression string conditioning validity on the task's own fields (e.g. \"outputModel == true\", \"provided(range)\").",
+          "anyOf": [ { "type": "boolean" }, { "type": "string", "minLength": 1 } ]
+        },
+        "type": { "enum": ["annotatedData", "model", "stringList"] },
+        "dimensions": { "$ref": "#/$defs/dimensions" },
+        "note": { "type": "string" }
+      },
+      "required": ["valid"],
+      "if": { "properties": { "valid": { "const": false } } },
+      "then": {},
+      "else": { "required": ["type"] },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "outputs": {
+      "type": "object",
+      "propertyNames": { "pattern": "^\\[id\\]" },
+      "additionalProperties": { "$ref": "#/$defs/outputEntry" },
+      "minProperties": 1
+    }
+  },
+  "required": ["outputs"],
+  "additionalProperties": false
+}

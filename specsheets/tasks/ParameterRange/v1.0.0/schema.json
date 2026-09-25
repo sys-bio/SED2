@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/ParameterRange/v1.0.0/schema.json",
+  "title": "SED2 ParameterRange",
+  "$defs": {
+    "ParameterRange": {
+      "description": "A numeric range scanned over a model element. Inherits from NumericRange. Used in ParameterScan.parameterRanges.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        },
+        {
+          "$ref": "../../../tasks/Range/v1.0.0/common.schema.json#/$defs/RangeCommon"
+        },
+        {
+          "$ref": "../../../tasks/NumericRange/v1.0.0/common.schema.json#/$defs/NumericRangeCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "parameterRange",
+          "x-rule-id": "ParameterRange-0016"
+        },
+        "modelElement": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-rule-id": [
+            "ParameterRange-0002",
+            "ParameterRange-0003"
+          ]
+        }
+      },
+      "required": [
+        "_type",
+        "modelElement"
+      ],
+      "x-required-rule-ids": {
+        "modelElement": "ParameterRange-0001"
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/ParameterRange"
+}

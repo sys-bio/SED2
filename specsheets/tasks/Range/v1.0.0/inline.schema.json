@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/Range/v1.0.0/inline.schema.json",
+  "title": "SED2 RangeInline",
+  "$defs": {
+    "RangeInline": {
+      "description": "A Range/NumericRange/ParameterRange as a named child of a Repeat. _type required, discriminated. oneOf is generated - never hand-edited; see Design.md's Classes section.",
+      "x-generated-oneOf": "common.schema.json#/$defs/RangeCommon",
+      "x-missing-type-rule-id": "Range-0004"
+    }
+  },
+  "$ref": "#/$defs/RangeInline"
+}

@@ -8,7 +8,8 @@
       "type": "object",
       "properties": {
         "acme@priority": {
-          "$ref": "../../../../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": "SimpleWidget-acme-0001"
         }
       }
     }

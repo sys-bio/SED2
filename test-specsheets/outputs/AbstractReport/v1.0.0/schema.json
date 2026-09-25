@@ -5,7 +5,8 @@
   "$defs": {
     "AbstractReport": {
       "description": "Any concrete report type. Discriminated by _type. oneOf is generated - never hand-edited. Trimmed analog of specsheets/outputs/AbstractOutput - exercises the same discriminator pattern on the outputs/ side of the tree.",
-      "x-generated-oneOf": "common.schema.json#/$defs/AbstractReportCommon"
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractReportCommon",
+      "x-missing-type-rule-id": "AbstractReport-0002"
     }
   },
   "$ref": "#/$defs/AbstractReport"

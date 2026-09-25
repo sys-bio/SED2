@@ -26,7 +26,11 @@
           "x-rule-id": "OneStepODESimulation-0007"
         },
         "independentStep": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",
+          "x-rule-id": [
+            "OneStepODESimulation-0005",
+            "OneStepODESimulation-0006"
+          ]
         }
       },
       "required": [

@@ -20,7 +20,11 @@
           "x-rule-id": "CsvImport-0018"
         },
         "location": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/URIOrRef",
+          "x-rule-id": [
+            "CsvImport-0002",
+            "CsvImport-0003"
+          ]
         },
         "organization": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",

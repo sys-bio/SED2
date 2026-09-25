@@ -11,7 +11,7 @@ A small, self-contained fixture tree - not part of the canonical spec (`specshee
 | Standalone schema-only mixin, no `oneOf` of its own | `tasks/WidgetOptions` | `tasks/AbstractSimulation` |
 | Plain leaf branch(es) of a discriminator | `tasks/SimpleWidget`, `tasks/FancyWidget`, `outputs/SimpleReport` | `tasks/ExplicitODESimulation`, etc. |
 | Simple embedded helper, no `_type`, not a branch of anything | `auxiliary/Note` | `auxiliary/TaskParameter`, `WorkingAlgorithm` |
-| Directly-instantiable class that is also the root of further subclasses (Common mixin split + generated `inline` union) | `auxiliary/Choice` (+ `WeightedChoice` subtype) | `auxiliary/Range` (+ `NumericRange`, `ParameterRange`) |
+| Directly-instantiable class that is also the root of further subclasses (Common mixin split + generated `inline` union) | `auxiliary/Choice` (+ `WeightedChoice` subtype) | `tasks/Range` (+ `NumericRange`, `ParameterRange`) |
 | Namespace `new/` class (wholly new type) | `namespaces/acme/new/tasks/AcmeWidget` | (none registered yet) |
 | Namespace `updated/` fragment (adds attributes to an existing class) | `namespaces/acme/updated/tasks/SimpleWidget` | (none registered yet) |
 

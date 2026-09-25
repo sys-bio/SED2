@@ -1,0 +1,843 @@
+{
+  "operators": [
+    {
+      "symbol": "+",
+      "name": "plus",
+      "arity": 2,
+      "associativity": "left",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Binary addition. Attested directly (Calculation examples use +)."
+    },
+    {
+      "symbol": "-",
+      "name": "minus",
+      "arity": 2,
+      "associativity": "left",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Binary subtraction. Attested directly."
+    },
+    {
+      "symbol": "-",
+      "name": "minus",
+      "arity": 1,
+      "associativity": "right",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Unary negation. Not shown in an example, but a standard PEMDAS reading of the spec's own operand list (+, -, *, /, ^)."
+    },
+    {
+      "symbol": "*",
+      "name": "times",
+      "arity": 2,
+      "associativity": "left",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Attested directly."
+    },
+    {
+      "symbol": "/",
+      "name": "divide",
+      "arity": 2,
+      "associativity": "left",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Attested directly."
+    },
+    {
+      "symbol": "%",
+      "name": "rem",
+      "arity": 2,
+      "associativity": "left",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix form of rem(x, y), as in libsbml's L3 infix parser with its L3v2 modulo setting. Same precedence as * and /, left-associative. The result has the sign of the dividend (x - y*trunc(x/y)): -7 % 3 is -1, not 2. That matches C++ fmod and Java's %, but NOT Python's %, which follows the divisor's sign - the Python library must evaluate it with math.fmod."
+    },
+    {
+      "symbol": "^",
+      "name": "power",
+      "arity": 2,
+      "associativity": "right",
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Attested directly. Right-associative, binds tighter than unary minus (standard PEMDAS: -2^2 == -(2^2))."
+    },
+    {
+      "symbol": "==",
+      "name": "eq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix spelling matches libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp). Relational operators share one precedence level, below + and -. Chains collapse as in libsbml: a == b == c parses to eq(a, b, c); a mixed chain such as a < b <= c parses to and(lt(a, b), leq(b, c))."
+    },
+    {
+      "symbol": "!=",
+      "name": "neq",
+      "arity": 2,
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix spelling matches libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp). Always exactly two operands; never collapsed into a longer chain."
+    },
+    {
+      "symbol": "<>",
+      "name": "neq",
+      "arity": 2,
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Alternative spelling of !=, accepted for libsbml compatibility. Serialized back as !=."
+    },
+    {
+      "symbol": "><",
+      "name": "neq",
+      "arity": 2,
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Alternative spelling of !=, accepted for libsbml compatibility. Serialized back as !=."
+    },
+    {
+      "symbol": "<",
+      "name": "lt",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "symbol": ">",
+      "name": "gt",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "symbol": "<=",
+      "name": "leq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "symbol": ">=",
+      "name": "geq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "symbol": "&&",
+      "name": "and",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix spelling matches libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp). && and || share one precedence level, the lowest of any operator, and associate left: a && b || c is (a && b) || c. Repeated uses flatten, as in libsbml: a && b && c parses to and(a, b, c). The call form and(...) is also registered, under functions."
+    },
+    {
+      "symbol": "||",
+      "name": "or",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "associativity": "left",
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix spelling matches libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp). Same precedence level as &&; see its note."
+    },
+    {
+      "symbol": "!",
+      "name": "not",
+      "arity": 1,
+      "associativity": "right",
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Infix spelling matches libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp). Binds at the same level as unary minus: tighter than * and /, looser than ^."
+    }
+  ],
+  "functions": [
+    {
+      "name": "abs",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "exp",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "ln",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "log",
+      "arity": [
+        1,
+        2
+      ],
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "1-arg: base-10 log. 2-arg: log(base, x), covering MathML's optional logbase qualifier."
+    },
+    {
+      "name": "floor",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "ceiling",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "factorial",
+      "arity": 1,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "quotient",
+      "arity": 2,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "rem",
+      "arity": 2,
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "min",
+      "arity": {
+        "min": 1,
+        "max": null
+      },
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "max",
+      "arity": {
+        "min": 1,
+        "max": null
+      },
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "root",
+      "arity": [
+        1,
+        2
+      ],
+      "category": "arithmetic",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "1-arg: square root. 2-arg: root(degree, x), covering MathML's optional degree qualifier."
+    },
+    {
+      "name": "sin",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "cos",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "tan",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "sec",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "csc",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "cot",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "sinh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "cosh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "tanh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "sech",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "csch",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "coth",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arcsin",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccos",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arctan",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arcsec",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccsc",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccot",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arcsinh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccosh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arctanh",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arcsech",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccsch",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "arccoth",
+      "arity": 1,
+      "category": "trigonometric",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "sum",
+      "arity": 1,
+      "category": "reduction",
+      "source": "sed2",
+      "attested": true,
+      "note": "Reduces the outermost dimension of an AnnotatedData reference to a scalar. The only SED2-specific math-grammar function with direct textual evidence: the Calculation 'compare_summary' example (SED2_2026_extracted.txt line 551) calls sum(#tasks:...['S1']). Distinct from AggregationCalculation, which is a whole Task selected by kisaoID (KISAO:0000824 'aggregation function' children) rather than a function named inside a math string; whether other KISAO:0000824 aggregation functions (mean, standard deviation, etc.) should also be exposed as math-grammar functions the way sum is has no textual evidence either way and is not decided here."
+    },
+    {
+      "name": "and",
+      "arity": {
+        "min": 0,
+        "max": null
+      },
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of &&. Zero or more arguments, as in libsbml and MathML: and() is true."
+    },
+    {
+      "name": "or",
+      "arity": {
+        "min": 0,
+        "max": null
+      },
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of ||. Zero or more arguments: or() is false."
+    },
+    {
+      "name": "xor",
+      "arity": {
+        "min": 0,
+        "max": null
+      },
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "No infix operator exists for xor, in libsbml or here; it is only available in call form. Zero or more arguments: xor() is false."
+    },
+    {
+      "name": "not",
+      "arity": 1,
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of !."
+    },
+    {
+      "name": "implies",
+      "arity": 2,
+      "category": "logical",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Exactly two arguments: implies(a, b). SBML Level 3 Version 2 (in libsbml, the l3v2extendedmath package). Call form only; no infix operator."
+    },
+    {
+      "name": "eq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of ==."
+    },
+    {
+      "name": "neq",
+      "arity": 2,
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of !=."
+    },
+    {
+      "name": "lt",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of <."
+    },
+    {
+      "name": "gt",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of >."
+    },
+    {
+      "name": "leq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of <=."
+    },
+    {
+      "name": "geq",
+      "arity": {
+        "min": 2,
+        "max": null
+      },
+      "category": "relational",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Call form of >=."
+    },
+    {
+      "name": "piecewise",
+      "arity": {
+        "min": 1,
+        "max": null
+      },
+      "category": "conditional",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "libsbml's argument order: piecewise(value1, condition1, value2, condition2, ..., otherwise). Each value comes before its condition, matching MathML's <piece>. The trailing unpaired argument is the 'otherwise' value and is optional. The first pair whose condition is true wins. With no otherwise and no true condition, the result is undefined (NaN). Note that condition-first order would parse the same way, so the order cannot be checked; examples and docs should always show value-first."
+    }
+  ],
+  "constants": [
+    {
+      "name": "pi",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Attested directly (Calculation section: 'the constants allowed in SBML (pi, exponentiale, etc.)')."
+    },
+    {
+      "name": "exponentiale",
+      "source": "sbml-core",
+      "attested": true,
+      "note": "Attested directly (same sentence as pi)."
+    },
+    {
+      "name": "true",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "false",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "notanumber",
+      "source": "sbml-core",
+      "attested": true
+    },
+    {
+      "name": "infinity",
+      "source": "sbml-core",
+      "attested": true
+    }
+  ],
+  "distrib": [
+    {
+      "name": "normal",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/normal",
+      "variants": [
+        [
+          "mean",
+          "stdev"
+        ],
+        [
+          "mean",
+          "stdev",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "uniform",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/uniform",
+      "variants": [
+        [
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "bernoulli",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/bernoulli",
+      "variants": [
+        [
+          "prob"
+        ]
+      ],
+      "bounds": "discrete",
+      "attested": true
+    },
+    {
+      "name": "binomial",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/binomial",
+      "variants": [
+        [
+          "nTrials",
+          "probabilityOfSuccess"
+        ],
+        [
+          "nTrials",
+          "probabilityOfSuccess",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "discrete",
+      "attested": true
+    },
+    {
+      "name": "cauchy",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/cauchy",
+      "variants": [
+        [
+          "scale"
+        ],
+        [
+          "location",
+          "scale"
+        ],
+        [
+          "location",
+          "scale",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "chisquare",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/chisquare",
+      "variants": [
+        [
+          "degreesOfFreedom"
+        ],
+        [
+          "degreesOfFreedom",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "exponential",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/exponential",
+      "variants": [
+        [
+          "rate"
+        ],
+        [
+          "rate",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "gamma",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/gamma",
+      "variants": [
+        [
+          "shape",
+          "scale"
+        ],
+        [
+          "shape",
+          "scale",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "laplace",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/laplace",
+      "variants": [
+        [
+          "scale"
+        ],
+        [
+          "location",
+          "scale"
+        ],
+        [
+          "location",
+          "scale",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "lognormal",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/lognormal",
+      "variants": [
+        [
+          "mean",
+          "stdev"
+        ],
+        [
+          "mean",
+          "stdev",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    },
+    {
+      "name": "poisson",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/poisson",
+      "variants": [
+        [
+          "rate"
+        ],
+        [
+          "rate",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "discrete",
+      "attested": true
+    },
+    {
+      "name": "rayleigh",
+      "definitionURL": "http://www.sbml.org/sbml/symbols/distrib/rayleigh",
+      "variants": [
+        [
+          "scale"
+        ],
+        [
+          "scale",
+          "min",
+          "max"
+        ]
+      ],
+      "bounds": "continuous",
+      "attested": true
+    }
+  ],
+  "notes": {
+    "scope": "Registers every name usable inside SED2 infix math: the SBML Level 3 Core MathML subset (operators, call-style functions, constants - sbml-specifications/sbml-level-3/version-2/core/spec/preliminary.tex, sec:mathmlsubset), all 12 SBML distrib package csymbol draw functions (sbml-level-3/version-1/distrib/sbml-level-3-distrib-package-proposal.tex, tab:csymbols), and sum, the one SED2-specific extension attested in the spec's own example text.",
+    "excluded-csymbols": "SBML's other core csymbols - time, delay(x,d), avogadro, rateOf(x) - are deliberately NOT registered here. They describe quantities internal to a running SBML model simulation (current integration time, a model rate rule's derivative, etc.), not SED2-level task outputs, and the SED2 spec's own inventory ('the functions allowed in SBML' / 'the constants allowed in SBML (pi, exponentiale, etc.)') lines up with the plain MathML-subset token list, not this separate csymbol section. Revisit if a concrete SED2 use case needs one of them.",
+    "distrib-bounds": "min is inclusive for every distribution. For continuous distributions max is exclusive; for discrete distributions (binomial, poisson) max is inclusive. Use INF/-INF for an unbounded side. (sbml-level-3-distrib-package-proposal.tex, sec:extended-math)",
+    "infix-conventions": "Relational operators, logical operators, and piecewise follow libsbml's L3 infix parser (src/sbml/math/L3Parser.ypp): the symbols ==, !=, <, >, <=, >=, &&, ||, ! plus call forms eq(), neq(), lt(), gt(), leq(), geq(), and(), or(), xor(), not(), implies(); and piecewise(value, condition, ..., otherwise). Decided 2026-09-24; none of this appears in the SED2 source text, but the spec inherits 'the functions allowed in SBML', and matching libsbml means any formula libsbml accepts reads the same way in SED2. libsbml's % operator is adopted as infix rem(); its 'lambda' is not."
+  }
+}

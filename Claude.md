@@ -12,4 +12,4 @@ ASCII only, in all files. In particular, use a plain hyphen (-) instead of an em
 
 ## Multi-Target Consistency
 
-This project generates three separate libraries at once, in C++, Java, and Python (see Design.md).  Any design change - to the SED2 class model, the cross-reference or math syntax, validation rules, or the generator itself - must be made for all three targets in the same change, every time.  Never update or propose an update for one language without updating the other two alongside it.
+This project generates three separate libraries at once, in C++, Java, and Python (see Design.md).  Within a phase of work, Python may be designed and implemented first.  Its first pass must still add stubs for Java and C++ - raising or returning a clear not-yet-implemented error - so neither target is left silently absent.  Real Java and C++ implementations must land before that phase is merged.  Never merge a phase with only Python actually implemented.

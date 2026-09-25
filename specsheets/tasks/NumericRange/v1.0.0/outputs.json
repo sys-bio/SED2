@@ -1,0 +1,23 @@
+{
+  "outputs": {
+    "[id]": {
+      "valid": true,
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(values) if provided(values) else numberOfSteps + 1"
+          },
+          "labels": null
+        }
+      ]
+    },
+    "[id].model": {
+      "valid": false
+    },
+    "[id].strings": {
+      "valid": false
+    }
+  }
+}

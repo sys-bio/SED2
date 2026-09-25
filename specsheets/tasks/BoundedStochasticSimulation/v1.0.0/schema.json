@@ -26,7 +26,7 @@
           "x-rule-id": "BoundedStochasticSimulation-0006"
         },
         "independentVariableSpan": {
-          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
+          "$ref": "../../../tasks/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
           "x-rule-id": "BoundedStochasticSimulation-0005"
         }
       },

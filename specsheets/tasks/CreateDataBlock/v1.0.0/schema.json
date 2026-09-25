@@ -30,6 +30,10 @@
             {
               "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
             }
+          ],
+          "x-rule-id": [
+            "CreateDataBlock-0002",
+            "CreateDataBlock-0003"
           ]
         }
       },

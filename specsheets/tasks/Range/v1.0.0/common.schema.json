@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/tasks/Range/v1.0.0/common.schema.json",
+  "title": "SED2 RangeCommon",
+  "$defs": {
+    "RangeCommon": {
+      "description": "Fields inherited by every Range subtype (in addition to SEDBase and AbstractTaskCommon). Used via allOf.",
+      "type": "object",
+      "properties": {
+        "values": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+              }
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ],
+          "x-rule-id": [
+            "Range-0001",
+            "Range-0002"
+          ]
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/RangeCommon"
+}

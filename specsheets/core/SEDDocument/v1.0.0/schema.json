@@ -14,7 +14,10 @@
         "version": {
           "type": "string",
           "pattern": "^v\\d+\\.\\d+\\.\\d+$",
-          "x-rule-id": "SEDDocument-0002"
+          "x-rule-id": [
+            "SEDDocument-0002",
+            "SEDDocument-0003"
+          ]
         },
         "constants": {
           "description": "Predefined constants. Keys are SIds; values may be any JSON value.",
