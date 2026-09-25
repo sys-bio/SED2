@@ -22,6 +22,16 @@
           "const": "fancyWidget",
           "x-rule-id": "FancyWidget-0002"
         },
+        "choices": {
+          "description": "Choice/WeightedChoice branches, keyed by SId.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../auxiliary/Choice/v1.0.0/inline.schema.json#/$defs/ChoiceInline"
+          }
+        },
         "value": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef"
         }

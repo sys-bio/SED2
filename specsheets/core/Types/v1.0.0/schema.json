@@ -12,7 +12,7 @@
     "SIdRef": {
       "description": "A reference to another SED element. Always starts with '#'. May include a colon-delimited path, dot-accessors (e.g. .model, .strings, .aggregates), and indexing ([n], [-n], ['label'], [a:b]).",
       "type": "string",
-      "pattern": "^#[A-Za-z_][A-Za-z0-9_]*((:[A-Za-z_][A-Za-z0-9_]*)|(\\.[A-Za-z_][A-Za-z0-9_]*)|(\\[(-?[0-9]+(:-?[0-9]+)?|'[^']*')\\]))*$"
+      "pattern": "^#[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z_][A-Za-z0-9_]*)*((\\.[A-Za-z_][A-Za-z0-9_]*)|(\\[(-?[0-9]+(:-?[0-9]+)?|'[^']*')\\]))*$"
     },
     "KISAOId": {
       "description": "A KiSAO identifier of the form KISAO:nnnnnnn (7 digits).",

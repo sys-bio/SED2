@@ -1,6 +1,6 @@
 # LoopVariable
 
-![LoopVariable UML diagram](./LoopVariable.png)
+![LoopVariable UML diagram](../../../tasks/Loop/v1.0.0/Loop.png)
 
 *(`LoopVariable` has no standalone diagram of its own - the image above is `Loop`'s diagram, reused here because `LoopVariable` is drawn fully within it as a linked box, right next to `Loop`. Look for the `LoopVariable` box.)*
 

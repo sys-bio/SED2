@@ -6,6 +6,11 @@
     "Plot": {
       "description": "Fields shared by Plot2D and Plot3D.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../outputs/AbstractOutput/v1.0.0/common.schema.json#/$defs/AbstractOutputCommon"
+        }
+      ],
       "properties": {
         "legend": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",

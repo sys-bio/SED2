@@ -6,6 +6,11 @@
     "NumericRangeCommon": {
       "description": "Fields inherited by every NumericRange subtype (in addition to Range). Used via allOf. Narrows values to numeric-only.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../tasks/Range/v1.0.0/common.schema.json#/$defs/RangeCommon"
+        }
+      ],
       "properties": {
         "start": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",

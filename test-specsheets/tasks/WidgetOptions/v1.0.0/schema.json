@@ -16,6 +16,13 @@
           "type": "number",
           "exclusiveMinimum": 0,
           "x-rule-id": "WidgetOptions-0002"
+        },
+        "notes": {
+          "description": "Embedded Note helper objects, for exercising a simple no-_type embedded child.",
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/Note/v1.0.0/schema.json#/$defs/Note"
+          }
         }
       }
     }

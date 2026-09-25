@@ -1,9 +1,9 @@
 ---
 id: Curve-0012
-rule: The xErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#').
-message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference."
+rule: The _type attribute of a Curve must be "curve".
+message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'."
 severity: error
 status: active
 ---
 
-`xErrorUpper` is `SIdRef` - always a reference, never a literal value.
+`_type` is the discriminator field. For `Curve` it must always equal `"curve"`.

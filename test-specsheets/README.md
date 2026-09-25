@@ -18,3 +18,7 @@ A small, self-contained fixture tree - not part of the canonical spec (`specshee
 Every class folder follows the same Data Sheet shape as `specsheets/` (`schema.json` [+ `common.schema.json`/`inline.schema.json` where the pattern needs them], `description.md`, `validation/*.md`), except diagrams: since these classes don't mean anything, there's no UML to draw, so each folder carries a `DIAGRAM-PENDING.md` explaining that plainly rather than inventing one.
 
 See Design.md's Specification Assembly section (and this README's own note there) for how this tree relates to the canonical `specsheets/`.
+
+## fixtures/
+
+`fixtures/` holds this tree's own document-level `.sed2.json` fixtures - one fail fixture per numbered rule above (plus a few pass and chained-violation examples) - for running through the generated libraries once the generator exists. See `fixtures/README.md` for the naming convention and the one exception it documents.

@@ -6,6 +6,11 @@
     "AbstractOutputCommon": {
       "description": "Fields inherited by every AbstractOutput (in addition to SEDBase).",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
       "properties": {
         "outputParameters": {
           "type": "array",

@@ -6,6 +6,11 @@
     "AbstractODESimulation": {
       "description": "ODE-solver tuning fields shared by ExplicitODESimulation, BoundedODESimulation, and OneStepODESimulation. A schema-only mixin composed via allOf; never instantiated on its own, no _type or diagram box of its own.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
+        }
+      ],
       "properties": {
         "relativeTolerance": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NumberOrRef",

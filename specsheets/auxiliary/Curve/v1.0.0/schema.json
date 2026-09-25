@@ -8,10 +8,14 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+          "$ref": "../../../auxiliary/AbstractCurve/v1.0.0/common.schema.json#/$defs/AbstractCurveCommon"
         }
       ],
       "properties": {
+        "_type": {
+          "const": "curve",
+          "x-rule-id": "Curve-0012"
+        },
         "curveType": {
           "anyOf": [
             {
@@ -26,77 +30,43 @@
             "Curve-0003"
           ]
         },
-        "x": {
+        "y": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
           "x-rule-id": "Curve-0005"
         },
-        "y": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0007"
-        },
-        "order": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef",
-          "x-rule-id": [
-            "Curve-0008",
-            "Curve-0009"
-          ]
-        },
-        "style": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0010"
-        },
-        "yAxis": {
-          "anyOf": [
-            {
-              "type": "string",
-              "enum": [
-                "right",
-                "left"
-              ]
-            },
-            {
-              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
-            }
-          ],
-          "x-rule-id": [
-            "Curve-0011",
-            "Curve-0018"
-          ]
-        },
         "xErrorUpper": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0012"
+          "x-rule-id": "Curve-0006"
         },
         "xErrorLower": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0013"
+          "x-rule-id": "Curve-0007"
         },
         "yErrorUpper": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0014"
+          "x-rule-id": "Curve-0008"
         },
         "yErrorLower": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0015"
+          "x-rule-id": "Curve-0009"
         },
         "yFrom": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0016"
+          "x-rule-id": "Curve-0010"
         },
         "yTo": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
-          "x-rule-id": "Curve-0017"
+          "x-rule-id": "Curve-0011"
         }
       },
       "required": [
+        "_type",
         "curveType",
-        "x",
         "y"
       ],
       "x-required-rule-ids": {
         "curveType": "Curve-0001",
-        "x": "Curve-0004",
-        "y": "Curve-0006"
+        "y": "Curve-0004"
       },
       "unevaluatedProperties": false
     }

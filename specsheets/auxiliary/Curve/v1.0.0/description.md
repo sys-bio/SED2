@@ -1,6 +1,8 @@
 # Curve
 
-![Curve UML diagram](./Curve.png)
+![Curve UML diagram](../../AbstractCurve/v1.0.0/AbstractCurve.png)
+
+*(`Curve` has no standalone diagram of its own - the image above is `AbstractCurve`'s diagram, which already draws `Curve` directly as `AbstractCurve`'s one concrete subclass.)*
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -8,7 +10,9 @@
 
 ## What it does
 
-The prose spec calls this class `AbstractCurve`; because it currently has only one concrete form, the schema names the concrete, directly-usable class `Curve` (no `_type` discriminator is needed). It defines a single 2D curve within a `Plot2D`'s `curves` dictionary: `curveType` (`"points"`, `"bar"`, `"barStacked"`, `"horizontalBar"`, `"horizontalBarStacked"`, or `"shadedArea"`), the `x`/`y` data references, an optional `order`, `style` reference, and which `yAxis` (`"left"` or `"right"`) it plots against. Error-bar fields `xErrorLower`/`xErrorUpper`/`yErrorLower`/`yErrorUpper` are also available. `yFrom`/`yTo` are meaningful only when `curveType` is `"shadedArea"`.
+`AbstractCurve` is the base class (see `auxiliary/AbstractCurve`); `Curve` is its only concrete subclass so far, always pinning `_type` to `"curve"` (a `ShadedArea` subclass, matching SED-ML, is expected to join it later - `AbstractCurve`'s `oneOf` is generated, so adding that branch needs no edit here). `Curve` composes `AbstractCurve`'s `AbstractCurveCommon` mixin - `x`, `order`, `style`, `yAxis` - and adds its own `curveType` (`"points"`, `"bar"`, `"barStacked"`, `"horizontalBar"`, `"horizontalBarStacked"`, or `"shadedArea"`), the `y` data reference, and the error-bar fields `xErrorLower`/`xErrorUpper`/`yErrorLower`/`yErrorUpper`. `yFrom`/`yTo` are meaningful only when `curveType` is `"shadedArea"`.
+
+**One schema file in this folder.** `schema.json` defines `Curve` itself, composing `AbstractCurve`'s `AbstractCurveCommon` mixin (in `auxiliary/AbstractCurve/v1.0.0/common.schema.json`) via `allOf`, plus its own `_type`/`curveType`/`y`/error-bar/`yFrom`/`yTo` fields.
 
 ## Attributes
 
@@ -16,6 +20,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
+| `_type` | const `"curve"` | yes |  |
 | `curveType` | CurveType or SIdRef | yes |  |
 | `x` | SIdRef | yes |  |
 | `y` | SIdRef | yes |  |
@@ -30,6 +35,8 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `yTo` | SIdRef | no |  |
 
 ### Attribute details
+
+**`_type`** (const `"curve"`, required) - The discriminator field; always `"curve"`.
 
 **`curveType`** (CurveType or SIdRef, required) - _(no description yet - placeholder, needs to be filled in)_
 

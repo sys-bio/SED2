@@ -1,9 +1,9 @@
 ---
 id: Curve-0009
-rule: When the value of order of a Curve is a reference, it must be a reference to a non-negative integer.
-message: "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a non-negative integer."
+rule: The yErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#').
+message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference."
 severity: error
 status: active
 ---
 
-`order` is `NonNegativeIntegerOrRef`: when the value is a reference, it must resolve to a non-negative integer.
+`yErrorLower` is `SIdRef` - always a reference, never a literal value.

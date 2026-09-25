@@ -1,9 +1,9 @@
 ---
 id: Curve-0011
-rule: When the value of yAxis of a Curve is provided directly, it must be one of 'right' or 'left'.
-message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of 'right' or 'left'."
+rule: The yTo attribute of a Curve, if present, must be a reference (a string starting with '#').
+message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference."
 severity: error
 status: active
 ---
 
-`yAxis` is `one of "right", "left" or SIdRef`: the value, when not a reference, must be one of 'right' or 'left'.
+`yTo` is `SIdRef` - always a reference, never a literal value.

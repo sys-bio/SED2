@@ -7,7 +7,7 @@
         {
           "size": {
             "source": "static",
-            "expr": "independentVariableRange.numberOfSteps"
+            "expr": "len(independentVariableRange)"
           },
           "labels": null
         },

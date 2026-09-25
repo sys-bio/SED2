@@ -105,6 +105,6 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 A 2D matrix of numbers, accessible as `[id]`: the first column is `independentVariable`, subsequent columns are (in order) each variable from `outputVariables`, all columns labeled accordingly. The model's end-of-run state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
-    - Dimensions: 2D: rows = each value in `independentVariableRange` (a `NumericRange`, so row count = that range's number of steps); columns = `independentVariable` plus one column per entry of `outputVariables`.
+    - Dimensions: 2D: rows = each value in `independentVariableRange` (a `NumericRange`, so row count = the number of points it resolves to); columns = `independentVariable` plus one column per entry of `outputVariables`.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**

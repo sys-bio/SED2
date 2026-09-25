@@ -1,6 +1,6 @@
 # TaskParameter
 
-![TaskParameter UML diagram](./TaskParameter.png)
+![TaskParameter UML diagram](../../../tasks/AbstractTask/v1.0.0/AbstractTask.png)
 
 *(`TaskParameter` has no standalone diagram of its own - the image above is `AbstractTask`'s diagram, reused here because `TaskParameter` is drawn fully within it as a linked box, right next to `AbstractTask`. Look for the `TaskParameter` box.)*
 

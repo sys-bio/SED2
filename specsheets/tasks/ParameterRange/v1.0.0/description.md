@@ -1,6 +1,8 @@
 # ParameterRange
 
-![ParameterRange UML diagram](./ParameterRange.png)
+![ParameterRange UML diagram](../../Range/v1.0.0/Range.png)
+
+*(`ParameterRange` has no standalone diagram of its own - the image above is `Range`'s diagram; `ParameterRange` inherits from `Range` (via `NumericRange`) and adds nothing that would need separate illustration.)*
 
 **Category:** tasks  
 **Version:** v1  

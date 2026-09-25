@@ -1,6 +1,6 @@
 # Axis
 
-![Axis UML diagram](./Axis.png)
+![Axis UML diagram](../../../outputs/Plot/v1.0.0/Plot.png)
 
 *(`Axis` has no standalone diagram of its own - the image above is `Plot`'s diagram, reused here because `Axis` is drawn fully within it as a linked box, right next to `Plot`. Look for the `Axis` box.)*
 

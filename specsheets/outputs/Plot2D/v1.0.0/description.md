@@ -9,7 +9,7 @@
 
 ## What it does
 
-A plot of two-dimensional data. Beyond `Plot`'s x/y axes, it adds an optional `rightYAxis` and a dictionary of named `curves` (each a `Curve`) to display.
+A plot of two-dimensional data. Beyond `Plot`'s x/y axes, it adds an optional `rightYAxis` and a dictionary of named `curves` (each an `AbstractCurve`-derived object) to display.
 
 ## Attributes
 
@@ -24,7 +24,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `xAxis` | Axis | no |  |
 | `yAxis` | Axis | no |  |
 | `rightYAxis` | Axis | no |  |
-| `curves` | object (values: Curve) | yes |  |
+| `curves` | object (values: AbstractCurve) | yes |  |
 
 ### Attribute details
 
@@ -42,7 +42,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`rightYAxis`** (Axis, optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`curves`** (object (values: Curve), required) - _(no description yet - placeholder, needs to be filled in)_
+**`curves`** (object (values: AbstractCurve), required) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ## Outputs

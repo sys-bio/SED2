@@ -8,12 +8,6 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
-        },
-        {
-          "$ref": "../../../outputs/AbstractOutput/v1.0.0/common.schema.json#/$defs/AbstractOutputCommon"
-        },
-        {
           "$ref": "../../../outputs/Plot/v1.0.0/schema.json#/$defs/Plot"
         }
       ],

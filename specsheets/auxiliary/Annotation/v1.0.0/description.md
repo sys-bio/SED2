@@ -1,6 +1,6 @@
 # Annotation
 
-![Annotation UML diagram](./Annotation.png)
+![Annotation UML diagram](../../../core/SEDBase/v1.0.0/SEDBase.png)
 
 *(`Annotation` has no standalone diagram of its own - the image above is `SEDBase`'s diagram, reused here because `Annotation` is drawn fully within it as a linked box, right next to `SEDBase`. Look for the `Annotation` box.)*
 

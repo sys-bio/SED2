@@ -6,6 +6,11 @@
     "AbstractTaskCommon": {
       "description": "Fields inherited by every AbstractTask (in addition to SEDBase). Used via allOf.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
       "properties": {
         "taskParameters": {
           "type": "array",

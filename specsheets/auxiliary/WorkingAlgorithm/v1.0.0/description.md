@@ -1,6 +1,6 @@
 # WorkingAlgorithm
 
-![WorkingAlgorithm UML diagram](./WorkingAlgorithm.png)
+![WorkingAlgorithm UML diagram](../../../tasks/AbstractSimulation/v1.0.0/AbstractSimulation.png)
 
 *(`WorkingAlgorithm` has no standalone diagram of its own - the image above is `AbstractSimulation`'s diagram, reused here because `WorkingAlgorithm` is drawn fully within it as a linked box, right next to `AbstractSimulation`. Look for the `workingAlgorithm` box.)*
 

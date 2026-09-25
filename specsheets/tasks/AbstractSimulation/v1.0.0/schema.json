@@ -6,6 +6,11 @@
     "AbstractSimulation": {
       "description": "Fields shared by AbstractODESimulation and AbstractStochasticSimulation (and, through them, every ODE/stochastic simulation task). A schema-only mixin composed via allOf; never instantiated on its own, no _type or diagram box of its own.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
       "properties": {
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",

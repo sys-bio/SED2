@@ -1,6 +1,8 @@
 # NumericRange
 
-![NumericRange UML diagram](./NumericRange.png)
+![NumericRange UML diagram](../../Range/v1.0.0/Range.png)
+
+*(`NumericRange` has no standalone diagram of its own - the image above is `Range`'s diagram; `NumericRange` inherits directly from `Range` and adds nothing that would need separate illustration.)*
 
 **Category:** tasks  
 **Version:** v1  

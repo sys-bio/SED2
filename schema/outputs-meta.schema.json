@@ -32,7 +32,8 @@
           "type": "object",
           "properties": {
             "source": { "const": "runtime" },
-            "note": { "type": "string", "minLength": 1 }
+            "note": { "type": "string", "minLength": 1 },
+            "min": { "type": "integer", "minimum": 0 }
           },
           "required": ["source", "note"],
           "additionalProperties": false
@@ -56,10 +57,29 @@
       "required": ["size", "labels"],
       "additionalProperties": false
     },
+    "repeatDimensionEntry": {
+      "description": "Expands to one dimension per entry of a named array-valued task attribute. Inside 'size'/'labels', a bare identifier resolves against the CURRENT ARRAY ENTRY's own fields, not the task's top-level fields.",
+      "type": "object",
+      "properties": {
+        "repeat": {
+          "type": "object",
+          "properties": {
+            "over": { "type": "string", "minLength": 1 },
+            "size": { "$ref": "#/$defs/sourced" },
+            "labels": { "$ref": "#/$defs/labels" },
+            "note": { "type": "string" }
+          },
+          "required": ["over", "size", "labels"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["repeat"],
+      "additionalProperties": false
+    },
     "dimensions": {
-      "description": "Either a fixed-length array of per-dimension entries (when the dimension COUNT itself is fixed), or a single sourced object describing the whole shape's derivation (when the dimension count is itself variable/data-dependent, e.g. ParameterScan).",
+      "description": "Either a fixed-length array of per-dimension entries (dimensionEntry, or repeatDimensionEntry to expand one dimension per entry of a named array-valued attribute) - when the shape is decomposable dimension-by-dimension - or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (shapeOf(x) whole-shape inheritance, or a runtime/input-file source where the dimension count itself isn't knowable ahead of time).",
       "anyOf": [
-        { "type": "array", "items": { "$ref": "#/$defs/dimensionEntry" } },
+        { "type": "array", "items": { "anyOf": [ { "$ref": "#/$defs/dimensionEntry" }, { "$ref": "#/$defs/repeatDimensionEntry" } ] } },
         { "$ref": "#/$defs/sourced" }
       ]
     },

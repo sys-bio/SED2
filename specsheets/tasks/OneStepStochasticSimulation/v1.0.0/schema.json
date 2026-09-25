@@ -8,15 +8,6 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
-        },
-        {
-          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
-        },
-        {
-          "$ref": "../../../tasks/AbstractSimulation/v1.0.0/schema.json#/$defs/AbstractSimulation"
-        },
-        {
           "$ref": "../../../tasks/AbstractStochasticSimulation/v1.0.0/schema.json#/$defs/AbstractStochasticSimulation"
         }
       ],

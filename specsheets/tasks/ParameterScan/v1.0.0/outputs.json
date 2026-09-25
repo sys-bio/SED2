@@ -3,11 +3,26 @@
     "[id]": {
       "valid": true,
       "type": "annotatedData",
-      "dimensions": {
-        "source": "static",
-        "expr": "one dimension per entry in parameterRanges (each sized by that entry's own range.numberOfSteps), plus one further dimension per entry of outputVariableMap",
-        "note": "dimensionality grows with the number of ranges scanned; each parameterRanges dimension's own size is itself a per-entry static formula (range.numberOfSteps)"
-      }
+      "dimensions": [
+        {
+          "repeat": {
+            "over": "parameterRanges",
+            "size": {
+              "source": "static",
+              "expr": "len(self)"
+            },
+            "labels": null,
+            "note": "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8"
+          }
+        },
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(outputVariableMap)"
+          },
+          "labels": null
+        }
+      ]
     },
     "[id].model": {
       "valid": false

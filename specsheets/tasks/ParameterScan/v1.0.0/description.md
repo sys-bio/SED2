@@ -41,10 +41,10 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 ## Outputs
 
-`[id]`: an `AnnotatedData` whose dimensions correspond to the scanned parameter ranges, following `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
+`[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges`, plus one further dimension sized by the number of entries in `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: N-D: one dimension per entry in `parameterRanges` (length = that range's number of steps), plus a further dimension per entry of `outputVariableMap` - dimensionality grows with the number of ranges scanned.
+    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 

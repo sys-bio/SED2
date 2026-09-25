@@ -7,10 +7,10 @@
         {
           "size": {
             "source": "static",
-            "expr": "range.numberOfSteps"
+            "expr": "len(range)"
           },
           "labels": null,
-          "note": "one row per value in range; formula assumes range resolves to a NumericRange-family object with numberOfSteps - a bare Range's step count is len(range.values) instead"
+          "note": "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"
         },
         {
           "size": {

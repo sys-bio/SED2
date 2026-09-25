@@ -6,6 +6,11 @@
     "RangeCommon": {
       "description": "Fields inherited by every Range subtype (in addition to SEDBase and AbstractTaskCommon). Used via allOf.",
       "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../tasks/AbstractTask/v1.0.0/common.schema.json#/$defs/AbstractTaskCommon"
+        }
+      ],
       "properties": {
         "values": {
           "anyOf": [

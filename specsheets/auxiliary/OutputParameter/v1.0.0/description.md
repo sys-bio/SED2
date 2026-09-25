@@ -1,6 +1,6 @@
 # OutputParameter
 
-![OutputParameter UML diagram](./OutputParameter.png)
+![OutputParameter UML diagram](../../../outputs/AbstractOutput/v1.0.0/AbstractOutput.png)
 
 *(`OutputParameter` has no standalone diagram of its own - the image above is `AbstractOutput`'s diagram, reused here because `OutputParameter` is drawn fully within it as a linked box, right next to `AbstractOutput`. Look for the `OutputParameter` box.)*
 
