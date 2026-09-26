@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "reports": {
+    "123bad": {
+      "_type": "simpleReport",
+      "source": "#x"
+    }
+  }
+}

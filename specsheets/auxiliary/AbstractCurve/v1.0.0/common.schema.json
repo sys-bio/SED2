@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/AbstractCurve/v1.0.0/common.schema.json",
+  "title": "SED2 AbstractCurveCommon",
+  "$defs": {
+    "AbstractCurveCommon": {
+      "description": "Fields inherited by every AbstractCurve (in addition to SEDBase). Used via allOf.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/SEDBase/v1.0.0/schema.json#/$defs/SEDBaseFields"
+        }
+      ],
+      "properties": {
+        "x": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "AbstractCurve-0002"
+        },
+        "order": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/NonNegativeIntegerOrRef",
+          "x-rule-id": [
+            "AbstractCurve-0003",
+            "AbstractCurve-0004"
+          ]
+        },
+        "style": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-rule-id": "AbstractCurve-0005"
+        },
+        "yAxis": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "right",
+                "left"
+              ]
+            },
+            {
+              "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+            }
+          ],
+          "x-rule-id": [
+            "AbstractCurve-0006",
+            "AbstractCurve-0007"
+          ]
+        }
+      },
+      "required": [
+        "x"
+      ],
+      "x-required-rule-ids": {
+        "x": "AbstractCurve-0001"
+      }
+    }
+  },
+  "$ref": "#/$defs/AbstractCurveCommon"
+}

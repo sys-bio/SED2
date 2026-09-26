@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "123bad": {
+      "_type": "simpleWidget",
+      "value": "x"
+    }
+  }
+}

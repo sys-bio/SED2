@@ -1,0 +1,16 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "fw1": {
+      "_type": "fancyWidget",
+      "value": "v",
+      "choices": {
+        "c1": {
+          "_type": "weightedChoice",
+          "weight": 1,
+          "bogus": true
+        }
+      }
+    }
+  }
+}

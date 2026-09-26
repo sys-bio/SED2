@@ -1,0 +1,43 @@
+{
+  "version": "v1.0.0",
+  "name": "full valid example",
+  "widgets": {
+    "simple1": {
+      "_type": "simpleWidget",
+      "value": "hello",
+      "label": "a simple widget"
+    },
+    "fancy1": {
+      "_type": "fancyWidget",
+      "value": "world",
+      "retries": 3,
+      "timeoutSeconds": 1.5,
+      "notes": [
+        {
+          "text": "a note"
+        },
+        {
+          "text": "another note",
+          "name": "n2"
+        }
+      ],
+      "choices": {
+        "opt1": {
+          "_type": "choice",
+          "label": "plain choice"
+        },
+        "opt2": {
+          "_type": "weightedChoice",
+          "weight": 2.5
+        }
+      }
+    }
+  },
+  "reports": {
+    "rep1": {
+      "_type": "simpleReport",
+      "source": "#tasks:sim1",
+      "format": "csv"
+    }
+  }
+}

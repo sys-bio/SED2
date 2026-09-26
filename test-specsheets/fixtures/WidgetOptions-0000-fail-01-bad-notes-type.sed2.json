@@ -1,0 +1,10 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "w1": {
+      "_type": "fancyWidget",
+      "value": "v",
+      "notes": "not-an-array"
+    }
+  }
+}

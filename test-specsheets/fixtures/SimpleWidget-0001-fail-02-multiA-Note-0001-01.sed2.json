@@ -1,0 +1,18 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "sw1": {
+      "_type": "simpleWidget"
+    },
+    "sw2": {
+      "_type": "simpleWidget"
+    },
+    "fw1": {
+      "_type": "fancyWidget",
+      "value": "v",
+      "notes": [
+        {}
+      ]
+    }
+  }
+}

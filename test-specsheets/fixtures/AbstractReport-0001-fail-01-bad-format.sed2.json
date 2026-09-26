@@ -1,0 +1,10 @@
+{
+  "version": "v1.0.0",
+  "reports": {
+    "r1": {
+      "_type": "simpleReport",
+      "source": "#x",
+      "format": 123
+    }
+  }
+}

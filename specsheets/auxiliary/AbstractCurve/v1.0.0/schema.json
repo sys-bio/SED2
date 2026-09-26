@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/schemas/auxiliary/AbstractCurve/v1.0.0/schema.json",
+  "title": "SED2 AbstractCurve",
+  "$defs": {
+    "AbstractCurve": {
+      "description": "Any concrete curve type. Discriminated by the _type field. oneOf is generated - never hand-edited; see Design.md's Classes section.",
+      "x-generated-oneOf": "common.schema.json#/$defs/AbstractCurveCommon",
+      "x-missing-type-rule-id": "AbstractCurve-0008"
+    }
+  },
+  "$ref": "#/$defs/AbstractCurve"
+}

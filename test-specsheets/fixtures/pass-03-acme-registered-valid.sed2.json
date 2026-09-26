@@ -1,0 +1,14 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "acmeW": {
+      "_type": "acme@acmeWidget",
+      "acme@acmeLevel": 4
+    },
+    "simpleWithAcme": {
+      "_type": "simpleWidget",
+      "value": "hi",
+      "acme@priority": 1
+    }
+  }
+}

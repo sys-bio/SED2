@@ -1,0 +1,15 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "fw1": {
+      "_type": "fancyWidget",
+      "value": "v",
+      "notes": [
+        {
+          "text": "hi",
+          "bogus": true
+        }
+      ]
+    }
+  }
+}

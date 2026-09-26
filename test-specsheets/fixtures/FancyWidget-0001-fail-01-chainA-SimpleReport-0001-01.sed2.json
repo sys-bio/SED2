@@ -1,0 +1,13 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "fw1": {
+      "_type": "fancyWidget"
+    }
+  },
+  "reports": {
+    "r1": {
+      "_type": "simpleReport"
+    }
+  }
+}

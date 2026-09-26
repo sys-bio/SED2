@@ -1,0 +1,10 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "w1": {
+      "_type": "acme@acmeWidget",
+      "acme@acmeLevel": 1,
+      "bogus": true
+    }
+  }
+}
