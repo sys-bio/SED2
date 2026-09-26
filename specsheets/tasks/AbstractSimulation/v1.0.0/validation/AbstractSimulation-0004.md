@@ -4,6 +4,7 @@ rule: When the value of independentVariableInit of an AbstractSimulation is prov
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariableInit` is `NumberOrRef` in AbstractSimulation: the value, when not a reference, must be a number.

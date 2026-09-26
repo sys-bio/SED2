@@ -4,6 +4,7 @@ rule: "Every bare identifier in a math expression must be a predefined constant.
 message: "The math in attribute '{attr}' of {class} '{id}' uses '{value}', which is not a predefined constant; use a #reference for document values."
 severity: error
 status: active
+check: handwritten
 ---
 
 SED2 math has no free variables: anything that is not a number, a predefined

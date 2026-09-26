@@ -4,6 +4,7 @@ rule: "For every namespace prefix used anywhere in the document, SEDDocument mus
 message: "Namespace '{prefix}' is used at '{location}', but the document does not declare '{prefix}@version'."
 severity: error
 status: active
+check: handwritten
 ---
 
 Applies to registered and unregistered prefixes alike: 'used' means any

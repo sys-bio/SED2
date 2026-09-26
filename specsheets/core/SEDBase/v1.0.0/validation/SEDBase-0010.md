@@ -4,6 +4,7 @@ rule: "A label index in a reference must name one of the labels of the dimension
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses label {subvalue}, which is not one of: {allowed}."
 severity: error
 status: active
+check: handwritten
 ---
 
 Only fires when that dimension's labels are "static" in outputs.json and all

@@ -4,6 +4,7 @@ rule: The _type attribute of an AggregationCalculation must be "aggregationCalcu
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'."
 severity: error
 status: active
+check: schema
 ---
 
 `_type` is the discriminator field. For `AggregationCalculation` it must always equal `"aggregationCalculation"`.

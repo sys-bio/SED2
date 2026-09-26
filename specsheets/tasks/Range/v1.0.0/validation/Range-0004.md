@@ -4,6 +4,7 @@ rule: A value that must resolve to a concrete Range subtype must declare a _type
 message: "{location} must be a Range, but no _type at all was declared."
 severity: error
 status: active
+check: schema
 ---
 
 A narrower case of Range-0000's catch-all: fires specifically when

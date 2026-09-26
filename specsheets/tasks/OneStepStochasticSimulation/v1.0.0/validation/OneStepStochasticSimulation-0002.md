@@ -4,6 +4,7 @@ rule: The independentVariable attribute of an OneStepStochasticSimulation is req
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariable` is required.

@@ -4,6 +4,7 @@ rule: The style attribute of a Surface, if present, must be a reference (a strin
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference."
 severity: error
 status: active
+check: schema
 ---
 
 `style` is `SIdRef` - always a reference, never a literal value.

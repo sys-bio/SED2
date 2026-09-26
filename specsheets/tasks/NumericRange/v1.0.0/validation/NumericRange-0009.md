@@ -4,6 +4,7 @@ rule: When the value of scale of a NumericRange is provided directly, it must be
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of {allowed}."
 severity: error
 status: active
+check: schema
 ---
 
 `ScaleType` is defined in `core/Types` with the allowed values 'linear', 'log10' (see `core/Types/v1.0.0/schema.json`).

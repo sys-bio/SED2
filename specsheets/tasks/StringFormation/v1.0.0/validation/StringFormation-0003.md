@@ -4,6 +4,7 @@ rule: When the value of concatenate of a StringFormation is a reference, it must
 message: "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of values."
 severity: error
 status: active
+check: ref-type
 ---
 
 `concatenate` is `ListOfAnyOrRef`: when the value is a reference, it must resolve to an array of values.

@@ -4,6 +4,7 @@ rule: When the value of interval of a NumericRange is provided directly, it must
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive number (> 0)."
 severity: error
 status: active
+check: schema
 ---
 
 `interval` is `PositiveDoubleOrRef`: the value, when not a reference, must be a positive number (> 0).

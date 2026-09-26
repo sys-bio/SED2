@@ -4,6 +4,7 @@ rule: The description attribute of a SEDBase-derived element, if present, must b
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string."
 severity: error
 status: active
+check: schema
 ---
 
 `description` is an unrestricted string in SEDBaseFields.

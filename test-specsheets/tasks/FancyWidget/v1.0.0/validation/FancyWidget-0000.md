@@ -4,6 +4,7 @@ rule: The element fails a JSON Schema constraint attributable to FancyWidget tha
 message: "{schema-message} (at {location})"
 severity: error
 status: active
+check: schema
 ---
 
 Catch-all rule for schema-pass failures attributable to FancyWidget (or a

@@ -4,6 +4,7 @@ rule: A Repeat must provide at least one of outputVariableMap or aggregateOutput
 message: "{class} '{id}' must provide at least one of 'outputVariableMap' or 'aggregateOutputVariables'."
 severity: error
 status: active
+check: schema
 ---
 
 Repeat's schema expresses this as an `anyOf` of two single-field `required`

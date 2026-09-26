@@ -4,6 +4,7 @@ rule: When the value of outputPersistent of a DrawFromDistribution is provided d
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean."
 severity: error
 status: active
+check: schema
 ---
 
 `outputPersistent` is `BooleanOrRef`: the value, when not a reference, must be a boolean.

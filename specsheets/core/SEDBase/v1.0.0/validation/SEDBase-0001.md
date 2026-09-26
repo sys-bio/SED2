@@ -4,6 +4,7 @@ rule: The name attribute of a SEDBase-derived element, if present, must be a str
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string."
 severity: error
 status: active
+check: schema
 ---
 
 `name` is an unrestricted string in SEDBaseFields.

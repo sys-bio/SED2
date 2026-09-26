@@ -4,6 +4,7 @@ rule: The _type attribute of a BoundedStochasticSimulation must be "boundedStoch
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'."
 severity: error
 status: active
+check: schema
 ---
 
 `_type` is the discriminator field. For `BoundedStochasticSimulation` it must always equal `"boundedStochasticSimulation"`.

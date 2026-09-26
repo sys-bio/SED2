@@ -4,6 +4,7 @@ rule: "The subsequentValues of a LoopVariable must reference one of its enclosin
 message: "LoopVariable '{id}' has subsequentValues '{value}', which is not one of its Loop's own subTasks."
 severity: error
 status: active
+check: handwritten
 ---
 
 subsequentValues is the value this loop variable takes on after each

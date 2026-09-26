@@ -4,6 +4,7 @@ rule: "A constant may only reference constants that appear before it in the cons
 message: "Constant '{attr}' references '{value}', which is not an earlier constant."
 severity: error
 status: active
+check: handwritten
 ---
 
 constants is described as coming before tasks, so a constant referencing a

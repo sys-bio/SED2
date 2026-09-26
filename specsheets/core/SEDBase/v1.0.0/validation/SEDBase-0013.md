@@ -4,6 +4,7 @@ rule: "A reference to a Repeat's subTasks, its .range/.index outputs, or one of 
 message: "{class} '{id}' references '{value}', which lies inside Repeat '{resolved-value}'; only that Repeat's own subTasks may reference into it."
 severity: error
 status: active
+check: handwritten
 ---
 
 Consolidates three rules that were drafted separately (AbstractTask-0004,

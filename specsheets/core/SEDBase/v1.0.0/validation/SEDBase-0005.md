@@ -4,6 +4,7 @@ rule: "The first segment of a reference must name one of SEDDocument's ID-keyed 
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' starts with an unknown collection; it must start with #tasks, #constants, #outputs, or #styles."
 severity: error
 status: active
+check: handwritten
 ---
 
 Applies to every reference anywhere in the document: a whole attribute value,

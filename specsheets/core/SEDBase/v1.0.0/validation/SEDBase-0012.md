@@ -4,6 +4,7 @@ rule: "A bracket index into a constant must match the structure of that constant
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' indexes constant '{resolved-value}' with {subvalue}, which that value does not contain."
 severity: error
 status: active
+check: handwritten
 ---
 
 Constants have no outputs.json; their shape is simply their literal JSON value.

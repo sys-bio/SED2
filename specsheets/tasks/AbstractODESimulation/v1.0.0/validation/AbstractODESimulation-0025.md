@@ -4,6 +4,7 @@ rule: When the value of useReducedModel of an AbstractODESimulation is provided 
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean."
 severity: error
 status: active
+check: schema
 ---
 
 `useReducedModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.

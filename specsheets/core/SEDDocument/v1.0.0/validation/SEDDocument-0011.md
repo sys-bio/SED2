@@ -4,6 +4,7 @@ rule: "The version of a SEDDocument should not be newer than the newest document
 message: "Document version '{value}' is newer than the newest version this library supports ('{max}'); newer features may be reported as errors."
 severity: warning
 status: active
+check: handwritten
 ---
 
 Version resolution picks the newest directory not greater than the

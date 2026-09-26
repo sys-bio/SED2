@@ -4,6 +4,7 @@ rule: "An integer or range index in a reference must fall within the size of the
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses index {subvalue}, outside the dimension's valid range {min}..{max}."
 severity: error
 status: active
+check: handwritten
 ---
 
 Only fires when that dimension's size is "static" and computable. Negative

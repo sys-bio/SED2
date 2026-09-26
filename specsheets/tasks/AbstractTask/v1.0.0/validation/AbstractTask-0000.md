@@ -4,6 +4,7 @@ rule: The element fails a JSON Schema constraint attributable to AbstractTask th
 message: "{schema-message} (at {location})"
 severity: error
 status: active
+check: schema
 ---
 
 Catch-all rule for schema-pass failures attributable to AbstractTask (or a

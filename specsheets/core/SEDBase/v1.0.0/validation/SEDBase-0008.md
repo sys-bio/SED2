@@ -4,6 +4,7 @@ rule: "A dot-accessor in a reference must be one the target declares valid."
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses accessor '{subvalue}', which is not a valid output of its target."
 severity: error
 status: active
+check: handwritten
 ---
 
 For a task target, the accessor must appear in that task class's outputs.json,

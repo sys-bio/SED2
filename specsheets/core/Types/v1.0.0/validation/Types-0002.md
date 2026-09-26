@@ -4,6 +4,7 @@ rule: "Every function called in a math expression must be defined in the predefi
 message: "The math in attribute '{attr}' of {class} '{id}' calls unknown function '{function}'."
 severity: error
 status: active
+check: handwritten
 ---
 
 The registry is schema/predefined-functions.json: the SBML L3 Core MathML

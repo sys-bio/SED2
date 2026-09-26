@@ -4,6 +4,7 @@ rule: When the value of forcePhysicalCorrectness of an AbstractODESimulation is 
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean."
 severity: error
 status: active
+check: schema
 ---
 
 `forcePhysicalCorrectness` is `BooleanOrRef`: the value, when not a reference, must be a boolean.

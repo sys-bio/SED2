@@ -4,6 +4,7 @@ rule: "A reference must not target an AbstractOutput, or anything contained in o
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' targets an output; outputs may never be used as input."
 severity: error
 status: active
+check: handwritten
 ---
 
 Enforces core-spec.md Section 6: an AbstractOutput is always a final stage

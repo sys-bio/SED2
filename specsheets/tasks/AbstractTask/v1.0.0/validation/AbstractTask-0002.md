@@ -4,6 +4,7 @@ rule: A value that must resolve to a concrete AbstractTask subtype must declare 
 message: "{location} must be an AbstractTask, but no _type at all was declared."
 severity: error
 status: active
+check: schema
 ---
 
 A narrower case of AbstractTask-0000's catch-all: fires specifically when

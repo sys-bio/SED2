@@ -4,6 +4,7 @@ rule: When the value of distribution of a DrawFromDistribution is provided direc
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of the allowed distribution URIs ({allowed})."
 severity: error
 status: active
+check: schema
 ---
 
 `distribution` is `DistributionURI | SIdRef`: the value, when not a reference, must be one of the 12 `http://www.sbml.org/sbml/symbols/distrib/*` URIs listed in `core/Types`'s `DistributionURI` (kept in sync with `schema/predefined-functions.json`'s `distrib` registry).

@@ -4,6 +4,7 @@ rule: "No JSON object in a SED2 document may contain the same key more than once
 message: "Key '{attr}' appears more than once at '{location}'."
 severity: error
 status: active
+check: handwritten
 ---
 
 JSON parsers silently keep one copy of a duplicated key (usually the last),

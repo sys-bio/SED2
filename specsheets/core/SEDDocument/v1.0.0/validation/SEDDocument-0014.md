@@ -4,6 +4,7 @@ rule: "An unregistered namespace's <prefix>@version attribute must match the for
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required format 'v#.#.#'."
 severity: error
 status: active
+check: schema
 ---
 
 For a registered namespace this is already enforced as a generated schema

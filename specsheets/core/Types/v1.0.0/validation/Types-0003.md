@@ -4,6 +4,7 @@ rule: "Every function called in a math expression must be given a number of argu
 message: "The math in attribute '{attr}' of {class} '{id}' calls '{function}' with {count} arguments; it accepts {expected-count}."
 severity: error
 status: active
+check: handwritten
 ---
 
 Arity comes from the function's registry entry, including the distrib

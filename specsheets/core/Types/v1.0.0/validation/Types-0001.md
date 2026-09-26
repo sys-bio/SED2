@@ -4,6 +4,7 @@ rule: "A math expression must be a well-formed expression under the SED2 infix g
 message: "The math in attribute '{attr}' of {class} '{id}' could not be parsed: '{expr}'. {parse-message}"
 severity: error
 status: active
+check: handwritten
 ---
 
 The grammar is the one in Design.md's Math section (math.g4). {parse-message}

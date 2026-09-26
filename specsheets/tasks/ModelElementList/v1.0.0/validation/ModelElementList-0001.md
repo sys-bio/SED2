@@ -4,6 +4,7 @@ rule: The model attribute of a ModelElementList is required.
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `model` is required.

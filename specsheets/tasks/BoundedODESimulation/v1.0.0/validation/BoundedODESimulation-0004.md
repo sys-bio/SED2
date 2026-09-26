@@ -4,6 +4,7 @@ rule: The independentVariableSpan attribute of a BoundedODESimulation is require
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariableSpan` is required.

@@ -4,6 +4,7 @@ rule: "A task may only reference constants, tasks that appear earlier in the sam
 message: "{class} '{id}' references '{value}', which is not defined before it; tasks may only depend on earlier tasks."
 severity: error
 status: active
+check: handwritten
 ---
 
 The chronological rule (core-spec.md Section 3), made checkable. For a task

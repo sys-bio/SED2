@@ -4,6 +4,7 @@ rule: When the value of excludeElements of a ModelElementList is provided direct
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings."
 severity: error
 status: active
+check: schema
 ---
 
 `excludeElements` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.

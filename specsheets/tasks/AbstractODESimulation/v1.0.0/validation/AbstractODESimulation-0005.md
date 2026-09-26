@@ -4,6 +4,7 @@ rule: When the value of absoluteToleranceVector of an AbstractODESimulation is p
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of numbers."
 severity: error
 status: active
+check: schema
 ---
 
 `absoluteToleranceVector` is `ListOfNumbersOrRef`: the value, when not a reference, must be an array of numbers.

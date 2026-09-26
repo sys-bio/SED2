@@ -4,6 +4,7 @@ rule: The independentVariableRange attribute of an ExplicitStochasticSimulation 
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariableRange` is required.

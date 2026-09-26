@@ -4,6 +4,7 @@ rule: When the value of absoluteTolerance of an AbstractODESimulation is provide
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number."
 severity: error
 status: active
+check: schema
 ---
 
 `absoluteTolerance` is `NumberOrRef`: the value, when not a reference, must be a number.

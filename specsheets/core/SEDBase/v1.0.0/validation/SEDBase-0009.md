@@ -4,6 +4,7 @@ rule: "A reference must not apply more bracket indices than its target has dimen
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' applies {count} indices, but its target has only {expected-count} dimension(s)."
 severity: error
 status: active
+check: handwritten
 ---
 
 Only fires when the target's dimension count is static in outputs.json (a

@@ -4,6 +4,7 @@ rule: The notes attribute of a SEDBase-derived element, if present, must be a ma
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a markdown-formatted string."
 severity: error
 status: active
+check: schema
 ---
 
 `notes` is a `MarkdownString` in SEDBaseFields - a CommonMark-formatted string.

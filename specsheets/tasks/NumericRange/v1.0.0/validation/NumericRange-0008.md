@@ -4,6 +4,7 @@ rule: When the value of numberOfSteps of a NumericRange is a reference, it must 
 message: "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer."
 severity: error
 status: active
+check: ref-type
 ---
 
 `numberOfSteps` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.

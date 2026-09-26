@@ -4,6 +4,7 @@ rule: The surfaceType attribute of a Surface is required.
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `surfaceType` is required.

@@ -4,6 +4,7 @@ rule: The independentVariableRange attribute of an ExplicitODESimulation is requ
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariableRange` is required.

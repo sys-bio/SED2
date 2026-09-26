@@ -4,6 +4,7 @@ rule: "The input of every entry in a Repeat's aggregateOutputVariables must refe
 message: "Entry '{attr}' of the aggregateOutputVariables of {class} '{id}' has input '{value}', which is not one of its own subTasks."
 severity: error
 status: active
+check: handwritten
 ---
 
 Same as Repeat-0008, for the AggregationCalculation entries that define

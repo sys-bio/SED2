@@ -4,6 +4,7 @@ rule: "Every value in a Repeat's outputVariableMap must reference one of that Re
 message: "Entry '{attr}' of the outputVariableMap of {class} '{id}' references '{value}', which is not one of its own subTasks."
 severity: error
 status: active
+check: handwritten
 ---
 
 outputVariableMap defines the columns of the Repeat's [id] output, each

@@ -4,6 +4,7 @@ rule: A value that must resolve to a concrete AbstractOutput subtype must declar
 message: "{location} must be an AbstractOutput, but no _type at all was declared."
 severity: error
 status: active
+check: schema
 ---
 
 A narrower case of AbstractOutput-0000's catch-all: fires specifically when

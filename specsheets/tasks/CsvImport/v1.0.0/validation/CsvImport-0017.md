@@ -4,6 +4,7 @@ rule: When the value of units of a CsvImport is a reference, it must be a refere
 message: "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings."
 severity: error
 status: active
+check: ref-type
 ---
 
 `units` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.

@@ -4,6 +4,7 @@ rule: "Every colon-delimited segment of a reference must resolve to an existing 
 message: "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{location}'."
 severity: error
 status: active
+check: handwritten
 ---
 
 Walks the containment tree one colon segment at a time: #tasks:loop1 must name

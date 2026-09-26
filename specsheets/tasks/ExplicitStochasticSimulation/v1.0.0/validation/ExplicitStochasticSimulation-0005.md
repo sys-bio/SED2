@@ -4,6 +4,7 @@ rule: The independentVariableRange attribute of an ExplicitStochasticSimulation 
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a NumericRangeInline object."
 severity: error
 status: active
+check: schema
 ---
 
 `independentVariableRange` is `NumericRangeInline`: it must be a NumericRangeInline object.

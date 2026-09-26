@@ -4,6 +4,7 @@ rule: The y attribute of a Curve is required.
 message: "Required attribute '{attr}' is missing from {class} '{id}'."
 severity: error
 status: active
+check: schema
 ---
 
 `y` is required.

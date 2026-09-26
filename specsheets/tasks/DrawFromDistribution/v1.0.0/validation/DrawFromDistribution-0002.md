@@ -4,6 +4,7 @@ rule: When the value of arguments of a DrawFromDistribution is provided directly
 message: "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of values."
 severity: error
 status: active
+check: schema
 ---
 
 `arguments` is `ListOfAnyOrRef`: the value, when not a reference, must be an array of values.
