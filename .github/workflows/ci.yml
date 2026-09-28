@@ -1,0 +1,135 @@
+# SED2 generator CI - Phase 1 skeleton, scoped to test-specsheets/ (the
+# small synthetic tree the generator was bootstrapped and verified against;
+# see test-specsheets/README.md and Design.md's Testing section). Once the
+# generator is proven against the real 51-class specsheets/ tree (Phase 2),
+# re-point SPEC_ROOT below at specsheets/ and drop the test-specsheets/
+# scoping note in each job's name.
+#
+# Each language job independently: runs the generator fresh against
+# test-specsheets/, copies that language's hand-written fixture-test glue
+# from templates/<lang>/tests/ (never regenerated - see Design.md's Code
+# Generation section) alongside the generated output, and runs the full
+# fixture suite (test-specsheets/fixtures/*.sed2.json) for that target.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  SPEC_ROOT: test-specsheets
+  GEN_OUT: test-specsheets/generated
+
+jobs:
+  generate:
+    name: Generator (schema composition + codegen, all targets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run generator for all three targets
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$SPEC_ROOT" \
+            --out "$GEN_OUT" \
+            --doc-class TestDocument \
+            --base-mixin TestBase \
+            --lang python,java,cpp
+
+  test-python:
+    name: Python target (test-specsheets/)
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Generate Python package
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$SPEC_ROOT" \
+            --out "$GEN_OUT" \
+            --doc-class TestDocument \
+            --base-mixin TestBase \
+            --lang python
+      - name: Install libsed2test + test deps
+        run: |
+          pip install -e "$GEN_OUT/python"
+          pip install pytest
+      - name: Copy hand-written fixture-test glue
+        run: cp templates/python/tests/test_fixtures.py "$GEN_OUT/python/"
+      - name: Run fixture suite
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
+        run: pytest "$GEN_OUT/python/test_fixtures.py" -q
+
+  test-java:
+    name: Java target (test-specsheets/)
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Generate Java package
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$SPEC_ROOT" \
+            --out "$GEN_OUT" \
+            --doc-class TestDocument \
+            --base-mixin TestBase \
+            --lang java
+      - name: Copy hand-written fixture-test glue
+        run: |
+          mkdir -p "$GEN_OUT/java/src/test/java/org/sed2test"
+          cp templates/java/tests/FixtureTest.java "$GEN_OUT/java/src/test/java/org/sed2test/"
+      - name: Run fixture suite
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
+        working-directory: ${{ github.workspace }}/test-specsheets/generated/java
+        run: mvn -B test
+
+  test-cpp:
+    name: C++ target (test-specsheets/)
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Generate C++ package
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$SPEC_ROOT" \
+            --out "$GEN_OUT" \
+            --doc-class TestDocument \
+            --base-mixin TestBase \
+            --lang cpp
+      - name: Copy hand-written fixture-test glue
+        run: |
+          mkdir -p "$GEN_OUT/cpp/tests"
+          cp templates/cpp/tests/FixtureTest.cpp "$GEN_OUT/cpp/tests/"
+      - name: Configure (CMake + FetchContent for jsoncons/GoogleTest)
+        working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp
+        run: cmake --build build -j"$(nproc)"
+      - name: Run fixture suite
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
+        working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp/build
+        run: ./fixture_tests
