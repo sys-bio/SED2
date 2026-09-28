@@ -1,0 +1,3282 @@
+{
+  "AbstractCurve-0000": {
+    "class": "AbstractCurve",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractCurve that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0001": {
+    "class": "AbstractCurve",
+    "rule": "The x attribute of an AbstractCurve is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0002": {
+    "class": "AbstractCurve",
+    "rule": "The x attribute of an AbstractCurve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0003": {
+    "class": "AbstractCurve",
+    "rule": "When the value of order of an AbstractCurve is provided directly, it must be a non-negative integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a non-negative integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0004": {
+    "class": "AbstractCurve",
+    "rule": "When the value of order of an AbstractCurve is a reference, it must be a reference to a non-negative integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a non-negative integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractCurve-0005": {
+    "class": "AbstractCurve",
+    "rule": "The style attribute of an AbstractCurve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0006": {
+    "class": "AbstractCurve",
+    "rule": "When the value of yAxis of an AbstractCurve is provided directly, it must be one of 'right' or 'left'.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of 'right' or 'left'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractCurve-0007": {
+    "class": "AbstractCurve",
+    "rule": "When the value of yAxis of an AbstractCurve is a reference, it must be a reference to one of 'right' or 'left'.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not one of 'right' or 'left'.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractCurve-0008": {
+    "class": "AbstractCurve",
+    "rule": "A value that must resolve to a concrete AbstractCurve subtype must declare a _type attribute.",
+    "message": "{location} must be an AbstractCurve, but no _type at all was declared.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0000": {
+    "class": "AbstractODESimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractODESimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0001": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of relativeTolerance of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0002": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of relativeTolerance of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0003": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteTolerance of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0004": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteTolerance of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0005": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteToleranceVector of an AbstractODESimulation is provided directly, it must be an array of numbers.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of numbers.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0006": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteToleranceVector of an AbstractODESimulation is a reference, it must be a reference to an array of numbers.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of numbers.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0007": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0008": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0009": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of toleranceForRootFinder of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0010": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of toleranceForRootFinder of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0011": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of initialStepSize of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0012": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of initialStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0013": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxNumberOfSteps of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0014": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxNumberOfSteps of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0015": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxInternalSteps of an AbstractODESimulation is provided directly, it must be an integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0016": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxInternalSteps of an AbstractODESimulation is a reference, it must be a reference to an integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0017": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxInternalStepSize of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0018": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0019": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of minInternalStepSize of an AbstractODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0020": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of minInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0021": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of forcePhysicalCorrectness of an AbstractODESimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0022": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of forcePhysicalCorrectness of an AbstractODESimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0023": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of integrateReducedModel of an AbstractODESimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0024": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of integrateReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0025": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of useReducedModel of an AbstractODESimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0026": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of useReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0027": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of useStiffSolver of an AbstractODESimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0028": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of useStiffSolver of an AbstractODESimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0029": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxBDForder of an AbstractODESimulation is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0030": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxBDForder of an AbstractODESimulation is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0031": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxAdamsOrder of an AbstractODESimulation is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0032": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxAdamsOrder of an AbstractODESimulation is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0033": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of variableStepSize of an AbstractODESimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0034": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of variableStepSize of an AbstractODESimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractODESimulation-0035": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxOutputRows of an AbstractODESimulation is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractODESimulation-0036": {
+    "class": "AbstractODESimulation",
+    "rule": "When the value of maxOutputRows of an AbstractODESimulation is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractOutput-0000": {
+    "class": "AbstractOutput",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractOutput that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractOutput-0001": {
+    "class": "AbstractOutput",
+    "rule": "The outputParameters attribute of an AbstractOutput must be an array of OutputParameter objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of OutputParameter objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractOutput-0002": {
+    "class": "AbstractOutput",
+    "rule": "A value that must resolve to a concrete AbstractOutput subtype must declare a _type attribute.",
+    "message": "{location} must be an AbstractOutput, but no _type at all was declared.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0000": {
+    "class": "AbstractSimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractSimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0001": {
+    "class": "AbstractSimulation",
+    "rule": "The model attribute of an AbstractSimulation, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0002": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of independentVariable of an AbstractSimulation is provided directly, it must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0003": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of independentVariable of an AbstractSimulation is a reference, it must be a reference to a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractSimulation-0004": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of independentVariableInit of an AbstractSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0005": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of independentVariableInit of an AbstractSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractSimulation-0006": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of outputVariables of an AbstractSimulation is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractSimulation-0007": {
+    "class": "AbstractSimulation",
+    "rule": "When the value of outputVariables of an AbstractSimulation is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractSimulation-0008": {
+    "class": "AbstractSimulation",
+    "rule": "The workingAlgorithms attribute of an AbstractSimulation, if present, must be an array of WorkingAlgorithm objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of WorkingAlgorithm objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0000": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractStochasticSimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0001": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of seed of an AbstractStochasticSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0002": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of seed of an AbstractStochasticSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0003": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0004": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0005": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of variableStepSize of an AbstractStochasticSimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0006": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of variableStepSize of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0007": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of minimumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0008": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of minimumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0009": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maximumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0010": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maximumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0011": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of nonNegative of an AbstractStochasticSimulation is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0012": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of nonNegative of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0013": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maxOutputRows of an AbstractStochasticSimulation is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0014": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maxOutputRows of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractStochasticSimulation-0015": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maxNumSteps of an AbstractStochasticSimulation is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractStochasticSimulation-0016": {
+    "class": "AbstractStochasticSimulation",
+    "rule": "When the value of maxNumSteps of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AbstractTask-0000": {
+    "class": "AbstractTask",
+    "rule": "The element fails a JSON Schema constraint attributable to AbstractTask that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractTask-0001": {
+    "class": "AbstractTask",
+    "rule": "The taskParameters attribute of an AbstractTask must be an array of TaskParameter objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of TaskParameter objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractTask-0002": {
+    "class": "AbstractTask",
+    "rule": "A value that must resolve to a concrete AbstractTask subtype must declare a _type attribute.",
+    "message": "{location} must be an AbstractTask, but no _type at all was declared.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AbstractTask-0003": {
+    "class": "AbstractTask",
+    "rule": "A task may only reference constants, tasks that appear earlier in the same tasks dictionary, or (for a subTask) the elements listed in this rule's explanation.",
+    "message": "{class} '{id}' references '{value}', which is not defined before it; tasks may only depend on earlier tasks.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "AggregationCalculation-0000": {
+    "class": "AggregationCalculation",
+    "rule": "The element fails a JSON Schema constraint attributable to AggregationCalculation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AggregationCalculation-0001": {
+    "class": "AggregationCalculation",
+    "rule": "The input attribute of an AggregationCalculation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AggregationCalculation-0002": {
+    "class": "AggregationCalculation",
+    "rule": "When the value of appliedDimensions of an AggregationCalculation is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "AggregationCalculation-0003": {
+    "class": "AggregationCalculation",
+    "rule": "When the value of appliedDimensions of an AggregationCalculation is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "AggregationCalculation-0004": {
+    "class": "AggregationCalculation",
+    "rule": "The _type attribute of an AggregationCalculation must be \"aggregationCalculation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Annotation-0000": {
+    "class": "Annotation",
+    "rule": "The element fails a JSON Schema constraint attributable to Annotation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Annotation-0001": {
+    "class": "Annotation",
+    "rule": "The qualifier attribute of an Annotation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Annotation-0002": {
+    "class": "Annotation",
+    "rule": "The qualifier attribute of an Annotation must be a Qualifier string (a 'namespace:term' pair).",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a Qualifier string (a 'namespace:term' pair).",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Annotation-0003": {
+    "class": "Annotation",
+    "rule": "The value attribute of an Annotation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0000": {
+    "class": "Axis",
+    "rule": "The element fails a JSON Schema constraint attributable to Axis that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0001": {
+    "class": "Axis",
+    "rule": "When the value of scale of an Axis is provided directly, it must be one of 'linear', 'log10'.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of {allowed}.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0002": {
+    "class": "Axis",
+    "rule": "When the value of scale of an Axis is a reference, it must be a reference to a valid ScaleType value.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a valid ScaleType value.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Axis-0003": {
+    "class": "Axis",
+    "rule": "When the value of min of an Axis is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0004": {
+    "class": "Axis",
+    "rule": "When the value of min of an Axis is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Axis-0005": {
+    "class": "Axis",
+    "rule": "When the value of max of an Axis is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0006": {
+    "class": "Axis",
+    "rule": "When the value of max of an Axis is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Axis-0007": {
+    "class": "Axis",
+    "rule": "When the value of grid of an Axis is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0008": {
+    "class": "Axis",
+    "rule": "When the value of grid of an Axis is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Axis-0009": {
+    "class": "Axis",
+    "rule": "The style attribute of an Axis, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0010": {
+    "class": "Axis",
+    "rule": "When the value of reverse of an Axis is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Axis-0011": {
+    "class": "Axis",
+    "rule": "When the value of reverse of an Axis is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "BoundedODESimulation-0000": {
+    "class": "BoundedODESimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to BoundedODESimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0001": {
+    "class": "BoundedODESimulation",
+    "rule": "The model attribute of a BoundedODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0002": {
+    "class": "BoundedODESimulation",
+    "rule": "The independentVariable attribute of a BoundedODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0003": {
+    "class": "BoundedODESimulation",
+    "rule": "The outputVariables attribute of a BoundedODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0004": {
+    "class": "BoundedODESimulation",
+    "rule": "The independentVariableSpan attribute of a BoundedODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0005": {
+    "class": "BoundedODESimulation",
+    "rule": "The independentVariableSpan attribute of a BoundedODESimulation must be a SpanInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a SpanInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedODESimulation-0006": {
+    "class": "BoundedODESimulation",
+    "rule": "The _type attribute of a BoundedODESimulation must be \"boundedODESimulation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0000": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to BoundedStochasticSimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0001": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The model attribute of a BoundedStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0002": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The independentVariable attribute of a BoundedStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0003": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The outputVariables attribute of a BoundedStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0004": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The independentVariableSpan attribute of a BoundedStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0005": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The independentVariableSpan attribute of a BoundedStochasticSimulation must be a SpanInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a SpanInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "BoundedStochasticSimulation-0006": {
+    "class": "BoundedStochasticSimulation",
+    "rule": "The _type attribute of a BoundedStochasticSimulation must be \"boundedStochasticSimulation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Calculation-0000": {
+    "class": "Calculation",
+    "rule": "The element fails a JSON Schema constraint attributable to Calculation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Calculation-0001": {
+    "class": "Calculation",
+    "rule": "The math attribute of a Calculation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Calculation-0002": {
+    "class": "Calculation",
+    "rule": "When the value of math of a Calculation is provided directly, it must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Calculation-0003": {
+    "class": "Calculation",
+    "rule": "When the value of math of a Calculation is a reference, it must be a reference to a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Calculation-0004": {
+    "class": "Calculation",
+    "rule": "The _type attribute of a Calculation must be \"calculation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CreateDataBlock-0000": {
+    "class": "CreateDataBlock",
+    "rule": "The element fails a JSON Schema constraint attributable to CreateDataBlock that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CreateDataBlock-0001": {
+    "class": "CreateDataBlock",
+    "rule": "The data attribute of a CreateDataBlock is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CreateDataBlock-0002": {
+    "class": "CreateDataBlock",
+    "rule": "When the value of data of a CreateDataBlock is provided directly, it must be an object whose values are AnyValueOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AnyValueOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CreateDataBlock-0003": {
+    "class": "CreateDataBlock",
+    "rule": "When the value of data of a CreateDataBlock is a reference, it must be a reference to an object whose values are AnyValueOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an object whose values are AnyValueOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CreateDataBlock-0004": {
+    "class": "CreateDataBlock",
+    "rule": "The _type attribute of a CreateDataBlock must be \"createDataBlock\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0000": {
+    "class": "CsvImport",
+    "rule": "The element fails a JSON Schema constraint attributable to CsvImport that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0001": {
+    "class": "CsvImport",
+    "rule": "The location attribute of a CsvImport is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0002": {
+    "class": "CsvImport",
+    "rule": "When the value of location of a CsvImport is provided directly, it must be a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0003": {
+    "class": "CsvImport",
+    "rule": "When the value of location of a CsvImport is a reference, it must be a reference to a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0004": {
+    "class": "CsvImport",
+    "rule": "When the value of organization of a CsvImport is provided directly, it must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0005": {
+    "class": "CsvImport",
+    "rule": "When the value of organization of a CsvImport is a reference, it must be a reference to a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0006": {
+    "class": "CsvImport",
+    "rule": "When the value of separator of a CsvImport is provided directly, it must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0007": {
+    "class": "CsvImport",
+    "rule": "When the value of separator of a CsvImport is a reference, it must be a reference to a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0008": {
+    "class": "CsvImport",
+    "rule": "When the value of headers of a CsvImport is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0009": {
+    "class": "CsvImport",
+    "rule": "When the value of headers of a CsvImport is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0010": {
+    "class": "CsvImport",
+    "rule": "When the value of columnNames of a CsvImport is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0011": {
+    "class": "CsvImport",
+    "rule": "When the value of columnNames of a CsvImport is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0012": {
+    "class": "CsvImport",
+    "rule": "When the value of ncols of a CsvImport is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0013": {
+    "class": "CsvImport",
+    "rule": "When the value of ncols of a CsvImport is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0014": {
+    "class": "CsvImport",
+    "rule": "When the value of nrows of a CsvImport is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0015": {
+    "class": "CsvImport",
+    "rule": "When the value of nrows of a CsvImport is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0016": {
+    "class": "CsvImport",
+    "rule": "When the value of units of a CsvImport is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "CsvImport-0017": {
+    "class": "CsvImport",
+    "rule": "When the value of units of a CsvImport is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "CsvImport-0018": {
+    "class": "CsvImport",
+    "rule": "The _type attribute of a CsvImport must be \"csvImport\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0000": {
+    "class": "Curve",
+    "rule": "The element fails a JSON Schema constraint attributable to Curve that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0001": {
+    "class": "Curve",
+    "rule": "The curveType attribute of a Curve is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0002": {
+    "class": "Curve",
+    "rule": "When the value of curveType of a Curve is provided directly, it must be one of 'points', 'bar', 'barStacked', 'horizontalBar', 'horizontalBarStacked', 'shadedArea'.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of {allowed}.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0003": {
+    "class": "Curve",
+    "rule": "When the value of curveType of a Curve is a reference, it must be a reference to a valid CurveType value.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a valid CurveType value.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Curve-0004": {
+    "class": "Curve",
+    "rule": "The y attribute of a Curve is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0005": {
+    "class": "Curve",
+    "rule": "The y attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0006": {
+    "class": "Curve",
+    "rule": "The xErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0007": {
+    "class": "Curve",
+    "rule": "The xErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0008": {
+    "class": "Curve",
+    "rule": "The yErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0009": {
+    "class": "Curve",
+    "rule": "The yErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0010": {
+    "class": "Curve",
+    "rule": "The yFrom attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0011": {
+    "class": "Curve",
+    "rule": "The yTo attribute of a Curve, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Curve-0012": {
+    "class": "Curve",
+    "rule": "The _type attribute of a Curve must be \"curve\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0000": {
+    "class": "DataImport",
+    "rule": "The element fails a JSON Schema constraint attributable to DataImport that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0001": {
+    "class": "DataImport",
+    "rule": "The location attribute of a DataImport is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0002": {
+    "class": "DataImport",
+    "rule": "When the value of location of a DataImport is provided directly, it must be a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0003": {
+    "class": "DataImport",
+    "rule": "When the value of location of a DataImport is a reference, it must be a reference to a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "DataImport-0004": {
+    "class": "DataImport",
+    "rule": "The format attribute of a DataImport is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0005": {
+    "class": "DataImport",
+    "rule": "When the value of format of a DataImport is provided directly, it must be a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DataImport-0006": {
+    "class": "DataImport",
+    "rule": "When the value of format of a DataImport is a reference, it must be a reference to a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "DataImport-0007": {
+    "class": "DataImport",
+    "rule": "The _type attribute of a DataImport must be \"dataImport\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0000": {
+    "class": "DrawFromDistribution",
+    "rule": "The element fails a JSON Schema constraint attributable to DrawFromDistribution that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0001": {
+    "class": "DrawFromDistribution",
+    "rule": "The arguments attribute of a DrawFromDistribution is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0002": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of arguments of a DrawFromDistribution is provided directly, it must be an array of values.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of values.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0003": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of arguments of a DrawFromDistribution is a reference, it must be a reference to an array of values.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of values.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "DrawFromDistribution-0004": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of outputPersistent of a DrawFromDistribution is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0005": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of outputPersistent of a DrawFromDistribution is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "DrawFromDistribution-0006": {
+    "class": "DrawFromDistribution",
+    "rule": "The _type attribute of a DrawFromDistribution must be \"drawFromDistribution\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0007": {
+    "class": "DrawFromDistribution",
+    "rule": "The distribution attribute of a DrawFromDistribution is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0008": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of distribution of a DrawFromDistribution is provided directly, it must be one of the SBML distrib package's definitionURL values.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of the allowed distribution URIs ({allowed}).",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "DrawFromDistribution-0009": {
+    "class": "DrawFromDistribution",
+    "rule": "When the value of distribution of a DrawFromDistribution is a reference, it must be a reference to one of the SBML distrib package's definitionURL values.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not one of the allowed distribution URIs ({allowed}).",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ExplicitODESimulation-0000": {
+    "class": "ExplicitODESimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to ExplicitODESimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0001": {
+    "class": "ExplicitODESimulation",
+    "rule": "The model attribute of an ExplicitODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0002": {
+    "class": "ExplicitODESimulation",
+    "rule": "The independentVariable attribute of an ExplicitODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0003": {
+    "class": "ExplicitODESimulation",
+    "rule": "The outputVariables attribute of an ExplicitODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0004": {
+    "class": "ExplicitODESimulation",
+    "rule": "The independentVariableRange attribute of an ExplicitODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0005": {
+    "class": "ExplicitODESimulation",
+    "rule": "The independentVariableRange attribute of an ExplicitODESimulation must be a NumericRangeInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a NumericRangeInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitODESimulation-0006": {
+    "class": "ExplicitODESimulation",
+    "rule": "The _type attribute of an ExplicitODESimulation must be \"explicitODESimulation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0000": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to ExplicitStochasticSimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0001": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The model attribute of an ExplicitStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0002": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The independentVariable attribute of an ExplicitStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0003": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The outputVariables attribute of an ExplicitStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0004": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The independentVariableRange attribute of an ExplicitStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0005": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The independentVariableRange attribute of an ExplicitStochasticSimulation must be a NumericRangeInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a NumericRangeInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ExplicitStochasticSimulation-0006": {
+    "class": "ExplicitStochasticSimulation",
+    "rule": "The _type attribute of an ExplicitStochasticSimulation must be \"explicitStochasticSimulation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0000": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The element fails a JSON Schema constraint attributable to FluxBalanceAnalysis that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0001": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The model attribute of a FluxBalanceAnalysis is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0002": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The model attribute of a FluxBalanceAnalysis, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0003": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The outputVariables attribute of a FluxBalanceAnalysis is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0004": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "When the value of outputVariables of a FluxBalanceAnalysis is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0005": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "When the value of outputVariables of a FluxBalanceAnalysis is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "FluxBalanceAnalysis-0006": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "When the value of outputModel of a FluxBalanceAnalysis is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "FluxBalanceAnalysis-0007": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "When the value of outputModel of a FluxBalanceAnalysis is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "FluxBalanceAnalysis-0008": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The _type attribute of a FluxBalanceAnalysis must be \"fluxBalanceAnalysis\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianFull-0000": {
+    "class": "JacobianFull",
+    "rule": "The element fails a JSON Schema constraint attributable to JacobianFull that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianFull-0001": {
+    "class": "JacobianFull",
+    "rule": "The model attribute of a JacobianFull is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianFull-0002": {
+    "class": "JacobianFull",
+    "rule": "The model attribute of a JacobianFull, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianFull-0003": {
+    "class": "JacobianFull",
+    "rule": "The _type attribute of a JacobianFull must be \"jacobianFull\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianReduced-0000": {
+    "class": "JacobianReduced",
+    "rule": "The element fails a JSON Schema constraint attributable to JacobianReduced that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianReduced-0001": {
+    "class": "JacobianReduced",
+    "rule": "The model attribute of a JacobianReduced is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianReduced-0002": {
+    "class": "JacobianReduced",
+    "rule": "The model attribute of a JacobianReduced, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "JacobianReduced-0003": {
+    "class": "JacobianReduced",
+    "rule": "The _type attribute of a JacobianReduced must be \"jacobianReduced\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0000": {
+    "class": "Loop",
+    "rule": "The element fails a JSON Schema constraint attributable to Loop that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0001": {
+    "class": "Loop",
+    "rule": "The subTasks attribute of a Loop is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0002": {
+    "class": "Loop",
+    "rule": "The loopVariables attribute of a Loop is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0003": {
+    "class": "Loop",
+    "rule": "The loopVariables attribute of a Loop must be an object whose values are LoopVariable.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are LoopVariable.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0005": {
+    "class": "Loop",
+    "rule": "The _type attribute of a Loop must be \"loop\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "LoopVariable-0000": {
+    "class": "LoopVariable",
+    "rule": "The element fails a JSON Schema constraint attributable to LoopVariable that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "LoopVariable-0001": {
+    "class": "LoopVariable",
+    "rule": "The initialValue attribute of a LoopVariable is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "LoopVariable-0002": {
+    "class": "LoopVariable",
+    "rule": "The subsequentValues attribute of a LoopVariable is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "LoopVariable-0003": {
+    "class": "LoopVariable",
+    "rule": "The subsequentValues attribute of a LoopVariable, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "LoopVariable-0004": {
+    "class": "LoopVariable",
+    "rule": "The subsequentValues of a LoopVariable must reference one of its enclosing Loop's own subTasks, or an output of one.",
+    "message": "LoopVariable '{id}' has subsequentValues '{value}', which is not one of its Loop's own subTasks.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "ModelChange-0000": {
+    "class": "ModelChange",
+    "rule": "The element fails a JSON Schema constraint attributable to ModelChange that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0001": {
+    "class": "ModelChange",
+    "rule": "The inputModel attribute of a ModelChange is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0002": {
+    "class": "ModelChange",
+    "rule": "The inputModel attribute of a ModelChange, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0003": {
+    "class": "ModelChange",
+    "rule": "When the value of setValues of a ModelChange is provided directly, it must be an object whose values are AnyValueOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AnyValueOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0004": {
+    "class": "ModelChange",
+    "rule": "When the value of setValues of a ModelChange is a reference, it must be a reference to an object whose values are AnyValueOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an object whose values are AnyValueOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelChange-0005": {
+    "class": "ModelChange",
+    "rule": "When the value of removeElements of a ModelChange is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0006": {
+    "class": "ModelChange",
+    "rule": "When the value of removeElements of a ModelChange is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelChange-0007": {
+    "class": "ModelChange",
+    "rule": "When the value of addElements of a ModelChange is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0008": {
+    "class": "ModelChange",
+    "rule": "When the value of addElements of a ModelChange is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelChange-0009": {
+    "class": "ModelChange",
+    "rule": "When the value of replaceElements of a ModelChange is provided directly, it must be an object whose values are StringOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are StringOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelChange-0010": {
+    "class": "ModelChange",
+    "rule": "When the value of replaceElements of a ModelChange is a reference, it must be a reference to an object whose values are StringOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an object whose values are StringOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelChange-0011": {
+    "class": "ModelChange",
+    "rule": "The _type attribute of a ModelChange must be \"modelChange\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0000": {
+    "class": "ModelElementList",
+    "rule": "The element fails a JSON Schema constraint attributable to ModelElementList that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0001": {
+    "class": "ModelElementList",
+    "rule": "The model attribute of a ModelElementList is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0002": {
+    "class": "ModelElementList",
+    "rule": "The model attribute of a ModelElementList, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0003": {
+    "class": "ModelElementList",
+    "rule": "When the value of includeElements of a ModelElementList is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0004": {
+    "class": "ModelElementList",
+    "rule": "When the value of includeElements of a ModelElementList is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelElementList-0005": {
+    "class": "ModelElementList",
+    "rule": "When the value of includeTypes of a ModelElementList is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0006": {
+    "class": "ModelElementList",
+    "rule": "When the value of includeTypes of a ModelElementList is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelElementList-0007": {
+    "class": "ModelElementList",
+    "rule": "When the value of excludeElements of a ModelElementList is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0008": {
+    "class": "ModelElementList",
+    "rule": "When the value of excludeElements of a ModelElementList is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelElementList-0009": {
+    "class": "ModelElementList",
+    "rule": "When the value of excludeTypes of a ModelElementList is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelElementList-0010": {
+    "class": "ModelElementList",
+    "rule": "When the value of excludeTypes of a ModelElementList is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelElementList-0011": {
+    "class": "ModelElementList",
+    "rule": "The _type attribute of a ModelElementList must be \"modelElementList\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0000": {
+    "class": "ModelImport",
+    "rule": "The element fails a JSON Schema constraint attributable to ModelImport that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0001": {
+    "class": "ModelImport",
+    "rule": "The location attribute of a ModelImport is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0002": {
+    "class": "ModelImport",
+    "rule": "When the value of location of a ModelImport is provided directly, it must be a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0003": {
+    "class": "ModelImport",
+    "rule": "When the value of location of a ModelImport is a reference, it must be a reference to a URI string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a URI string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelImport-0004": {
+    "class": "ModelImport",
+    "rule": "The language attribute of a ModelImport is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0005": {
+    "class": "ModelImport",
+    "rule": "When the value of language of a ModelImport is provided directly, it must be a URN string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a URN string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ModelImport-0006": {
+    "class": "ModelImport",
+    "rule": "When the value of language of a ModelImport is a reference, it must be a reference to a URN string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a URN string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ModelImport-0007": {
+    "class": "ModelImport",
+    "rule": "The _type attribute of a ModelImport must be \"modelImport\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0000": {
+    "class": "NumericRange",
+    "rule": "The element fails a JSON Schema constraint attributable to NumericRange that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0001": {
+    "class": "NumericRange",
+    "rule": "When the value of start of a NumericRange is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0002": {
+    "class": "NumericRange",
+    "rule": "When the value of start of a NumericRange is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0003": {
+    "class": "NumericRange",
+    "rule": "When the value of end of a NumericRange is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0004": {
+    "class": "NumericRange",
+    "rule": "When the value of end of a NumericRange is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0005": {
+    "class": "NumericRange",
+    "rule": "When the value of interval of a NumericRange is provided directly, it must be a positive number (> 0).",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive number (> 0).",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0006": {
+    "class": "NumericRange",
+    "rule": "When the value of interval of a NumericRange is a reference, it must be a reference to a positive number (> 0).",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive number (> 0).",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0007": {
+    "class": "NumericRange",
+    "rule": "When the value of numberOfSteps of a NumericRange is provided directly, it must be a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0008": {
+    "class": "NumericRange",
+    "rule": "When the value of numberOfSteps of a NumericRange is a reference, it must be a reference to a positive integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a positive integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0009": {
+    "class": "NumericRange",
+    "rule": "When the value of scale of a NumericRange is provided directly, it must be one of 'linear', 'log10'.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of {allowed}.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0010": {
+    "class": "NumericRange",
+    "rule": "When the value of scale of a NumericRange is a reference, it must be a reference to a valid ScaleType value.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a valid ScaleType value.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0011": {
+    "class": "NumericRange",
+    "rule": "When the value of values of a NumericRange is provided directly, it must be an array of NumberOrRef objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of NumberOrRef objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "NumericRange-0012": {
+    "class": "NumericRange",
+    "rule": "When the value of values of a NumericRange is a reference, it must be a reference to an array of NumberOrRef objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of NumberOrRef objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "NumericRange-0013": {
+    "class": "NumericRange",
+    "rule": "The _type attribute of a NumericRange must be \"numericRange\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0000": {
+    "class": "OneStepODESimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to OneStepODESimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0001": {
+    "class": "OneStepODESimulation",
+    "rule": "The model attribute of an OneStepODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0002": {
+    "class": "OneStepODESimulation",
+    "rule": "The independentVariable attribute of an OneStepODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0003": {
+    "class": "OneStepODESimulation",
+    "rule": "The outputVariables attribute of an OneStepODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0004": {
+    "class": "OneStepODESimulation",
+    "rule": "The independentStep attribute of an OneStepODESimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0005": {
+    "class": "OneStepODESimulation",
+    "rule": "When the value of independentStep of an OneStepODESimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepODESimulation-0006": {
+    "class": "OneStepODESimulation",
+    "rule": "When the value of independentStep of an OneStepODESimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "OneStepODESimulation-0007": {
+    "class": "OneStepODESimulation",
+    "rule": "The _type attribute of an OneStepODESimulation must be \"oneStepODE\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0000": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "The element fails a JSON Schema constraint attributable to OneStepStochasticSimulation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0001": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "The model attribute of an OneStepStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0002": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "The independentVariable attribute of an OneStepStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0003": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "The outputVariables attribute of an OneStepStochasticSimulation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0004": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "When the value of independentStep of an OneStepStochasticSimulation is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OneStepStochasticSimulation-0005": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "When the value of independentStep of an OneStepStochasticSimulation is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "OneStepStochasticSimulation-0006": {
+    "class": "OneStepStochasticSimulation",
+    "rule": "The _type attribute of an OneStepStochasticSimulation must be \"oneStepStochastic\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OutputParameter-0000": {
+    "class": "OutputParameter",
+    "rule": "The element fails a JSON Schema constraint attributable to OutputParameter that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "OutputParameter-0001": {
+    "class": "OutputParameter",
+    "rule": "The value attribute of an OutputParameter is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterRange-0000": {
+    "class": "ParameterRange",
+    "rule": "The element fails a JSON Schema constraint attributable to ParameterRange that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterRange-0001": {
+    "class": "ParameterRange",
+    "rule": "The modelElement attribute of a ParameterRange is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterRange-0002": {
+    "class": "ParameterRange",
+    "rule": "When the value of modelElement of a ParameterRange is provided directly, it must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterRange-0003": {
+    "class": "ParameterRange",
+    "rule": "When the value of modelElement of a ParameterRange is a reference, it must be a reference to a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "ParameterRange-0016": {
+    "class": "ParameterRange",
+    "rule": "The _type attribute of a ParameterRange must be \"parameterRange\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0000": {
+    "class": "ParameterScan",
+    "rule": "The element fails a JSON Schema constraint attributable to ParameterScan that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0001": {
+    "class": "ParameterScan",
+    "rule": "The model attribute of a ParameterScan is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0002": {
+    "class": "ParameterScan",
+    "rule": "The model attribute of a ParameterScan, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0003": {
+    "class": "ParameterScan",
+    "rule": "The parameterRanges attribute of a ParameterScan is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0004": {
+    "class": "ParameterScan",
+    "rule": "The parameterRanges attribute of a ParameterScan must be an array of ParameterRangeInline objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of ParameterRangeInline objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0005": {
+    "class": "ParameterScan",
+    "rule": "The subTasks attribute of a ParameterScan is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "ParameterScan-0006": {
+    "class": "ParameterScan",
+    "rule": "The _type attribute of a ParameterScan must be \"parameterScan\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0000": {
+    "class": "Plot",
+    "rule": "The element fails a JSON Schema constraint attributable to Plot that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0001": {
+    "class": "Plot",
+    "rule": "When the value of legend of a Plot is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0002": {
+    "class": "Plot",
+    "rule": "When the value of legend of a Plot is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Plot-0003": {
+    "class": "Plot",
+    "rule": "When the value of height of a Plot is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0004": {
+    "class": "Plot",
+    "rule": "When the value of height of a Plot is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Plot-0005": {
+    "class": "Plot",
+    "rule": "When the value of width of a Plot is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0006": {
+    "class": "Plot",
+    "rule": "When the value of width of a Plot is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Plot-0007": {
+    "class": "Plot",
+    "rule": "The xAxis attribute of a Plot must be an Axis object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an Axis object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot-0008": {
+    "class": "Plot",
+    "rule": "When the value of yAxis of a Plot is a reference, it must be a reference to a valid one of `\"right\"`, `\"left\"` value.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a valid one of `\"right\"`, `\"left\"` value.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Plot2D-0000": {
+    "class": "Plot2D",
+    "rule": "The element fails a JSON Schema constraint attributable to Plot2D that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot2D-0001": {
+    "class": "Plot2D",
+    "rule": "The curves attribute of a Plot2D is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot2D-0002": {
+    "class": "Plot2D",
+    "rule": "The curves attribute of a Plot2D must be an object whose values are Curve.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are Curve.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot2D-0003": {
+    "class": "Plot2D",
+    "rule": "The rightYAxis attribute of a Plot2D must be an Axis object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an Axis object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot2D-0004": {
+    "class": "Plot2D",
+    "rule": "The _type attribute of a Plot2D must be \"plot2D\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot3D-0000": {
+    "class": "Plot3D",
+    "rule": "The element fails a JSON Schema constraint attributable to Plot3D that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot3D-0001": {
+    "class": "Plot3D",
+    "rule": "The surfaces attribute of a Plot3D is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot3D-0002": {
+    "class": "Plot3D",
+    "rule": "The surfaces attribute of a Plot3D must be an object whose values are Surface.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are Surface.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot3D-0003": {
+    "class": "Plot3D",
+    "rule": "The zAxis attribute of a Plot3D must be an Axis object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an Axis object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Plot3D-0004": {
+    "class": "Plot3D",
+    "rule": "The _type attribute of a Plot3D must be \"plot3D\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Range-0000": {
+    "class": "Range",
+    "rule": "The element fails a JSON Schema constraint attributable to Range that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Range-0001": {
+    "class": "Range",
+    "rule": "When the value of values of a Range is provided directly, it must be an array of AnyValueOrRef objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of AnyValueOrRef objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Range-0002": {
+    "class": "Range",
+    "rule": "When the value of values of a Range is a reference, it must be a reference to an array of AnyValueOrRef objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of AnyValueOrRef objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Range-0003": {
+    "class": "Range",
+    "rule": "The _type attribute of a Range must be \"range\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Range-0004": {
+    "class": "Range",
+    "rule": "A value that must resolve to a concrete Range subtype must declare a _type attribute.",
+    "message": "{location} must be a Range, but no _type at all was declared.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0000": {
+    "class": "RelabelData",
+    "rule": "The element fails a JSON Schema constraint attributable to RelabelData that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0001": {
+    "class": "RelabelData",
+    "rule": "The input attribute of a RelabelData is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0002": {
+    "class": "RelabelData",
+    "rule": "The input attribute of a RelabelData, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0003": {
+    "class": "RelabelData",
+    "rule": "The labels attribute of a RelabelData is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0004": {
+    "class": "RelabelData",
+    "rule": "When the value of labels of a RelabelData is provided directly, it must be an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "RelabelData-0005": {
+    "class": "RelabelData",
+    "rule": "When the value of labels of a RelabelData is a reference, it must be a reference to an array of strings.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of strings.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "RelabelData-0006": {
+    "class": "RelabelData",
+    "rule": "The _type attribute of a RelabelData must be \"relabelData\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0000": {
+    "class": "Repeat",
+    "rule": "The element fails a JSON Schema constraint attributable to Repeat that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0001": {
+    "class": "Repeat",
+    "rule": "The subTasks attribute of a Repeat must be an object whose values are AbstractTask.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AbstractTask.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0002": {
+    "class": "Repeat",
+    "rule": "When the value of outputVariableMap of a Repeat is provided directly, it must be an object whose values are SIdRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are SIdRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0003": {
+    "class": "Repeat",
+    "rule": "When the value of outputVariableMap of a Repeat is a reference, it must be a reference to an object whose values are SIdRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an object whose values are SIdRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Repeat-0004": {
+    "class": "Repeat",
+    "rule": "The aggregateOutputVariables attribute of a Repeat must be an object whose values are AggregationCalculation.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AggregationCalculation.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0005": {
+    "class": "Repeat",
+    "rule": "The range attribute of a Repeat, if present, must be a RangeInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a RangeInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0006": {
+    "class": "Repeat",
+    "rule": "A Repeat must provide at least one of outputVariableMap or aggregateOutputVariables.",
+    "message": "{class} '{id}' must provide at least one of 'outputVariableMap' or 'aggregateOutputVariables'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Repeat-0008": {
+    "class": "Repeat",
+    "rule": "Every value in a Repeat's outputVariableMap must reference one of that Repeat's own subTasks, or an output of one.",
+    "message": "Entry '{attr}' of the outputVariableMap of {class} '{id}' references '{value}', which is not one of its own subTasks.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Repeat-0009": {
+    "class": "Repeat",
+    "rule": "The input of every entry in a Repeat's aggregateOutputVariables must reference one of that Repeat's own subTasks, or an output of one.",
+    "message": "Entry '{attr}' of the aggregateOutputVariables of {class} '{id}' has input '{value}', which is not one of its own subTasks.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Repeat-0010": {
+    "class": "Repeat",
+    "rule": "An entry in a Repeat's aggregateOutputVariables must not define appliedDimensions.",
+    "message": "Entry '{attr}' of the aggregateOutputVariables of {class} '{id}' defines appliedDimensions; the applied dimension is always the Repeat's own iterations.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Report-0000": {
+    "class": "Report",
+    "rule": "The element fails a JSON Schema constraint attributable to Report that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Report-0001": {
+    "class": "Report",
+    "rule": "The data attribute of a Report is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Report-0002": {
+    "class": "Report",
+    "rule": "The data attribute of a Report, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Report-0003": {
+    "class": "Report",
+    "rule": "The _type attribute of a Report must be \"report\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0000": {
+    "class": "SEDBase",
+    "rule": "The element fails a JSON Schema constraint attributable to SEDBase that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0001": {
+    "class": "SEDBase",
+    "rule": "The name attribute of a SEDBase-derived element, if present, must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0002": {
+    "class": "SEDBase",
+    "rule": "The description attribute of a SEDBase-derived element, if present, must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0003": {
+    "class": "SEDBase",
+    "rule": "The notes attribute of a SEDBase-derived element, if present, must be a markdown-formatted string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a markdown-formatted string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0004": {
+    "class": "SEDBase",
+    "rule": "The annotations attribute of a SEDBase-derived element, if present, must be an array of Annotation objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of Annotation objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDBase-0005": {
+    "class": "SEDBase",
+    "rule": "The first segment of a reference must name one of SEDDocument's ID-keyed collections: tasks, constants, outputs, or styles.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' starts with an unknown collection; it must start with #tasks, #constants, #outputs, or #styles.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0006": {
+    "class": "SEDBase",
+    "rule": "Every colon-delimited segment of a reference must resolve to an existing element.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{location}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0007": {
+    "class": "SEDBase",
+    "rule": "A reference must not target an AbstractOutput, or anything contained in one.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' targets an output; outputs may never be used as input.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0008": {
+    "class": "SEDBase",
+    "rule": "A dot-accessor in a reference must be one the target declares valid.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses accessor '{subvalue}', which is not a valid output of its target.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0009": {
+    "class": "SEDBase",
+    "rule": "A reference must not apply more bracket indices than its target has dimensions.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' applies {count} indices, but its target has only {expected-count} dimension(s).",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0010": {
+    "class": "SEDBase",
+    "rule": "A label index in a reference must name one of the labels of the dimension it indexes.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses label {subvalue}, which is not one of: {allowed}.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0011": {
+    "class": "SEDBase",
+    "rule": "An integer or range index in a reference must fall within the size of the dimension it indexes.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses index {subvalue}, outside the dimension's valid range {min}..{max}.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0012": {
+    "class": "SEDBase",
+    "rule": "A bracket index into a constant must match the structure of that constant's literal value.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' indexes constant '{resolved-value}' with {subvalue}, which that value does not contain.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0013": {
+    "class": "SEDBase",
+    "rule": "A reference to a Repeat's subTasks, its .range/.index outputs, or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat).",
+    "message": "{class} '{id}' references '{value}', which lies inside Repeat '{resolved-value}'; only that Repeat's own subTasks may reference into it.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0014": {
+    "class": "SEDBase",
+    "rule": "An integer or range index into a dimension whose size is sourced as runtime and documents a min should warn when the index requires more entries than min guarantees.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses index {subvalue}, which might not exist - this dimension is only guaranteed to have at least {min} entries at runtime.",
+    "severity": "warning",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0015": {
+    "class": "SEDBase",
+    "rule": "A reference required to resolve to a scalar value must apply enough non-range indices to reduce its target's shape to zero remaining dimensions.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' must resolve to a {expected-type}, but its target still has {count} dimension(s) remaining after indexing - only a non-range index removes a dimension, so a range anywhere in the chain leaves it in place.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0000": {
+    "class": "SEDDocument",
+    "rule": "The element fails a JSON Schema constraint attributable to SEDDocument that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0001": {
+    "class": "SEDDocument",
+    "rule": "The version attribute of a SEDDocument is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0002": {
+    "class": "SEDDocument",
+    "rule": "The version attribute of a SEDDocument must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0003": {
+    "class": "SEDDocument",
+    "rule": "The version attribute of a SEDDocument must match the format v#.#.# (major.minor.patch).",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required format 'v#.#.#'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0005": {
+    "class": "SEDDocument",
+    "rule": "The constants attribute of a SEDDocument must be an object whose values are AnyValueOrRef.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AnyValueOrRef.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0006": {
+    "class": "SEDDocument",
+    "rule": "The tasks attribute of a SEDDocument must be an object whose values are AbstractTask.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AbstractTask.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0007": {
+    "class": "SEDDocument",
+    "rule": "The outputs attribute of a SEDDocument must be an object whose values are AbstractOutput.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AbstractOutput.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0008": {
+    "class": "SEDDocument",
+    "rule": "The styles attribute of a SEDDocument must be an object whose values are Style.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are Style.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SEDDocument-0009": {
+    "class": "SEDDocument",
+    "rule": "For every namespace prefix used anywhere in the document, SEDDocument must declare a <prefix>@version attribute.",
+    "message": "Namespace '{prefix}' is used at '{location}', but the document does not declare '{prefix}@version'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0010": {
+    "class": "SEDDocument",
+    "rule": "A <prefix>@version attribute should not be declared for a namespace the document never uses.",
+    "message": "The document declares '{attr}', but namespace '{prefix}' is not used anywhere.",
+    "severity": "warning",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0011": {
+    "class": "SEDDocument",
+    "rule": "The version of a SEDDocument should not be newer than the newest document version this library knows.",
+    "message": "Document version '{value}' is newer than the newest version this library supports ('{max}'); newer features may be reported as errors.",
+    "severity": "warning",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0012": {
+    "class": "SEDDocument",
+    "rule": "No JSON object in a SED2 document may contain the same key more than once.",
+    "message": "Key '{attr}' appears more than once at '{location}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0013": {
+    "class": "SEDDocument",
+    "rule": "A constant may only reference constants that appear before it in the constants dictionary.",
+    "message": "Constant '{attr}' references '{value}', which is not an earlier constant.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDDocument-0014": {
+    "class": "SEDDocument",
+    "rule": "An unregistered namespace's <prefix>@version attribute must match the format v#.#.# (major.minor.patch).",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required format 'v#.#.#'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Scatter-0000": {
+    "class": "Scatter",
+    "rule": "The element fails a JSON Schema constraint attributable to Scatter that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Scatter-0001": {
+    "class": "Scatter",
+    "rule": "The subTasks attribute of a Scatter is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Scatter-0003": {
+    "class": "Scatter",
+    "rule": "The _type attribute of a Scatter must be \"scatter\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0000": {
+    "class": "Span",
+    "rule": "The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0001": {
+    "class": "Span",
+    "rule": "The start attribute of a Span is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0002": {
+    "class": "Span",
+    "rule": "When the value of start of a Span is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0003": {
+    "class": "Span",
+    "rule": "When the value of start of a Span is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Span-0004": {
+    "class": "Span",
+    "rule": "The end attribute of a Span is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0005": {
+    "class": "Span",
+    "rule": "When the value of end of a Span is provided directly, it must be a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Span-0006": {
+    "class": "Span",
+    "rule": "When the value of end of a Span is a reference, it must be a reference to a number.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Span-0007": {
+    "class": "Span",
+    "rule": "The _type attribute of a Span must be \"span\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0000": {
+    "class": "SteadyState",
+    "rule": "The element fails a JSON Schema constraint attributable to SteadyState that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0001": {
+    "class": "SteadyState",
+    "rule": "The model attribute of a SteadyState is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0002": {
+    "class": "SteadyState",
+    "rule": "The outputVariables attribute of a SteadyState is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0003": {
+    "class": "SteadyState",
+    "rule": "The _type attribute of a SteadyState must be \"steadyState\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0004": {
+    "class": "SteadyState",
+    "rule": "The independentVariable attribute of a SteadyState, if present, must be a string.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0005": {
+    "class": "SteadyState",
+    "rule": "When the value of outputModel of a SteadyState is provided directly, it must be a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0006": {
+    "class": "SteadyState",
+    "rule": "When the value of outputModel of a SteadyState is a reference, it must be a reference to a boolean.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "StringFormation-0000": {
+    "class": "StringFormation",
+    "rule": "The element fails a JSON Schema constraint attributable to StringFormation that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "StringFormation-0001": {
+    "class": "StringFormation",
+    "rule": "The concatenate attribute of a StringFormation is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "StringFormation-0002": {
+    "class": "StringFormation",
+    "rule": "When the value of concatenate of a StringFormation is provided directly, it must be an array of values.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of values.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "StringFormation-0003": {
+    "class": "StringFormation",
+    "rule": "When the value of concatenate of a StringFormation is a reference, it must be a reference to an array of values.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not an array of values.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "StringFormation-0004": {
+    "class": "StringFormation",
+    "rule": "The _type attribute of a StringFormation must be \"stringFormation\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Style-0000": {
+    "class": "Style",
+    "rule": "The element fails a JSON Schema constraint attributable to Style that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0000": {
+    "class": "Surface",
+    "rule": "The element fails a JSON Schema constraint attributable to Surface that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0001": {
+    "class": "Surface",
+    "rule": "The surfaceType attribute of a Surface is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0002": {
+    "class": "Surface",
+    "rule": "When the value of surfaceType of a Surface is provided directly, it must be one of 'parametricCurve', 'surfaceMesh', 'surfaceContour', 'contour', 'heatMap', 'stackedCurves', 'bar'.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not one of {allowed}.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0003": {
+    "class": "Surface",
+    "rule": "When the value of surfaceType of a Surface is a reference, it must be a reference to a valid SurfaceType value.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a valid SurfaceType value.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "Surface-0004": {
+    "class": "Surface",
+    "rule": "The x attribute of a Surface is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0005": {
+    "class": "Surface",
+    "rule": "The x attribute of a Surface, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0006": {
+    "class": "Surface",
+    "rule": "The y attribute of a Surface is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0007": {
+    "class": "Surface",
+    "rule": "The y attribute of a Surface, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0008": {
+    "class": "Surface",
+    "rule": "The z attribute of a Surface is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0009": {
+    "class": "Surface",
+    "rule": "The z attribute of a Surface, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0010": {
+    "class": "Surface",
+    "rule": "The style attribute of a Surface, if present, must be a reference (a string starting with '#').",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0011": {
+    "class": "Surface",
+    "rule": "When the value of order of a Surface is provided directly, it must be a non-negative integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a non-negative integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Surface-0012": {
+    "class": "Surface",
+    "rule": "When the value of order of a Surface is a reference, it must be a reference to a non-negative integer.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a non-negative integer.",
+    "severity": "error",
+    "status": "active",
+    "check": "ref-type"
+  },
+  "TaskParameter-0000": {
+    "class": "TaskParameter",
+    "rule": "The element fails a JSON Schema constraint attributable to TaskParameter that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TaskParameter-0001": {
+    "class": "TaskParameter",
+    "rule": "The value attribute of a TaskParameter is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Types-0001": {
+    "class": "Types",
+    "rule": "A math expression must be a well-formed expression under the SED2 infix grammar.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' could not be parsed: '{expr}'. {parse-message}",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0002": {
+    "class": "Types",
+    "rule": "Every function called in a math expression must be defined in the predefined-functions registry.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' calls unknown function '{function}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0003": {
+    "class": "Types",
+    "rule": "Every function called in a math expression must be given a number of arguments its registry entry allows.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' calls '{function}' with {count} arguments; it accepts {expected-count}.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0004": {
+    "class": "Types",
+    "rule": "Every bare identifier in a math expression must be a predefined constant.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' uses '{value}', which is not a predefined constant; use a #reference for document values.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "WorkingAlgorithm-0000": {
+    "class": "WorkingAlgorithm",
+    "rule": "The element fails a JSON Schema constraint attributable to WorkingAlgorithm that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "WorkingAlgorithm-0001": {
+    "class": "WorkingAlgorithm",
+    "rule": "The algorithm attribute of a WorkingAlgorithm is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  }
+}
