@@ -85,6 +85,19 @@ jobs:
         with:
           python-version: "3.11"
 
+      # The generator process itself (not just the libraries it writes)
+      # imports these: emit_python.py's own leaf_value_ok() uses jsonschema
+      # to pre-check schema-derivable fixtures at generate time, and
+      # gen_fixtures.py verifies every candidate fixture by importing the
+      # freshly-generated package in-process (sys.path, not pip install) and
+      # calling its real validate() - which pulls in the generated
+      # _runtime.py's own jsonschema import, and, for any is_math field,
+      # math_ast.py's antlr4 import too. Versions match pyproject.toml's own
+      # dependency list in emit_python.py (kept in sync there - see
+      # Design.md's Toolchain section on why antlr4's version is pinned).
+      - name: Install the generator's own runtime dependencies
+        run: pip install "jsonschema>=4.18" "antlr4-python3-runtime==4.13.2"
+
       # -- test-specsheets/ -> test-specsheets/generated/  (Phase 1, proven) --
       # A failure here is a real regression - no continue-on-error, this is
       # allowed to fail the job.
