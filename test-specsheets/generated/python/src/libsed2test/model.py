@@ -92,7 +92,7 @@ class UnknownChoiceInline(SedBase):
 
 class TestDocument(SedBase):
     """Generated from test-specsheets/core/TestDocument/."""
-    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget', is_math=False), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False)]
+    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'version'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -179,9 +179,8 @@ class TestDocument(SedBase):
             out.append((self._reports.get(i), '/reports/' + i))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['widgets', 'reports']
 
     def _own_json_value(self):
         d = {}
@@ -200,7 +199,7 @@ class TestDocument(SedBase):
 
 class FancyWidget(SedBase):
     """Generated from test-specsheets/tasks/FancyWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline', is_math=False), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'fancyWidget'
     _TYPE_RULE_ID = 'FancyWidget-0002'
@@ -335,9 +334,8 @@ class FancyWidget(SedBase):
             out.append((item, '/notes/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['choices']
 
     def _own_json_value(self):
         d = {}
@@ -360,7 +358,7 @@ class FancyWidget(SedBase):
 
 class SimpleWidget(SedBase):
     """Generated from test-specsheets/tasks/SimpleWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'simpleWidget'
     _TYPE_RULE_ID = 'SimpleWidget-0002'
@@ -368,7 +366,7 @@ class SimpleWidget(SedBase):
     _NAME_RULE_ID = 'TestBase-0001'
     _DESC_RULE_ID = None
     _BASE_CATCHALL = 'TestBase-0000'
-    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]}
+    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]}
     _NAMESPACE_CATCHALL = {'acme': 'SimpleWidget-acme-0000'}
     _KNOWN_NAMESPACE_PREFIXES = {'acme'}
 
@@ -446,9 +444,8 @@ class SimpleWidget(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -468,7 +465,7 @@ class SimpleWidget(SedBase):
 
 class SimpleReport(SedBase):
     """Generated from test-specsheets/outputs/SimpleReport/."""
-    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'source'}
     _TYPE_CONST = 'simpleReport'
     _TYPE_RULE_ID = 'SimpleReport-0002'
@@ -530,9 +527,8 @@ class SimpleReport(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -551,7 +547,7 @@ class SimpleReport(SedBase):
 
 class Choice(SedBase):
     """Generated from test-specsheets/auxiliary/Choice/."""
-    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'choice'
     _TYPE_RULE_ID = 'Choice-0002'
@@ -600,9 +596,8 @@ class Choice(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -620,7 +615,7 @@ class Choice(SedBase):
 
 class Note(SedBase):
     """Generated from test-specsheets/auxiliary/Note/."""
-    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'text'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -666,9 +661,8 @@ class Note(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -685,7 +679,7 @@ class Note(SedBase):
 
 class WeightedChoice(SedBase):
     """Generated from test-specsheets/auxiliary/WeightedChoice/."""
-    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'weight'}
     _TYPE_CONST = 'weightedChoice'
     _TYPE_RULE_ID = 'WeightedChoice-0002'
@@ -755,9 +749,8 @@ class WeightedChoice(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -776,7 +769,7 @@ class WeightedChoice(SedBase):
 
 class AcmeWidget(SedBase):
     """Generated from test-specsheets/tasks/AcmeWidget/."""
-    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'acme@acmeLevel'}
     _TYPE_CONST = 'acme@acmeWidget'
     _TYPE_RULE_ID = 'acme-AcmeWidget-0002'
@@ -846,9 +839,8 @@ class AcmeWidget(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -960,7 +952,7 @@ def _load_fields(obj, raw: dict):
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']
     for spec in obj._FIELDS:
-        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict'):
+        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict', 'ref-class', 'ref-discriminator'):
             continue
         v = raw[spec.name]
         if spec.kind in ('StringOrRef', 'NumberOrRef', 'IntegerOrRef', 'BooleanOrRef', 'ArrayOrRef', 'DictOrRef'):
@@ -1052,6 +1044,29 @@ def _load_fields(obj, raw: dict):
                         'attr': spec.name, 'class': obj.__class__.__name__,
                         'id': obj._own_id_for_message(), 'value': item_id}))
                 coll.add(item_id, item_value)
+        elif spec.kind in ('ref-class', 'ref-discriminator') and spec.name in raw:
+            # A single nested SedBase-derived child (see emit_model_py's own
+            # child_fields/_child_accessors docstring) - 'ref-class' constructs
+            # a fixed target class directly; 'ref-discriminator' dispatches on
+            # the raw JSON's own _type via the matching parse_* function, same
+            # as a dict-kind field's own discriminated items above.
+            raw_value = raw[spec.name]
+            if not isinstance(raw_value, dict):
+                rid = spec.rule_id or spec.origin_catchall
+                obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                    'attr': spec.name, 'class': obj.__class__.__name__,
+                    'id': obj._own_id_for_message(), 'value': raw_value}))
+                continue
+            if spec.kind == 'ref-discriminator':
+                dispatch = globals()['parse_' + spec.item_discriminator]
+                child, problem = dispatch(raw_value)
+                if problem is not None:
+                    obj._load_problems.append(problem)
+            else:
+                child = globals()[spec.item_class]()
+                _load_fields(child, raw_value)
+            if child is not None:
+                setattr(obj, '_' + _pyname(spec.name), child)
 
 
 def _pyname(name):

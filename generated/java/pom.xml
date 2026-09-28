@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.sed2test</groupId>
-  <artifactId>libsed2test</artifactId>
+  <groupId>org.sed-ml</groupId>
+  <artifactId>libsed2j</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
-  <description>Generated SED2 test-fixture library (Java target) - exercises the SED2 generator against test-specsheets/, see Design.md's Testing section.</description>
+  <description>Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py.</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>

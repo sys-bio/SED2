@@ -84,6 +84,13 @@ class FieldType:
     minimum: Optional[float] = None
     exclusive_minimum: Optional[float] = None
     pattern: Optional[str] = None
+    min_length: Optional[int] = None  # core/Types' URI leaf: "minLength": 1
+    # A fixed set of legal string values (core/Types leaf defs like
+    # CurveType/ScaleType/SurfaceType/DistributionURI - "type": "string",
+    # "enum": [...]) - only ever set for kind == "string" or one of the
+    # *OrRef kinds whose value-side is itself one of those enum-constrained
+    # leaves (see _orref_value_kind's one-level-of-$ref resolution).
+    enum: Optional[tuple] = None
 
 
 @dataclass
@@ -100,6 +107,15 @@ class Field:
     # note: "the schema type every math-bearing attribute uses" is StringOrRef, but
     # not every StringOrRef field is math-bearing, so this needs its own marker
     # rather than being inferred from the field's declared type)
+    ref_type_rule_id: Optional[str] = None
+    # core-spec.md Section 8's "x-rule-id is a single rule-ID string, or an
+    # array of them when more than one rule governs the same property (most
+    # commonly an OrRef field's separate direct-value and reference-form
+    # rules)" - the second element (Design.md's Validation section: "the
+    # formulaic 'if a reference, must resolve to type X' rules" - see
+    # _check_ref_type in emit_python.py's RUNTIME), split out here so
+    # `rule_id` itself stays a single string throughout - see _flatten_object
+    # below for where the split actually happens.
 
 
 @dataclass
@@ -131,6 +147,12 @@ class FlatClass:
     namespace_catchalls: dict = field(default_factory=dict)  # prefix -> "<Class>-<ns>-0000"
     is_document: bool = False
     namespace: Optional[str] = None  # set when this whole class is a namespace new/ branch
+    # core-spec.md Section 8's per-class outputs.json envelope (the raw
+    # {"outputs": {"[id]": {...}, "[id].model": {...}, ...}} dict), when this
+    # class's own Data Sheet folder has one - every concrete tasks/ class
+    # does; abstract/mixin classes and every non-tasks/ category class don't
+    # (see Design.md's Validation section, SEDBase-0008 through -0015).
+    outputs_json: Optional[dict] = None
 
     @property
     def own_catchall(self) -> str:
@@ -248,7 +270,7 @@ class _Loader:
 
     def _load_class_dir(self, category: str, class_name: str, version_dir: str):
         entry = {"dir": version_dir, "category": category, "schema": None,
-                 "common": None, "inline": None}
+                 "common": None, "inline": None, "outputs": None}
         schema_path = os.path.join(version_dir, "schema.json")
         if os.path.isfile(schema_path):
             entry["schema"] = read_json(schema_path)
@@ -261,6 +283,17 @@ class _Loader:
         if os.path.isfile(inline_path):
             entry["inline"] = read_json(inline_path)
             entry["inline_path"] = inline_path
+        # core-spec.md Section 8's "Task output shapes (outputs.json)" - every
+        # concrete tasks/ class (one with its own _type) carries one of
+        # these, machine-describing what each output suffix ([id], [id].model,
+        # [id].strings, [id].aggregates, ...) resolves to. Abstract/mixin
+        # classes (AbstractSimulation, Repeat, ...) carry none - nothing is
+        # ever instantiated as one directly, so there's no "outputs.json" to
+        # even find here, matching FlatClass.outputs_json's own None default.
+        outputs_path = os.path.join(version_dir, "outputs.json")
+        if os.path.isfile(outputs_path):
+            entry["outputs"] = read_json(outputs_path)
+            entry["outputs_path"] = outputs_path
         self.class_dirs[class_name] = entry
         self._load_rules(version_dir)
 
@@ -419,43 +452,64 @@ class _Composer:
         _rpath, rfrag = _resolve_ref_file(aref, from_file, self.spec_root)
         return rfrag.rsplit("/", 1)[-1] == "SIdRef"
 
-    def _orref_value_kind(self, alt: dict) -> Optional[str]:
+    def _orref_value_kind(self, alt: dict, from_file: str) -> tuple:
         """Maps the non-reference side of an OrRef anyOf to one of the OrRef
-        FieldType kinds emit_python.py knows how to generate accessors for.
-        Best-effort: a value shape this doesn't recognize (a further $ref,
-        an exotic combinator) returns None and the caller falls back."""
-        t = alt.get("type")
-        return {
+        FieldType kinds emit_python.py knows how to generate accessors for,
+        returning (kind, resolved_schema) - resolved_schema is `alt` itself
+        for an inline shape, or the one-level-deep $ref target for a value
+        side like Curve.curveType's CurveType (a core/Types leaf def: plain
+        "type": "string", "enum": [...] - the enum-typed *OrRef family isn't
+        a further OrRef itself, just one indirection away from an inline
+        {"type": "string", ...} shape, so one level of $ref-following is
+        enough; this doesn't recurse). Best-effort: a value shape this
+        doesn't recognize (an exotic combinator, a $ref to something that
+        still isn't a plain typed leaf) returns (None, alt)."""
+        if "type" not in alt and "$ref" in alt:
+            rpath, rfrag = _resolve_ref_file(alt["$ref"], from_file, self.spec_root)
+            target_doc = self._load_doc(rpath)
+            resolved = _defs_lookup(target_doc, rfrag)
+        else:
+            resolved = alt
+        t = resolved.get("type")
+        kind = {
             "string": "StringOrRef", "number": "NumberOrRef", "integer": "IntegerOrRef",
             "boolean": "BooleanOrRef", "array": "ArrayOrRef", "object": "DictOrRef",
         }.get(t)
+        return kind, resolved
 
     def _orref_shape(self, alts: list, from_file: str) -> Optional[FieldType]:
         """Recognizes Design.md's Classes-section OrRef pattern generically:
         anyOf of [some literal/restricted-value shape, a reference to
         SIdRef] - in EITHER order - covering not just the two named
         core/Types defs (StringOrRef, NumberOrRef) but the whole family
-        (IntegerOrRef, PositiveIntegerOrRef, BooleanOrRef, URIOrRef, ...)
-        and inline ad-hoc ones the real spec also uses (AbstractCurve.order/
-        .yAxis, Repeat.outputVariableMap) - none of which were in
-        test-specsheets/, so Phase 1 never had to generalize this. Numeric
-        bounds/pattern on the value side are carried through; an enum or a
-        nested $ref on the value side is accepted structurally (right JSON
-        type) but its own finer constraint isn't re-derived here."""
+        (IntegerOrRef, PositiveIntegerOrRef, BooleanOrRef, URIOrRef, ...),
+        inline ad-hoc ones the real spec also uses (AbstractCurve.order/
+        .yAxis, Repeat.outputVariableMap), AND the enum-constrained leaves
+        one $ref away (Curve.curveType -> CurveType, Axis.scale's own
+        ScaleTypeOrRef -> ScaleType, Surface.surfaceType -> SurfaceType,
+        DrawFromDistribution's *OrRef -> DistributionURI) - see
+        _orref_value_kind's one-level-of-$ref resolution. Numeric bounds/
+        pattern/enum on the (possibly resolved) value side are carried
+        through; anything this still doesn't recognize is accepted
+        structurally (right JSON type) but its own finer constraint isn't
+        re-derived here."""
         if len(alts) != 2:
             return None
         for i in (0, 1):
             value_alt, ref_alt = alts[i], alts[1 - i]
             if not self._is_sidref_alt(ref_alt, from_file):
                 continue
-            kind = self._orref_value_kind(value_alt)
+            kind, resolved = self._orref_value_kind(value_alt, from_file)
             if kind is None:
                 continue
+            enum = resolved.get("enum")
             return FieldType(
                 kind=kind,
-                minimum=value_alt.get("minimum"),
-                exclusive_minimum=value_alt.get("exclusiveMinimum"),
-                pattern=value_alt.get("pattern") if kind == "StringOrRef" else None,
+                minimum=resolved.get("minimum"),
+                exclusive_minimum=resolved.get("exclusiveMinimum"),
+                pattern=resolved.get("pattern") if kind == "StringOrRef" else None,
+                min_length=resolved.get("minLength") if kind == "StringOrRef" else None,
+                enum=tuple(enum) if enum else None,
             )
         return None
 
@@ -573,6 +627,10 @@ class _Composer:
             ft.exclusive_minimum = prop_schema["exclusiveMinimum"]
         if "pattern" in prop_schema:
             ft.pattern = prop_schema["pattern"]
+        if "minLength" in prop_schema:
+            ft.min_length = prop_schema["minLength"]
+        if "enum" in prop_schema:
+            ft.enum = tuple(prop_schema["enum"])
         return ft
 
     def _flatten_object(self, doc: dict, doc_path: str, origin_class: str) -> list[Field]:
@@ -587,14 +645,29 @@ class _Composer:
             if pname == "_type":
                 continue
             ftype = self._classify_type(pschema, doc_path)
+            # core-spec.md Section 8: "x-rule-id is a single rule-ID string,
+            # or an array of them when more than one rule governs the same
+            # property (most commonly an OrRef field's separate direct-value
+            # and reference-form rules)". Split here so every OTHER reader
+            # of Field.rule_id (schema-pass error mapping, required-field
+            # messages, ...) only ever sees a single rule id, never a raw
+            # (unhashable, un-formattable) list.
+            raw_rule_id = pschema.get("x-rule-id")
+            if isinstance(raw_rule_id, list):
+                rule_id = raw_rule_id[0] if raw_rule_id else None
+                ref_type_rule_id = raw_rule_id[1] if len(raw_rule_id) > 1 else None
+            else:
+                rule_id = raw_rule_id
+                ref_type_rule_id = None
             fields.append(Field(
                 name=pname,
                 type=ftype,
                 required=pname in required,
-                rule_id=pschema.get("x-rule-id"),
+                rule_id=rule_id,
                 required_rule_id=required_rule_ids.get(pname),
                 origin_class=origin_class,
                 is_math=bool(pschema.get("x-math", False)),
+                ref_type_rule_id=ref_type_rule_id,
             ))
         return fields
 
@@ -651,6 +724,7 @@ class _Composer:
                 type_rule_id=type_rule_id,
                 discriminator=branch_of.get(name),
                 is_document=(name == self.document_class_guess()),
+                outputs_json=entry.get("outputs"),
             )
             fc.fields = self._flatten_allof_chain(doc, path, name)
             self.classes[name] = fc
@@ -670,6 +744,7 @@ class _Composer:
                 for d in self.discriminators.values():
                     if type_const in d.branches and d.branches[type_const].namespace == prefix:
                         disc_name = d.name
+                outputs_path = os.path.join(version_dir, "outputs.json")
                 fc = FlatClass(
                     name=class_name,
                     category=category,
@@ -678,6 +753,7 @@ class _Composer:
                     type_rule_id=type_rule_id,
                     discriminator=disc_name,
                     namespace=prefix,
+                    outputs_json=read_json(outputs_path) if os.path.isfile(outputs_path) else None,
                 )
                 fc.fields = self._flatten_allof_chain(doc, schema_path, class_name)
                 self.classes[class_name] = fc

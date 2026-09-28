@@ -132,7 +132,14 @@ jobs:
             --out "$MAIN_GEN_OUT" \
             --doc-class SEDDocument \
             --base-mixin SEDBase \
-            --lang python,java,cpp
+            --lang python,java,cpp \
+            --python-package libsed2 \
+            --python-description "Generated SED2 library (Python target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
+            --java-package org.sedml.libsed2 \
+            --java-group-id org.sed-ml \
+            --java-artifact-id libsed2j \
+            --java-description "Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
+            --cpp-namespace libsed2
 
       - name: Warn if the real-spec regenerate failed
         if: steps.regen_main.outcome == 'failure'

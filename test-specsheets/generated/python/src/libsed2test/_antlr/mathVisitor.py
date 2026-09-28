@@ -1,4 +1,4 @@
-# Generated from /home/runner/work/SED2/SED2/generator/math.g4 by ANTLR 4.13.2
+# Generated from /home/claude/sys-bio/sed2/generator/math.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .mathParser import mathParser

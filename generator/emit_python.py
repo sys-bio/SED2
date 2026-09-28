@@ -47,7 +47,14 @@ _ORREF_KINDS = ("StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "A
 _IMPLEMENTED_HANDWRITTEN_RULE_IDS = (
     "Types-0001", "Types-0002", "Types-0003", "Types-0004",
     "SEDBase-0005", "SEDBase-0006", "SEDBase-0007",
+    "SEDBase-0008", "SEDBase-0009", "SEDBase-0010", "SEDBase-0011", "SEDBase-0012",
+    "SEDBase-0013", "SEDBase-0014", "SEDBase-0015",
     "SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011", "SEDDocument-0013",
+    "AbstractTask-0003", "Repeat-0008", "Repeat-0009", "Repeat-0010", "LoopVariable-0004",
+    # SEDDocument-0012 (duplicate JSON keys) is deliberately NOT implemented -
+    # see SEDDocument-0012.md's own "Decided not to implement detection for
+    # this rule in v1" paragraph. Every fixture for it is a documentation-
+    # only stub, never expected to actually fire.
 )
 
 RUNTIME = r'''"""Shared runtime for the generated libsed2test package. GENERATED - do not
@@ -230,13 +237,25 @@ def get_sed_reference(document, parsed: ParsedReference):
     return current, prefix
 
 
-def _check_reference_field(value, *, document, class_name, id_value, attr, location) -> list:
-    """Shared per-type dispatcher for the reference-resolution rules
-    (SEDBase-0005 through -0007 so far - see Task #10's tracked scope for
-    -0008 through -0015, which need outputs.json and aren't implemented
-    yet). Called for every SIdRef/*OrRef-kind field whose value is a
-    reference (is_reference(value)); mirrors _check_math_field's shape and
-    local-import-to-avoid-circularity convention (see its own docstring)."""
+def _check_reference_field(value, *, document, class_name, id_value, attr, location,
+                            referrer=None, field_kind=None, ref_type_rule_id=None,
+                            expected_enum=None) -> list:
+    """Shared per-type dispatcher for every reference-resolution rule
+    (SEDBase-0005 through -0015, plus the formulaic ref-type rules that
+    piggyback on -0015's scalar-reduction check - Design.md's Validation
+    section, "the formulaic 'if a reference, must resolve to type X' rules
+    ... needing no per-rule authorship"). Called for every SIdRef/*OrRef/
+    any-kind field whose value is a reference (is_reference(value));
+    mirrors _check_math_field's shape and local-import-to-avoid-
+    circularity convention (see its own docstring). `referrer` is the
+    element carrying this reference (self, in _validate_own) - needed only
+    by SEDBase-0013's own containment-tree scoping check, so it's the one
+    argument every OTHER caller in this module besides _validate_own's own
+    two call sites can safely omit. `field_kind`/`ref_type_rule_id`/
+    `expected_enum` drive the ref-type dispatch at the very end and can
+    likewise be omitted wherever there's no field-level ref-type rule to
+    check (an "any"-kind AnyValueOrRef field, or a plain SIdRef field that
+    only ever had one rule id to begin with)."""
     try:
         from ._rules import sedbase_0005, sedbase_0006, sedbase_0007
     except ImportError:
@@ -256,6 +275,440 @@ def _check_reference_field(value, *, document, class_name, id_value, attr, locat
     problems = problems + sedbase_0007.check(parsed, **kwargs)
     resolved, resolved_prefix = get_sed_reference(document, parsed)
     problems = problems + sedbase_0006.check(parsed, resolved, resolved_prefix, **kwargs)
+    if resolved is None or parsed.collection == "outputs":
+        # Nothing further to check against - either the reference didn't
+        # resolve at all (SEDBase-0006 already reported it), or it targets
+        # an Output (SEDBase-0007 already reported it; core-spec.md's
+        # Outputs are never a data SOURCE, so there's no "shape" to check
+        # an accessor/index chain against in the first place).
+        return problems
+    if parsed.collection != "constants":
+        # A constants target is a raw JSON value (IdKeyedCollection stores
+        # any-dict entries as-is, never dispatched to a SedBase instance -
+        # see this module's own any-dict handling notes elsewhere), so
+        # there's no containment ancestry to walk and SEDBase-0013's own
+        # Repeat-scoping concept doesn't apply to it at all.
+        problems = problems + _check_repeat_scoping(
+            referrer, resolved, parsed, class_name=class_name, id_value=id_value, location=location, value=value)
+    if parsed.collection == "tasks":
+        # AbstractTask-0003's own chronological rule - only ever meaningful
+        # for a '#tasks:...' target (a constants target has no ordering
+        # concept beyond SEDDocument-0013's own separate constants-only
+        # check; core-spec.md Section 3 exempts Output/Style referrers
+        # entirely, which _check_task_order detects on its own via
+        # _task_chain(referrer, ...) returning None for them).
+        problems = problems + _check_task_order(
+            referrer, resolved, document, parsed, class_name=class_name, id_value=id_value,
+            attr=attr, location=location, value=value)
+    problems = problems + _check_output_shape_and_ref_type(
+        parsed, resolved, document, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        value=value, field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+    return problems
+
+
+# ---- SEDBase-0013: Repeat subTasks/range/index/loopVariables scoping ------
+# Pure containment-tree ancestry, no outputs.json/shape involved at all -
+# see SEDBase-0013.md's own text and templates/python/rules/SEDBase-0013.py.
+
+def _nearest_repeat_ancestor(elem):
+    cur = elem
+    while cur is not None:
+        if cur._get_id_collection("subTasks") is not None:
+            return cur
+        cur = cur.get_parent()
+    return None
+
+
+def _is_ancestor_or_self(candidate, elem):
+    cur = elem
+    while cur is not None:
+        if cur is candidate:
+            return True
+        cur = cur.get_parent()
+    return False
+
+
+def _check_repeat_scoping(referrer, resolved, parsed, *, class_name, id_value, location, value) -> list:
+    try:
+        from ._rules import sedbase_0013
+    except ImportError:
+        return []
+    dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+    is_repeat_itself = resolved._get_id_collection("subTasks") is not None
+    if is_repeat_itself:
+        # A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
+        # is never scoped (SEDBase-0013.md's own clarifying paragraph -
+        # "#tasks:loop1 or #tasks:loop1.aggregates ... from anywhere");
+        # only its .range/.index outputs are, since those only have a
+        # value during one iteration.
+        target_repeat = resolved if dot_name in ("range", "index") else None
+    else:
+        parent = resolved.get_parent()
+        target_repeat = _nearest_repeat_ancestor(parent) if parent is not None else None
+    if target_repeat is None or referrer is None:
+        return []
+    if _is_ancestor_or_self(target_repeat, referrer):
+        return []
+    return sedbase_0013.check(
+        False, target_repeat._own_id_for_message(), value=value,
+        class_name=class_name, id_value=id_value, location=location, make_problem=make_problem)
+
+
+# ---- AbstractTask-0003: the chronological ("no forward reference") rule --
+# core-spec.md Section 3 - see AbstractTask-0003.md's own worked-out cases
+# and templates/python/rules/AbstractTask-0003.py.
+
+def _dict_membership(node):
+    """(owner, coll_name, node_id, index) if node's own parent stores node
+    directly under a 'tasks' or 'subTasks' id-keyed collection - the two
+    collection kinds the chronological rule cares about (SEDDocument.tasks
+    itself, and a Repeat-family class's own subTasks) - else None. A
+    node stored under any OTHER id-keyed field (loopVariables,
+    aggregateOutputVariables, constants, outputs, styles, ...) doesn't
+    match here, which is exactly what lets _task_chain below collapse a
+    reference living in one of those fields down to its owning task's own
+    chronological position (see LoopVariable-0004.py's own docstring)."""
+    parent = node.get_parent()
+    if parent is None:
+        return None
+    for coll_name in ("tasks", "subTasks"):
+        coll = parent._get_id_collection(coll_name)
+        if coll is None:
+            continue
+        ids = list(coll.ids())
+        for idx, iid in enumerate(ids):
+            if coll.get(iid) is node:
+                return (parent, coll_name, iid, idx)
+    return None
+
+
+def _task_chain(elem, doc):
+    """The chain of dict-membership steps from SEDDocument.tasks down to
+    whichever tasks/subTasks entry directly contains `elem` (elem itself,
+    if elem IS such an entry) - outermost first, as a list of (id, index)
+    pairs. None if elem isn't reachable inside doc.tasks at all (an
+    Output/Style element, or doc itself) - core-spec.md Section 3: nothing
+    outside the tasks tree has a chronological position to compare."""
+    node = elem
+    chain = []
+    while node is not None and node is not doc:
+        m = _dict_membership(node)
+        if m is not None:
+            owner, coll_name, node_id, idx = m
+            chain.append((node_id, idx))
+            node = owner
+            continue
+        node = node.get_parent()
+    if not chain:
+        return None
+    chain.reverse()
+    return chain
+
+
+def _task_order_ok(rchain, tchain):
+    """AbstractTask-0003.md's own chronological comparison, walked level by
+    level (both chains are outermost-first): the first level where the two
+    chains name a DIFFERENT task-dict entry is the decisive one - the
+    target must be strictly earlier there ("a task appearing earlier in
+    the same tasks dictionary" / "an earlier sibling subTask", recursively
+    at whatever depth that turns out to be). If every level of the SHORTER
+    chain matches, the two chains share a task-lineage prefix:
+      - target chain no longer than referrer's: target names referrer's
+        own task, or an ancestor Repeat of it ("R itself, or any Repeat
+        enclosing R") - fine, UNLESS the two chains are the exact same
+        length (target IS referrer's own task - "a task never references
+        itself").
+      - target chain longer: target is a descendant subTask of referrer's
+        own task (Repeat-0008/-0009's own scenario: R's outputVariableMap/
+        aggregateOutputVariables referencing one of R's own subTasks) -
+        always fine, no ordering concept applies going downward."""
+    n = min(len(rchain), len(tchain))
+    for i in range(n):
+        rid, ridx = rchain[i]
+        tid, tidx = tchain[i]
+        if rid != tid:
+            return tidx < ridx
+    if len(tchain) <= len(rchain):
+        return len(tchain) < len(rchain)
+    return True
+
+
+def _check_task_order(referrer, resolved, document, parsed, *, class_name, id_value, attr, location, value) -> list:
+    try:
+        from ._rules import abstracttask_0003
+    except ImportError:
+        return []
+    if referrer is None or document is None:
+        return []
+    rchain = _task_chain(referrer, document)
+    if rchain is None:
+        # The referring element itself isn't inside SEDDocument.tasks at
+        # all (e.g. a Curve under outputs/ referencing a task) -
+        # core-spec.md Section 3: outputs always come chronologically
+        # after every task, so no ordering constraint applies to them.
+        return []
+    tchain = _task_chain(resolved, document)
+    if tchain is None:
+        return []
+    ok = _task_order_ok(rchain, tchain)
+    return abstracttask_0003.check(
+        ok, value=value, class_name=class_name, id_value=id_value,
+        attr=attr, location=location, make_problem=make_problem)
+
+
+# ---- Repeat-0008/-0009/-0010: a Repeat-family instance's own children ----
+# outputVariableMap/aggregateOutputVariables must stay scoped to that same
+# instance's own subTasks, and an aggregateOutputVariables entry may never
+# define appliedDimensions - see each rule's own templates/python/rules/
+# file. Detected by class SHAPE (_get_id_collection('subTasks') is not
+# None), not by name, so this applies uniformly to every Repeat-family
+# class (Loop/ParameterScan/Scatter in the real spec) without hardcoding
+# any of their names here.
+
+def _check_repeat_own_children(self) -> list:
+    try:
+        from ._rules import repeat_0008, repeat_0009, repeat_0010
+    except ImportError:
+        return []
+    if self._get_id_collection("subTasks") is None:
+        return []
+    document = self.get_document()
+
+    def _resolves_to_own_child(ref_value):
+        parsed = _parse_reference(ref_value)
+        resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
+        return resolved is not None and resolved.get_parent() is self
+
+    problems = []
+    ovm = self._values.get("outputVariableMap")
+    if isinstance(ovm, dict):
+        for key, entry_value in ovm.items():
+            if not is_reference(entry_value):
+                continue
+            if not _resolves_to_own_child(entry_value):
+                problems.extend(repeat_0008.check(
+                    False, value=entry_value, class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr=key,
+                    location=f"/outputVariableMap/{key}", make_problem=make_problem))
+    agg_coll = self._get_id_collection("aggregateOutputVariables")
+    if agg_coll is not None:
+        for entry_id in agg_coll.ids():
+            entry = agg_coll.get(entry_id)
+            entry_json = entry._own_json_value()
+            if "appliedDimensions" in entry_json:
+                problems.extend(repeat_0010.check(
+                    True, value=entry_json["appliedDimensions"], class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr="appliedDimensions",
+                    location=f"/aggregateOutputVariables/{entry_id}/appliedDimensions",
+                    make_problem=make_problem))
+            input_value = entry_json.get("input")
+            if input_value is not None and is_reference(input_value) and not _resolves_to_own_child(input_value):
+                problems.extend(repeat_0009.check(
+                    False, value=input_value, class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr="input",
+                    location=f"/aggregateOutputVariables/{entry_id}/input", make_problem=make_problem))
+    return problems
+
+
+# ---- LoopVariable-0004: subsequentValues stays scoped to the enclosing ---
+# Loop's own subTasks - same shape as Repeat-0008/-0009 above, but for the
+# one field a LoopVariable itself carries.
+
+def _check_loop_variable_scope(self) -> list:
+    try:
+        from ._rules import loopvariable_0004
+    except ImportError:
+        return []
+    if "subsequentValues" not in self._values:
+        return []
+    value = self._values["subsequentValues"]
+    if not is_reference(value):
+        return []
+    enclosing = self.get_parent()
+    if enclosing is None:
+        return []
+    document = self.get_document()
+    parsed = _parse_reference(value)
+    resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
+    ok = resolved is not None and resolved.get_parent() is enclosing
+    if ok:
+        return []
+    return loopvariable_0004.check(
+        False, value=value, id_value=self._own_id_for_message(),
+        location="/subsequentValues", make_problem=make_problem)
+
+
+# ---- SEDBase-0008 through -0012/-0014/-0015, plus the formulaic ref-type -
+# rules (Design.md's Validation section) - core-spec.md Section 8's
+# outputs.json-driven hasSubvalue()-style shape resolution, via
+# outputs_shape.py (imported lazily, mirroring _check_math_field's own
+# local-import convention).
+
+_SCALAR_ORREF_EXPECTED = {
+    "NumberOrRef": "number", "StringOrRef": "string",
+    "IntegerOrRef": "integer", "BooleanOrRef": "boolean",
+}
+# ArrayOrRef/DictOrRef deliberately excluded - SEDBase-0015.md's own text
+# only ever discusses a reference "required to resolve to a scalar value";
+# it has nothing to say about a reference that's SUPPOSED to stay shaped,
+# so there's no well-specified ref-type check to derive for those two kinds
+# here. (A handful of real fields use them - see Design.md's Validation
+# section note on this gap - left for future work rather than guessed at.)
+
+
+def _fmt_literal(value) -> str:
+    try:
+        return json.dumps(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _literal_matches_kind(value, field_kind, expected_enum):
+    """Only called once a constant's own literal value has already been
+    fully indexed down (index_into_literal) - a REAL value, not a
+    derived/declared type name, so enum membership can be checked exactly
+    here (unlike _ref_type_matches_declared below, for a task-output
+    target)."""
+    if field_kind == "NumberOrRef":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if field_kind == "IntegerOrRef":
+        return (isinstance(value, int) and not isinstance(value, bool)) or \
+               (isinstance(value, float) and value.is_integer())
+    if field_kind == "BooleanOrRef":
+        return isinstance(value, bool)
+    if field_kind == "StringOrRef":
+        if not isinstance(value, str):
+            return False
+        if expected_enum is not None:
+            return value in expected_enum
+        return True
+    return None
+
+
+def _ref_type_matches_declared(expected, actual_declared_type):
+    """A task-output target has no actual VALUE to type-check (nothing has
+    been simulated) - only outputs.json's own declared "type" for the
+    suffix entry (annotatedData/stringList; "model" never reaches here,
+    since it carries no "dimensions" and so never reduces to a scalar via
+    SEDBase-0015). Coarse by necessity: an annotatedData cell is always
+    treated as number-shaped, a stringList entry as string-shaped: enum
+    membership can never be verified this way (there is no literal value to
+    check it against), so an enum-constrained StringOrRef field referencing
+    a task output can only be checked at this coarse "string family" level,
+    never rejected on enum grounds."""
+    mapped = {"annotatedData": "number", "stringList": "string"}.get(actual_declared_type)
+    if mapped is None:
+        return None
+    return mapped == expected
+
+
+def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0012, *,
+                              class_name, id_value, attr, location, value,
+                              field_kind, ref_type_rule_id, expected_enum) -> list:
+    kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
+                  make_problem=make_problem, value=value)
+    dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+    if dot_name is not None:
+        # SEDBase-0008.md: "For a constants ... target, no dot-accessor is
+        # valid."
+        return list(sedbase_0008.check(False, dot_name, **kwargs))
+    from . import outputs_shape as _oshape
+    index_accessors = [v for k, v in parsed.accessors if k == "index"]
+    const_value = resolved
+    if isinstance(const_value, str) and is_reference(const_value):
+        # SEDBase-0012.md: "A constant whose value is itself a reference is
+        # followed first." One hop only - a constant-of-a-constant chain
+        # deeper than that isn't a documented case.
+        inner_parsed = _parse_reference(const_value)
+        inner_resolved, _ = get_sed_reference(document, inner_parsed)
+        const_value = inner_resolved
+    try:
+        final_value = _oshape.index_into_literal(const_value, index_accessors)
+    except _oshape.NotIndexable as e:
+        bad = e.args[0] if e.args else ""
+        return list(sedbase_0012.check(False, bad, _fmt_literal(const_value), **kwargs))
+    if ref_type_rule_id is None or field_kind not in _SCALAR_ORREF_EXPECTED:
+        return []
+    if _literal_matches_kind(final_value, field_kind, expected_enum) is False:
+        return [make_problem(
+            ref_type_rule_id, location, attr=attr, value=value,
+            **{"class": class_name, "id": id_value, "resolved-value": _fmt_literal(final_value)})]
+    return []
+
+
+def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, id_value, attr, location,
+                                      value, field_kind, ref_type_rule_id, expected_enum) -> list:
+    try:
+        from ._rules import sedbase_0008, sedbase_0009, sedbase_0010, sedbase_0011, sedbase_0012, sedbase_0014, sedbase_0015
+    except ImportError:
+        # This tree's own model.rules never defined SEDBase-0008 (a
+        # different spec tree with no outputs.json-shaped tasks/ vocabulary
+        # at all) - degrade to a no-op, matching every other handwritten-
+        # rule dispatcher's ImportError guard in this module.
+        return []
+
+    if parsed.collection == "constants":
+        return _check_constant_accessor(
+            parsed, resolved, document, sedbase_0008, sedbase_0012,
+            class_name=class_name, id_value=id_value, attr=attr, location=location, value=value,
+            field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+
+    kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
+                  make_problem=make_problem, value=value)
+    outputs_json = getattr(resolved, "_OUTPUTS_JSON", None)
+    if outputs_json is None:
+        # styles / outputs-collection-but-already-handled-above / a nested
+        # non-tasks/-class element reached via a tasks: path (LoopVariable,
+        # TaskParameter, ...) - SEDBase-0008.md's "For a constants,
+        # loopVariables, or styles target, no dot-accessor is valid"
+        # category. A bare reference (no accessor at all) is always fine
+        # for these - only a dot-accessor on top is invalid - and there's
+        # no outputs.json-driven shape to check brackets against either
+        # way, so this dispatcher goes no further for them.
+        dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+        if dot_name is None:
+            return []
+        return list(sedbase_0008.check(False, dot_name, **kwargs))
+
+    from . import outputs_shape as _oshape
+    depth = [0]
+
+    def shape_of(ref_string):
+        depth[0] += 1
+        if depth[0] > 25:
+            raise _oshape.NotStatic("shapeOf() recursion too deep")
+        parsed2 = _parse_reference(ref_string)
+        inner, _ = get_sed_reference(document, parsed2)
+        inner_outputs_json = getattr(inner, "_OUTPUTS_JSON", None) if inner is not None else None
+        if inner_outputs_json is None:
+            raise _oshape.NotStatic("shapeOf() target has no outputs.json")
+        inner_ok, _entry, _before, inner_after, _dot, _idx = _oshape.resolve_output(
+            inner_outputs_json, inner._own_json_value(), parsed2.accessors, shape_of)
+        if inner_ok is not True or inner_after is None:
+            raise _oshape.NotStatic("shapeOf() target shape not statically known")
+        return inner_after
+
+    ok, entry, dims_before, dims_after, dot_name, index_accessors = _oshape.resolve_output(
+        outputs_json, resolved._own_json_value(), parsed.accessors, shape_of)
+
+    problems = list(sedbase_0008.check(ok, dot_name, **kwargs))
+    if ok is not True:
+        return problems
+    problems += sedbase_0009.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0010.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0011.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0014.check(dims_before, index_accessors, **kwargs)
+
+    if ref_type_rule_id is not None and field_kind in _SCALAR_ORREF_EXPECTED:
+        expected = _SCALAR_ORREF_EXPECTED[field_kind]
+        problems += sedbase_0015.check(dims_after, expected, **kwargs)
+        if dims_after is not None and len(dims_after) == 0:
+            actual_declared = entry.get("type") if entry else None
+            if _ref_type_matches_declared(expected, actual_declared) is False:
+                problems.append(make_problem(
+                    ref_type_rule_id, location, attr=attr, value=value,
+                    **{"class": class_name, "id": id_value,
+                       "resolved-value": f"a {actual_declared} value"}))
     return problems
 
 
@@ -411,19 +864,52 @@ _LEAF_SCHEMAS = {
 }
 
 
-def leaf_schema_for(kind: str, minimum=None, exclusive_minimum=None, pattern=None) -> dict:
+def leaf_schema_for(kind: str, minimum=None, exclusive_minimum=None, pattern=None,
+                     min_length=None, enum=None) -> dict:
     base = dict(_LEAF_SCHEMAS[kind])
+    # minimum/exclusiveMinimum are numeric-only JSON Schema keywords - a
+    # no-op against a non-numeric instance (a reference string, for an
+    # *OrRef kind) per the JSON Schema spec, so bolting them on at the top
+    # level (sibling to "anyOf") is always safe.
     if minimum is not None:
         base = {**base, "minimum": minimum}
     if exclusive_minimum is not None:
         base = {**base, "exclusiveMinimum": exclusive_minimum}
-    if pattern is not None and kind == "string":
-        base = {**base, "pattern": pattern}
+    string_constraints = {}
+    if pattern is not None:
+        string_constraints["pattern"] = pattern
+    if min_length is not None:
+        string_constraints["minLength"] = min_length
+    if enum is not None:
+        string_constraints["enum"] = list(enum)
+    if string_constraints:
+        if kind == "StringOrRef":
+            # Unlike minimum/exclusiveMinimum above, pattern/minLength/enum
+            # are STRING-only keywords - and a StringOrRef's reference form
+            # is *also* a plain string, so bolting these on at the top level
+            # would incorrectly reject a perfectly valid reference too (it
+            # isn't a no-op the way a numeric keyword is against a string
+            # instance). Split explicitly into "the literal value, meeting
+            # these constraints" vs. "a reference-shaped string" instead of
+            # _LEAF_SCHEMAS["StringOrRef"]'s own single unconstrained
+            # {"type": "string"} branch.
+            base = {"anyOf": [
+                {"type": "string", **string_constraints},
+                {"type": "string", "pattern": SIDREF_PATTERN.pattern},
+            ]}
+        else:
+            # "string"/"SId"/"SIdRef" - never a reference alternative to
+            # worry about, so a direct bolt-on is fine (SId/SIdRef never
+            # actually carry these - _classify_type returns them without
+            # collecting further constraints - but handled generically
+            # rather than asserting that stays true).
+            base = {**base, **string_constraints}
     return base
 
 
-def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, pattern=None) -> bool:
-    schema = leaf_schema_for(kind, minimum, exclusive_minimum, pattern)
+def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, pattern=None,
+                   min_length=None, enum=None) -> bool:
+    schema = leaf_schema_for(kind, minimum, exclusive_minimum, pattern, min_length, enum)
     try:
         jsonschema.validate(value, schema)
         return True
@@ -434,12 +920,13 @@ def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, p
 class FieldSpec:
     __slots__ = ("name", "kind", "required", "rule_id", "required_rule_id",
                  "origin_catchall", "minimum", "exclusive_minimum", "pattern",
-                 "item_class", "item_discriminator", "is_math")
+                 "item_class", "item_discriminator", "is_math", "min_length",
+                 "enum", "ref_type_rule_id")
 
     def __init__(self, name, kind, required, rule_id, required_rule_id,
                  origin_catchall, minimum=None, exclusive_minimum=None,
                  pattern=None, item_class=None, item_discriminator=None,
-                 is_math=False):
+                 is_math=False, min_length=None, enum=None, ref_type_rule_id=None):
         self.name = name
         self.kind = kind
         self.required = required
@@ -452,6 +939,9 @@ class FieldSpec:
         self.item_class = item_class
         self.item_discriminator = item_discriminator
         self.is_math = is_math
+        self.min_length = min_length
+        self.enum = enum
+        self.ref_type_rule_id = ref_type_rule_id
 
 
 LEAF_KINDS = {"string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
@@ -490,6 +980,12 @@ class SedBase:
     # document... is called once, from SEDDocument's own validate()").
     _IS_DOCUMENT_CLASS: bool = False
     _MAX_KNOWN_DOCUMENT_VERSION: Optional[str] = None
+    # core-spec.md Section 8's per-class outputs.json envelope (see
+    # emit_model_py's own per-class attribute emission below) - None for
+    # every class except a concrete tasks/ one, matching FlatClass.
+    # outputs_json's own None default (Design.md's Validation section,
+    # SEDBase-0008 through -0015).
+    _OUTPUTS_JSON: Optional[dict] = None
     # The universal name/description mixin (TestBaseFields/SEDBaseFields)
     # isn't a per-class FieldSpec - its own rule IDs are set once, the same
     # on every concrete class, from the base mixin's own validation rules.
@@ -688,16 +1184,52 @@ class SedBase:
                 continue
             value = instance[spec.name]
             if spec.kind in LEAF_KINDS:
-                if not leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern):
+                if not leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern,
+                                      spec.min_length, spec.enum):
                     rid = spec.rule_id or spec.origin_catchall
-                    problems.append(make_problem(
-                        rid, "/" + spec.name, attr=spec.name,
-                        **{"class": self.__class__.__name__, "id": self._own_id_for_message(),
-                           "value": value}))
+                    extra = {"class": self.__class__.__name__, "id": self._own_id_for_message(),
+                             "value": value}
+                    if spec.enum is not None:
+                        # A rule fired from an enum-constrained leaf's own
+                        # message template may reference {allowed} (e.g.
+                        # Curve-0002/Surface's own curveType/surfaceType
+                        # rules) - harmless to always include, since
+                        # _fmt_message only substitutes placeholders the
+                        # template actually names.
+                        extra["allowed"] = ", ".join(repr(v) for v in spec.enum)
+                    problems.append(make_problem(rid, "/" + spec.name, attr=spec.name, **extra))
                 elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value):
                     problems.extend(_check_reference_field(
                         value, document=self.get_document(), class_name=self.__class__.__name__,
-                        id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+                        id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
+                        referrer=self, field_kind=spec.kind, ref_type_rule_id=spec.ref_type_rule_id,
+                        expected_enum=spec.enum))
+                elif spec.kind == "DictOrRef" and isinstance(value, dict):
+                    # The dict-literal branch of a DictOrRef field (e.g.
+                    # Repeat.outputVariableMap: an SId-keyed map of column
+                    # name -> SIdRef) - is_reference(value) above is False
+                    # for this whole-field-is-a-dict shape, so each entry
+                    # gets its OWN reference-resolution dispatch here
+                    # (SEDBase-0005 through -0015, same as any other
+                    # reference-capable field) rather than the field as a
+                    # single unit. ref_type_rule_id is deliberately omitted
+                    # (None) - the field's own ref_type_rule_id describes
+                    # what the WHOLE FIELD must resolve to when IT is a
+                    # reference (the other anyOf branch, handled above),
+                    # not what each entry's own target must be; no per-entry
+                    # expected type is declared for a DictOrRef's dict-form
+                    # (Design.md's Validation section note on this scope
+                    # limitation - see _SCALAR_ORREF_EXPECTED's own
+                    # docstring in this module).
+                    for key, entry_value in value.items():
+                        if is_reference(entry_value):
+                            problems.extend(_check_reference_field(
+                                entry_value, document=self.get_document(),
+                                class_name=self.__class__.__name__,
+                                id_value=self._own_id_for_message(), attr=spec.name,
+                                location=f"/{spec.name}/{key}",
+                                referrer=self, field_kind=spec.kind,
+                                ref_type_rule_id=None, expected_enum=None))
                 elif spec.is_math and isinstance(value, str):
                     problems.extend(_check_math_field(
                         value, class_name=self.__class__.__name__, id_value=self._own_id_for_message(),
@@ -712,13 +1244,56 @@ class SedBase:
                 # every *OrRef-kind field above.
                 problems.extend(_check_reference_field(
                     value, document=self.get_document(), class_name=self.__class__.__name__,
-                    id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+                    id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
+                    referrer=self, field_kind="any", ref_type_rule_id=None, expected_enum=None))
         if self._IS_DOCUMENT_CLASS:
             problems.extend(_check_namespace_usage_and_version(self))
             problems.extend(_check_constants_ordering(self))
+        # Repeat-0008/-0009/-0010 (own-subTasks scoping for a Repeat-family
+        # instance's outputVariableMap/aggregateOutputVariables) and
+        # LoopVariable-0004 (own-Loop scoping for subsequentValues) each
+        # internally no-op for every class they don't apply to (a cheap
+        # class-shape check, not a class-name check - see their own
+        # docstrings) - called unconditionally here, the same as every
+        # other per-instance handwritten check above.
+        problems.extend(_check_repeat_own_children(self))
+        problems.extend(_check_loop_variable_scope(self))
         return problems
 
+    def _id_collection_names(self) -> list:
+        """Every id-keyed collection field name THIS class declares (see
+        emit_model_py's own per-class emission) - the default here (empty)
+        covers every class with none (a leaf class with no dict/any-dict
+        field of its own, and every discriminator's own Unknown* holder,
+        which never overrides this). Used only by _own_id_for_message
+        below, which needs to search a PARENT's own collections for self -
+        _get_id_collection(name) already does the actual lookup once a
+        name is in hand, this just enumerates the names to try."""
+        return []
+
     def _own_id_for_message(self) -> str:
+        """This element's own SId, for a validation message's {id}
+        placeholder - Design.md's Classes section: id is implicit, the key
+        under which an element is stored in its owning collection, never a
+        field on the element itself (see spec.py's own field-flattening,
+        which never produces an 'id' FieldSpec). So this walks up to the
+        parent and searches every id-keyed collection IT declares for
+        whichever key maps to self - generic over every concrete class,
+        with no per-class override needed. Falls back to '?' for anything
+        genuinely id-less: the document root (no parent at all), an
+        array-item class (TaskParameter, WorkingAlgorithm, ...) stored
+        positionally rather than by id, or an unattached/standalone
+        instance no parent has claimed yet."""
+        parent = self.get_parent()
+        if parent is None:
+            return "?"
+        for name in parent._id_collection_names():
+            coll = parent._get_id_collection(name)
+            if coll is None:
+                continue
+            for iid in coll.ids():
+                if coll.get(iid) is self:
+                    return iid
         return "?"
 
     def _own_json_value(self) -> dict:
@@ -1137,6 +1712,644 @@ def to_string(node: ASTNode) -> str:
 '''
 
 
+# outputs.json expr/valid notation (core-spec.md Section 8) - parser,
+# evaluator, shape/hasSubvalue() resolver. Hand-authored (not per-class
+# generated data), same treatment as MATH_AST_PY above - written verbatim
+# into every generated Python package as outputs_shape.py, imported lazily
+# by _check_reference_field's own SEDBase-0008..-0015/ref-type dispatch
+# (see that function's docstring in RUNTIME above).
+OUTPUTS_SHAPE_PY = r'''"""outputs.json expr/valid notation (core-spec.md Section 8) - parser,
+evaluator, and shape/hasSubvalue() resolver, backing SEDBase-0008 through
+-0015 (Design.md's Validation section) and the formulaic ref-type rules
+that piggyback on SEDBase-0015's scalar-reduction check. GENERATED - do not
+hand-edit; regenerate via generator/generate.py.
+
+Design choice (documented, not silent): core-spec.md's own wording for this
+notation is "the generator... compil[es] it into real code in each target
+language... rather than shipping a small runtime interpreter". This module
+IS a small runtime interpreter - a deliberate, narrower reading of that
+sentence: the alternative (a bespoke Python function generated per
+outputs.json suffix entry, one per concrete tasks/ class) would multiply
+authorship effort by the number of suffix entries in the whole spec for no
+behavioral difference, since walking a handful-of-nodes AST against an
+in-memory dict costs nothing at validate() time. This mirrors the ONE other
+precedent already in this codebase for a small expression language:
+math_ast.py's ANTLR-generated grammar still gets walked by hand-written,
+non-per-field interpretation code in the Types-0002/-0003/-0004 rule files,
+not compiled into bespoke functions either. What core-spec.md's sentence
+does rule out, and what this module doesn't do, is re-deriving the
+notation's *grammar* independently per language - the notation itself is
+parsed exactly once, right here, the same "one canonical definition" the
+math grammar and the schema tree already get.
+"""
+from __future__ import annotations
+
+
+class NotStatic(Exception):
+    """Raised whenever an expr can't be evaluated against the target's own
+    literal fields - a reference where a literal was needed, a missing
+    attribute, an unresolvable shape dependency, a cycle/depth guard, and so
+    on. Every caller catches this and treats it as "the rule does not fire"
+    (SEDBase-0008 through -0011/-0014's own "only fires when computable"
+    language) rather than as an error."""
+
+
+# ---- lexer ------------------------------------------------------------
+
+def _tokenize(text: str) -> list:
+    toks = []
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch.isspace():
+            i += 1
+            continue
+        if ch == "=" and text[i:i + 2] == "==":
+            toks.append(("==", "==")); i += 2; continue
+        if ch in "+-!(),[].":
+            toks.append((ch, ch)); i += 1; continue
+        if ch.isdigit() or (ch == "." and i + 1 < n and text[i + 1].isdigit()):
+            j = i
+            while j < n and (text[j].isdigit() or text[j] == "."):
+                j += 1
+            toks.append(("NUMBER", text[i:j])); i = j; continue
+        if ch.isalpha() or ch == "_":
+            j = i
+            while j < n and (text[j].isalnum() or text[j] == "_"):
+                j += 1
+            word = text[i:j]
+            if word in ("true", "false"):
+                toks.append(("BOOL", word))
+            elif word in ("or", "if", "else"):
+                toks.append((word, word))
+            else:
+                toks.append(("IDENT", word))
+            i = j
+            continue
+        raise NotStatic(f"unexpected character {ch!r} in expr {text!r}")
+    toks.append(("EOF", ""))
+    return toks
+
+
+# ---- AST ----------------------------------------------------------------
+
+class Num:
+    __slots__ = ("value",)
+    def __init__(self, value): self.value = value
+
+class Bool:
+    __slots__ = ("value",)
+    def __init__(self, value): self.value = value
+
+class ArrayLit:
+    __slots__ = ("items",)
+    def __init__(self, items): self.items = items
+
+class Path:
+    __slots__ = ("names",)
+    def __init__(self, names): self.names = names
+
+class Call:
+    __slots__ = ("func", "args")
+    def __init__(self, func, args): self.func = func; self.args = args
+
+class UnaryNot:
+    __slots__ = ("operand",)
+    def __init__(self, operand): self.operand = operand
+
+class BinOp:
+    __slots__ = ("op", "left", "right")
+    def __init__(self, op, left, right): self.op = op; self.left = left; self.right = right
+
+class Conditional:
+    __slots__ = ("cond", "then", "orelse")
+    def __init__(self, cond, then, orelse): self.cond = cond; self.then = then; self.orelse = orelse
+
+
+_FUNCS = ("len", "keys", "shapeOf", "dim", "provided")
+
+
+class _Parser:
+    def __init__(self, toks):
+        self.toks = toks
+        self.i = 0
+
+    def _peek(self):
+        return self.toks[self.i]
+
+    def _eat(self, kind):
+        tok = self.toks[self.i]
+        if tok[0] != kind:
+            raise NotStatic(f"expected {kind}, got {tok}")
+        self.i += 1
+        return tok
+
+    def parse(self):
+        node = self._conditional()
+        self._eat("EOF")
+        return node
+
+    def _conditional(self):
+        node = self._or_expr()
+        if self._peek()[0] == "if":
+            self._eat("if")
+            cond = self._or_expr()
+            self._eat("else")
+            orelse = self._conditional()
+            return Conditional(cond, node, orelse)
+        return node
+
+    def _or_expr(self):
+        node = self._equality()
+        while self._peek()[0] == "or":
+            self._eat("or")
+            node = BinOp("or", node, self._equality())
+        return node
+
+    def _equality(self):
+        node = self._additive()
+        if self._peek()[0] == "==":
+            self._eat("==")
+            node = BinOp("==", node, self._additive())
+        return node
+
+    def _additive(self):
+        node = self._unary()
+        while self._peek()[0] in ("+", "-"):
+            op = self._eat(self._peek()[0])[0]
+            node = BinOp(op, node, self._unary())
+        return node
+
+    def _unary(self):
+        if self._peek()[0] == "!":
+            self._eat("!")
+            return UnaryNot(self._unary())
+        return self._primary()
+
+    def _primary(self):
+        kind, text = self._peek()
+        if kind == "NUMBER":
+            self._eat("NUMBER")
+            return Num(float(text) if "." in text else int(text))
+        if kind == "BOOL":
+            self._eat("BOOL")
+            return Bool(text == "true")
+        if kind == "[":
+            self._eat("[")
+            items = []
+            if self._peek()[0] != "]":
+                items.append(self._conditional())
+                while self._peek()[0] == ",":
+                    self._eat(","); items.append(self._conditional())
+            self._eat("]")
+            return ArrayLit(items)
+        if kind == "IDENT":
+            name = self._eat("IDENT")[1]
+            if self._peek()[0] == "(" and name in _FUNCS:
+                self._eat("(")
+                args = []
+                if self._peek()[0] != ")":
+                    args.append(self._conditional())
+                    while self._peek()[0] == ",":
+                        self._eat(","); args.append(self._conditional())
+                self._eat(")")
+                return Call(name, args)
+            names = [name]
+            while self._peek()[0] == ".":
+                self._eat("."); names.append(self._eat("IDENT")[1])
+            return Path(names)
+        raise NotStatic(f"unexpected token {self._peek()} in expr")
+
+
+_PARSE_CACHE: dict = {}
+
+
+def parse_expr(text: str):
+    node = _PARSE_CACHE.get(text)
+    if node is None:
+        node = _Parser(_tokenize(text)).parse()
+        _PARSE_CACHE[text] = node
+    return node
+
+
+# ---- scopes -------------------------------------------------------------
+
+class _OutermostSentinel:
+    def __repr__(self): return "OUTERMOST"
+
+
+OUTERMOST = _OutermostSentinel()
+
+
+class Scope:
+    """Top-level scope: bare identifiers resolve against a task's own raw
+    JSON field values (SedBase._own_json_value()) - core-spec.md: "A bare
+    identifier names one of the task's own attributes and evaluates to its
+    value"."""
+    __slots__ = ("fields",)
+    def __init__(self, fields): self.fields = fields
+
+    def lookup(self, name):
+        if name not in self.fields:
+            raise NotStatic(f"attribute {name!r} not provided")
+        return self.fields[name]
+
+    def provided(self, name):
+        return name in self.fields
+
+
+class RepeatScope:
+    """core-spec.md's repeat-entry scoping: bare identifiers resolve against
+    the CURRENT array entry's own fields, and `self` refers to the entry as
+    a whole."""
+    __slots__ = ("entry", "outer")
+    def __init__(self, entry, outer): self.entry = entry; self.outer = outer
+
+    def lookup(self, name):
+        if name == "self":
+            return self.entry
+        if not isinstance(self.entry, dict) or name not in self.entry:
+            raise NotStatic(f"attribute {name!r} not provided on repeat entry")
+        return self.entry[name]
+
+    def provided(self, name):
+        if name == "self":
+            return True
+        return isinstance(self.entry, dict) and name in self.entry
+
+
+# ---- evaluation -----------------------------------------------------------
+
+def _resolve_path(node, scope):
+    if node.names[0] == "outermost":
+        if len(node.names) != 1:
+            raise NotStatic("outermost is not a container")
+        return OUTERMOST
+    value = scope.lookup(node.names[0])
+    for seg in node.names[1:]:
+        if not isinstance(value, dict) or seg not in value:
+            raise NotStatic(f"attribute {'.'.join(node.names)!r} not provided")
+        value = value[seg]
+    return value
+
+
+def _is_provided(node, scope):
+    if not isinstance(node, Path):
+        raise NotStatic("provided() needs a bare identifier or dotted path")
+    if node.names[0] == "outermost":
+        return True
+    if len(node.names) == 1:
+        return scope.provided(node.names[0])
+    try:
+        value = scope.lookup(node.names[0])
+    except NotStatic:
+        return False
+    for seg in node.names[1:-1]:
+        if not isinstance(value, dict) or seg not in value:
+            return False
+        value = value[seg]
+    return isinstance(value, dict) and node.names[-1] in value
+
+
+def _fn_len(value):
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, dict):
+        # Range-family dispatch (core-spec.md): len(x.values) if
+        # provided(x.values) else x.numberOfSteps + 1 for NumericRange/
+        # ParameterRange; just len(x.values) for a bare Range. Covered
+        # generically by this shape-based dispatch rather than naming the
+        # discriminator consts explicitly. Anything else object-shaped is a
+        # plain SId-keyed map (outputVariableMap, aggregateOutputVariables,
+        # CreateDataBlock.data) - len() there just means key count, the
+        # same as keys(x)'s own array's length would be.
+        if "values" in value:
+            values = value["values"]
+            if isinstance(values, list):
+                return len(values)
+            raise NotStatic("values is not a literal array")
+        if "numberOfSteps" in value:
+            steps = value["numberOfSteps"]
+            if isinstance(steps, (int, float)) and not isinstance(steps, bool):
+                return int(steps) + 1
+            raise NotStatic("numberOfSteps is not a literal number")
+        return len(value)
+    raise NotStatic("len() needs a literal array, object, or Range-family value")
+
+
+def _fn_keys(value):
+    if not isinstance(value, dict):
+        raise NotStatic("keys() needs a literal object")
+    return list(value.keys())
+
+
+def eval_expr(node, scope, shape_of):
+    if isinstance(node, Num):
+        return node.value
+    if isinstance(node, Bool):
+        return node.value
+    if isinstance(node, ArrayLit):
+        return [eval_expr(item, scope, shape_of) for item in node.items]
+    if isinstance(node, Path):
+        return _resolve_path(node, scope)
+    if isinstance(node, UnaryNot):
+        return not bool(eval_expr(node.operand, scope, shape_of))
+    if isinstance(node, Call):
+        if node.func == "provided":
+            if len(node.args) != 1:
+                raise NotStatic("provided() takes exactly one argument")
+            return _is_provided(node.args[0], scope)
+        if node.func == "len":
+            return _fn_len(eval_expr(node.args[0], scope, shape_of))
+        if node.func == "keys":
+            return _fn_keys(eval_expr(node.args[0], scope, shape_of))
+        if node.func == "shapeOf":
+            ref = eval_expr(node.args[0], scope, shape_of)
+            if not isinstance(ref, str) or not ref.startswith("#"):
+                raise NotStatic("shapeOf() needs a reference-valued operand")
+            return shape_of(ref)
+        if node.func == "dim":
+            if len(node.args) != 1:
+                raise NotStatic("dim() takes exactly one argument")
+            value = eval_expr(node.args[0], scope, shape_of)
+            if value is OUTERMOST:
+                return [OUTERMOST]
+            if isinstance(value, str):
+                return [value]
+            if isinstance(value, list):
+                return value
+            raise NotStatic("dim() needs a name or a list of names")
+        raise NotStatic(f"unknown function {node.func}()")
+    if isinstance(node, BinOp):
+        if node.op == "or":
+            if _is_provided(node.left, scope):
+                return eval_expr(node.left, scope, shape_of)
+            return eval_expr(node.right, scope, shape_of)
+        left = eval_expr(node.left, scope, shape_of)
+        if node.op == "-":
+            # The only place "-" appears: shapeOf(x) - dim(y). `left` is a
+            # resolved dims list (or None); `right` is a list of dimension
+            # selectors from dim(). Handled inline (rather than deferred, as
+            # an earlier draft of this module did) since both operands are
+            # fully evaluated by this point anyway.
+            right = eval_expr(node.right, scope, shape_of)
+            return _apply_dim_minus(left, right)
+        right = eval_expr(node.right, scope, shape_of)
+        if node.op == "==":
+            return left == right
+        if node.op == "+":
+            if isinstance(left, list) and isinstance(right, list):
+                return left + right
+            if isinstance(left, (int, float)) and not isinstance(left, bool) \
+                    and isinstance(right, (int, float)) and not isinstance(right, bool):
+                return left + right
+            raise NotStatic("+ needs two arrays or two numbers")
+        raise NotStatic(f"unknown operator {node.op}")
+    if isinstance(node, Conditional):
+        if bool(eval_expr(node.cond, scope, shape_of)):
+            return eval_expr(node.then, scope, shape_of)
+        return eval_expr(node.orelse, scope, shape_of)
+    raise NotStatic(f"unknown AST node {node!r}")
+
+
+def _apply_dim_minus(dims, selectors):
+    """shapeOf(x) - dim(y): a dims list (see resolve_dims) with the
+    dimension(s) named by `selectors` removed. This data model has no
+    per-dimension naming beyond the reserved `outermost` sentinel (see this
+    module's own docstring on dim()), so only that one case removes a
+    SPECIFIC, still-fully-known dimension (the first); anything else can
+    only shrink the known dimension COUNT, with the remaining dimensions'
+    own details marked unknown rather than guessing which slot(s) a name
+    like `appliedDimensions` was meant to select - safe (never mis-fires a
+    downstream rule) even though it under-reports what SEDBase-0010/-0011
+    could otherwise catch for those remaining dimensions."""
+    if dims is None:
+        return None
+    count = len(selectors) if isinstance(selectors, list) else 1
+    if count >= len(dims):
+        return []
+    if selectors == [OUTERMOST]:
+        return dims[1:]
+    return [{"size": None, "labels": None, "source": "runtime", "min": None}
+            for _ in range(len(dims) - count)]
+
+
+# ---- outputs.json "sourced" value resolution -----------------------------
+
+def _eval_sourced_size(sourced, scope, shape_of):
+    if sourced is None:
+        return None
+    if sourced.get("source") != "static":
+        return None  # runtime / input-file - not statically known
+    try:
+        value = eval_expr(parse_expr(sourced["expr"]), scope, shape_of)
+    except NotStatic:
+        return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return int(value)
+    return None
+
+
+def _eval_sourced_labels(labels_spec, scope, shape_of):
+    """None (JSON null) means "no labels for this dimension" - statically
+    known as empty, not "unresolvable" - so this returns [] for that case,
+    reserving None for a genuine failure to resolve."""
+    if labels_spec is None:
+        return []
+    if isinstance(labels_spec, list):
+        return labels_spec
+    if isinstance(labels_spec, dict):
+        if labels_spec.get("source") != "static":
+            return None
+        try:
+            value = eval_expr(parse_expr(labels_spec["expr"]), scope, shape_of)
+        except NotStatic:
+            return None
+        if isinstance(value, list) and all(isinstance(v, str) for v in value):
+            return value
+        return None
+    return None
+
+
+def resolve_dims(dims_spec, scope, shape_of):
+    """dims_spec is outputs.json's own "dimensions" value for one suffix
+    entry (see schema/outputs-meta.schema.json's $defs/dimensions) - either
+    a fixed-length array of per-dimension entries, or a single "sourced"
+    object describing the whole shape. Returns a list of
+    {"size": int|None, "labels": list[str]|None, "source": str, "min":
+    int|None} - one per dimension, in order - or None when the dimension
+    COUNT itself isn't statically known (a whole-shape runtime/input-file
+    source, or a static expr that didn't evaluate to a resolved dims list)."""
+    if dims_spec is None:
+        return None
+    if isinstance(dims_spec, list):
+        result = []
+        for d in dims_spec:
+            if "repeat" in d:
+                rep = d["repeat"]
+                try:
+                    over_val = scope.lookup(rep["over"])
+                except NotStatic:
+                    return None
+                if not isinstance(over_val, list):
+                    return None
+                for item in over_val:
+                    item_scope = RepeatScope(item, scope)
+                    result.append({
+                        "size": _eval_sourced_size(rep["size"], item_scope, shape_of),
+                        "labels": _eval_sourced_labels(rep.get("labels"), item_scope, shape_of),
+                        "source": rep["size"].get("source"),
+                        "min": rep["size"].get("min"),
+                    })
+            else:
+                result.append({
+                    "size": _eval_sourced_size(d["size"], scope, shape_of),
+                    "labels": _eval_sourced_labels(d.get("labels"), scope, shape_of),
+                    "source": d["size"].get("source"),
+                    "min": d["size"].get("min"),
+                })
+        return result
+    # single sourced object - the whole shape's derivation
+    if dims_spec.get("source") != "static":
+        return None  # runtime / input-file - dimension count itself unknown
+    try:
+        value = eval_expr(parse_expr(dims_spec["expr"]), scope, shape_of)
+    except NotStatic:
+        return None
+    return value if isinstance(value, list) else None
+
+
+def _apply_index_chain(dims, index_accessors):
+    """Applies a reference's own bracket-index chain to a resolved dims
+    list, left-to-right, each index against the CORRESPONDING original
+    dimension position (a range at position 0 doesn't renumber position 1 -
+    ordinary multi-axis indexing semantics). A positional/label index drops
+    its dimension from the result; a range keeps it (core-spec.md's
+    Grammar); a dimension beyond the index chain's own length passes
+    through untouched."""
+    if dims is None:
+        return None
+    result = []
+    for i, d in enumerate(dims):
+        if i < len(index_accessors):
+            if index_accessors[i].kind == "range":
+                result.append(d)
+            # positional/label -> dimension dropped
+        else:
+            result.append(d)
+    return result
+
+
+def eval_valid(entry, scope, shape_of):
+    """entry["valid"] is True/False, or a boolean expr string over the
+    task's own fields. Returns True/False, or None when a string expr
+    couldn't be evaluated statically (SEDBase-0008: "the rule does not
+    fire" in that case)."""
+    valid = entry.get("valid")
+    if valid is True or valid is False:
+        return valid
+    if isinstance(valid, str):
+        try:
+            return bool(eval_expr(parse_expr(valid), scope, shape_of))
+        except NotStatic:
+            return None
+    return False
+
+
+def resolve_output(outputs_json, fields, accessors, shape_of):
+    """The core hasSubvalue()-style resolution SEDBase-0008 through -0011/
+    -0014/-0015 and the ref-type rules all share. `outputs_json` is a
+    concrete tasks/ class's own parsed outputs.json ({"outputs": {...}});
+    `fields` is the referenced task's own _own_json_value() dict; `accessors`
+    is a ParsedReference's own .accessors list. Returns (accessor_ok, entry,
+    dims_before, dims_after, dot_name, index_accessors):
+      - accessor_ok: True (the suffix exists and its "valid" evaluated
+        true), False (suffix absent or "valid" is/evaluates false), or None
+        (couldn't be determined statically - every caller treats this the
+        same as False for "don't fire a positive claim" but ALSO suppresses
+        every rule that would need to know for sure, per the "only fires
+        when computable" convention).
+      - entry: the raw outputEntry dict, or None if the suffix key itself
+        isn't present in outputs.json at all.
+      - dims_before / dims_after: resolve_dims()'s own result, before and
+        after applying the index chain (see _apply_index_chain) - both None
+        whenever accessor_ok isn't True, or whenever entry has no
+        "dimensions" at all (a "model"-typed suffix, which has no shape
+        concept to index into in the first place).
+      - dot_name: the first ('dot', name) accessor's name, or None for a
+        bare [id] reference.
+      - index_accessors: every ('index', RefIndex) accessor, in order,
+        regardless of where it fell relative to a dot accessor.
+    """
+    dot_name = None
+    index_accessors = []
+    for kind, val in accessors:
+        if kind == "dot" and dot_name is None:
+            dot_name = val
+        elif kind == "index":
+            index_accessors.append(val)
+    suffix_key = "[id]" if dot_name is None else f"[id].{dot_name}"
+    entry = (outputs_json or {}).get("outputs", {}).get(suffix_key)
+    if entry is None:
+        return False, None, None, None, dot_name, index_accessors
+    scope = Scope(fields)
+    ok = eval_valid(entry, scope, shape_of)
+    if ok is not True:
+        return ok, entry, None, None, dot_name, index_accessors
+    dims_before = resolve_dims(entry.get("dimensions"), scope, shape_of)
+    dims_after = _apply_index_chain(dims_before, index_accessors)
+    return True, entry, dims_before, dims_after, dot_name, index_accessors
+
+
+# ---- SEDBase-0012: indexing into a constant's own literal JSON value ------
+
+class NotIndexable(Exception):
+    """Raised by index_into_literal when the index chain can't be applied
+    to the constant's own literal structure - the signal SEDBase-0012
+    fires on."""
+
+
+def index_into_literal(value, index_accessors):
+    """core-spec.md / SEDBase-0012.md: constants have no outputs.json,
+    their "shape" is just their own literal JSON value. Applies an index
+    chain directly against it, following one level of reference first if
+    the constant's own value is itself a reference string (SEDBase-0012.md:
+    "A constant whose value is itself a reference is followed first") -
+    callers pass an already-dereferenced `value` (see the RUNTIME dispatcher
+    for the one-hop-then-stop resolution, mirroring how deeply nested
+    constants-of-constants aren't a documented case). Raises NotIndexable
+    the moment an index can't apply; returns the fully-indexed literal value
+    otherwise (used by the ref-type check too, once indexing succeeds)."""
+    cur = value
+    for idx in index_accessors:
+        if idx.kind == "label":
+            if not isinstance(cur, dict) or idx.value not in cur:
+                raise NotIndexable(idx.value)
+            cur = cur[idx.value]
+        elif idx.kind == "int":
+            if not isinstance(cur, list):
+                raise NotIndexable(idx.value)
+            n = len(cur)
+            i = idx.value
+            if i < -n or i >= n:
+                raise NotIndexable(idx.value)
+            cur = cur[i]
+        elif idx.kind == "range":
+            if not isinstance(cur, list):
+                raise NotIndexable(idx.value)
+            a, b = idx.value
+            n = len(cur)
+            ea = a if a is not None else 0
+            eb = b if b is not None else n
+            if ea < 0: ea += n
+            if eb < 0: eb += n
+            cur = cur[max(ea, 0):max(eb, 0)]
+        else:
+            raise NotIndexable(idx.value)
+    return cur
+'''
+
+
 def _pyname(name: str) -> str:
     """camelCase/PascalCase attribute name -> snake_case, namespace@key -> ns_key."""
     if "@" in name:
@@ -1152,10 +2365,12 @@ def emit_field_specs_literal(fields: list[Field]) -> str:
         t = f.type
         parts.append(
             "FieldSpec(%r, %r, %r, %r, %r, %r, minimum=%r, exclusive_minimum=%r, "
-            "pattern=%r, item_class=%r, item_discriminator=%r, is_math=%r)" % (
+            "pattern=%r, item_class=%r, item_discriminator=%r, is_math=%r, "
+            "min_length=%r, enum=%r, ref_type_rule_id=%r)" % (
                 f.name, t.kind, f.required, f.rule_id, f.required_rule_id,
                 f"{f.origin_class}-0000", t.minimum, t.exclusive_minimum,
                 t.pattern, t.item_class, t.item_discriminator, f.is_math,
+                t.min_length, t.enum, f.ref_type_rule_id,
             )
         )
     return "[" + ", ".join(parts) + "]"
@@ -1212,6 +2427,33 @@ def _collection_accessors(f: Field, model: SpecModel) -> str:
     return "\n".join(lines)
 
 
+def _child_accessors(f: Field) -> str:
+    """A single nested SedBase-derived child, stored directly on the
+    instance (self._{py}), not in an IdKeyedCollection/ListCollection -
+    there is exactly zero or one of it, and it has no id of its own
+    (unlike a dict-kind field's items). Covers both "ref-class" (a fixed
+    target class, e.g. ExplicitODESimulation.independentVariableRange ->
+    NumericRange) and "ref-discriminator" (a _type-dispatched target,
+    e.g. Repeat.range -> RangeInline's NumericRange/VectorRange/...) - the
+    accessors themselves don't care which; only _load_fields's own parsing
+    (see emit_model_py) needs to tell them apart, to know whether to
+    construct a fixed class or dispatch on the raw JSON's own _type."""
+    py = _pyname(f.name)
+    lines = []
+    lines.append(
+        f"    def get_{py}(self):\n"
+        f"        if self._{py} is None: raise ApiError({py + ' is not set'!r})\n"
+        f"        return self._{py}\n"
+    )
+    lines.append(
+        f"    def set_{py}(self, obj):\n"
+        f"        self._{py} = obj; obj._attach(self, self.get_document())\n"
+    )
+    lines.append(f"    def is_set_{py}(self):\n        return self._{py} is not None\n")
+    lines.append(f"    def unset_{py}(self):\n        self._{py} = None\n")
+    return "\n".join(lines)
+
+
 def _dispatch_fn_name(disc_name: str) -> str:
     return f"_dispatch_{disc_name}"
 
@@ -1260,16 +2502,39 @@ def emit_model_py(model: SpecModel) -> str:
     # -- concrete classes --------------------------------------------------
     for name in gen_names:
         c = model.classes[name]
-        own_fields = [f for f in c.fields if f.origin_class != base]
+        # name/description get their OWN dedicated, hardcoded treatment
+        # (self._name/self._description slots on SedBase, set_name/
+        # get_name/... accessors defined once there, special-cased inside
+        # _validate_own and _load_fields) rather than flowing through the
+        # generic per-field pipeline below - excluded here for that reason
+        # alone. notes/annotations are every bit as much SEDBaseFields
+        # members (composed into every class the same way), but need no
+        # such special treatment: notes classifies as a plain "any"-kind
+        # leaf field and annotations as a plain array-of-Annotation
+        # collection field, both already fully handled by the SAME generic
+        # per-field FieldSpec pipeline every other field goes through - so,
+        # unlike name/description, they're deliberately NOT filtered out
+        # here (Design.md's Validation section note on this gap: notes/
+        # annotations were previously dropped from own_fields entirely,
+        # rejected as "additional property not allowed" on every class).
+        own_fields = [f for f in c.fields
+                      if not (f.origin_class == base and f.name in ("name", "description"))]
         collection_fields = [f for f in own_fields if f.type.kind in ("dict", "array", "any-dict")]
         leaf_fields = [f for f in own_fields if f.type.kind in _ORREF_KINDS + (
             "string", "integer", "number", "boolean", "SId", "SIdRef", "any")]
+        # A single nested SedBase-derived child, neither array- nor
+        # dict-kind - a plain "one object" field (spec.py's _classify_type:
+        # a $ref to a fixed class -> "ref-class", e.g.
+        # ExplicitODESimulation.independentVariableRange; a $ref to an
+        # x-generated-oneOf discriminator -> "ref-discriminator", e.g.
+        # Repeat.range). See _child_accessors's own docstring.
+        child_fields = [f for f in own_fields if f.type.kind in ("ref-class", "ref-discriminator")]
         ns_field_lits = {p: emit_field_specs_literal(fs) for p, fs in c.namespace_updates.items()}
 
         out.append(f"class {name}(SedBase):\n")
         doc = f'    """Generated from test-specsheets/{c.category}/{name}/."""\n'
         out.append(doc)
-        out.append(f"    _FIELDS = {emit_field_specs_literal(leaf_fields + [f for f in collection_fields])}\n")
+        out.append(f"    _FIELDS = {emit_field_specs_literal(leaf_fields + collection_fields + child_fields)}\n")
         out.append(f"    _REQUIRED_NAMES = {{{', '.join(repr(f.name) for f in own_fields if f.required)}}}\n")
         out.append(f"    _TYPE_CONST = {c.type_const!r}\n")
         out.append(f"    _TYPE_RULE_ID = {c.type_rule_id!r}\n")
@@ -1280,6 +2545,15 @@ def emit_model_py(model: SpecModel) -> str:
         if c.is_document:
             out.append(f"    _IS_DOCUMENT_CLASS = True\n")
             out.append(f"    _MAX_KNOWN_DOCUMENT_VERSION = {model.document_version!r}\n")
+        if c.outputs_json is not None:
+            # core-spec.md Section 8 - baked in as a plain dict literal so
+            # RUNTIME's outputs_shape.resolve_output() can read it straight
+            # off the instance at validate() time (SEDBase-0008 through
+            # -0015). Only concrete tasks/ classes ever have one; every
+            # other class (including abstract/mixin tasks/ classes like
+            # Repeat, and every core/auxiliary/outputs/ class) leaves this
+            # at SedBase's own None default.
+            out.append(f"    _OUTPUTS_JSON = {c.outputs_json!r}\n")
         if ns_field_lits:
             items = ", ".join(f"{p!r}: {lit}" for p, lit in ns_field_lits.items())
             out.append(f"    _NAMESPACE_FIELDS = {{{items}}}\n")
@@ -1311,6 +2585,8 @@ def emit_model_py(model: SpecModel) -> str:
                 out.append(f"        self._{py} = IdKeyedCollection(None)\n")
             else:
                 out.append(f"        self._{py} = ListCollection()\n")
+        for f in child_fields:
+            out.append(f"        self._{_pyname(f.name)} = None\n")
         for p, fs in c.namespace_updates.items():
             pass  # namespace fields stored in the same self._values dict, no init needed
         if c.is_document:
@@ -1335,6 +2611,8 @@ def emit_model_py(model: SpecModel) -> str:
             out.append(_leaf_accessors(name, f) + "\n")
         for f in collection_fields:
             out.append(_collection_accessors(f, model) + "\n")
+        for f in child_fields:
+            out.append(_child_accessors(f) + "\n")
 
         # namespace-typed convenience accessors
         for prefix, fs in c.namespace_updates.items():
@@ -1353,6 +2631,9 @@ def emit_model_py(model: SpecModel) -> str:
             # they get no backpointer attachment and no validate() recursion
             # (see SEDBase-0012 for the separate, still-open rule covering
             # a constant's own shape).
+        for f in child_fields:
+            py = _pyname(f.name)
+            out.append(f"        if self._{py} is not None: kids.append(self._{py})\n")
         out.append("        return kids\n\n")
 
         # Generic containment-tree lookup by field name (SEDBase-0006 /
@@ -1376,9 +2657,13 @@ def emit_model_py(model: SpecModel) -> str:
                 out.append(f"        for i in self._{py}.ids():\n            out.append((self._{py}.get(i), '/{f.name}/' + i))\n")
             elif f.type.kind == "array":
                 out.append(f"        for idx, item in enumerate(self._{py}.items()):\n            out.append((item, '/{f.name}/%d' % idx))\n")
+        for f in child_fields:
+            py = _pyname(f.name)
+            out.append(f"        if self._{py} is not None: out.append((self._{py}, '/{f.name}'))\n")
         out.append("        return out\n\n")
 
-        out.append(f"    def _own_id_for_message(self):\n        p = self.get_parent()\n        return '?'\n\n")
+        out.append("    def _id_collection_names(self):\n")
+        out.append(f"        return {[f.name for f in id_coll_fields]!r}\n\n")
 
         out.append("    def _own_json_value(self):\n        d = {}\n")
         out.append("        if self._name is not None: d['name'] = self._name\n")
@@ -1399,6 +2684,9 @@ def emit_model_py(model: SpecModel) -> str:
                 out.append(f"        if len(self._{py}): d[{f.name!r}] = {{i: self._{py}.get(i) for i in self._{py}.ids()}}\n")
             else:
                 out.append(f"        if len(self._{py}): d[{f.name!r}] = [it.to_json_value() for it in self._{py}.items()]\n")
+        for f in child_fields:
+            py = _pyname(f.name)
+            out.append(f"        if self._{py} is not None: d[{f.name!r}] = self._{py}.to_json_value()\n")
         for (pfx, key), _ in []:
             pass
         out.append("        for (pfx, key), value in self._ns_attrs.items():\n")
@@ -1452,7 +2740,7 @@ def emit_model_py(model: SpecModel) -> str:
     out.append("    if 'description' in raw: obj.set_description(raw['description'])\n")
     out.append("    if '_type' in raw: obj._values['_type'] = raw['_type']\n")
     out.append("    for spec in obj._FIELDS:\n")
-    out.append("        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict'):\n")
+    out.append("        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict', 'ref-class', 'ref-discriminator'):\n")
     out.append("            continue\n")
     out.append("        v = raw[spec.name]\n")
     out.append(f"        if spec.kind in {_ORREF_KINDS!r}:\n")
@@ -1544,6 +2832,29 @@ def emit_model_py(model: SpecModel) -> str:
     out.append("                        'attr': spec.name, 'class': obj.__class__.__name__,\n")
     out.append("                        'id': obj._own_id_for_message(), 'value': item_id}))\n")
     out.append("                coll.add(item_id, item_value)\n")
+    out.append("        elif spec.kind in ('ref-class', 'ref-discriminator') and spec.name in raw:\n")
+    out.append("            # A single nested SedBase-derived child (see emit_model_py's own\n")
+    out.append("            # child_fields/_child_accessors docstring) - 'ref-class' constructs\n")
+    out.append("            # a fixed target class directly; 'ref-discriminator' dispatches on\n")
+    out.append("            # the raw JSON's own _type via the matching parse_* function, same\n")
+    out.append("            # as a dict-kind field's own discriminated items above.\n")
+    out.append("            raw_value = raw[spec.name]\n")
+    out.append("            if not isinstance(raw_value, dict):\n")
+    out.append("                rid = spec.rule_id or spec.origin_catchall\n")
+    out.append("                obj._load_problems.append(make_problem(rid, '/' + spec.name, **{\n")
+    out.append("                    'attr': spec.name, 'class': obj.__class__.__name__,\n")
+    out.append("                    'id': obj._own_id_for_message(), 'value': raw_value}))\n")
+    out.append("                continue\n")
+    out.append("            if spec.kind == 'ref-discriminator':\n")
+    out.append("                dispatch = globals()['parse_' + spec.item_discriminator]\n")
+    out.append("                child, problem = dispatch(raw_value)\n")
+    out.append("                if problem is not None:\n")
+    out.append("                    obj._load_problems.append(problem)\n")
+    out.append("            else:\n")
+    out.append("                child = globals()[spec.item_class]()\n")
+    out.append("                _load_fields(child, raw_value)\n")
+    out.append("            if child is not None:\n")
+    out.append("                setattr(obj, '_' + _pyname(spec.name), child)\n")
     out.append("\n\n")
     out.append(f"def _pyname(name):\n")
     out.append("    import re as _re2\n")
@@ -1783,6 +3094,8 @@ def emit_python_package(
         f.write(_named(emit_document_helpers(model)))
     with open(os.path.join(pkg_dir, "math_ast.py"), "w") as f:
         f.write(_named(MATH_AST_PY))
+    with open(os.path.join(pkg_dir, "outputs_shape.py"), "w") as f:
+        f.write(_named(OUTPUTS_SHAPE_PY))
     # Handwritten rule files (Design.md's Validation section) - copied from
     # templates/python/rules/ with a missing-file check that fails this
     # whole run, plus the compiled predefined-functions.json data they rely

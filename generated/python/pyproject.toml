@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "libsed2test"
+name = "libsed2"
 version = "0.1.0"
-description = "Generated SED2 test-fixture library (Python target) - exercises the SED2 generator against test-specsheets/, see Design.md's Testing section."
+description = "Generated SED2 library (Python target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py."
 requires-python = ">=3.10"
 dependencies = ["jsonschema>=4.18", "antlr4-python3-runtime==4.13.2"]
 
@@ -13,4 +13,4 @@ dependencies = ["jsonschema>=4.18", "antlr4-python3-runtime==4.13.2"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-libsed2test = ["_antlr/*.py"]
+libsed2 = ["_antlr/*.py"]
