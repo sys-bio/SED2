@@ -1,4 +1,4 @@
-package org.sed2test;
+package org.sedml.libsed2;
 
 import java.util.HashMap;
 import java.util.Map;

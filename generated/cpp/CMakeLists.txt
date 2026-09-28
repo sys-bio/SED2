@@ -35,6 +35,14 @@ if(LIBSED2_BUILD_TESTS)
   enable_testing()
   add_executable(fixture_tests tests/FixtureTest.cpp)
   target_link_libraries(fixture_tests PRIVATE libsed2 GTest::gtest_main)
+  # fixtures/ always lives two levels up from this file's own directory
+  # (see generate.py: fixtures/ is written under dirname(--out), and cpp
+  # sources under --out/cpp) - baked in here, at configure time, rather
+  # than guessed at run time from the test binary's working directory
+  # (which gtest_discover_tests/ctest don't guarantee the same way across
+  # generators). See templates/cpp/tests/FixtureTest.cpp's fixtures_dir().
+  target_compile_definitions(fixture_tests PRIVATE
+    SED2_FIXTURES_DIR_DEFAULT="${CMAKE_CURRENT_SOURCE_DIR}/../../fixtures")
   include(GoogleTest)
   gtest_discover_tests(fixture_tests)
 endif()

@@ -1,4 +1,4 @@
-package org.sed2test;
+package org.sedml.libsed2;
 
 /** GENERATED - do not hand-edit; regenerate via generator/generate.py. */
 public final class FieldSpec {

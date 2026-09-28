@@ -5,7 +5,7 @@
   <artifactId>libsed2j</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
-  <description>Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py.</description>
+  <description>Generated SED2 library (Java target).</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -37,6 +37,19 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
+        <configuration>
+          <!-- surefire's default workingDirectory is ${project.basedir},
+               i.e. this module's own directory, regardless of where mvn
+               itself was invoked from - templates/java/tests/FixtureTest.
+               java's fixturesDir() relies on that for its own plain
+               relative fallback. This property is a second, explicit way
+               to give it the same path (see that file's comment), always
+               correct no matter how deeply the java package option nests
+               this module's sources. -->
+          <systemPropertyVariables>
+            <sed2.fixturesDir>${project.basedir}/../../fixtures</sed2.fixturesDir>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -1,4 +1,4 @@
-package org.sed2test;
+package org.sedml.libsed2;
 
 import java.util.ArrayList;
 import java.util.List;

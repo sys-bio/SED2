@@ -1111,6 +1111,51 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
     return "".join(out)
 
 
+def emit_direct_only_hpp(model: SpecModel) -> str:
+    """rule_id -> factory, for every generated class whose own _type-const
+    rule can only be exercised by validating that class directly - not
+    embedded through a parent's discriminated dict/array field, where a
+    _type mismatch is caught by the parent's own dispatch first (see
+    Design.md's Testing section). C++ has no runtime reflection (unlike
+    Python's inspect.getmembers() or Java's classloader-based scan - see
+    templates/python/tests/test_fixtures.py and templates/java/tests/
+    FixtureTest.java), so this table is built here, at generate time, from
+    the same per-class type_rule_id() metadata those two discover at their
+    own run time - every class in model.generatable_classes() with a
+    non-empty type_rule_id, which is exactly the set with a default
+    constructor available (the only other classes, the discriminator
+    Unknown* holders, take constructor arguments and have no type_rule_id
+    to begin with - see emit_dispatch_hpp's Unknown* handling). This keeps
+    templates/cpp/tests/FixtureTest.cpp itself free of any spec-specific
+    class or rule-ID knowledge, the same as the other two targets.
+    GENERATED - do not hand-edit; regenerate via generator/generate.py."""
+    out = [f'''// Generated direct-only-class registry (see this file's own generator,
+// generator/emit_cpp.py's emit_direct_only_hpp, for what this is and why
+// it exists). GENERATED - do not hand-edit; regenerate via
+// generator/generate.py.
+#pragma once
+
+#include "GeneratedModel.hpp"
+
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+
+namespace {NS} {{
+
+inline const std::map<std::string, std::function<std::unique_ptr<SedBase>()>>& direct_only_classes() {{
+    static const std::map<std::string, std::function<std::unique_ptr<SedBase>()>> m = {{
+''']
+    for name in model.generatable_classes():
+        rid = model.classes[name].type_rule_id
+        if rid:
+            out.append(f"        {{{_cpp_lit(rid)}, [] {{ return std::unique_ptr<SedBase>(std::make_unique<{name}>()); }}}},\n")
+    out.append("    };\n    return m;\n}\n\n")
+    out.append(f"}}  // namespace {NS}\n")
+    return "".join(out)
+
+
 def emit_rules_data_hpp(model: SpecModel) -> str:
     out = [f'''// Generated rule catalogue. GENERATED - do not hand-edit;
 // regenerate from test-specsheets/ via generator/generate.py.
@@ -1183,6 +1228,39 @@ inline void write_to_file(const {doc_name}& doc, const std::string& path) {{
 '''
 
 
+def _repo_root() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _copy_fixture_test_cpp(out_dir: str, ns: str) -> None:
+    """Copies templates/cpp/tests/FixtureTest.cpp -> <out_dir>/tests/
+    FixtureTest.cpp, rewriting its #include lines and using-namespace
+    declaration to match ns. Every other reference in that file resolves
+    generically (auto-deduced document type, or the generated
+    direct_only_classes() registry - see the file's own top-of-file
+    comment), so these lines are the one place this copy step needs to
+    touch content rather than copying verbatim - the preprocessor and
+    `using namespace` both need a literal name, unlike Python (no
+    equivalent concept) or Java (same-package visibility handles it - see
+    emit_java.py's _copy_fixture_test_java)."""
+    src = os.path.join(_repo_root(), "templates", "cpp", "tests", "FixtureTest.cpp")
+    with open(src) as f:
+        content = f.read()
+    for old in (
+        "#include <sed2test/DirectOnly.hpp>",
+        "#include <sed2test/Io.hpp>",
+        "using namespace sed2test;",
+    ):
+        assert old in content, f"templates/cpp/tests/FixtureTest.cpp must contain {old!r}"
+    content = content.replace("sed2test/DirectOnly.hpp", f"{ns}/DirectOnly.hpp")
+    content = content.replace("sed2test/Io.hpp", f"{ns}/Io.hpp")
+    content = content.replace("using namespace sed2test;", f"using namespace {ns};")
+    tests_dir = os.path.join(out_dir, "tests")
+    os.makedirs(tests_dir, exist_ok=True)
+    with open(os.path.join(tests_dir, "FixtureTest.cpp"), "w") as f:
+        f.write(content)
+
+
 def _cmake_lists(name: str) -> str:
     build_tests_opt = f"{name.upper()}_BUILD_TESTS"
     return f'''cmake_minimum_required(VERSION 3.16)
@@ -1222,6 +1300,14 @@ if({build_tests_opt})
   enable_testing()
   add_executable(fixture_tests tests/FixtureTest.cpp)
   target_link_libraries(fixture_tests PRIVATE {name} GTest::gtest_main)
+  # fixtures/ always lives two levels up from this file's own directory
+  # (see generate.py: fixtures/ is written under dirname(--out), and cpp
+  # sources under --out/cpp) - baked in here, at configure time, rather
+  # than guessed at run time from the test binary's working directory
+  # (which gtest_discover_tests/ctest don't guarantee the same way across
+  # generators). See templates/cpp/tests/FixtureTest.cpp's fixtures_dir().
+  target_compile_definitions(fixture_tests PRIVATE
+    SED2_FIXTURES_DIR_DEFAULT="${{CMAKE_CURRENT_SOURCE_DIR}}/../../fixtures")
   include(GoogleTest)
   gtest_discover_tests(fixture_tests)
 endif()
@@ -1242,6 +1328,8 @@ def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2t
         f.write(emit_model_hpp(model))
     with open(os.path.join(inc_dir, "Dispatch.hpp"), "w") as f:
         f.write(emit_dispatch_hpp(model))
+    with open(os.path.join(inc_dir, "DirectOnly.hpp"), "w") as f:
+        f.write(emit_direct_only_hpp(model))
     with open(os.path.join(inc_dir, "RulesData.hpp"), "w") as f:
         f.write(emit_rules_data_hpp(model))
     with open(os.path.join(inc_dir, "Io.hpp"), "w") as f:
@@ -1249,3 +1337,5 @@ def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2t
 
     with open(os.path.join(out_dir, "CMakeLists.txt"), "w") as f:
         f.write(_cmake_lists(NS))
+
+    _copy_fixture_test_cpp(out_dir, NS)

@@ -1,4 +1,4 @@
-package org.sed2test;
+package org.sedml.libsed2;
 
 /** Raised for any misuse of the generated API itself (wrong-kind OrRef
  * access, get on an unset field, an out-of-range insert, ...) - never for

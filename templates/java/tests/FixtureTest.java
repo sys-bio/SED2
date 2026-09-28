@@ -1,19 +1,36 @@
 package org.sed2test;
 
 /*
- * Hand-written glue: runs every test-specsheets/fixtures/*.sed2.json fixture
- * through the generated libsed2test library's parser + validate(), and
- * checks it against the rule ID(s)/count(s) encoded in the filename - see
- * Design.md's Testing section for the naming convention this parses.
+ * Hand-written glue: runs every fixture in this tree's fixtures/ directory
+ * through the generated library's parser + validate(), and checks it
+ * against the rule ID(s)/count(s) encoded in the filename - see Design.md's
+ * Testing section for the naming convention this parses.
  *
  * This file lives under templates/java/tests/ (hand-written, never
- * regenerated - see Design.md's Code Generation section) and is copied
- * alongside the generated library, under src/test/java/org/sed2test/, for
- * `mvn test` to run. It is the Java analog of
- * templates/python/tests/test_fixtures.py - see that file for the
- * reference implementation this one mirrors, including its fix for the
- * chain-suffix parsing bug (a rule ID's own trailing NNNN segment is
- * always 4 digits, never a chain-count boundary).
+ * regenerated - see Design.md's Code Generation section) and is copied,
+ * with its package line rewritten to match --java-package, to
+ * <out>/java/src/test/java/<package-path>/FixtureTest.java as part of
+ * every `generate.py` run that includes the java target (see
+ * generator/emit_java.py's _copy_fixture_test_java) - never by hand, so a
+ * fresh spec regeneration always carries a matching, up-to-date copy with
+ * it. It is the Java analog of templates/python/tests/test_fixtures.py -
+ * see that file for the reference implementation this one mirrors,
+ * including its fix for the chain-suffix parsing bug (a rule ID's own
+ * trailing NNNN segment is always 4 digits, never a chain-count boundary).
+ *
+ * Nothing below is specific to any one spec tree (test-specsheets/ vs.
+ * specsheets/, or any future one): the document root class, which classes
+ * need "direct" (not document-embedded) validation, and which fixture
+ * files to run are all discovered at test time from whatever got generated
+ * and whatever fixture files exist on disk - never a hardcoded class name
+ * or list. Point this file at a different generated tree (i.e. let the
+ * generator copy it there) and it "just works" unmodified. The package
+ * line above is the one exception - Java requires it to match this file's
+ * own location on disk, so the generator rewrites it (and only it) at
+ * copy time; every class this file refers to below is resolved by same-
+ * package visibility (SedBase, Dispatch, Io, RulesData, ValidationProblem)
+ * or by reflection (the document root class, direct-only classes), so
+ * nothing else here needs to change when the package does.
  */
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,11 +40,19 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -42,19 +67,58 @@ public class FixtureTest {
             "^(?<rule>[A-Za-z0-9_-]+)-(?<kind>pass|fail)-(?<count>\\d+)-(?<name>.+?)"
                     + "(?<chain>(?:-[A-Za-z0-9_-]+-\\d+)*)\\.sed2\\.json$");
 
+    /**
+     * Maven's surefire plugin runs tests with the module's own directory
+     * (the one holding pom.xml, i.e. <out>/java) as the process working
+     * directory by default ("workingDirectory" defaults to
+     * "${project.basedir}") - true whether `mvn test` is invoked from that
+     * directory or with -f from elsewhere, and independent of how deep
+     * --java-package nests this class's own source file. fixtures/ always
+     * lives two levels up from <out>/java (see generate.py: fixtures/ is
+     * written under dirname(--out), and java sources under --out/java), so
+     * a plain relative default is safe here - unlike a path derived from
+     * this class's own file location (which Java doesn't expose to a
+     * compiled class the way Python's __file__ does). The generated
+     * pom.xml also sets a sed2.fixturesDir system property to this same
+     * path explicitly (belt-and-suspenders, and self-documenting from the
+     * pom itself); SED2_FIXTURES_DIR remains the highest-priority override
+     * for CI/manual runs, same as the Python target.
+     */
     private static File fixturesDir() {
         String env = System.getenv("SED2_FIXTURES_DIR");
         if (env != null && !env.isEmpty()) return new File(env);
-        return new File("../../../../fixtures");
+        String prop = System.getProperty("sed2.fixturesDir");
+        if (prop != null && !prop.isEmpty()) return new File(prop);
+        return new File("../../fixtures");
     }
 
-    static Stream<File> fixtureFiles() {
+    /** Every *.sed2.json anywhere under fixturesDir(), except beneath an
+     * "archive" subdirectory (deprecated-rule fixtures, excluded from the
+     * active suite - see Design.md's Repository Layout section). Recursive
+     * so this picks up fixtures/generated/, fixtures/handwritten/, and any
+     * future subdirectory Design.md's layout adds, without this file
+     * needing to know about any of them by name. */
+    static Stream<File> fixtureFiles() throws IOException {
         File dir = fixturesDir();
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".sed2.json"));
-        if (files == null) return Stream.empty();
-        List<File> list = new ArrayList<>(List.of(files));
-        list.sort((a, b) -> a.getName().compareTo(b.getName()));
+        if (!dir.isDirectory()) return Stream.empty();
+        Path base = dir.toPath();
+        List<File> list = new ArrayList<>();
+        try (Stream<Path> walk = Files.walk(base)) {
+            walk.filter(p -> p.getFileName().toString().endsWith(".sed2.json"))
+                    .filter(p -> !underArchiveDir(base, p))
+                    .forEach(p -> list.add(p.toFile()));
+        }
+        list.sort(Comparator.comparing(File::getName));
         return list.stream();
+    }
+
+    private static boolean underArchiveDir(Path base, Path file) {
+        Path parent = base.relativize(file).getParent();
+        if (parent == null) return false;
+        for (Path part : parent) {
+            if (part.toString().equals("archive")) return true;
+        }
+        return false;
     }
 
     private static final class Expected {
@@ -107,13 +171,75 @@ public class FixtureTest {
         return new Expected(kind, expected);
     }
 
-    private static final Map<String, Class<? extends SedBase>> DIRECT_CLASSES = Map.of(
-            "Choice-0002", Choice.class,
-            "WeightedChoice-0002", WeightedChoice.class,
-            "SimpleWidget-0002", SimpleWidget.class,
-            "FancyWidget-0002", FancyWidget.class,
-            "SimpleReport-0002", SimpleReport.class,
-            "acme-AcmeWidget-0002", AcmeWidget.class);
+    /** rule_id -> class, for every generated class whose own _type-const
+     * rule (see SedBase.typeConst()/typeRuleId()) can only ever be
+     * exercised by validating that class directly - not embedded through a
+     * parent's discriminated dict/array field, where a _type mismatch is
+     * caught by the parent's own dispatch first. Built by scanning every
+     * .class file the classloader can see under this file's own package
+     * (same package as every generated class - see the file-top note) and
+     * probing each concrete SedBase subclass's typeRuleId(), rather than a
+     * hardcoded class list, so this works unmodified against any generated
+     * tree. The document root class is naturally excluded (its own
+     * typeRuleId() is null), as are classes with no no-arg constructor
+     * (the Unknown*Holder classes), with no special-casing needed for
+     * either. */
+    private static Map<String, Class<? extends SedBase>> discoverDirectOnlyClasses() throws IOException {
+        Map<String, Class<? extends SedBase>> result = new HashMap<>();
+        for (Class<?> cls : classesInThisPackage()) {
+            if (!SedBase.class.isAssignableFrom(cls)) continue;
+            if (Modifier.isAbstract(cls.getModifiers()) || cls.isInterface()) continue;
+            Constructor<?> ctor;
+            try {
+                ctor = cls.getDeclaredConstructor();
+            } catch (NoSuchMethodException e) {
+                continue; // no no-arg constructor - not directly instantiable this way
+            }
+            try {
+                ctor.setAccessible(true);
+                SedBase probe = (SedBase) ctor.newInstance();
+                String rid = probe.typeRuleId();
+                if (rid != null) {
+                    @SuppressWarnings("unchecked")
+                    Class<? extends SedBase> sedBaseCls = (Class<? extends SedBase>) cls;
+                    result.put(rid, sedBaseCls);
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("failed probing generated class " + cls, e);
+            }
+        }
+        return result;
+    }
+
+    private static List<Class<?>> classesInThisPackage() throws IOException {
+        String pkgName = FixtureTest.class.getPackageName();
+        String pkgPath = pkgName.replace('.', '/');
+        List<Class<?>> classes = new ArrayList<>();
+        Enumeration<URL> roots = Thread.currentThread().getContextClassLoader().getResources(pkgPath);
+        while (roots.hasMoreElements()) {
+            URL root = roots.nextElement();
+            if (!"file".equals(root.getProtocol())) continue; // classes-on-disk only - mvn test never packs a jar first
+            File dir;
+            try {
+                dir = new File(root.toURI());
+            } catch (java.net.URISyntaxException e) {
+                dir = new File(root.getPath());
+            }
+            File[] files = dir.listFiles((d, name) -> name.endsWith(".class"));
+            if (files == null) continue;
+            for (File f : files) {
+                String simple = f.getName().substring(0, f.getName().length() - ".class".length());
+                if (simple.contains("$")) continue; // skip nested/inner classes
+                try {
+                    classes.add(Class.forName(pkgName + "." + simple));
+                } catch (ClassNotFoundException | LinkageError e) {
+                    // not a loadable top-level class (e.g. this test class
+                    // itself, package-info, ...) - skip
+                }
+            }
+        }
+        return classes;
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("fixtureFiles")
@@ -128,20 +254,17 @@ public class FixtureTest {
         // touched yet by this test run
         RulesData.register();
 
+        Map<String, Class<? extends SedBase>> directOnly = discoverDirectOnlyClasses();
+        String primaryRule = expected.rules.isEmpty() ? null : expected.rules.get(0).getKey();
+        Class<? extends SedBase> directCls = primaryRule == null ? null : directOnly.get(primaryRule);
+
         List<ValidationProblem> problems;
-        String directKey = null;
-        for (String k : DIRECT_CLASSES.keySet()) {
-            if (base.startsWith(k)) {
-                directKey = k;
-                break;
-            }
-        }
-        if (directKey != null) {
-            SedBase obj = DIRECT_CLASSES.get(directKey).getConstructor().newInstance();
+        if (directCls != null) {
+            SedBase obj = directCls.getDeclaredConstructor().newInstance();
             Dispatch.loadFields(obj, instance);
             problems = obj.validate();
         } else {
-            TestDocument doc = Io.readFromString(raw);
+            var doc = Io.readFromString(raw);
             problems = doc.validate();
             if (expected.kind.equals("pass")) {
                 JsonNode rt = mapper.readTree(Io.writeToString(doc));
@@ -162,7 +285,7 @@ public class FixtureTest {
                     path + ": expected rule " + e.getKey() + " to fire " + e.getValue()
                             + " time(s), got " + got + " (all problems: " + problems + ")");
         }
-        java.util.Set<String> allowedIds = new java.util.HashSet<>();
+        Set<String> allowedIds = new HashSet<>();
         for (Map.Entry<String, Integer> e : expected.rules) allowedIds.add(e.getKey());
         Map<String, Integer> extra = new HashMap<>();
         for (Map.Entry<String, Integer> e : counts.entrySet()) {

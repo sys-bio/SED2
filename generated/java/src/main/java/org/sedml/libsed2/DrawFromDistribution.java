@@ -1,4 +1,4 @@
-package org.sed2test;
+package org.sedml.libsed2;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;

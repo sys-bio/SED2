@@ -1,17 +1,33 @@
-// Hand-written glue: runs every test-specsheets/fixtures/*.sed2.json
-// fixture through the generated libsed2test library's parser + validate(),
-// and checks it against the rule ID(s)/count(s) encoded in the filename -
-// see Design.md's Testing section for the naming convention this parses.
+// Hand-written glue: runs every fixture in this tree's fixtures/ directory
+// through the generated library's parser + validate(), and checks it
+// against the rule ID(s)/count(s) encoded in the filename - see Design.md's
+// Testing section for the naming convention this parses.
 //
 // This file lives under templates/cpp/tests/ (hand-written, never
-// regenerated - see Design.md's Code Generation section) and is copied
-// alongside the generated library, under tests/, for the CMake-built
-// `fixture_tests` GoogleTest binary to run. It is the C++ analog of
-// templates/python/tests/test_fixtures.py - see that file for the
-// reference implementation this one mirrors, including its fix for the
-// chain-suffix parsing bug (a rule ID's own trailing NNNN segment is
-// always 4 digits, never a chain-count boundary).
+// regenerated - see Design.md's Code Generation section) and is copied,
+// with its #include/using-namespace lines rewritten to match --cpp-
+// namespace, to <out>/cpp/tests/FixtureTest.cpp as part of every
+// `generate.py` run that includes the cpp target (see
+// generator/emit_cpp.py's _copy_fixture_test_cpp) - never by hand, so a
+// fresh spec regeneration always carries a matching, up-to-date copy with
+// it. It is the C++ analog of templates/python/tests/test_fixtures.py -
+// see that file for the reference implementation this one mirrors,
+// including its fix for the chain-suffix parsing bug (a rule ID's own
+// trailing NNNN segment is always 4 digits, never a chain-count boundary).
+//
+// Nothing below is specific to any one spec tree (test-specsheets/ vs.
+// specsheets/, or any future one): read_from_string()/write_to_string()
+// already operate on whatever the document root type is without this file
+// naming it (auto doc = read_from_string(...)), and which classes need
+// "direct" (not document-embedded) validation is resolved through
+// direct_only_classes() - a table built by the generator itself at
+// generate time (see emit_cpp.py's emit_direct_only_hpp), since C++ has no
+// runtime reflection to discover it the way Python and Java do. The
+// #include path and using-namespace line are the one exception - the
+// preprocessor needs a literal namespace name - so the generator rewrites
+// only those at copy time.
 
+#include <sed2test/DirectOnly.hpp>
 #include <sed2test/Io.hpp>
 
 #include <gtest/gtest.h>
@@ -19,11 +35,9 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
-#include <dirent.h>
+#include <filesystem>
 #include <fstream>
-#include <functional>
 #include <map>
-#include <memory>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -34,24 +48,56 @@ using namespace sed2test;
 
 namespace {
 
+namespace fs = std::filesystem;
+
+/// CMakeLists.txt (see _cmake_lists in generator/emit_cpp.py) bakes in
+/// SED2_FIXTURES_DIR_DEFAULT as this module's own known path to fixtures/
+/// (CMAKE_CURRENT_SOURCE_DIR/../../fixtures - always correct, independent
+/// of --cpp-namespace and of whatever working directory the test binary
+/// ends up run from) - the C++ equivalent of the Java target's generated
+/// pom.xml sed2.fixturesDir system property. SED2_FIXTURES_DIR remains the
+/// highest-priority override for CI/manual runs, same as the other two
+/// targets; the plain relative fallback below only matters if this file is
+/// ever compiled outside that generated CMakeLists.txt.
 std::string fixtures_dir() {
     const char* env = std::getenv("SED2_FIXTURES_DIR");
     if (env && *env) return std::string(env);
-    return "../../../../fixtures";
+#ifdef SED2_FIXTURES_DIR_DEFAULT
+    return SED2_FIXTURES_DIR_DEFAULT;
+#else
+    return "../../fixtures";
+#endif
 }
 
+/// True if `file` (somewhere under `base`) has "archive" as one of its
+/// directory components relative to base - deprecated-rule fixtures,
+/// excluded from the active suite (see Design.md's Repository Layout
+/// section).
+bool under_archive_dir(const fs::path& base, const fs::path& file) {
+    fs::path rel = fs::relative(file.parent_path(), base);
+    for (const auto& part : rel) {
+        if (part == "archive") return true;
+    }
+    return false;
+}
+
+/// Every *.sed2.json anywhere under fixtures_dir(), except beneath an
+/// "archive" subdirectory. Recursive so this picks up fixtures/generated/,
+/// fixtures/handwritten/, and any future subdirectory Design.md's layout
+/// adds, without this file needing to know about any of them by name.
 std::vector<std::string> fixture_files() {
     std::vector<std::string> files;
-    DIR* dir = opendir(fixtures_dir().c_str());
-    if (!dir) return files;
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        std::string name(entry->d_name);
-        if (name.size() > 10 && name.substr(name.size() - 10) == ".sed2.json") {
-            files.push_back(fixtures_dir() + "/" + name);
+    fs::path base = fixtures_dir();
+    std::error_code ec;
+    if (!fs::is_directory(base, ec)) return files;
+    for (const auto& entry : fs::recursive_directory_iterator(base, ec)) {
+        if (!entry.is_regular_file()) continue;
+        const fs::path& p = entry.path();
+        std::string name = p.filename().string();
+        if (name.size() > 10 && name.substr(name.size() - 10) == ".sed2.json" && !under_archive_dir(base, p)) {
+            files.push_back(p.string());
         }
     }
-    closedir(dir);
     std::sort(files.begin(), files.end());
     return files;
 }
@@ -129,18 +175,6 @@ Expected expected_from_filename(const std::string& base) {
     return expected;
 }
 
-const std::map<std::string, std::function<std::unique_ptr<SedBase>()>>& direct_classes() {
-    static const std::map<std::string, std::function<std::unique_ptr<SedBase>()>> m = {
-        {"Choice-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<Choice>()); }},
-        {"WeightedChoice-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<WeightedChoice>()); }},
-        {"SimpleWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<SimpleWidget>()); }},
-        {"FancyWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<FancyWidget>()); }},
-        {"SimpleReport-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<SimpleReport>()); }},
-        {"acme-AcmeWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<AcmeWidget>()); }},
-    };
-    return m;
-}
-
 }  // namespace
 
 class FixtureTest : public ::testing::TestWithParam<std::string> {};
@@ -154,17 +188,13 @@ TEST_P(FixtureTest, RunsFixture) {
 
     register_rules();
 
-    std::vector<ValidationProblem> problems;
-    std::string direct_key;
-    for (const auto& kv : direct_classes()) {
-        if (base.rfind(kv.first, 0) == 0) {
-            direct_key = kv.first;
-            break;
-        }
-    }
+    std::string primary_rule = expected.rules.empty() ? "" : expected.rules[0].first;
+    const auto& direct = direct_only_classes();
+    auto direct_it = direct.find(primary_rule);
 
-    if (!direct_key.empty()) {
-        std::unique_ptr<SedBase> obj = direct_classes().at(direct_key)();
+    std::vector<ValidationProblem> problems;
+    if (direct_it != direct.end()) {
+        std::unique_ptr<SedBase> obj = direct_it->second();
         load_fields(obj.get(), instance);
         problems = obj->validate();
     } else {

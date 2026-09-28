@@ -52,7 +52,15 @@ def _cap(ident: str) -> str:
 # identical for every spec, exactly like emit_python.py's RUNTIME string).
 # ---------------------------------------------------------------------------
 
-_VALIDATION_PROBLEM_JAVA = f'''package {PKG};
+def _validation_problem_java() -> str:
+    # Built lazily (called from runtime_files(), after emit_java_package()
+    # has set the real PKG for this run) rather than as a module-level f-
+    # string constant - see this module's PKG comment: an f-string baked at
+    # import time freezes whatever PKG was at that moment ("org.sed2test"),
+    # and reassigning the global later can't retroactively fix an already-
+    # interpolated string. This was the root cause of ~48/56 real-spec
+    # .java files shipping the wrong `package` line.
+    return f'''package {PKG};
 
 /** GENERATED - do not hand-edit; regenerate via generator/generate.py. */
 public final class ValidationProblem {{
@@ -95,7 +103,8 @@ public final class ValidationProblem {{
 }}
 '''
 
-_API_ERROR_JAVA = f'''package {PKG};
+def _api_error_java() -> str:
+    return f'''package {PKG};
 
 /** Raised for any misuse of the generated API itself (wrong-kind OrRef
  * access, get on an unset field, an out-of-range insert, ...) - never for
@@ -106,7 +115,8 @@ public class ApiError extends RuntimeException {{
 }}
 '''
 
-_FIELD_SPEC_JAVA = f'''package {PKG};
+def _field_spec_java() -> str:
+    return f'''package {PKG};
 
 /** GENERATED - do not hand-edit; regenerate via generator/generate.py. */
 public final class FieldSpec {{
@@ -140,7 +150,8 @@ public final class FieldSpec {{
 }}
 '''
 
-_RULE_CATALOG_JAVA = f'''package {PKG};
+def _rule_catalog_java() -> str:
+    return f'''package {PKG};
 
 import java.util.HashMap;
 import java.util.Map;
@@ -198,7 +209,8 @@ public final class RuleCatalog {{
 }}
 '''
 
-_LEAF_VALIDATION_JAVA = f'''package {PKG};
+def _leaf_validation_java() -> str:
+    return f'''package {PKG};
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -288,7 +300,8 @@ public final class LeafValidation {{
 }}
 '''
 
-_ID_KEYED_COLLECTION_JAVA = f'''package {PKG};
+def _id_keyed_collection_java() -> str:
+    return f'''package {PKG};
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -344,7 +357,8 @@ public final class IdKeyedCollection<T extends SedBase> {{
 }}
 '''
 
-_LIST_COLLECTION_JAVA = f'''package {PKG};
+def _list_collection_java() -> str:
+    return f'''package {PKG};
 
 import java.util.ArrayList;
 import java.util.List;
@@ -373,7 +387,8 @@ public final class ListCollection<T extends SedBase> {{
 }}
 '''
 
-_SED_BASE_JAVA = f'''package {PKG};
+def _sed_base_java() -> str:
+    return f'''package {PKG};
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -687,14 +702,14 @@ public abstract class SedBase {{
 
 def runtime_files() -> dict:
     return {
-        "ValidationProblem.java": _VALIDATION_PROBLEM_JAVA,
-        "ApiError.java": _API_ERROR_JAVA,
-        "FieldSpec.java": _FIELD_SPEC_JAVA,
-        "RuleCatalog.java": _RULE_CATALOG_JAVA,
-        "LeafValidation.java": _LEAF_VALIDATION_JAVA,
-        "IdKeyedCollection.java": _ID_KEYED_COLLECTION_JAVA,
-        "ListCollection.java": _LIST_COLLECTION_JAVA,
-        "SedBase.java": _SED_BASE_JAVA,
+        "ValidationProblem.java": _validation_problem_java(),
+        "ApiError.java": _api_error_java(),
+        "FieldSpec.java": _field_spec_java(),
+        "RuleCatalog.java": _rule_catalog_java(),
+        "LeafValidation.java": _leaf_validation_java(),
+        "IdKeyedCollection.java": _id_keyed_collection_java(),
+        "ListCollection.java": _list_collection_java(),
+        "SedBase.java": _sed_base_java(),
     }
 
 
@@ -791,7 +806,12 @@ def _collection_accessors_java(f: Field) -> str:
     return "\n".join(lines) + "\n"
 
 
-_MODEL_FILE_IMPORTS = f'''package {PKG};
+def _model_file_imports() -> str:
+    # Same lazy-evaluation fix as the runtime-file builders above - this is
+    # what every generated model class (SEDDocument.java, Plot2D.java, ...)
+    # opens with, so it accounted for the bulk of the ~48 wrongly-packaged
+    # files.
+    return f'''package {PKG};
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -831,7 +851,7 @@ def emit_model_java_files(model: SpecModel) -> dict:
         dict_fields = [f for f in collection_fields if f.type.kind == "dict"]
         array_fields = [f for f in collection_fields if f.type.kind == "array"]
 
-        out = [_MODEL_FILE_IMPORTS]
+        out = [_model_file_imports()]
         out.append(f"/** Generated from test-specsheets/{c.category}/{name}/. GENERATED - do not\n"
                     f" * hand-edit; regenerate via generator/generate.py. */\n")
         out.append(f"public final class {name} extends SedBase {{\n")
@@ -1259,6 +1279,34 @@ public final class Io {{
 '''
 
 
+def _repo_root() -> str:
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _copy_fixture_test_java(out_dir: str, java_package: str) -> None:
+    """Copies templates/java/tests/FixtureTest.java -> <out_dir>/src/test/
+    java/<package-path>/FixtureTest.java, rewriting only its leading
+    `package ...;` line to match java_package. Every other reference in
+    that file resolves generically (same-package visibility or reflection
+    - see the file's own top-of-file comment), so the package line is the
+    one place this copy step needs to touch content rather than copying
+    verbatim - unlike _copy_test_fixtures_py in emit_python.py, where
+    Python's lack of a package-declaration concept means no rewrite is
+    needed at all."""
+    src = os.path.join(_repo_root(), "templates", "java", "tests", "FixtureTest.java")
+    with open(src) as f:
+        content = f.read()
+    first_nl = content.index("\n")
+    assert content[:first_nl].startswith("package "), (
+        "templates/java/tests/FixtureTest.java must start with a `package ...;` line"
+    )
+    content = f"package {java_package};" + content[first_nl:]
+    test_pkg_dir = os.path.join(out_dir, "src", "test", "java", *java_package.split("."))
+    os.makedirs(test_pkg_dir, exist_ok=True)
+    with open(os.path.join(test_pkg_dir, "FixtureTest.java"), "w") as f:
+        f.write(content)
+
+
 def _pom_xml(group_id: str, artifact_id: str, description: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
@@ -1299,6 +1347,19 @@ def _pom_xml(group_id: str, artifact_id: str, description: str) -> str:
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.2.5</version>
+        <configuration>
+          <!-- surefire's default workingDirectory is ${{project.basedir}},
+               i.e. this module's own directory, regardless of where mvn
+               itself was invoked from - templates/java/tests/FixtureTest.
+               java's fixturesDir() relies on that for its own plain
+               relative fallback. This property is a second, explicit way
+               to give it the same path (see that file's comment), always
+               correct no matter how deeply the java package option nests
+               this module's sources. -->
+          <systemPropertyVariables>
+            <sed2.fixturesDir>${{project.basedir}}/../../fixtures</sed2.fixturesDir>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -1344,3 +1405,5 @@ def emit_java_package(
 
     with open(os.path.join(out_dir, "pom.xml"), "w") as f:
         f.write(_pom_xml(maven_group_id, maven_artifact_id, description))
+
+    _copy_fixture_test_java(out_dir, PKG)

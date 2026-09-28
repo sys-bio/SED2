@@ -284,15 +284,57 @@ jobs:
         with:
           name: test-specsheets-generated
           path: test-specsheets/generated
-      - name: Copy hand-written fixture-test glue
-        run: |
-          mkdir -p "$TEST_GEN_OUT/java/src/test/java/org/sed2test"
-          cp templates/java/tests/FixtureTest.java "$TEST_GEN_OUT/java/src/test/java/org/sed2test/"
       - name: Run fixture suite
+        # FixtureTest.java is generator/emit_java.py's own copy of
+        # templates/java/tests/FixtureTest.java (see
+        # _copy_fixture_test_java) - no manual copy step needed. The
+        # generated pom.xml also sets sed2.fixturesDir for us, so
+        # SED2_FIXTURES_DIR isn't strictly required here either, but is
+        # kept explicit for clarity/parity with the other targets.
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
         working-directory: ${{ github.workspace }}/test-specsheets/generated/java
         run: mvn -B test
+
+  test-java-main:
+    name: Java target (specsheets/)
+    needs: regenerate
+    # Same graceful-degradation shape as test-python-main: skip entirely
+    # when the real-spec regenerate itself failed (nothing to test).
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Run fixture suite
+        # Unlike test-python-main, this is allowed to fail today: the real
+        # spec (specsheets/) uses several field-type kinds (any,
+        # BooleanOrRef, ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
+        # ref-discriminator, any-dict) that generator/emit_java.py doesn't
+        # emit yet - only test-specsheets/'s narrower Phase-1 kind
+        # vocabulary is fully implemented for Java so far (Python's
+        # emitter covers all of them - see generator/emit_python.py).
+        # continue-on-error here keeps that gap from blocking the rest of
+        # the run while it gets closed incrementally.
+        id: test_java_main
+        continue-on-error: true
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/fixtures
+        working-directory: ${{ github.workspace }}/generated/java
+        run: mvn -B test
+      - name: Warn if the real-spec Java test suite failed
+        if: steps.test_java_main.outcome == 'failure'
+        run: |
+          echo "::warning::generated/java's fixture suite failed against specsheets/ - expected until emit_java.py covers every real-spec field-type kind (see this job's Run fixture suite step). Does not block the rest of the run."
 
   test-cpp:
     name: C++ target (test-specsheets/)
@@ -306,10 +348,9 @@ jobs:
         with:
           name: test-specsheets-generated
           path: test-specsheets/generated
-      - name: Copy hand-written fixture-test glue
-        run: |
-          mkdir -p "$TEST_GEN_OUT/cpp/tests"
-          cp templates/cpp/tests/FixtureTest.cpp "$TEST_GEN_OUT/cpp/tests/"
+      # FixtureTest.cpp is generator/emit_cpp.py's own copy of
+      # templates/cpp/tests/FixtureTest.cpp (see _copy_fixture_test_cpp) -
+      # no manual copy step needed.
       - name: Configure (CMake + FetchContent for jsoncons/GoogleTest)
         working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -317,28 +358,74 @@ jobs:
         working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp
         run: cmake --build build -j"$(nproc)"
       - name: Run fixture suite
+        # The generated CMakeLists.txt also bakes in a
+        # SED2_FIXTURES_DIR_DEFAULT compile definition, so
+        # SED2_FIXTURES_DIR isn't strictly required here either, but is
+        # kept explicit for clarity/parity with the other targets.
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
         working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp/build
         run: ./fixture_tests
 
+  test-cpp-main:
+    name: C++ target (specsheets/)
+    needs: regenerate
+    # Same graceful-degradation shape as test-python-main/test-java-main:
+    # skip entirely when the real-spec regenerate itself failed.
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Configure (CMake + FetchContent for jsoncons/GoogleTest)
+        working-directory: ${{ github.workspace }}/generated/cpp
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        working-directory: ${{ github.workspace }}/generated/cpp
+        run: cmake --build build -j"$(nproc)"
+      - name: Run fixture suite
+        # Allowed to fail today, same reason and same shape as
+        # test-java-main: emit_cpp.py has the identical real-spec
+        # field-type-kind gap as emit_java.py (any, BooleanOrRef,
+        # ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
+        # ref-discriminator, any-dict) - only test-specsheets/'s narrower
+        # Phase-1 kind vocabulary is fully implemented for C++ so far.
+        id: test_cpp_main
+        continue-on-error: true
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/fixtures
+        working-directory: ${{ github.workspace }}/generated/cpp/build
+        run: ./fixture_tests
+      - name: Warn if the real-spec C++ test suite failed
+        if: steps.test_cpp_main.outcome == 'failure'
+        run: |
+          echo "::warning::generated/cpp's fixture suite failed against specsheets/ - expected until emit_cpp.py covers every real-spec field-type kind (see this job's Run fixture suite step). Does not block the rest of the run."
+
   # ---------------------------------------------------------------------
-  # specsheets/ -> generated/   (Phase 2: Python done, see Design.md)
+  # specsheets/ -> generated/   (Phase 2, see Design.md)
   #
   # specsheets/ is the real, 51-class spec (doc-class SEDDocument, base
-  # mixin SEDBase). The Python target is fully implemented against it -
-  # test-python-main above runs generated/python's own fixture suite
-  # against fixtures/generated/ (schema-derivable, regenerated every run
-  # by gen_fixtures.py) the same way test-python does for test-specsheets/.
+  # mixin SEDBase). All three targets' *-main jobs (test-python-main,
+  # test-java-main, test-cpp-main - each placed next to its test-specsheets/
+  # counterpart above) run generated/<lang>'s own fixture suite against
+  # fixtures/generated/ (schema-derivable, regenerated every run by
+  # gen_fixtures.py) the same way the test-specsheets/ jobs do.
   # fixtures/handwritten/ (hand-authored semantic fixtures for the real
   # spec - Task 12's other half) is still deliberately deferred until the
   # spec itself stabilizes (see Design.md's Testing section); when it
-  # exists, test-python-main picks its fixtures up automatically too -
+  # exists, every *-main job picks its fixtures up automatically too -
   # nothing here is specific to fixtures/generated/ alone.
   #
-  # There's deliberately no test-java-main/test-cpp-main job yet: Java and
-  # C++ are stubs for the real spec (compile failures there are expected -
-  # see Design.md), so there's nothing meaningful to test-run yet. Add them
-  # here, same shape as test-python-main above, once those targets are
-  # implemented.
+  # Only Python is fully implemented against specsheets/ today.
+  # test-java-main/test-cpp-main both run with continue-on-error (see their
+  # own Run fixture suite steps): specsheets/ uses several field-type kinds
+  # (any, BooleanOrRef, ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
+  # ref-discriminator, any-dict) that generator/emit_java.py and
+  # generator/emit_cpp.py don't emit yet, so real fixture failures are
+  # expected there until that gap is closed - see each job's own comment.
   # ---------------------------------------------------------------------
