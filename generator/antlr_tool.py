@@ -56,14 +56,29 @@ def generate_python_math_parser(dest_pkg_dir: str, cache_dir: str | None = None)
     any grammar or tool-invocation failure."""
     jar_path = ensure_antlr_jar(cache_dir)
     with tempfile.TemporaryDirectory() as tmp:
+        # ANTLR embeds whatever grammar-file argument it's given verbatim in
+        # every generated file's "# Generated from <...> by ANTLR <ver>"
+        # header comment. GRAMMAR_PATH is absolute (derived from this
+        # module's own __file__), so passing it directly would bake in
+        # wherever THIS repo happens to be checked out - different on every
+        # machine/CI runner (e.g. /home/runner/work/SED2/SED2/... on GitHub
+        # Actions vs. a contributor's own checkout path), producing a
+        # spurious diff in the generated output on every regeneration even
+        # when math.g4 itself hasn't changed. Passing just the grammar's
+        # bare filename, with cwd set to its directory, makes that header
+        # comment ("# Generated from math.g4 by ANTLR 4.13.2") identical
+        # everywhere - see Design.md's determinism note on generated output
+        # needing to be byte-identical across repeated/cross-machine runs.
         cmd = [
             "java", "-jar", jar_path,
             "-Dlanguage=Python3", "-visitor", "-no-listener",
             "-Xexact-output-dir",
             "-o", tmp,
-            GRAMMAR_PATH,
+            os.path.basename(GRAMMAR_PATH),
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=os.path.dirname(GRAMMAR_PATH)
+        )
         if result.returncode != 0:
             raise RuntimeError(
                 "ANTLR tool failed on generator/math.g4:\n"

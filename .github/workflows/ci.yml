@@ -34,9 +34,9 @@
 # commit.
 #
 # Two regenerate targets, one job: test-specsheets/ -> test-specsheets/
-# generated/ (Phase 1, working) and specsheets/ -> generated/ (Phase 2, not
-# started - see the regenerate job below for why that one is expected to
-# fail today). Both live in the *same* job, committed with a single
+# generated/ (Phase 1, working) and specsheets/ -> generated/ (Phase 2:
+# Python target working, Java/C++ still stubs - see the regenerate job
+# below). Both live in the *same* job, committed with a single
 # `git add`/commit/push covering both trees, specifically so there's only
 # ever one push per run - two independent jobs each pushing their own
 # regeneration raced on the same ref and got a non-fast-forward rejection
@@ -46,6 +46,9 @@
 # continue-on-error and only turned into a warning annotation, specifically
 # so it never blocks the commit or the downstream test-python/test-java/
 # test-cpp jobs, which only depend on the test-specsheets/ half.
+# test-python-main *does* depend on the real-spec half succeeding, and
+# degrades gracefully (skips, doesn't fail) when it doesn't - see that
+# job's own `if:`.
 
 name: CI
 
@@ -77,6 +80,8 @@ jobs:
   regenerate:
     name: Regenerate generated/ directories (self-healing)
     runs-on: ubuntu-latest
+    outputs:
+      regen_main_outcome: ${{ steps.regen_main.outcome }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -114,16 +119,18 @@ jobs:
             --base-mixin TestBase \
             --lang python,java,cpp
 
-      # -- specsheets/ -> generated/  (Phase 2, not started - see below) --
-      # Expected to fail today (see the regenerate-main-equivalent notes at
-      # the bottom of this file's history / Design.md); continue-on-error
-      # keeps that from blocking the commit step or the test-specsheets/
-      # test jobs below, which don't depend on this half at all.
+      # -- specsheets/ -> generated/  (Phase 2: Python done, Java/C++ stubs -
+      # see below) -- generate.py itself (source emission, not compiling
+      # the Java/C++ output) succeeds today for all three targets against
+      # the real spec; continue-on-error is kept anyway, since this job
+      # also covers the real spec's OWN emitters continuing to work as
+      # specsheets/ itself changes, and a failure here still must never
+      # block the proven test-specsheets/ half's commit or tests.
 
       - name: Delete existing generated/, if any
         run: rm -rf "$MAIN_GEN_OUT"
 
-      - name: Regenerate from specsheets/ (all three targets) - Phase 2, expected to fail for now
+      - name: Regenerate from specsheets/ (all three targets)
         id: regen_main
         continue-on-error: true
         run: |
@@ -144,7 +151,7 @@ jobs:
       - name: Warn if the real-spec regenerate failed
         if: steps.regen_main.outcome == 'failure'
         run: |
-          echo "::warning::specsheets/ -> generated/ regeneration failed. Expected until Phase 2 (pointing the generator at the real spec) is done - see Design.md. This does not block test-specsheets/ or its tests."
+          echo "::warning::specsheets/ -> generated/ regeneration failed - see Design.md's Testing section. Not expected (Phase 2's Python target is working), but does not block test-specsheets/ or its tests; test-python-main below will skip since it has nothing to test."
 
       # -- Commit both trees together, one push --
 
@@ -178,6 +185,23 @@ jobs:
           path: test-specsheets/generated
           retention-days: 7
 
+      # generated/ (real spec) + fixtures/ (schema-derivable, written by the
+      # regen step above via gen_fixtures.py) only exist to upload when
+      # regen_main actually succeeded - guarded the same way the warning
+      # step above is, so a Phase-2 regenerate failure just means the
+      # downstream test-python-main job below has nothing to download and
+      # skips (see that job's own `if:`), same graceful degradation as
+      # everywhere else Phase 2 can still fail today.
+      - name: Upload generated/ + fixtures/ for the real-spec test job
+        if: steps.regen_main.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-generated
+          path: |
+            generated
+            fixtures
+          retention-days: 7
+
   # ---------------------------------------------------------------------
   # test-specsheets/ target tests - only depend on the test-specsheets/
   # half of the regenerate job above, so a Phase-2 (real spec) failure
@@ -203,12 +227,46 @@ jobs:
         run: |
           pip install -e "$TEST_GEN_OUT/python"
           pip install pytest
-      - name: Copy hand-written fixture-test glue
-        run: cp templates/python/tests/test_fixtures.py "$TEST_GEN_OUT/python/"
       - name: Run fixture suite
-        env:
-          SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
+        # test_fixtures.py is generator/emit_python.py's own copy of
+        # templates/python/tests/test_fixtures.py (see
+        # _copy_test_fixtures_py) - no manual copy step needed, and it
+        # finds test-specsheets/fixtures/ (including its generated/
+        # subdirectory) on its own without SED2_FIXTURES_DIR, since that's
+        # the default relative to where it was copied.
         run: pytest "$TEST_GEN_OUT/python/test_fixtures.py" -q
+
+  test-python-main:
+    name: Python target (specsheets/)
+    needs: regenerate
+    # Phase 2's real-spec regenerate step is still allowed to fail today
+    # (continue-on-error - see the regenerate job's own comments); when it
+    # does, there's no generated/ or fixtures/ artifact to download, so
+    # this job has nothing to test and skips rather than failing the run.
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Install libsed2 + test deps
+        run: |
+          pip install -e "$MAIN_GEN_OUT/python"
+          pip install pytest
+      - name: Run fixture suite
+        # Same test_fixtures.py as test-specsheets/ above, copied by the
+        # generator into THIS tree's generated/python/ - it discovers
+        # fixtures/generated/ (and fixtures/handwritten/, once Task 12's
+        # deferred hand-authored fixtures exist - see Design.md's Testing
+        # section) on its own, no per-spec configuration here.
+        run: pytest "$MAIN_GEN_OUT/python/test_fixtures.py" -q
 
   test-java:
     name: Java target (test-specsheets/)
@@ -265,18 +323,22 @@ jobs:
         run: ./fixture_tests
 
   # ---------------------------------------------------------------------
-  # specsheets/ -> generated/   (Phase 2 - not started, see Design.md)
+  # specsheets/ -> generated/   (Phase 2: Python done, see Design.md)
   #
-  # The generator has only ever been run against the small synthetic
-  # test-specsheets/ tree. specsheets/ is the real, 51-class spec
-  # (doc-class SEDDocument, base mixin SEDBase); pointing the generator at
-  # it is future work, handled above in the shared regenerate job (the
-  # "Regenerate from specsheets/" step is expected to fail until then, and
-  # is only ever a warning, never a blocker - see that job's comments).
+  # specsheets/ is the real, 51-class spec (doc-class SEDDocument, base
+  # mixin SEDBase). The Python target is fully implemented against it -
+  # test-python-main above runs generated/python's own fixture suite
+  # against fixtures/generated/ (schema-derivable, regenerated every run
+  # by gen_fixtures.py) the same way test-python does for test-specsheets/.
+  # fixtures/handwritten/ (hand-authored semantic fixtures for the real
+  # spec - Task 12's other half) is still deliberately deferred until the
+  # spec itself stabilizes (see Design.md's Testing section); when it
+  # exists, test-python-main picks its fixtures up automatically too -
+  # nothing here is specific to fixtures/generated/ alone.
   #
-  # There's deliberately no test-python-main/test-java-main/test-cpp-main
-  # job yet: those need a real fixtures/ tree and hand-written test
-  # harnesses for the real spec, neither of which exists yet either (see
-  # Design.md's Repository Layout and Testing sections). Add them here,
-  # same shape as the test-specsheets jobs above, once those exist.
+  # There's deliberately no test-java-main/test-cpp-main job yet: Java and
+  # C++ are stubs for the real spec (compile failures there are expected -
+  # see Design.md), so there's nothing meaningful to test-run yet. Add them
+  # here, same shape as test-python-main above, once those targets are
+  # implemented.
   # ---------------------------------------------------------------------

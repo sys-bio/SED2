@@ -3061,6 +3061,22 @@ def emit_init_py(model: SpecModel) -> str:
     )
 
 
+def _copy_test_fixtures_py(out_dir: str) -> None:
+    """Copies templates/python/tests/test_fixtures.py -> <out>/test_fixtures.py
+    verbatim (Design.md's Testing section - Task 12: the generated library
+    is tested against whatever fixtures/*.sed2.json files exist for this
+    spec tree, discovered at test-collection time, never a fixture list
+    baked in here or in the template itself). Every `generate.py` run that
+    includes the python target gets this automatically - no separate manual
+    copy step required (in CI or locally) for the fixture suite to be
+    runnable against a fresh regeneration."""
+    src = os.path.join(_repo_root(), "templates", "python", "tests", "test_fixtures.py")
+    with open(src) as f:
+        content = f.read()
+    with open(os.path.join(out_dir, "test_fixtures.py"), "w") as f:
+        f.write(content)
+
+
 def emit_python_package(
     model: SpecModel,
     out_dir: str,
@@ -3134,3 +3150,4 @@ where = ["src"]
 '''
     with open(os.path.join(out_dir, "pyproject.toml"), "w") as f:
         f.write(pyproject)
+    _copy_test_fixtures_py(out_dir)
