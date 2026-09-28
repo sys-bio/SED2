@@ -92,7 +92,7 @@ class UnknownChoiceInline(SedBase):
 
 class TestDocument(SedBase):
     """Generated from test-specsheets/core/TestDocument/."""
-    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget'), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport')]
+    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget', is_math=False), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False)]
     _REQUIRED_NAMES = {'version'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -100,6 +100,8 @@ class TestDocument(SedBase):
     _NAME_RULE_ID = 'TestBase-0001'
     _DESC_RULE_ID = None
     _BASE_CATCHALL = 'TestBase-0000'
+    _IS_DOCUMENT_CLASS = True
+    _MAX_KNOWN_DOCUMENT_VERSION = 'v1.0.0'
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -107,6 +109,7 @@ class TestDocument(SedBase):
         super().__init__()
         self._widgets = IdKeyedCollection(_dispatch_AbstractWidget)
         self._reports = IdKeyedCollection(_dispatch_AbstractReport)
+        self._attach(None, self)
 
     def get_version(self):
         if 'version' not in self._values: raise ApiError('version is not set')
@@ -163,6 +166,11 @@ class TestDocument(SedBase):
         kids.extend(self._reports.get(i) for i in self._reports.ids())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'widgets': return self._widgets
+        if field_name == 'reports': return self._reports
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._widgets.ids():
@@ -192,7 +200,7 @@ class TestDocument(SedBase):
 
 class FancyWidget(SedBase):
     """Generated from test-specsheets/tasks/FancyWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline'), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline', is_math=False), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'fancyWidget'
     _TYPE_RULE_ID = 'FancyWidget-0002'
@@ -315,6 +323,10 @@ class FancyWidget(SedBase):
         kids.extend(self._notes.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'choices': return self._choices
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._choices.ids():
@@ -348,7 +360,7 @@ class FancyWidget(SedBase):
 
 class SimpleWidget(SedBase):
     """Generated from test-specsheets/tasks/SimpleWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'simpleWidget'
     _TYPE_RULE_ID = 'SimpleWidget-0002'
@@ -356,7 +368,7 @@ class SimpleWidget(SedBase):
     _NAME_RULE_ID = 'TestBase-0001'
     _DESC_RULE_ID = None
     _BASE_CATCHALL = 'TestBase-0000'
-    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]}
+    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]}
     _NAMESPACE_CATCHALL = {'acme': 'SimpleWidget-acme-0000'}
     _KNOWN_NAMESPACE_PREFIXES = {'acme'}
 
@@ -427,6 +439,9 @@ class SimpleWidget(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -453,7 +468,7 @@ class SimpleWidget(SedBase):
 
 class SimpleReport(SedBase):
     """Generated from test-specsheets/outputs/SimpleReport/."""
-    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'source'}
     _TYPE_CONST = 'simpleReport'
     _TYPE_RULE_ID = 'SimpleReport-0002'
@@ -508,6 +523,9 @@ class SimpleReport(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -533,7 +551,7 @@ class SimpleReport(SedBase):
 
 class Choice(SedBase):
     """Generated from test-specsheets/auxiliary/Choice/."""
-    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'choice'
     _TYPE_RULE_ID = 'Choice-0002'
@@ -575,6 +593,9 @@ class Choice(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -599,7 +620,7 @@ class Choice(SedBase):
 
 class Note(SedBase):
     """Generated from test-specsheets/auxiliary/Note/."""
-    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'text'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -638,6 +659,9 @@ class Note(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -661,7 +685,7 @@ class Note(SedBase):
 
 class WeightedChoice(SedBase):
     """Generated from test-specsheets/auxiliary/WeightedChoice/."""
-    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'weight'}
     _TYPE_CONST = 'weightedChoice'
     _TYPE_RULE_ID = 'WeightedChoice-0002'
@@ -724,6 +748,9 @@ class WeightedChoice(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -749,7 +776,7 @@ class WeightedChoice(SedBase):
 
 class AcmeWidget(SedBase):
     """Generated from test-specsheets/tasks/AcmeWidget/."""
-    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'acme@acmeLevel'}
     _TYPE_CONST = 'acme@acmeWidget'
     _TYPE_RULE_ID = 'acme-AcmeWidget-0002'
@@ -811,6 +838,9 @@ class AcmeWidget(SedBase):
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -930,10 +960,10 @@ def _load_fields(obj, raw: dict):
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']
     for spec in obj._FIELDS:
-        if spec.name not in raw or spec.kind in ('dict', 'array'):
+        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict'):
             continue
         v = raw[spec.name]
-        if spec.kind in ('StringOrRef', 'NumberOrRef'):
+        if spec.kind in ('StringOrRef', 'NumberOrRef', 'IntegerOrRef', 'BooleanOrRef', 'ArrayOrRef', 'DictOrRef'):
             if is_reference(v):
                 obj._set_orref_ref(spec.name, v)
             else:
@@ -971,16 +1001,21 @@ def _load_fields(obj, raw: dict):
                     'id': obj._own_id_for_message(), 'value': raw_value}))
                 continue
             coll = getattr(obj, '_' + _pyname(spec.name))
-            dispatch = globals()['parse_' + spec.item_discriminator]
+            dispatch = globals()['parse_' + spec.item_discriminator] if spec.item_discriminator else None
             for item_id, item_raw in raw_value.items():
                 if not SID_PATTERN.match(item_id):
                     rid = spec.rule_id or spec.origin_catchall
                     obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
                         'attr': spec.name, 'class': obj.__class__.__name__,
                         'id': obj._own_id_for_message(), 'value': item_id}))
-                child, problem = dispatch(item_raw)
-                if problem is not None:
-                    obj._load_problems.append(problem)
+                if dispatch is not None:
+                    child, problem = dispatch(item_raw)
+                    if problem is not None:
+                        obj._load_problems.append(problem)
+                else:
+                    # Plain (non-discriminated) item class: no _type dispatch.
+                    child = globals()[spec.item_class]()
+                    _load_fields(child, item_raw)
                 if child is not None:
                     coll.add(item_id, child)
         elif spec.kind == 'array' and spec.name in raw:
@@ -997,6 +1032,26 @@ def _load_fields(obj, raw: dict):
                 child = item_cls()
                 _load_fields(child, item_raw)
                 coll.add(child)
+        elif spec.kind == 'any-dict' and spec.name in raw:
+            # Every value is stored as-is - a plain JSON value, never
+            # constructed as a class instance (see spec.py's _classify_type
+            # additionalProperties branch and _collection_accessors' any-dict
+            # branch above).
+            raw_value = raw[spec.name]
+            if not isinstance(raw_value, dict):
+                rid = spec.rule_id or spec.origin_catchall
+                obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                    'attr': spec.name, 'class': obj.__class__.__name__,
+                    'id': obj._own_id_for_message(), 'value': raw_value}))
+                continue
+            coll = getattr(obj, '_' + _pyname(spec.name))
+            for item_id, item_value in raw_value.items():
+                if not SID_PATTERN.match(item_id):
+                    rid = spec.rule_id or spec.origin_catchall
+                    obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                        'attr': spec.name, 'class': obj.__class__.__name__,
+                        'id': obj._own_id_for_message(), 'value': item_id}))
+                coll.add(item_id, item_value)
 
 
 def _pyname(name):

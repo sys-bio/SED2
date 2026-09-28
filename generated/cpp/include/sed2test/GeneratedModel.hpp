@@ -1,4 +1,4 @@
-// Generated concrete SED2 classes for libsed2test. GENERATED - do not
+// Generated concrete SED2 classes. GENERATED - do not
 // hand-edit; regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 
@@ -16,10 +16,9 @@ public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"version", "string", true, std::string(["SEDDocument-0002", "SEDDocument-0003"]), std::string("SEDDocument-0001"), "SEDDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt},
-            FieldSpec{"constants", "dict", false, std::string("SEDDocument-0005"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AnyValueOrRef")},
             FieldSpec{"tasks", "dict", false, std::string("SEDDocument-0006"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
             FieldSpec{"outputs", "dict", false, std::string("SEDDocument-0007"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractOutput")},
-            FieldSpec{"styles", "dict", false, std::string("SEDDocument-0008"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("Style")}
+            FieldSpec{"styles", "dict", false, std::string("SEDDocument-0008"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Style"), std::nullopt}
         };
         return specs;
     }
@@ -39,13 +38,6 @@ public:
     void set_version(const std::string& value) { values_["version"] = jsoncons::json(value); }
     bool is_set_version() const { return values_.count("version") > 0; }
     void unset_version() { values_.erase("version"); }
-
-    std::vector<std::string> get_constants() const { return constants_.ids(); }
-    SedBase* get_constants_item(const std::string& item_id) const { return constants_.get(item_id); }
-    void add_constants(const std::string& item_id, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); constants_.add(item_id, std::move(obj)); raw->attach(this, get_document()); }
-    void insert_constants(size_t index, const std::string& item_id, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); constants_.insert(index, item_id, std::move(obj)); raw->attach(this, get_document()); }
-    void remove_constants(const std::string& item_id) { constants_.remove(item_id); }
-    void set_id_on_constants(const std::string& old_id, const std::string& new_id) { constants_.set_id(old_id, new_id); }
 
     std::vector<std::string> get_tasks() const { return tasks_.ids(); }
     SedBase* get_tasks_item(const std::string& item_id) const { return tasks_.get(item_id); }
@@ -70,7 +62,6 @@ public:
 
     std::vector<SedBase*> children() override {
         std::vector<SedBase*> kids;
-        for (const auto& i : constants_.ids()) kids.push_back(constants_.get(i));
         for (const auto& i : tasks_.ids()) kids.push_back(tasks_.get(i));
         for (const auto& i : outputs_.ids()) kids.push_back(outputs_.get(i));
         for (const auto& i : styles_.ids()) kids.push_back(styles_.get(i));
@@ -79,7 +70,6 @@ public:
 
     std::vector<ChildLoc> children_with_locations() override {
         std::vector<ChildLoc> out;
-        for (const auto& i : constants_.ids()) out.push_back(ChildLoc{constants_.get(i), "/constants/" + i});
         for (const auto& i : tasks_.ids()) out.push_back(ChildLoc{tasks_.get(i), "/tasks/" + i});
         for (const auto& i : outputs_.ids()) out.push_back(ChildLoc{outputs_.get(i), "/outputs/" + i});
         for (const auto& i : styles_.ids()) out.push_back(ChildLoc{styles_.get(i), "/styles/" + i});
@@ -87,7 +77,6 @@ public:
     }
 
     IdKeyedCollection& get_dict_collection(const std::string& field_name) override {
-        if (field_name == "constants") return constants_;
         if (field_name == "tasks") return tasks_;
         if (field_name == "outputs") return outputs_;
         if (field_name == "styles") return styles_;
@@ -99,7 +88,6 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         if (values_.count("version")) d["version"] = values_.at("version");
-        if (constants_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : constants_.ids()) sub[i] = constants_.get(i)->to_json_value(); d["constants"] = sub; }
         if (tasks_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : tasks_.ids()) sub[i] = tasks_.get(i)->to_json_value(); d["tasks"] = sub; }
         if (outputs_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : outputs_.ids()) sub[i] = outputs_.get(i)->to_json_value(); d["outputs"] = sub; }
         if (styles_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : styles_.ids()) sub[i] = styles_.get(i)->to_json_value(); d["styles"] = sub; }
@@ -108,10 +96,29 @@ public:
     }
 
 private:
-    IdKeyedCollection constants_;
     IdKeyedCollection tasks_;
     IdKeyedCollection outputs_;
     IdKeyedCollection styles_;
+};
+
+/// Generated from test-specsheets/core/Style/.
+class Style : public SedBase {
+public:
+    std::optional<std::string> type_const() const override { return std::nullopt; }
+    std::optional<std::string> type_rule_id() const override { return std::nullopt; }
+    std::string own_catchall() const override { return "Style-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::string("SEDBase-0002"); }
+    std::string base_catchall() const override { return "SEDBase-0000"; }
+    std::string class_name() const override { return "Style"; }
+
+    jsoncons::json own_json_value() const override {
+        jsoncons::json d = jsoncons::json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
 };
 
 /// Generated from test-specsheets/tasks/AggregationCalculation/.
@@ -557,7 +564,6 @@ class CreateDataBlock : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"data", "string", true, std::string(["CreateDataBlock-0002", "CreateDataBlock-0003"]), std::string("CreateDataBlock-0001"), "CreateDataBlock-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -574,11 +580,6 @@ public:
     std::string base_catchall() const override { return "SEDBase-0000"; }
     std::string class_name() const override { return "CreateDataBlock"; }
     std::string get_type() const { return "createDataBlock"; }
-
-    std::string get_data() const { auto it = values_.find("data"); if (it == values_.end()) throw ApiError(std::string("data") + " is not set"); return it->second.as<std::string>(); }
-    void set_data(const std::string& value) { values_["data"] = jsoncons::json(value); }
-    bool is_set_data() const { return values_.count("data") > 0; }
-    void unset_data() { values_.erase("data"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -607,7 +608,6 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("createDataBlock");
-        if (values_.count("data")) d["data"] = values_.at("data");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -1330,10 +1330,9 @@ class Loop : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"outputVariableMap", "string", false, std::string(["Repeat-0002", "Repeat-0003"]), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"loopVariables", "dict", true, std::string("Loop-0003"), std::string("Loop-0002"), "Loop-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("LoopVariable")},
+            FieldSpec{"loopVariables", "dict", true, std::string("Loop-0003"), std::string("Loop-0002"), "Loop-0000", std::nullopt, std::nullopt, std::nullopt, std::string("LoopVariable"), std::nullopt},
             FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation")},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -1350,11 +1349,6 @@ public:
     std::string base_catchall() const override { return "SEDBase-0000"; }
     std::string class_name() const override { return "Loop"; }
     std::string get_type() const { return "loop"; }
-
-    std::string get_outputVariableMap() const { auto it = values_.find("outputVariableMap"); if (it == values_.end()) throw ApiError(std::string("outputVariableMap") + " is not set"); return it->second.as<std::string>(); }
-    void set_outputVariableMap(const std::string& value) { values_["outputVariableMap"] = jsoncons::json(value); }
-    bool is_set_outputVariableMap() const { return values_.count("outputVariableMap") > 0; }
-    void unset_outputVariableMap() { values_.erase("outputVariableMap"); }
 
     std::vector<std::string> get_loopVariables() const { return loopVariables_.ids(); }
     SedBase* get_loopVariables_item(const std::string& item_id) const { return loopVariables_.get(item_id); }
@@ -1417,7 +1411,6 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("loop");
-        if (values_.count("outputVariableMap")) d["outputVariableMap"] = values_.at("outputVariableMap");
         if (loopVariables_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : loopVariables_.ids()) sub[i] = loopVariables_.get(i)->to_json_value(); d["loopVariables"] = sub; }
         if (subTasks_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : subTasks_.ids()) sub[i] = subTasks_.get(i)->to_json_value(); d["subTasks"] = sub; }
         if (aggregateOutputVariables_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : aggregateOutputVariables_.ids()) sub[i] = aggregateOutputVariables_.get(i)->to_json_value(); d["aggregateOutputVariables"] = sub; }
@@ -1439,8 +1432,6 @@ public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"inputModel", "SIdRef", true, std::string("ModelChange-0002"), std::string("ModelChange-0001"), "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"setValues", "string", false, std::string(["ModelChange-0003", "ModelChange-0004"]), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"replaceElements", "string", false, std::string(["ModelChange-0009", "ModelChange-0010"]), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -1462,16 +1453,6 @@ public:
     void set_inputModel(const std::string& value) { values_["inputModel"] = jsoncons::json(value); }
     bool is_set_inputModel() const { return values_.count("inputModel") > 0; }
     void unset_inputModel() { values_.erase("inputModel"); }
-
-    std::string get_setValues() const { auto it = values_.find("setValues"); if (it == values_.end()) throw ApiError(std::string("setValues") + " is not set"); return it->second.as<std::string>(); }
-    void set_setValues(const std::string& value) { values_["setValues"] = jsoncons::json(value); }
-    bool is_set_setValues() const { return values_.count("setValues") > 0; }
-    void unset_setValues() { values_.erase("setValues"); }
-
-    std::string get_replaceElements() const { auto it = values_.find("replaceElements"); if (it == values_.end()) throw ApiError(std::string("replaceElements") + " is not set"); return it->second.as<std::string>(); }
-    void set_replaceElements(const std::string& value) { values_["replaceElements"] = jsoncons::json(value); }
-    bool is_set_replaceElements() const { return values_.count("replaceElements") > 0; }
-    void unset_replaceElements() { values_.erase("replaceElements"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -1501,8 +1482,6 @@ public:
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("modelChange");
         if (values_.count("inputModel")) d["inputModel"] = values_.at("inputModel");
-        if (values_.count("setValues")) d["setValues"] = values_.at("setValues");
-        if (values_.count("replaceElements")) d["replaceElements"] = values_.at("replaceElements");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -1582,6 +1561,7 @@ class ModelImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
+            FieldSpec{"language", "StringOrRef", true, std::string(["ModelImport-0005", "ModelImport-0006"]), std::string("ModelImport-0004"), "ModelImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -1598,6 +1578,14 @@ public:
     std::string base_catchall() const override { return "SEDBase-0000"; }
     std::string class_name() const override { return "ModelImport"; }
     std::string get_type() const { return "modelImport"; }
+
+    std::string get_language_value() const { return get_or_ref_value_node("language").as<std::string>(); }
+    std::string get_language_ref() const { return get_or_ref_ref_node("language").as<std::string>(); }
+    void set_language_value(const std::string& value) { set_or_ref_value_node("language", jsoncons::json(value)); }
+    void set_language_ref(const std::string& ref) { set_or_ref_ref_node("language", ref); }
+    bool is_language_ref() const { return is_or_ref_ref("language"); }
+    bool is_set_language() const { return values_.count("language") > 0; }
+    void unset_language() { values_.erase("language"); or_ref_is_ref_.erase("language"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -1626,6 +1614,7 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("modelImport");
+        if (values_.count("language")) d["language"] = values_.at("language");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -1642,8 +1631,7 @@ public:
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"start", "NumberOrRef", false, std::string(["NumericRange-0001", "NumericRange-0002"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"end", "NumberOrRef", false, std::string(["NumericRange-0003", "NumericRange-0004"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "string", false, std::string(["NumericRange-0011", "NumericRange-0012"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "string", false, std::string(["Range-0001", "Range-0002"]), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"interval", "NumberOrRef", false, std::string(["NumericRange-0005", "NumericRange-0006"]), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -1673,15 +1661,13 @@ public:
     bool is_set_end() const { return values_.count("end") > 0; }
     void unset_end() { values_.erase("end"); or_ref_is_ref_.erase("end"); }
 
-    std::string get_values() const { auto it = values_.find("values"); if (it == values_.end()) throw ApiError(std::string("values") + " is not set"); return it->second.as<std::string>(); }
-    void set_values(const std::string& value) { values_["values"] = jsoncons::json(value); }
-    bool is_set_values() const { return values_.count("values") > 0; }
-    void unset_values() { values_.erase("values"); }
-
-    std::string get_values() const { auto it = values_.find("values"); if (it == values_.end()) throw ApiError(std::string("values") + " is not set"); return it->second.as<std::string>(); }
-    void set_values(const std::string& value) { values_["values"] = jsoncons::json(value); }
-    bool is_set_values() const { return values_.count("values") > 0; }
-    void unset_values() { values_.erase("values"); }
+    double get_interval_value() const { return get_or_ref_value_node("interval").as<double>(); }
+    std::string get_interval_ref() const { return get_or_ref_ref_node("interval").as<std::string>(); }
+    void set_interval_value(double value) { set_or_ref_value_node("interval", jsoncons::json(value)); }
+    void set_interval_ref(const std::string& ref) { set_or_ref_ref_node("interval", ref); }
+    bool is_interval_ref() const { return is_or_ref_ref("interval"); }
+    bool is_set_interval() const { return values_.count("interval") > 0; }
+    void unset_interval() { values_.erase("interval"); or_ref_is_ref_.erase("interval"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -1712,8 +1698,7 @@ public:
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("numericRange");
         if (values_.count("start")) d["start"] = values_.at("start");
         if (values_.count("end")) d["end"] = values_.at("end");
-        if (values_.count("values")) d["values"] = values_.at("values");
-        if (values_.count("values")) d["values"] = values_.at("values");
+        if (values_.count("interval")) d["interval"] = values_.at("interval");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -2059,8 +2044,7 @@ public:
             FieldSpec{"modelElement", "StringOrRef", true, std::string(["ParameterRange-0002", "ParameterRange-0003"]), std::string("ParameterRange-0001"), "ParameterRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"start", "NumberOrRef", false, std::string(["NumericRange-0001", "NumericRange-0002"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"end", "NumberOrRef", false, std::string(["NumericRange-0003", "NumericRange-0004"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "string", false, std::string(["NumericRange-0011", "NumericRange-0012"]), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "string", false, std::string(["Range-0001", "Range-0002"]), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"interval", "NumberOrRef", false, std::string(["NumericRange-0005", "NumericRange-0006"]), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -2102,15 +2086,13 @@ public:
     bool is_set_end() const { return values_.count("end") > 0; }
     void unset_end() { values_.erase("end"); or_ref_is_ref_.erase("end"); }
 
-    std::string get_values() const { auto it = values_.find("values"); if (it == values_.end()) throw ApiError(std::string("values") + " is not set"); return it->second.as<std::string>(); }
-    void set_values(const std::string& value) { values_["values"] = jsoncons::json(value); }
-    bool is_set_values() const { return values_.count("values") > 0; }
-    void unset_values() { values_.erase("values"); }
-
-    std::string get_values() const { auto it = values_.find("values"); if (it == values_.end()) throw ApiError(std::string("values") + " is not set"); return it->second.as<std::string>(); }
-    void set_values(const std::string& value) { values_["values"] = jsoncons::json(value); }
-    bool is_set_values() const { return values_.count("values") > 0; }
-    void unset_values() { values_.erase("values"); }
+    double get_interval_value() const { return get_or_ref_value_node("interval").as<double>(); }
+    std::string get_interval_ref() const { return get_or_ref_ref_node("interval").as<std::string>(); }
+    void set_interval_value(double value) { set_or_ref_value_node("interval", jsoncons::json(value)); }
+    void set_interval_ref(const std::string& ref) { set_or_ref_ref_node("interval", ref); }
+    bool is_interval_ref() const { return is_or_ref_ref("interval"); }
+    bool is_set_interval() const { return values_.count("interval") > 0; }
+    void unset_interval() { values_.erase("interval"); or_ref_is_ref_.erase("interval"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -2142,8 +2124,7 @@ public:
         if (values_.count("modelElement")) d["modelElement"] = values_.at("modelElement");
         if (values_.count("start")) d["start"] = values_.at("start");
         if (values_.count("end")) d["end"] = values_.at("end");
-        if (values_.count("values")) d["values"] = values_.at("values");
-        if (values_.count("values")) d["values"] = values_.at("values");
+        if (values_.count("interval")) d["interval"] = values_.at("interval");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -2159,10 +2140,9 @@ public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"model", "SIdRef", true, std::string("ParameterScan-0002"), std::string("ParameterScan-0001"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariableMap", "string", false, std::string(["Repeat-0002", "Repeat-0003"]), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"parameterRanges", "array", true, std::string("ParameterScan-0004"), std::string("ParameterScan-0003"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::string("ParameterRangeInline"), std::nullopt},
+            FieldSpec{"parameterRanges", "array", true, std::string("ParameterScan-0004"), std::string("ParameterScan-0003"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::string("ParameterRange"), std::nullopt},
             FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation")},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -2184,11 +2164,6 @@ public:
     void set_model(const std::string& value) { values_["model"] = jsoncons::json(value); }
     bool is_set_model() const { return values_.count("model") > 0; }
     void unset_model() { values_.erase("model"); }
-
-    std::string get_outputVariableMap() const { auto it = values_.find("outputVariableMap"); if (it == values_.end()) throw ApiError(std::string("outputVariableMap") + " is not set"); return it->second.as<std::string>(); }
-    void set_outputVariableMap(const std::string& value) { values_["outputVariableMap"] = jsoncons::json(value); }
-    bool is_set_outputVariableMap() const { return values_.count("outputVariableMap") > 0; }
-    void unset_outputVariableMap() { values_.erase("outputVariableMap"); }
 
     std::vector<SedBase*> get_parameterRanges() const { return parameterRanges_.items(); }
     void add_parameterRanges(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); parameterRanges_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -2250,7 +2225,6 @@ public:
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("parameterScan");
         if (values_.count("model")) d["model"] = values_.at("model");
-        if (values_.count("outputVariableMap")) d["outputVariableMap"] = values_.at("outputVariableMap");
         if (subTasks_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : subTasks_.ids()) sub[i] = subTasks_.get(i)->to_json_value(); d["subTasks"] = sub; }
         if (aggregateOutputVariables_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : aggregateOutputVariables_.ids()) sub[i] = aggregateOutputVariables_.get(i)->to_json_value(); d["aggregateOutputVariables"] = sub; }
         if (parameterRanges_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : parameterRanges_.items()) arr.push_back(item->to_json_value()); d["parameterRanges"] = arr; }
@@ -2271,7 +2245,6 @@ class Range : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"values", "string", false, std::string(["Range-0001", "Range-0002"]), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -2284,11 +2257,6 @@ public:
     std::string base_catchall() const override { return "SEDBase-0000"; }
     std::string class_name() const override { return "Range"; }
     std::string get_type() const { return "range"; }
-
-    std::string get_values() const { auto it = values_.find("values"); if (it == values_.end()) throw ApiError(std::string("values") + " is not set"); return it->second.as<std::string>(); }
-    void set_values(const std::string& value) { values_["values"] = jsoncons::json(value); }
-    bool is_set_values() const { return values_.count("values") > 0; }
-    void unset_values() { values_.erase("values"); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -2317,7 +2285,6 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("range");
-        if (values_.count("values")) d["values"] = values_.at("values");
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -2397,9 +2364,8 @@ class Scatter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"outputVariableMap", "string", false, std::string(["Repeat-0002", "Repeat-0003"]), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation")},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt}
         };
         return specs;
@@ -2412,11 +2378,6 @@ public:
     std::string base_catchall() const override { return "SEDBase-0000"; }
     std::string class_name() const override { return "Scatter"; }
     std::string get_type() const { return "scatter"; }
-
-    std::string get_outputVariableMap() const { auto it = values_.find("outputVariableMap"); if (it == values_.end()) throw ApiError(std::string("outputVariableMap") + " is not set"); return it->second.as<std::string>(); }
-    void set_outputVariableMap(const std::string& value) { values_["outputVariableMap"] = jsoncons::json(value); }
-    bool is_set_outputVariableMap() const { return values_.count("outputVariableMap") > 0; }
-    void unset_outputVariableMap() { values_.erase("outputVariableMap"); }
 
     std::vector<std::string> get_subTasks() const { return subTasks_.ids(); }
     SedBase* get_subTasks_item(const std::string& item_id) const { return subTasks_.get(item_id); }
@@ -2469,7 +2430,6 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("scatter");
-        if (values_.count("outputVariableMap")) d["outputVariableMap"] = values_.at("outputVariableMap");
         if (subTasks_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : subTasks_.ids()) sub[i] = subTasks_.get(i)->to_json_value(); d["subTasks"] = sub; }
         if (aggregateOutputVariables_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : aggregateOutputVariables_.ids()) sub[i] = aggregateOutputVariables_.get(i)->to_json_value(); d["aggregateOutputVariables"] = sub; }
         if (taskParameters_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
@@ -2769,7 +2729,7 @@ public:
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"height", "NumberOrRef", false, std::string(["Plot-0003", "Plot-0004"]), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"width", "NumberOrRef", false, std::string(["Plot-0005", "Plot-0006"]), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"surfaces", "dict", true, std::string("Plot3D-0002"), std::string("Plot3D-0001"), "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("Surface")},
+            FieldSpec{"surfaces", "dict", true, std::string("Plot3D-0002"), std::string("Plot3D-0001"), "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Surface"), std::nullopt},
             FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt}
         };
         return specs;
@@ -2922,6 +2882,70 @@ private:
     ListCollection outputParameters_;
 };
 
+/// Generated from test-specsheets/outputs/Surface/.
+class Surface : public SedBase {
+public:
+    const std::vector<FieldSpec>& field_specs() const override {
+        static const std::vector<FieldSpec> specs = {
+            FieldSpec{"surfaceType", "string", true, std::string(["Surface-0002", "Surface-0003"]), std::string("Surface-0001"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"x", "SIdRef", true, std::string("Surface-0005"), std::string("Surface-0004"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"y", "SIdRef", true, std::string("Surface-0007"), std::string("Surface-0006"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"z", "SIdRef", true, std::string("Surface-0009"), std::string("Surface-0008"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"style", "SIdRef", false, std::string("Surface-0010"), std::nullopt, "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+        };
+        return specs;
+    }
+    const std::set<std::string>& required_names() const override {
+        static const std::set<std::string> names = {"surfaceType", "x", "y", "z"};
+        return names;
+    }
+    std::optional<std::string> type_const() const override { return std::nullopt; }
+    std::optional<std::string> type_rule_id() const override { return std::nullopt; }
+    std::string own_catchall() const override { return "Surface-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::string("SEDBase-0002"); }
+    std::string base_catchall() const override { return "SEDBase-0000"; }
+    std::string class_name() const override { return "Surface"; }
+
+    std::string get_surfaceType() const { auto it = values_.find("surfaceType"); if (it == values_.end()) throw ApiError(std::string("surfaceType") + " is not set"); return it->second.as<std::string>(); }
+    void set_surfaceType(const std::string& value) { values_["surfaceType"] = jsoncons::json(value); }
+    bool is_set_surfaceType() const { return values_.count("surfaceType") > 0; }
+    void unset_surfaceType() { values_.erase("surfaceType"); }
+
+    std::string get_x() const { auto it = values_.find("x"); if (it == values_.end()) throw ApiError(std::string("x") + " is not set"); return it->second.as<std::string>(); }
+    void set_x(const std::string& value) { values_["x"] = jsoncons::json(value); }
+    bool is_set_x() const { return values_.count("x") > 0; }
+    void unset_x() { values_.erase("x"); }
+
+    std::string get_y() const { auto it = values_.find("y"); if (it == values_.end()) throw ApiError(std::string("y") + " is not set"); return it->second.as<std::string>(); }
+    void set_y(const std::string& value) { values_["y"] = jsoncons::json(value); }
+    bool is_set_y() const { return values_.count("y") > 0; }
+    void unset_y() { values_.erase("y"); }
+
+    std::string get_z() const { auto it = values_.find("z"); if (it == values_.end()) throw ApiError(std::string("z") + " is not set"); return it->second.as<std::string>(); }
+    void set_z(const std::string& value) { values_["z"] = jsoncons::json(value); }
+    bool is_set_z() const { return values_.count("z") > 0; }
+    void unset_z() { values_.erase("z"); }
+
+    std::string get_style() const { auto it = values_.find("style"); if (it == values_.end()) throw ApiError(std::string("style") + " is not set"); return it->second.as<std::string>(); }
+    void set_style(const std::string& value) { values_["style"] = jsoncons::json(value); }
+    bool is_set_style() const { return values_.count("style") > 0; }
+    void unset_style() { values_.erase("style"); }
+
+    jsoncons::json own_json_value() const override {
+        jsoncons::json d = jsoncons::json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        if (values_.count("surfaceType")) d["surfaceType"] = values_.at("surfaceType");
+        if (values_.count("x")) d["x"] = values_.at("x");
+        if (values_.count("y")) d["y"] = values_.at("y");
+        if (values_.count("z")) d["z"] = values_.at("z");
+        if (values_.count("style")) d["style"] = values_.at("style");
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
+};
+
 /// Generated from test-specsheets/auxiliary/Annotation/.
 class Annotation : public SedBase {
 public:
@@ -3013,7 +3037,7 @@ public:
             FieldSpec{"yTo", "SIdRef", false, std::string("Curve-0011"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"x", "SIdRef", true, std::string("AbstractCurve-0002"), std::string("AbstractCurve-0001"), "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"style", "SIdRef", false, std::string("AbstractCurve-0005"), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yAxis", "string", false, std::string(["AbstractCurve-0006", "AbstractCurve-0007"]), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"yAxis", "StringOrRef", false, std::string(["AbstractCurve-0006", "AbstractCurve-0007"]), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -3080,10 +3104,13 @@ public:
     bool is_set_style() const { return values_.count("style") > 0; }
     void unset_style() { values_.erase("style"); }
 
-    std::string get_yAxis() const { auto it = values_.find("yAxis"); if (it == values_.end()) throw ApiError(std::string("yAxis") + " is not set"); return it->second.as<std::string>(); }
-    void set_yAxis(const std::string& value) { values_["yAxis"] = jsoncons::json(value); }
+    std::string get_yAxis_value() const { return get_or_ref_value_node("yAxis").as<std::string>(); }
+    std::string get_yAxis_ref() const { return get_or_ref_ref_node("yAxis").as<std::string>(); }
+    void set_yAxis_value(const std::string& value) { set_or_ref_value_node("yAxis", jsoncons::json(value)); }
+    void set_yAxis_ref(const std::string& ref) { set_or_ref_ref_node("yAxis", ref); }
+    bool is_yAxis_ref() const { return is_or_ref_ref("yAxis"); }
     bool is_set_yAxis() const { return values_.count("yAxis") > 0; }
-    void unset_yAxis() { values_.erase("yAxis"); }
+    void unset_yAxis() { values_.erase("yAxis"); or_ref_is_ref_.erase("yAxis"); }
 
     jsoncons::json own_json_value() const override {
         jsoncons::json d = jsoncons::json::object();
@@ -3101,6 +3128,42 @@ public:
         if (values_.count("x")) d["x"] = values_.at("x");
         if (values_.count("style")) d["style"] = values_.at("style");
         if (values_.count("yAxis")) d["yAxis"] = values_.at("yAxis");
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
+};
+
+/// Generated from test-specsheets/auxiliary/LoopVariable/.
+class LoopVariable : public SedBase {
+public:
+    const std::vector<FieldSpec>& field_specs() const override {
+        static const std::vector<FieldSpec> specs = {
+            FieldSpec{"subsequentValues", "SIdRef", true, std::string("LoopVariable-0003"), std::string("LoopVariable-0002"), "LoopVariable-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+        };
+        return specs;
+    }
+    const std::set<std::string>& required_names() const override {
+        static const std::set<std::string> names = {"initialValue", "subsequentValues"};
+        return names;
+    }
+    std::optional<std::string> type_const() const override { return std::nullopt; }
+    std::optional<std::string> type_rule_id() const override { return std::nullopt; }
+    std::string own_catchall() const override { return "LoopVariable-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::string("SEDBase-0002"); }
+    std::string base_catchall() const override { return "SEDBase-0000"; }
+    std::string class_name() const override { return "LoopVariable"; }
+
+    std::string get_subsequentValues() const { auto it = values_.find("subsequentValues"); if (it == values_.end()) throw ApiError(std::string("subsequentValues") + " is not set"); return it->second.as<std::string>(); }
+    void set_subsequentValues(const std::string& value) { values_["subsequentValues"] = jsoncons::json(value); }
+    bool is_set_subsequentValues() const { return values_.count("subsequentValues") > 0; }
+    void unset_subsequentValues() { values_.erase("subsequentValues"); }
+
+    jsoncons::json own_json_value() const override {
+        jsoncons::json d = jsoncons::json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        if (values_.count("subsequentValues")) d["subsequentValues"] = values_.at("subsequentValues");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
     }

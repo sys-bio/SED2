@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libsed2test CXX)
+project(sed2test CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +14,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(jsoncons)
 
-# libsed2test is header-only (see generator/emit_cpp.py's module docstring),
+# sed2test is header-only (see generator/emit_cpp.py's module docstring),
 # so it is exposed as an INTERFACE library: nothing to compile here, only
 # include paths and its jsoncons dependency to propagate to consumers.
 add_library(sed2test INTERFACE)

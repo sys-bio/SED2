@@ -21,7 +21,7 @@ public final class Plot3D extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("height", "NumberOrRef", false, ["Plot-0003", "Plot-0004"], null, "Plot-0000", null, null, null, null, null),
         new FieldSpec("width", "NumberOrRef", false, ["Plot-0005", "Plot-0006"], null, "Plot-0000", null, null, null, null, null),
-        new FieldSpec("surfaces", "dict", true, "Plot3D-0002", "Plot3D-0001", "Plot3D-0000", null, null, null, null, "Surface"),
+        new FieldSpec("surfaces", "dict", true, "Plot3D-0002", "Plot3D-0001", "Plot3D-0000", null, null, null, "Surface", null),
         new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("surfaces");

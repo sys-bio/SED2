@@ -5,9 +5,7 @@
   <artifactId>libsed2test</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
-  <description>Generated SED2 test-fixture library (Java target) - exercises
-    the SED2 generator against test-specsheets/, see Design.md's Testing
-    section.</description>
+  <description>Generated SED2 test-fixture library (Java target) - exercises the SED2 generator against test-specsheets/, see Design.md's Testing section.</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>

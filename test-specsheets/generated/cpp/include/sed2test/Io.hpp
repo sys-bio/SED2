@@ -1,4 +1,4 @@
-// Top-level read/write entry points for libsed2test. GENERATED - do not
+// Top-level read/write entry points. GENERATED - do not
 // hand-edit; regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 

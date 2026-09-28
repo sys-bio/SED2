@@ -120,7 +120,7 @@ class UnknownAbstractCurve(SedBase):
 
 class SEDDocument(SedBase):
     """Generated from test-specsheets/core/SEDDocument/."""
-    _FIELDS = [FieldSpec('version', 'string', True, ['SEDDocument-0002', 'SEDDocument-0003'], 'SEDDocument-0001', 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None), FieldSpec('constants', 'dict', False, 'SEDDocument-0005', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AnyValueOrRef'), FieldSpec('tasks', 'dict', False, 'SEDDocument-0006', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask'), FieldSpec('outputs', 'dict', False, 'SEDDocument-0007', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractOutput'), FieldSpec('styles', 'dict', False, 'SEDDocument-0008', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='Style')]
+    _FIELDS = [FieldSpec('version', 'string', True, ['SEDDocument-0002', 'SEDDocument-0003'], 'SEDDocument-0001', 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False), FieldSpec('constants', 'any-dict', False, 'SEDDocument-0005', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('tasks', 'dict', False, 'SEDDocument-0006', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('outputs', 'dict', False, 'SEDDocument-0007', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractOutput', is_math=False), FieldSpec('styles', 'dict', False, 'SEDDocument-0008', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Style', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'version'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -128,15 +128,18 @@ class SEDDocument(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _IS_DOCUMENT_CLASS = True
+    _MAX_KNOWN_DOCUMENT_VERSION = 'v1.0.0'
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
-        self._constants = IdKeyedCollection(_dispatch_AnyValueOrRef)
+        self._constants = IdKeyedCollection(None)
         self._tasks = IdKeyedCollection(_dispatch_AbstractTask)
         self._outputs = IdKeyedCollection(_dispatch_AbstractOutput)
-        self._styles = IdKeyedCollection(_dispatch_Style)
+        self._styles = IdKeyedCollection(lambda tv, _cls=Style: (_cls, False))
+        self._attach(None, self)
 
     def get_version(self):
         if 'version' not in self._values: raise ApiError('version is not set')
@@ -157,11 +160,11 @@ class SEDDocument(SedBase):
     def get_constants_item(self, item_id):
         return self._constants.get(item_id)
 
-    def add_constants(self, item_id, obj):
-        self._constants.add(item_id, obj); obj._attach(self, self.get_document())
+    def add_constants(self, item_id, value):
+        self._constants.add(item_id, value)
 
-    def insert_constants(self, index, item_id, obj):
-        self._constants.insert(index, item_id, obj); obj._attach(self, self.get_document())
+    def insert_constants(self, index, item_id, value):
+        self._constants.insert(index, item_id, value)
 
     def remove_constants(self, item_id):
         self._constants.remove(item_id)
@@ -225,16 +228,20 @@ class SEDDocument(SedBase):
 
     def _children(self):
         kids = []
-        kids.extend(self._constants.get(i) for i in self._constants.ids())
         kids.extend(self._tasks.get(i) for i in self._tasks.ids())
         kids.extend(self._outputs.get(i) for i in self._outputs.ids())
         kids.extend(self._styles.get(i) for i in self._styles.ids())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'constants': return self._constants
+        if field_name == 'tasks': return self._tasks
+        if field_name == 'outputs': return self._outputs
+        if field_name == 'styles': return self._styles
+        return None
+
     def _children_with_locations(self):
         out = []
-        for i in self._constants.ids():
-            out.append((self._constants.get(i), '/constants/' + i))
         for i in self._tasks.ids():
             out.append((self._tasks.get(i), '/tasks/' + i))
         for i in self._outputs.ids():
@@ -252,7 +259,7 @@ class SEDDocument(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         if 'version' in self._values: d['version'] = self._values['version']
-        if len(self._constants): d['constants'] = {i: self._constants.get(i).to_json_value() for i in self._constants.ids()}
+        if len(self._constants): d['constants'] = {i: self._constants.get(i) for i in self._constants.ids()}
         if len(self._tasks): d['tasks'] = {i: self._tasks.get(i).to_json_value() for i in self._tasks.ids()}
         if len(self._outputs): d['outputs'] = {i: self._outputs.get(i).to_json_value() for i in self._outputs.ids()}
         if len(self._styles): d['styles'] = {i: self._styles.get(i).to_json_value() for i in self._styles.ids()}
@@ -264,9 +271,52 @@ class SEDDocument(SedBase):
         return self._own_json_value()
 
 
+class Style(SedBase):
+    """Generated from test-specsheets/core/Style/."""
+    _FIELDS = []
+    _REQUIRED_NAMES = {}
+    _TYPE_CONST = None
+    _TYPE_RULE_ID = None
+    _OWN_CATCHALL = 'Style-0000'
+    _NAME_RULE_ID = 'SEDBase-0001'
+    _DESC_RULE_ID = 'SEDBase-0002'
+    _BASE_CATCHALL = 'SEDBase-0000'
+    _NAMESPACE_FIELDS = {}
+    _NAMESPACE_CATCHALL = {}
+
+    def __init__(self):
+        super().__init__()
+
+    def _children(self):
+        kids = []
+        return kids
+
+    def _get_id_collection(self, field_name):
+        return None
+
+    def _children_with_locations(self):
+        out = []
+        return out
+
+    def _own_id_for_message(self):
+        p = self.get_parent()
+        return '?'
+
+    def _own_json_value(self):
+        d = {}
+        if self._name is not None: d['name'] = self._name
+        if self._description is not None: d['description'] = self._description
+        for (pfx, key), value in self._ns_attrs.items():
+            d[f'{pfx}@{key}'] = value
+        return d
+
+    def to_json_value(self):
+        return self._own_json_value()
+
+
 class AggregationCalculation(SedBase):
     """Generated from test-specsheets/tasks/AggregationCalculation/."""
-    _FIELDS = [FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('input', 'any', True, None, 'AggregationCalculation-0001', 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('appliedDimensions', 'ArrayOrRef', False, ['AggregationCalculation-0002', 'AggregationCalculation-0003'], None, 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'input'}
     _TYPE_CONST = 'aggregationCalculation'
     _TYPE_RULE_ID = 'AggregationCalculation-0004'
@@ -283,6 +333,40 @@ class AggregationCalculation(SedBase):
 
     def get_type(self):
         return 'aggregationCalculation'
+
+    def get_input(self):
+        if 'input' not in self._values: raise ApiError('input is not set')
+        return self._values['input']
+
+    def set_input(self, value):
+        self._values['input'] = value
+
+    def is_set_input(self):
+        return 'input' in self._values
+
+    def unset_input(self):
+        self._values.pop('input', None)
+
+    def get_applied_dimensions_value(self):
+        return self._get_orref_value('appliedDimensions')
+
+    def get_applied_dimensions_ref(self):
+        return self._get_orref_ref('appliedDimensions')
+
+    def set_applied_dimensions_value(self, value):
+        self._set_orref_value('appliedDimensions', value)
+
+    def set_applied_dimensions_ref(self, ref):
+        self._set_orref_ref('appliedDimensions', ref)
+
+    def is_applied_dimensions_ref(self):
+        return self._is_orref_ref('appliedDimensions')
+
+    def is_set_applied_dimensions(self):
+        return 'appliedDimensions' in self._values
+
+    def unset_applied_dimensions(self):
+        self._values.pop('appliedDimensions', None); self._orref_is_ref.pop('appliedDimensions', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -301,6 +385,9 @@ class AggregationCalculation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -316,6 +403,8 @@ class AggregationCalculation(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'aggregationCalculation')
+        if 'input' in self._values: d['input'] = self._values['input']
+        if 'appliedDimensions' in self._values: d['appliedDimensions'] = self._values['appliedDimensions']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -327,7 +416,7 @@ class AggregationCalculation(SedBase):
 
 class BoundedODESimulation(SedBase):
     """Generated from test-specsheets/tasks/BoundedODESimulation/."""
-    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'independentVariableSpan'}
     _TYPE_CONST = 'boundedODESimulation'
     _TYPE_RULE_ID = 'BoundedODESimulation-0006'
@@ -388,6 +477,27 @@ class BoundedODESimulation(SedBase):
     def unset_absolute_tolerance(self):
         self._values.pop('absoluteTolerance', None); self._orref_is_ref.pop('absoluteTolerance', None)
 
+    def get_absolute_tolerance_vector_value(self):
+        return self._get_orref_value('absoluteToleranceVector')
+
+    def get_absolute_tolerance_vector_ref(self):
+        return self._get_orref_ref('absoluteToleranceVector')
+
+    def set_absolute_tolerance_vector_value(self, value):
+        self._set_orref_value('absoluteToleranceVector', value)
+
+    def set_absolute_tolerance_vector_ref(self, ref):
+        self._set_orref_ref('absoluteToleranceVector', ref)
+
+    def is_absolute_tolerance_vector_ref(self):
+        return self._is_orref_ref('absoluteToleranceVector')
+
+    def is_set_absolute_tolerance_vector(self):
+        return 'absoluteToleranceVector' in self._values
+
+    def unset_absolute_tolerance_vector(self):
+        self._values.pop('absoluteToleranceVector', None); self._orref_is_ref.pop('absoluteToleranceVector', None)
+
     def get_absolute_tolerance_adjustment_factor_value(self):
         return self._get_orref_value('absoluteToleranceAdjustmentFactor')
 
@@ -472,6 +582,27 @@ class BoundedODESimulation(SedBase):
     def unset_max_number_of_steps(self):
         self._values.pop('maxNumberOfSteps', None); self._orref_is_ref.pop('maxNumberOfSteps', None)
 
+    def get_max_internal_steps_value(self):
+        return self._get_orref_value('maxInternalSteps')
+
+    def get_max_internal_steps_ref(self):
+        return self._get_orref_ref('maxInternalSteps')
+
+    def set_max_internal_steps_value(self, value):
+        self._set_orref_value('maxInternalSteps', value)
+
+    def set_max_internal_steps_ref(self, ref):
+        self._set_orref_ref('maxInternalSteps', ref)
+
+    def is_max_internal_steps_ref(self):
+        return self._is_orref_ref('maxInternalSteps')
+
+    def is_set_max_internal_steps(self):
+        return 'maxInternalSteps' in self._values
+
+    def unset_max_internal_steps(self):
+        self._values.pop('maxInternalSteps', None); self._orref_is_ref.pop('maxInternalSteps', None)
+
     def get_max_internal_step_size_value(self):
         return self._get_orref_value('maxInternalStepSize')
 
@@ -513,6 +644,174 @@ class BoundedODESimulation(SedBase):
 
     def unset_min_internal_step_size(self):
         self._values.pop('minInternalStepSize', None); self._orref_is_ref.pop('minInternalStepSize', None)
+
+    def get_force_physical_correctness_value(self):
+        return self._get_orref_value('forcePhysicalCorrectness')
+
+    def get_force_physical_correctness_ref(self):
+        return self._get_orref_ref('forcePhysicalCorrectness')
+
+    def set_force_physical_correctness_value(self, value):
+        self._set_orref_value('forcePhysicalCorrectness', value)
+
+    def set_force_physical_correctness_ref(self, ref):
+        self._set_orref_ref('forcePhysicalCorrectness', ref)
+
+    def is_force_physical_correctness_ref(self):
+        return self._is_orref_ref('forcePhysicalCorrectness')
+
+    def is_set_force_physical_correctness(self):
+        return 'forcePhysicalCorrectness' in self._values
+
+    def unset_force_physical_correctness(self):
+        self._values.pop('forcePhysicalCorrectness', None); self._orref_is_ref.pop('forcePhysicalCorrectness', None)
+
+    def get_integrate_reduced_model_value(self):
+        return self._get_orref_value('integrateReducedModel')
+
+    def get_integrate_reduced_model_ref(self):
+        return self._get_orref_ref('integrateReducedModel')
+
+    def set_integrate_reduced_model_value(self, value):
+        self._set_orref_value('integrateReducedModel', value)
+
+    def set_integrate_reduced_model_ref(self, ref):
+        self._set_orref_ref('integrateReducedModel', ref)
+
+    def is_integrate_reduced_model_ref(self):
+        return self._is_orref_ref('integrateReducedModel')
+
+    def is_set_integrate_reduced_model(self):
+        return 'integrateReducedModel' in self._values
+
+    def unset_integrate_reduced_model(self):
+        self._values.pop('integrateReducedModel', None); self._orref_is_ref.pop('integrateReducedModel', None)
+
+    def get_use_reduced_model_value(self):
+        return self._get_orref_value('useReducedModel')
+
+    def get_use_reduced_model_ref(self):
+        return self._get_orref_ref('useReducedModel')
+
+    def set_use_reduced_model_value(self, value):
+        self._set_orref_value('useReducedModel', value)
+
+    def set_use_reduced_model_ref(self, ref):
+        self._set_orref_ref('useReducedModel', ref)
+
+    def is_use_reduced_model_ref(self):
+        return self._is_orref_ref('useReducedModel')
+
+    def is_set_use_reduced_model(self):
+        return 'useReducedModel' in self._values
+
+    def unset_use_reduced_model(self):
+        self._values.pop('useReducedModel', None); self._orref_is_ref.pop('useReducedModel', None)
+
+    def get_use_stiff_solver_value(self):
+        return self._get_orref_value('useStiffSolver')
+
+    def get_use_stiff_solver_ref(self):
+        return self._get_orref_ref('useStiffSolver')
+
+    def set_use_stiff_solver_value(self, value):
+        self._set_orref_value('useStiffSolver', value)
+
+    def set_use_stiff_solver_ref(self, ref):
+        self._set_orref_ref('useStiffSolver', ref)
+
+    def is_use_stiff_solver_ref(self):
+        return self._is_orref_ref('useStiffSolver')
+
+    def is_set_use_stiff_solver(self):
+        return 'useStiffSolver' in self._values
+
+    def unset_use_stiff_solver(self):
+        self._values.pop('useStiffSolver', None); self._orref_is_ref.pop('useStiffSolver', None)
+
+    def get_max_b_d_forder_value(self):
+        return self._get_orref_value('maxBDForder')
+
+    def get_max_b_d_forder_ref(self):
+        return self._get_orref_ref('maxBDForder')
+
+    def set_max_b_d_forder_value(self, value):
+        self._set_orref_value('maxBDForder', value)
+
+    def set_max_b_d_forder_ref(self, ref):
+        self._set_orref_ref('maxBDForder', ref)
+
+    def is_max_b_d_forder_ref(self):
+        return self._is_orref_ref('maxBDForder')
+
+    def is_set_max_b_d_forder(self):
+        return 'maxBDForder' in self._values
+
+    def unset_max_b_d_forder(self):
+        self._values.pop('maxBDForder', None); self._orref_is_ref.pop('maxBDForder', None)
+
+    def get_max_adams_order_value(self):
+        return self._get_orref_value('maxAdamsOrder')
+
+    def get_max_adams_order_ref(self):
+        return self._get_orref_ref('maxAdamsOrder')
+
+    def set_max_adams_order_value(self, value):
+        self._set_orref_value('maxAdamsOrder', value)
+
+    def set_max_adams_order_ref(self, ref):
+        self._set_orref_ref('maxAdamsOrder', ref)
+
+    def is_max_adams_order_ref(self):
+        return self._is_orref_ref('maxAdamsOrder')
+
+    def is_set_max_adams_order(self):
+        return 'maxAdamsOrder' in self._values
+
+    def unset_max_adams_order(self):
+        self._values.pop('maxAdamsOrder', None); self._orref_is_ref.pop('maxAdamsOrder', None)
+
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -569,6 +868,27 @@ class BoundedODESimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -599,6 +919,9 @@ class BoundedODESimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -618,15 +941,26 @@ class BoundedODESimulation(SedBase):
         d['_type'] = self._values.get('_type', 'boundedODESimulation')
         if 'relativeTolerance' in self._values: d['relativeTolerance'] = self._values['relativeTolerance']
         if 'absoluteTolerance' in self._values: d['absoluteTolerance'] = self._values['absoluteTolerance']
+        if 'absoluteToleranceVector' in self._values: d['absoluteToleranceVector'] = self._values['absoluteToleranceVector']
         if 'absoluteToleranceAdjustmentFactor' in self._values: d['absoluteToleranceAdjustmentFactor'] = self._values['absoluteToleranceAdjustmentFactor']
         if 'toleranceForRootFinder' in self._values: d['toleranceForRootFinder'] = self._values['toleranceForRootFinder']
         if 'initialStepSize' in self._values: d['initialStepSize'] = self._values['initialStepSize']
         if 'maxNumberOfSteps' in self._values: d['maxNumberOfSteps'] = self._values['maxNumberOfSteps']
+        if 'maxInternalSteps' in self._values: d['maxInternalSteps'] = self._values['maxInternalSteps']
         if 'maxInternalStepSize' in self._values: d['maxInternalStepSize'] = self._values['maxInternalStepSize']
         if 'minInternalStepSize' in self._values: d['minInternalStepSize'] = self._values['minInternalStepSize']
+        if 'forcePhysicalCorrectness' in self._values: d['forcePhysicalCorrectness'] = self._values['forcePhysicalCorrectness']
+        if 'integrateReducedModel' in self._values: d['integrateReducedModel'] = self._values['integrateReducedModel']
+        if 'useReducedModel' in self._values: d['useReducedModel'] = self._values['useReducedModel']
+        if 'useStiffSolver' in self._values: d['useStiffSolver'] = self._values['useStiffSolver']
+        if 'maxBDForder' in self._values: d['maxBDForder'] = self._values['maxBDForder']
+        if 'maxAdamsOrder' in self._values: d['maxAdamsOrder'] = self._values['maxAdamsOrder']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -639,7 +973,7 @@ class BoundedODESimulation(SedBase):
 
 class BoundedStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/BoundedStochasticSimulation/."""
-    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'independentVariableSpan'}
     _TYPE_CONST = 'boundedStochasticSimulation'
     _TYPE_RULE_ID = 'BoundedStochasticSimulation-0006'
@@ -700,6 +1034,27 @@ class BoundedStochasticSimulation(SedBase):
     def unset_time_dependent_relative_tolerance(self):
         self._values.pop('timeDependentRelativeTolerance', None); self._orref_is_ref.pop('timeDependentRelativeTolerance', None)
 
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
     def get_minimum_time_step_value(self):
         return self._get_orref_value('minimumTimeStep')
 
@@ -741,6 +1096,69 @@ class BoundedStochasticSimulation(SedBase):
 
     def unset_maximum_time_step(self):
         self._values.pop('maximumTimeStep', None); self._orref_is_ref.pop('maximumTimeStep', None)
+
+    def get_non_negative_value(self):
+        return self._get_orref_value('nonNegative')
+
+    def get_non_negative_ref(self):
+        return self._get_orref_ref('nonNegative')
+
+    def set_non_negative_value(self, value):
+        self._set_orref_value('nonNegative', value)
+
+    def set_non_negative_ref(self, ref):
+        self._set_orref_ref('nonNegative', ref)
+
+    def is_non_negative_ref(self):
+        return self._is_orref_ref('nonNegative')
+
+    def is_set_non_negative(self):
+        return 'nonNegative' in self._values
+
+    def unset_non_negative(self):
+        self._values.pop('nonNegative', None); self._orref_is_ref.pop('nonNegative', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
+
+    def get_max_num_steps_value(self):
+        return self._get_orref_value('maxNumSteps')
+
+    def get_max_num_steps_ref(self):
+        return self._get_orref_ref('maxNumSteps')
+
+    def set_max_num_steps_value(self, value):
+        self._set_orref_value('maxNumSteps', value)
+
+    def set_max_num_steps_ref(self, ref):
+        self._set_orref_ref('maxNumSteps', ref)
+
+    def is_max_num_steps_ref(self):
+        return self._is_orref_ref('maxNumSteps')
+
+    def is_set_max_num_steps(self):
+        return 'maxNumSteps' in self._values
+
+    def unset_max_num_steps(self):
+        self._values.pop('maxNumSteps', None); self._orref_is_ref.pop('maxNumSteps', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -797,6 +1215,27 @@ class BoundedStochasticSimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -827,6 +1266,9 @@ class BoundedStochasticSimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -846,11 +1288,16 @@ class BoundedStochasticSimulation(SedBase):
         d['_type'] = self._values.get('_type', 'boundedStochasticSimulation')
         if 'seed' in self._values: d['seed'] = self._values['seed']
         if 'timeDependentRelativeTolerance' in self._values: d['timeDependentRelativeTolerance'] = self._values['timeDependentRelativeTolerance']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
         if 'minimumTimeStep' in self._values: d['minimumTimeStep'] = self._values['minimumTimeStep']
         if 'maximumTimeStep' in self._values: d['maximumTimeStep'] = self._values['maximumTimeStep']
+        if 'nonNegative' in self._values: d['nonNegative'] = self._values['nonNegative']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
+        if 'maxNumSteps' in self._values: d['maxNumSteps'] = self._values['maxNumSteps']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -863,7 +1310,7 @@ class BoundedStochasticSimulation(SedBase):
 
 class Calculation(SedBase):
     """Generated from test-specsheets/tasks/Calculation/."""
-    _FIELDS = [FieldSpec('math', 'StringOrRef', True, ['Calculation-0002', 'Calculation-0003'], 'Calculation-0001', 'Calculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('math', 'StringOrRef', True, ['Calculation-0002', 'Calculation-0003'], 'Calculation-0001', 'Calculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'math'}
     _TYPE_CONST = 'calculation'
     _TYPE_RULE_ID = 'Calculation-0004'
@@ -919,6 +1366,9 @@ class Calculation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -946,7 +1396,7 @@ class Calculation(SedBase):
 
 class CreateDataBlock(SedBase):
     """Generated from test-specsheets/tasks/CreateDataBlock/."""
-    _FIELDS = [FieldSpec('data', 'string', True, ['CreateDataBlock-0002', 'CreateDataBlock-0003'], 'CreateDataBlock-0001', 'CreateDataBlock-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('data', 'DictOrRef', True, ['CreateDataBlock-0002', 'CreateDataBlock-0003'], 'CreateDataBlock-0001', 'CreateDataBlock-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'data'}
     _TYPE_CONST = 'createDataBlock'
     _TYPE_RULE_ID = 'CreateDataBlock-0004'
@@ -964,18 +1414,26 @@ class CreateDataBlock(SedBase):
     def get_type(self):
         return 'createDataBlock'
 
-    def get_data(self):
-        if 'data' not in self._values: raise ApiError('data is not set')
-        return self._values['data']
+    def get_data_value(self):
+        return self._get_orref_value('data')
 
-    def set_data(self, value):
-        self._values['data'] = value
+    def get_data_ref(self):
+        return self._get_orref_ref('data')
+
+    def set_data_value(self, value):
+        self._set_orref_value('data', value)
+
+    def set_data_ref(self, ref):
+        self._set_orref_ref('data', ref)
+
+    def is_data_ref(self):
+        return self._is_orref_ref('data')
 
     def is_set_data(self):
         return 'data' in self._values
 
     def unset_data(self):
-        self._values.pop('data', None)
+        self._values.pop('data', None); self._orref_is_ref.pop('data', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -993,6 +1451,9 @@ class CreateDataBlock(SedBase):
         kids = []
         kids.extend(self._task_parameters.items())
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -1021,7 +1482,7 @@ class CreateDataBlock(SedBase):
 
 class CsvImport(SedBase):
     """Generated from test-specsheets/tasks/CsvImport/."""
-    _FIELDS = [FieldSpec('organization', 'StringOrRef', False, ['CsvImport-0004', 'CsvImport-0005'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('separator', 'StringOrRef', False, ['CsvImport-0006', 'CsvImport-0007'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('location', 'any', True, ['CsvImport-0002', 'CsvImport-0003'], 'CsvImport-0001', 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('organization', 'StringOrRef', False, ['CsvImport-0004', 'CsvImport-0005'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('separator', 'StringOrRef', False, ['CsvImport-0006', 'CsvImport-0007'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('headers', 'BooleanOrRef', False, ['CsvImport-0008', 'CsvImport-0009'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('columnNames', 'ArrayOrRef', False, ['CsvImport-0010', 'CsvImport-0011'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('ncols', 'IntegerOrRef', False, ['CsvImport-0012', 'CsvImport-0013'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nrows', 'IntegerOrRef', False, ['CsvImport-0014', 'CsvImport-0015'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('units', 'ArrayOrRef', False, ['CsvImport-0016', 'CsvImport-0017'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'location'}
     _TYPE_CONST = 'csvImport'
     _TYPE_RULE_ID = 'CsvImport-0018'
@@ -1038,6 +1499,19 @@ class CsvImport(SedBase):
 
     def get_type(self):
         return 'csvImport'
+
+    def get_location(self):
+        if 'location' not in self._values: raise ApiError('location is not set')
+        return self._values['location']
+
+    def set_location(self, value):
+        self._values['location'] = value
+
+    def is_set_location(self):
+        return 'location' in self._values
+
+    def unset_location(self):
+        self._values.pop('location', None)
 
     def get_organization_value(self):
         return self._get_orref_value('organization')
@@ -1081,6 +1555,111 @@ class CsvImport(SedBase):
     def unset_separator(self):
         self._values.pop('separator', None); self._orref_is_ref.pop('separator', None)
 
+    def get_headers_value(self):
+        return self._get_orref_value('headers')
+
+    def get_headers_ref(self):
+        return self._get_orref_ref('headers')
+
+    def set_headers_value(self, value):
+        self._set_orref_value('headers', value)
+
+    def set_headers_ref(self, ref):
+        self._set_orref_ref('headers', ref)
+
+    def is_headers_ref(self):
+        return self._is_orref_ref('headers')
+
+    def is_set_headers(self):
+        return 'headers' in self._values
+
+    def unset_headers(self):
+        self._values.pop('headers', None); self._orref_is_ref.pop('headers', None)
+
+    def get_column_names_value(self):
+        return self._get_orref_value('columnNames')
+
+    def get_column_names_ref(self):
+        return self._get_orref_ref('columnNames')
+
+    def set_column_names_value(self, value):
+        self._set_orref_value('columnNames', value)
+
+    def set_column_names_ref(self, ref):
+        self._set_orref_ref('columnNames', ref)
+
+    def is_column_names_ref(self):
+        return self._is_orref_ref('columnNames')
+
+    def is_set_column_names(self):
+        return 'columnNames' in self._values
+
+    def unset_column_names(self):
+        self._values.pop('columnNames', None); self._orref_is_ref.pop('columnNames', None)
+
+    def get_ncols_value(self):
+        return self._get_orref_value('ncols')
+
+    def get_ncols_ref(self):
+        return self._get_orref_ref('ncols')
+
+    def set_ncols_value(self, value):
+        self._set_orref_value('ncols', value)
+
+    def set_ncols_ref(self, ref):
+        self._set_orref_ref('ncols', ref)
+
+    def is_ncols_ref(self):
+        return self._is_orref_ref('ncols')
+
+    def is_set_ncols(self):
+        return 'ncols' in self._values
+
+    def unset_ncols(self):
+        self._values.pop('ncols', None); self._orref_is_ref.pop('ncols', None)
+
+    def get_nrows_value(self):
+        return self._get_orref_value('nrows')
+
+    def get_nrows_ref(self):
+        return self._get_orref_ref('nrows')
+
+    def set_nrows_value(self, value):
+        self._set_orref_value('nrows', value)
+
+    def set_nrows_ref(self, ref):
+        self._set_orref_ref('nrows', ref)
+
+    def is_nrows_ref(self):
+        return self._is_orref_ref('nrows')
+
+    def is_set_nrows(self):
+        return 'nrows' in self._values
+
+    def unset_nrows(self):
+        self._values.pop('nrows', None); self._orref_is_ref.pop('nrows', None)
+
+    def get_units_value(self):
+        return self._get_orref_value('units')
+
+    def get_units_ref(self):
+        return self._get_orref_ref('units')
+
+    def set_units_value(self, value):
+        self._set_orref_value('units', value)
+
+    def set_units_ref(self, ref):
+        self._set_orref_ref('units', ref)
+
+    def is_units_ref(self):
+        return self._is_orref_ref('units')
+
+    def is_set_units(self):
+        return 'units' in self._values
+
+    def unset_units(self):
+        self._values.pop('units', None); self._orref_is_ref.pop('units', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1098,6 +1677,9 @@ class CsvImport(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -1113,8 +1695,14 @@ class CsvImport(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'csvImport')
+        if 'location' in self._values: d['location'] = self._values['location']
         if 'organization' in self._values: d['organization'] = self._values['organization']
         if 'separator' in self._values: d['separator'] = self._values['separator']
+        if 'headers' in self._values: d['headers'] = self._values['headers']
+        if 'columnNames' in self._values: d['columnNames'] = self._values['columnNames']
+        if 'ncols' in self._values: d['ncols'] = self._values['ncols']
+        if 'nrows' in self._values: d['nrows'] = self._values['nrows']
+        if 'units' in self._values: d['units'] = self._values['units']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -1126,7 +1714,7 @@ class CsvImport(SedBase):
 
 class DataImport(SedBase):
     """Generated from test-specsheets/tasks/DataImport/."""
-    _FIELDS = [FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('location', 'any', True, ['DataImport-0002', 'DataImport-0003'], 'DataImport-0001', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('format', 'any', True, ['DataImport-0005', 'DataImport-0006'], 'DataImport-0004', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'location', 'format'}
     _TYPE_CONST = 'dataImport'
     _TYPE_RULE_ID = 'DataImport-0007'
@@ -1144,6 +1732,32 @@ class DataImport(SedBase):
     def get_type(self):
         return 'dataImport'
 
+    def get_location(self):
+        if 'location' not in self._values: raise ApiError('location is not set')
+        return self._values['location']
+
+    def set_location(self, value):
+        self._values['location'] = value
+
+    def is_set_location(self):
+        return 'location' in self._values
+
+    def unset_location(self):
+        self._values.pop('location', None)
+
+    def get_format(self):
+        if 'format' not in self._values: raise ApiError('format is not set')
+        return self._values['format']
+
+    def set_format(self, value):
+        self._values['format'] = value
+
+    def is_set_format(self):
+        return 'format' in self._values
+
+    def unset_format(self):
+        self._values.pop('format', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1161,6 +1775,9 @@ class DataImport(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -1176,6 +1793,8 @@ class DataImport(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'dataImport')
+        if 'location' in self._values: d['location'] = self._values['location']
+        if 'format' in self._values: d['format'] = self._values['format']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -1187,7 +1806,7 @@ class DataImport(SedBase):
 
 class DrawFromDistribution(SedBase):
     """Generated from test-specsheets/tasks/DrawFromDistribution/."""
-    _FIELDS = [FieldSpec('distribution', 'string', True, ['DrawFromDistribution-0008', 'DrawFromDistribution-0009'], 'DrawFromDistribution-0007', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('distribution', 'string', True, ['DrawFromDistribution-0008', 'DrawFromDistribution-0009'], 'DrawFromDistribution-0007', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputPersistent', 'BooleanOrRef', False, ['DrawFromDistribution-0004', 'DrawFromDistribution-0005'], None, 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('arguments', 'ArrayOrRef', True, ['DrawFromDistribution-0002', 'DrawFromDistribution-0003'], 'DrawFromDistribution-0001', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'distribution', 'arguments'}
     _TYPE_CONST = 'drawFromDistribution'
     _TYPE_RULE_ID = 'DrawFromDistribution-0006'
@@ -1218,6 +1837,48 @@ class DrawFromDistribution(SedBase):
     def unset_distribution(self):
         self._values.pop('distribution', None)
 
+    def get_output_persistent_value(self):
+        return self._get_orref_value('outputPersistent')
+
+    def get_output_persistent_ref(self):
+        return self._get_orref_ref('outputPersistent')
+
+    def set_output_persistent_value(self, value):
+        self._set_orref_value('outputPersistent', value)
+
+    def set_output_persistent_ref(self, ref):
+        self._set_orref_ref('outputPersistent', ref)
+
+    def is_output_persistent_ref(self):
+        return self._is_orref_ref('outputPersistent')
+
+    def is_set_output_persistent(self):
+        return 'outputPersistent' in self._values
+
+    def unset_output_persistent(self):
+        self._values.pop('outputPersistent', None); self._orref_is_ref.pop('outputPersistent', None)
+
+    def get_arguments_value(self):
+        return self._get_orref_value('arguments')
+
+    def get_arguments_ref(self):
+        return self._get_orref_ref('arguments')
+
+    def set_arguments_value(self, value):
+        self._set_orref_value('arguments', value)
+
+    def set_arguments_ref(self, ref):
+        self._set_orref_ref('arguments', ref)
+
+    def is_arguments_ref(self):
+        return self._is_orref_ref('arguments')
+
+    def is_set_arguments(self):
+        return 'arguments' in self._values
+
+    def unset_arguments(self):
+        self._values.pop('arguments', None); self._orref_is_ref.pop('arguments', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1235,6 +1896,9 @@ class DrawFromDistribution(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -1251,6 +1915,8 @@ class DrawFromDistribution(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'drawFromDistribution')
         if 'distribution' in self._values: d['distribution'] = self._values['distribution']
+        if 'outputPersistent' in self._values: d['outputPersistent'] = self._values['outputPersistent']
+        if 'arguments' in self._values: d['arguments'] = self._values['arguments']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -1262,7 +1928,7 @@ class DrawFromDistribution(SedBase):
 
 class ExplicitODESimulation(SedBase):
     """Generated from test-specsheets/tasks/ExplicitODESimulation/."""
-    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'independentVariableRange'}
     _TYPE_CONST = 'explicitODESimulation'
     _TYPE_RULE_ID = 'ExplicitODESimulation-0006'
@@ -1322,6 +1988,27 @@ class ExplicitODESimulation(SedBase):
 
     def unset_absolute_tolerance(self):
         self._values.pop('absoluteTolerance', None); self._orref_is_ref.pop('absoluteTolerance', None)
+
+    def get_absolute_tolerance_vector_value(self):
+        return self._get_orref_value('absoluteToleranceVector')
+
+    def get_absolute_tolerance_vector_ref(self):
+        return self._get_orref_ref('absoluteToleranceVector')
+
+    def set_absolute_tolerance_vector_value(self, value):
+        self._set_orref_value('absoluteToleranceVector', value)
+
+    def set_absolute_tolerance_vector_ref(self, ref):
+        self._set_orref_ref('absoluteToleranceVector', ref)
+
+    def is_absolute_tolerance_vector_ref(self):
+        return self._is_orref_ref('absoluteToleranceVector')
+
+    def is_set_absolute_tolerance_vector(self):
+        return 'absoluteToleranceVector' in self._values
+
+    def unset_absolute_tolerance_vector(self):
+        self._values.pop('absoluteToleranceVector', None); self._orref_is_ref.pop('absoluteToleranceVector', None)
 
     def get_absolute_tolerance_adjustment_factor_value(self):
         return self._get_orref_value('absoluteToleranceAdjustmentFactor')
@@ -1407,6 +2094,27 @@ class ExplicitODESimulation(SedBase):
     def unset_max_number_of_steps(self):
         self._values.pop('maxNumberOfSteps', None); self._orref_is_ref.pop('maxNumberOfSteps', None)
 
+    def get_max_internal_steps_value(self):
+        return self._get_orref_value('maxInternalSteps')
+
+    def get_max_internal_steps_ref(self):
+        return self._get_orref_ref('maxInternalSteps')
+
+    def set_max_internal_steps_value(self, value):
+        self._set_orref_value('maxInternalSteps', value)
+
+    def set_max_internal_steps_ref(self, ref):
+        self._set_orref_ref('maxInternalSteps', ref)
+
+    def is_max_internal_steps_ref(self):
+        return self._is_orref_ref('maxInternalSteps')
+
+    def is_set_max_internal_steps(self):
+        return 'maxInternalSteps' in self._values
+
+    def unset_max_internal_steps(self):
+        self._values.pop('maxInternalSteps', None); self._orref_is_ref.pop('maxInternalSteps', None)
+
     def get_max_internal_step_size_value(self):
         return self._get_orref_value('maxInternalStepSize')
 
@@ -1448,6 +2156,174 @@ class ExplicitODESimulation(SedBase):
 
     def unset_min_internal_step_size(self):
         self._values.pop('minInternalStepSize', None); self._orref_is_ref.pop('minInternalStepSize', None)
+
+    def get_force_physical_correctness_value(self):
+        return self._get_orref_value('forcePhysicalCorrectness')
+
+    def get_force_physical_correctness_ref(self):
+        return self._get_orref_ref('forcePhysicalCorrectness')
+
+    def set_force_physical_correctness_value(self, value):
+        self._set_orref_value('forcePhysicalCorrectness', value)
+
+    def set_force_physical_correctness_ref(self, ref):
+        self._set_orref_ref('forcePhysicalCorrectness', ref)
+
+    def is_force_physical_correctness_ref(self):
+        return self._is_orref_ref('forcePhysicalCorrectness')
+
+    def is_set_force_physical_correctness(self):
+        return 'forcePhysicalCorrectness' in self._values
+
+    def unset_force_physical_correctness(self):
+        self._values.pop('forcePhysicalCorrectness', None); self._orref_is_ref.pop('forcePhysicalCorrectness', None)
+
+    def get_integrate_reduced_model_value(self):
+        return self._get_orref_value('integrateReducedModel')
+
+    def get_integrate_reduced_model_ref(self):
+        return self._get_orref_ref('integrateReducedModel')
+
+    def set_integrate_reduced_model_value(self, value):
+        self._set_orref_value('integrateReducedModel', value)
+
+    def set_integrate_reduced_model_ref(self, ref):
+        self._set_orref_ref('integrateReducedModel', ref)
+
+    def is_integrate_reduced_model_ref(self):
+        return self._is_orref_ref('integrateReducedModel')
+
+    def is_set_integrate_reduced_model(self):
+        return 'integrateReducedModel' in self._values
+
+    def unset_integrate_reduced_model(self):
+        self._values.pop('integrateReducedModel', None); self._orref_is_ref.pop('integrateReducedModel', None)
+
+    def get_use_reduced_model_value(self):
+        return self._get_orref_value('useReducedModel')
+
+    def get_use_reduced_model_ref(self):
+        return self._get_orref_ref('useReducedModel')
+
+    def set_use_reduced_model_value(self, value):
+        self._set_orref_value('useReducedModel', value)
+
+    def set_use_reduced_model_ref(self, ref):
+        self._set_orref_ref('useReducedModel', ref)
+
+    def is_use_reduced_model_ref(self):
+        return self._is_orref_ref('useReducedModel')
+
+    def is_set_use_reduced_model(self):
+        return 'useReducedModel' in self._values
+
+    def unset_use_reduced_model(self):
+        self._values.pop('useReducedModel', None); self._orref_is_ref.pop('useReducedModel', None)
+
+    def get_use_stiff_solver_value(self):
+        return self._get_orref_value('useStiffSolver')
+
+    def get_use_stiff_solver_ref(self):
+        return self._get_orref_ref('useStiffSolver')
+
+    def set_use_stiff_solver_value(self, value):
+        self._set_orref_value('useStiffSolver', value)
+
+    def set_use_stiff_solver_ref(self, ref):
+        self._set_orref_ref('useStiffSolver', ref)
+
+    def is_use_stiff_solver_ref(self):
+        return self._is_orref_ref('useStiffSolver')
+
+    def is_set_use_stiff_solver(self):
+        return 'useStiffSolver' in self._values
+
+    def unset_use_stiff_solver(self):
+        self._values.pop('useStiffSolver', None); self._orref_is_ref.pop('useStiffSolver', None)
+
+    def get_max_b_d_forder_value(self):
+        return self._get_orref_value('maxBDForder')
+
+    def get_max_b_d_forder_ref(self):
+        return self._get_orref_ref('maxBDForder')
+
+    def set_max_b_d_forder_value(self, value):
+        self._set_orref_value('maxBDForder', value)
+
+    def set_max_b_d_forder_ref(self, ref):
+        self._set_orref_ref('maxBDForder', ref)
+
+    def is_max_b_d_forder_ref(self):
+        return self._is_orref_ref('maxBDForder')
+
+    def is_set_max_b_d_forder(self):
+        return 'maxBDForder' in self._values
+
+    def unset_max_b_d_forder(self):
+        self._values.pop('maxBDForder', None); self._orref_is_ref.pop('maxBDForder', None)
+
+    def get_max_adams_order_value(self):
+        return self._get_orref_value('maxAdamsOrder')
+
+    def get_max_adams_order_ref(self):
+        return self._get_orref_ref('maxAdamsOrder')
+
+    def set_max_adams_order_value(self, value):
+        self._set_orref_value('maxAdamsOrder', value)
+
+    def set_max_adams_order_ref(self, ref):
+        self._set_orref_ref('maxAdamsOrder', ref)
+
+    def is_max_adams_order_ref(self):
+        return self._is_orref_ref('maxAdamsOrder')
+
+    def is_set_max_adams_order(self):
+        return 'maxAdamsOrder' in self._values
+
+    def unset_max_adams_order(self):
+        self._values.pop('maxAdamsOrder', None); self._orref_is_ref.pop('maxAdamsOrder', None)
+
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -1504,6 +2380,27 @@ class ExplicitODESimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -1534,6 +2431,9 @@ class ExplicitODESimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -1553,15 +2453,26 @@ class ExplicitODESimulation(SedBase):
         d['_type'] = self._values.get('_type', 'explicitODESimulation')
         if 'relativeTolerance' in self._values: d['relativeTolerance'] = self._values['relativeTolerance']
         if 'absoluteTolerance' in self._values: d['absoluteTolerance'] = self._values['absoluteTolerance']
+        if 'absoluteToleranceVector' in self._values: d['absoluteToleranceVector'] = self._values['absoluteToleranceVector']
         if 'absoluteToleranceAdjustmentFactor' in self._values: d['absoluteToleranceAdjustmentFactor'] = self._values['absoluteToleranceAdjustmentFactor']
         if 'toleranceForRootFinder' in self._values: d['toleranceForRootFinder'] = self._values['toleranceForRootFinder']
         if 'initialStepSize' in self._values: d['initialStepSize'] = self._values['initialStepSize']
         if 'maxNumberOfSteps' in self._values: d['maxNumberOfSteps'] = self._values['maxNumberOfSteps']
+        if 'maxInternalSteps' in self._values: d['maxInternalSteps'] = self._values['maxInternalSteps']
         if 'maxInternalStepSize' in self._values: d['maxInternalStepSize'] = self._values['maxInternalStepSize']
         if 'minInternalStepSize' in self._values: d['minInternalStepSize'] = self._values['minInternalStepSize']
+        if 'forcePhysicalCorrectness' in self._values: d['forcePhysicalCorrectness'] = self._values['forcePhysicalCorrectness']
+        if 'integrateReducedModel' in self._values: d['integrateReducedModel'] = self._values['integrateReducedModel']
+        if 'useReducedModel' in self._values: d['useReducedModel'] = self._values['useReducedModel']
+        if 'useStiffSolver' in self._values: d['useStiffSolver'] = self._values['useStiffSolver']
+        if 'maxBDForder' in self._values: d['maxBDForder'] = self._values['maxBDForder']
+        if 'maxAdamsOrder' in self._values: d['maxAdamsOrder'] = self._values['maxAdamsOrder']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -1574,7 +2485,7 @@ class ExplicitODESimulation(SedBase):
 
 class ExplicitStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/ExplicitStochasticSimulation/."""
-    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'independentVariableRange'}
     _TYPE_CONST = 'explicitStochasticSimulation'
     _TYPE_RULE_ID = 'ExplicitStochasticSimulation-0006'
@@ -1635,6 +2546,27 @@ class ExplicitStochasticSimulation(SedBase):
     def unset_time_dependent_relative_tolerance(self):
         self._values.pop('timeDependentRelativeTolerance', None); self._orref_is_ref.pop('timeDependentRelativeTolerance', None)
 
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
     def get_minimum_time_step_value(self):
         return self._get_orref_value('minimumTimeStep')
 
@@ -1676,6 +2608,69 @@ class ExplicitStochasticSimulation(SedBase):
 
     def unset_maximum_time_step(self):
         self._values.pop('maximumTimeStep', None); self._orref_is_ref.pop('maximumTimeStep', None)
+
+    def get_non_negative_value(self):
+        return self._get_orref_value('nonNegative')
+
+    def get_non_negative_ref(self):
+        return self._get_orref_ref('nonNegative')
+
+    def set_non_negative_value(self, value):
+        self._set_orref_value('nonNegative', value)
+
+    def set_non_negative_ref(self, ref):
+        self._set_orref_ref('nonNegative', ref)
+
+    def is_non_negative_ref(self):
+        return self._is_orref_ref('nonNegative')
+
+    def is_set_non_negative(self):
+        return 'nonNegative' in self._values
+
+    def unset_non_negative(self):
+        self._values.pop('nonNegative', None); self._orref_is_ref.pop('nonNegative', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
+
+    def get_max_num_steps_value(self):
+        return self._get_orref_value('maxNumSteps')
+
+    def get_max_num_steps_ref(self):
+        return self._get_orref_ref('maxNumSteps')
+
+    def set_max_num_steps_value(self, value):
+        self._set_orref_value('maxNumSteps', value)
+
+    def set_max_num_steps_ref(self, ref):
+        self._set_orref_ref('maxNumSteps', ref)
+
+    def is_max_num_steps_ref(self):
+        return self._is_orref_ref('maxNumSteps')
+
+    def is_set_max_num_steps(self):
+        return 'maxNumSteps' in self._values
+
+    def unset_max_num_steps(self):
+        self._values.pop('maxNumSteps', None); self._orref_is_ref.pop('maxNumSteps', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -1732,6 +2727,27 @@ class ExplicitStochasticSimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -1762,6 +2778,9 @@ class ExplicitStochasticSimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -1781,11 +2800,16 @@ class ExplicitStochasticSimulation(SedBase):
         d['_type'] = self._values.get('_type', 'explicitStochasticSimulation')
         if 'seed' in self._values: d['seed'] = self._values['seed']
         if 'timeDependentRelativeTolerance' in self._values: d['timeDependentRelativeTolerance'] = self._values['timeDependentRelativeTolerance']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
         if 'minimumTimeStep' in self._values: d['minimumTimeStep'] = self._values['minimumTimeStep']
         if 'maximumTimeStep' in self._values: d['maximumTimeStep'] = self._values['maximumTimeStep']
+        if 'nonNegative' in self._values: d['nonNegative'] = self._values['nonNegative']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
+        if 'maxNumSteps' in self._values: d['maxNumSteps'] = self._values['maxNumSteps']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -1798,7 +2822,7 @@ class ExplicitStochasticSimulation(SedBase):
 
 class FluxBalanceAnalysis(SedBase):
     """Generated from test-specsheets/tasks/FluxBalanceAnalysis/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', True, ['FluxBalanceAnalysis-0004', 'FluxBalanceAnalysis-0005'], 'FluxBalanceAnalysis-0003', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputModel', 'BooleanOrRef', False, ['FluxBalanceAnalysis-0006', 'FluxBalanceAnalysis-0007'], None, 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'fluxBalanceAnalysis'
     _TYPE_RULE_ID = 'FluxBalanceAnalysis-0008'
@@ -1829,6 +2853,48 @@ class FluxBalanceAnalysis(SedBase):
     def unset_model(self):
         self._values.pop('model', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
+    def get_output_model_value(self):
+        return self._get_orref_value('outputModel')
+
+    def get_output_model_ref(self):
+        return self._get_orref_ref('outputModel')
+
+    def set_output_model_value(self, value):
+        self._set_orref_value('outputModel', value)
+
+    def set_output_model_ref(self, ref):
+        self._set_orref_ref('outputModel', ref)
+
+    def is_output_model_ref(self):
+        return self._is_orref_ref('outputModel')
+
+    def is_set_output_model(self):
+        return 'outputModel' in self._values
+
+    def unset_output_model(self):
+        self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1846,6 +2912,9 @@ class FluxBalanceAnalysis(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -1862,6 +2931,8 @@ class FluxBalanceAnalysis(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'fluxBalanceAnalysis')
         if 'model' in self._values: d['model'] = self._values['model']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -1873,7 +2944,7 @@ class FluxBalanceAnalysis(SedBase):
 
 class JacobianFull(SedBase):
     """Generated from test-specsheets/tasks/JacobianFull/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianFull-0002', 'JacobianFull-0001', 'JacobianFull-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianFull-0002', 'JacobianFull-0001', 'JacobianFull-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'jacobianFull'
     _TYPE_RULE_ID = 'JacobianFull-0003'
@@ -1921,6 +2992,9 @@ class JacobianFull(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -1948,7 +3022,7 @@ class JacobianFull(SedBase):
 
 class JacobianReduced(SedBase):
     """Generated from test-specsheets/tasks/JacobianReduced/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianReduced-0002', 'JacobianReduced-0001', 'JacobianReduced-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianReduced-0002', 'JacobianReduced-0001', 'JacobianReduced-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'jacobianReduced'
     _TYPE_RULE_ID = 'JacobianReduced-0003'
@@ -1996,6 +3070,9 @@ class JacobianReduced(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -2023,7 +3100,7 @@ class JacobianReduced(SedBase):
 
 class Loop(SedBase):
     """Generated from test-specsheets/tasks/Loop/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'string', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='LoopVariable'), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask'), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AggregationCalculation'), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='LoopVariable', item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'loopVariables'}
     _TYPE_CONST = 'loop'
     _TYPE_RULE_ID = 'Loop-0005'
@@ -2036,26 +3113,34 @@ class Loop(SedBase):
 
     def __init__(self):
         super().__init__()
-        self._loop_variables = IdKeyedCollection(_dispatch_LoopVariable)
+        self._loop_variables = IdKeyedCollection(lambda tv, _cls=LoopVariable: (_cls, False))
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
-        self._aggregate_output_variables = IdKeyedCollection(_dispatch_AggregationCalculation)
+        self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
 
     def get_type(self):
         return 'loop'
 
-    def get_output_variable_map(self):
-        if 'outputVariableMap' not in self._values: raise ApiError('output_variable_map is not set')
-        return self._values['outputVariableMap']
+    def get_output_variable_map_value(self):
+        return self._get_orref_value('outputVariableMap')
 
-    def set_output_variable_map(self, value):
-        self._values['outputVariableMap'] = value
+    def get_output_variable_map_ref(self):
+        return self._get_orref_ref('outputVariableMap')
+
+    def set_output_variable_map_value(self, value):
+        self._set_orref_value('outputVariableMap', value)
+
+    def set_output_variable_map_ref(self, ref):
+        self._set_orref_ref('outputVariableMap', ref)
+
+    def is_output_variable_map_ref(self):
+        return self._is_orref_ref('outputVariableMap')
 
     def is_set_output_variable_map(self):
         return 'outputVariableMap' in self._values
 
     def unset_output_variable_map(self):
-        self._values.pop('outputVariableMap', None)
+        self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
 
     def get_loop_variables(self):
         return self._loop_variables.ids()
@@ -2131,6 +3216,12 @@ class Loop(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'loopVariables': return self._loop_variables
+        if field_name == 'subTasks': return self._sub_tasks
+        if field_name == 'aggregateOutputVariables': return self._aggregate_output_variables
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._loop_variables.ids():
@@ -2167,7 +3258,7 @@ class Loop(SedBase):
 
 class ModelChange(SedBase):
     """Generated from test-specsheets/tasks/ModelChange/."""
-    _FIELDS = [FieldSpec('inputModel', 'SIdRef', True, 'ModelChange-0002', 'ModelChange-0001', 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('setValues', 'string', False, ['ModelChange-0003', 'ModelChange-0004'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('replaceElements', 'string', False, ['ModelChange-0009', 'ModelChange-0010'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('inputModel', 'SIdRef', True, 'ModelChange-0002', 'ModelChange-0001', 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('setValues', 'DictOrRef', False, ['ModelChange-0003', 'ModelChange-0004'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('removeElements', 'ArrayOrRef', False, ['ModelChange-0005', 'ModelChange-0006'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('addElements', 'ArrayOrRef', False, ['ModelChange-0007', 'ModelChange-0008'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('replaceElements', 'DictOrRef', False, ['ModelChange-0009', 'ModelChange-0010'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'inputModel'}
     _TYPE_CONST = 'modelChange'
     _TYPE_RULE_ID = 'ModelChange-0011'
@@ -2198,31 +3289,89 @@ class ModelChange(SedBase):
     def unset_input_model(self):
         self._values.pop('inputModel', None)
 
-    def get_set_values(self):
-        if 'setValues' not in self._values: raise ApiError('set_values is not set')
-        return self._values['setValues']
+    def get_set_values_value(self):
+        return self._get_orref_value('setValues')
 
-    def set_set_values(self, value):
-        self._values['setValues'] = value
+    def get_set_values_ref(self):
+        return self._get_orref_ref('setValues')
+
+    def set_set_values_value(self, value):
+        self._set_orref_value('setValues', value)
+
+    def set_set_values_ref(self, ref):
+        self._set_orref_ref('setValues', ref)
+
+    def is_set_values_ref(self):
+        return self._is_orref_ref('setValues')
 
     def is_set_set_values(self):
         return 'setValues' in self._values
 
     def unset_set_values(self):
-        self._values.pop('setValues', None)
+        self._values.pop('setValues', None); self._orref_is_ref.pop('setValues', None)
 
-    def get_replace_elements(self):
-        if 'replaceElements' not in self._values: raise ApiError('replace_elements is not set')
-        return self._values['replaceElements']
+    def get_remove_elements_value(self):
+        return self._get_orref_value('removeElements')
 
-    def set_replace_elements(self, value):
-        self._values['replaceElements'] = value
+    def get_remove_elements_ref(self):
+        return self._get_orref_ref('removeElements')
+
+    def set_remove_elements_value(self, value):
+        self._set_orref_value('removeElements', value)
+
+    def set_remove_elements_ref(self, ref):
+        self._set_orref_ref('removeElements', ref)
+
+    def is_remove_elements_ref(self):
+        return self._is_orref_ref('removeElements')
+
+    def is_set_remove_elements(self):
+        return 'removeElements' in self._values
+
+    def unset_remove_elements(self):
+        self._values.pop('removeElements', None); self._orref_is_ref.pop('removeElements', None)
+
+    def get_add_elements_value(self):
+        return self._get_orref_value('addElements')
+
+    def get_add_elements_ref(self):
+        return self._get_orref_ref('addElements')
+
+    def set_add_elements_value(self, value):
+        self._set_orref_value('addElements', value)
+
+    def set_add_elements_ref(self, ref):
+        self._set_orref_ref('addElements', ref)
+
+    def is_add_elements_ref(self):
+        return self._is_orref_ref('addElements')
+
+    def is_set_add_elements(self):
+        return 'addElements' in self._values
+
+    def unset_add_elements(self):
+        self._values.pop('addElements', None); self._orref_is_ref.pop('addElements', None)
+
+    def get_replace_elements_value(self):
+        return self._get_orref_value('replaceElements')
+
+    def get_replace_elements_ref(self):
+        return self._get_orref_ref('replaceElements')
+
+    def set_replace_elements_value(self, value):
+        self._set_orref_value('replaceElements', value)
+
+    def set_replace_elements_ref(self, ref):
+        self._set_orref_ref('replaceElements', ref)
+
+    def is_replace_elements_ref(self):
+        return self._is_orref_ref('replaceElements')
 
     def is_set_replace_elements(self):
         return 'replaceElements' in self._values
 
     def unset_replace_elements(self):
-        self._values.pop('replaceElements', None)
+        self._values.pop('replaceElements', None); self._orref_is_ref.pop('replaceElements', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -2241,6 +3390,9 @@ class ModelChange(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -2258,6 +3410,8 @@ class ModelChange(SedBase):
         d['_type'] = self._values.get('_type', 'modelChange')
         if 'inputModel' in self._values: d['inputModel'] = self._values['inputModel']
         if 'setValues' in self._values: d['setValues'] = self._values['setValues']
+        if 'removeElements' in self._values: d['removeElements'] = self._values['removeElements']
+        if 'addElements' in self._values: d['addElements'] = self._values['addElements']
         if 'replaceElements' in self._values: d['replaceElements'] = self._values['replaceElements']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -2270,7 +3424,7 @@ class ModelChange(SedBase):
 
 class ModelElementList(SedBase):
     """Generated from test-specsheets/tasks/ModelElementList/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ModelElementList-0002', 'ModelElementList-0001', 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ModelElementList-0002', 'ModelElementList-0001', 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('includeElements', 'ArrayOrRef', False, ['ModelElementList-0003', 'ModelElementList-0004'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('includeTypes', 'ArrayOrRef', False, ['ModelElementList-0005', 'ModelElementList-0006'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('excludeElements', 'ArrayOrRef', False, ['ModelElementList-0007', 'ModelElementList-0008'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('excludeTypes', 'ArrayOrRef', False, ['ModelElementList-0009', 'ModelElementList-0010'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'modelElementList'
     _TYPE_RULE_ID = 'ModelElementList-0011'
@@ -2301,6 +3455,90 @@ class ModelElementList(SedBase):
     def unset_model(self):
         self._values.pop('model', None)
 
+    def get_include_elements_value(self):
+        return self._get_orref_value('includeElements')
+
+    def get_include_elements_ref(self):
+        return self._get_orref_ref('includeElements')
+
+    def set_include_elements_value(self, value):
+        self._set_orref_value('includeElements', value)
+
+    def set_include_elements_ref(self, ref):
+        self._set_orref_ref('includeElements', ref)
+
+    def is_include_elements_ref(self):
+        return self._is_orref_ref('includeElements')
+
+    def is_set_include_elements(self):
+        return 'includeElements' in self._values
+
+    def unset_include_elements(self):
+        self._values.pop('includeElements', None); self._orref_is_ref.pop('includeElements', None)
+
+    def get_include_types_value(self):
+        return self._get_orref_value('includeTypes')
+
+    def get_include_types_ref(self):
+        return self._get_orref_ref('includeTypes')
+
+    def set_include_types_value(self, value):
+        self._set_orref_value('includeTypes', value)
+
+    def set_include_types_ref(self, ref):
+        self._set_orref_ref('includeTypes', ref)
+
+    def is_include_types_ref(self):
+        return self._is_orref_ref('includeTypes')
+
+    def is_set_include_types(self):
+        return 'includeTypes' in self._values
+
+    def unset_include_types(self):
+        self._values.pop('includeTypes', None); self._orref_is_ref.pop('includeTypes', None)
+
+    def get_exclude_elements_value(self):
+        return self._get_orref_value('excludeElements')
+
+    def get_exclude_elements_ref(self):
+        return self._get_orref_ref('excludeElements')
+
+    def set_exclude_elements_value(self, value):
+        self._set_orref_value('excludeElements', value)
+
+    def set_exclude_elements_ref(self, ref):
+        self._set_orref_ref('excludeElements', ref)
+
+    def is_exclude_elements_ref(self):
+        return self._is_orref_ref('excludeElements')
+
+    def is_set_exclude_elements(self):
+        return 'excludeElements' in self._values
+
+    def unset_exclude_elements(self):
+        self._values.pop('excludeElements', None); self._orref_is_ref.pop('excludeElements', None)
+
+    def get_exclude_types_value(self):
+        return self._get_orref_value('excludeTypes')
+
+    def get_exclude_types_ref(self):
+        return self._get_orref_ref('excludeTypes')
+
+    def set_exclude_types_value(self, value):
+        self._set_orref_value('excludeTypes', value)
+
+    def set_exclude_types_ref(self, ref):
+        self._set_orref_ref('excludeTypes', ref)
+
+    def is_exclude_types_ref(self):
+        return self._is_orref_ref('excludeTypes')
+
+    def is_set_exclude_types(self):
+        return 'excludeTypes' in self._values
+
+    def unset_exclude_types(self):
+        self._values.pop('excludeTypes', None); self._orref_is_ref.pop('excludeTypes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -2317,6 +3555,9 @@ class ModelElementList(SedBase):
         kids = []
         kids.extend(self._task_parameters.items())
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -2334,6 +3575,10 @@ class ModelElementList(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'modelElementList')
         if 'model' in self._values: d['model'] = self._values['model']
+        if 'includeElements' in self._values: d['includeElements'] = self._values['includeElements']
+        if 'includeTypes' in self._values: d['includeTypes'] = self._values['includeTypes']
+        if 'excludeElements' in self._values: d['excludeElements'] = self._values['excludeElements']
+        if 'excludeTypes' in self._values: d['excludeTypes'] = self._values['excludeTypes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -2345,7 +3590,7 @@ class ModelElementList(SedBase):
 
 class ModelImport(SedBase):
     """Generated from test-specsheets/tasks/ModelImport/."""
-    _FIELDS = [FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('location', 'any', True, ['ModelImport-0002', 'ModelImport-0003'], 'ModelImport-0001', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('language', 'StringOrRef', True, ['ModelImport-0005', 'ModelImport-0006'], 'ModelImport-0004', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'location', 'language'}
     _TYPE_CONST = 'modelImport'
     _TYPE_RULE_ID = 'ModelImport-0007'
@@ -2362,6 +3607,40 @@ class ModelImport(SedBase):
 
     def get_type(self):
         return 'modelImport'
+
+    def get_location(self):
+        if 'location' not in self._values: raise ApiError('location is not set')
+        return self._values['location']
+
+    def set_location(self, value):
+        self._values['location'] = value
+
+    def is_set_location(self):
+        return 'location' in self._values
+
+    def unset_location(self):
+        self._values.pop('location', None)
+
+    def get_language_value(self):
+        return self._get_orref_value('language')
+
+    def get_language_ref(self):
+        return self._get_orref_ref('language')
+
+    def set_language_value(self, value):
+        self._set_orref_value('language', value)
+
+    def set_language_ref(self, ref):
+        self._set_orref_ref('language', ref)
+
+    def is_language_ref(self):
+        return self._is_orref_ref('language')
+
+    def is_set_language(self):
+        return 'language' in self._values
+
+    def unset_language(self):
+        self._values.pop('language', None); self._orref_is_ref.pop('language', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -2380,6 +3659,9 @@ class ModelImport(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -2395,6 +3677,8 @@ class ModelImport(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'modelImport')
+        if 'location' in self._values: d['location'] = self._values['location']
+        if 'language' in self._values: d['language'] = self._values['language']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -2406,7 +3690,7 @@ class ModelImport(SedBase):
 
 class NumericRange(SedBase):
     """Generated from test-specsheets/tasks/NumericRange/."""
-    _FIELDS = [FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('values', 'string', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('values', 'string', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('interval', 'NumberOrRef', False, ['NumericRange-0005', 'NumericRange-0006'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('numberOfSteps', 'IntegerOrRef', False, ['NumericRange-0007', 'NumericRange-0008'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('scale', 'any', False, ['NumericRange-0009', 'NumericRange-0010'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'numericRange'
     _TYPE_RULE_ID = 'NumericRange-0013'
@@ -2466,31 +3750,102 @@ class NumericRange(SedBase):
     def unset_end(self):
         self._values.pop('end', None); self._orref_is_ref.pop('end', None)
 
-    def get_values(self):
-        if 'values' not in self._values: raise ApiError('values is not set')
-        return self._values['values']
+    def get_interval_value(self):
+        return self._get_orref_value('interval')
 
-    def set_values(self, value):
-        self._values['values'] = value
+    def get_interval_ref(self):
+        return self._get_orref_ref('interval')
+
+    def set_interval_value(self, value):
+        self._set_orref_value('interval', value)
+
+    def set_interval_ref(self, ref):
+        self._set_orref_ref('interval', ref)
+
+    def is_interval_ref(self):
+        return self._is_orref_ref('interval')
+
+    def is_set_interval(self):
+        return 'interval' in self._values
+
+    def unset_interval(self):
+        self._values.pop('interval', None); self._orref_is_ref.pop('interval', None)
+
+    def get_number_of_steps_value(self):
+        return self._get_orref_value('numberOfSteps')
+
+    def get_number_of_steps_ref(self):
+        return self._get_orref_ref('numberOfSteps')
+
+    def set_number_of_steps_value(self, value):
+        self._set_orref_value('numberOfSteps', value)
+
+    def set_number_of_steps_ref(self, ref):
+        self._set_orref_ref('numberOfSteps', ref)
+
+    def is_number_of_steps_ref(self):
+        return self._is_orref_ref('numberOfSteps')
+
+    def is_set_number_of_steps(self):
+        return 'numberOfSteps' in self._values
+
+    def unset_number_of_steps(self):
+        self._values.pop('numberOfSteps', None); self._orref_is_ref.pop('numberOfSteps', None)
+
+    def get_scale(self):
+        if 'scale' not in self._values: raise ApiError('scale is not set')
+        return self._values['scale']
+
+    def set_scale(self, value):
+        self._values['scale'] = value
+
+    def is_set_scale(self):
+        return 'scale' in self._values
+
+    def unset_scale(self):
+        self._values.pop('scale', None)
+
+    def get_values_value(self):
+        return self._get_orref_value('values')
+
+    def get_values_ref(self):
+        return self._get_orref_ref('values')
+
+    def set_values_value(self, value):
+        self._set_orref_value('values', value)
+
+    def set_values_ref(self, ref):
+        self._set_orref_ref('values', ref)
+
+    def is_values_ref(self):
+        return self._is_orref_ref('values')
 
     def is_set_values(self):
         return 'values' in self._values
 
     def unset_values(self):
-        self._values.pop('values', None)
+        self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
-    def get_values(self):
-        if 'values' not in self._values: raise ApiError('values is not set')
-        return self._values['values']
+    def get_values_value(self):
+        return self._get_orref_value('values')
 
-    def set_values(self, value):
-        self._values['values'] = value
+    def get_values_ref(self):
+        return self._get_orref_ref('values')
+
+    def set_values_value(self, value):
+        self._set_orref_value('values', value)
+
+    def set_values_ref(self, ref):
+        self._set_orref_ref('values', ref)
+
+    def is_values_ref(self):
+        return self._is_orref_ref('values')
 
     def is_set_values(self):
         return 'values' in self._values
 
     def unset_values(self):
-        self._values.pop('values', None)
+        self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -2509,6 +3864,9 @@ class NumericRange(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -2526,6 +3884,9 @@ class NumericRange(SedBase):
         d['_type'] = self._values.get('_type', 'numericRange')
         if 'start' in self._values: d['start'] = self._values['start']
         if 'end' in self._values: d['end'] = self._values['end']
+        if 'interval' in self._values: d['interval'] = self._values['interval']
+        if 'numberOfSteps' in self._values: d['numberOfSteps'] = self._values['numberOfSteps']
+        if 'scale' in self._values: d['scale'] = self._values['scale']
         if 'values' in self._values: d['values'] = self._values['values']
         if 'values' in self._values: d['values'] = self._values['values']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
@@ -2539,7 +3900,7 @@ class NumericRange(SedBase):
 
 class OneStepODESimulation(SedBase):
     """Generated from test-specsheets/tasks/OneStepODESimulation/."""
-    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', True, ['OneStepODESimulation-0005', 'OneStepODESimulation-0006'], 'OneStepODESimulation-0004', 'OneStepODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', True, ['OneStepODESimulation-0005', 'OneStepODESimulation-0006'], 'OneStepODESimulation-0004', 'OneStepODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'independentStep'}
     _TYPE_CONST = 'oneStepODE'
     _TYPE_RULE_ID = 'OneStepODESimulation-0007'
@@ -2621,6 +3982,27 @@ class OneStepODESimulation(SedBase):
     def unset_absolute_tolerance(self):
         self._values.pop('absoluteTolerance', None); self._orref_is_ref.pop('absoluteTolerance', None)
 
+    def get_absolute_tolerance_vector_value(self):
+        return self._get_orref_value('absoluteToleranceVector')
+
+    def get_absolute_tolerance_vector_ref(self):
+        return self._get_orref_ref('absoluteToleranceVector')
+
+    def set_absolute_tolerance_vector_value(self, value):
+        self._set_orref_value('absoluteToleranceVector', value)
+
+    def set_absolute_tolerance_vector_ref(self, ref):
+        self._set_orref_ref('absoluteToleranceVector', ref)
+
+    def is_absolute_tolerance_vector_ref(self):
+        return self._is_orref_ref('absoluteToleranceVector')
+
+    def is_set_absolute_tolerance_vector(self):
+        return 'absoluteToleranceVector' in self._values
+
+    def unset_absolute_tolerance_vector(self):
+        self._values.pop('absoluteToleranceVector', None); self._orref_is_ref.pop('absoluteToleranceVector', None)
+
     def get_absolute_tolerance_adjustment_factor_value(self):
         return self._get_orref_value('absoluteToleranceAdjustmentFactor')
 
@@ -2705,6 +4087,27 @@ class OneStepODESimulation(SedBase):
     def unset_max_number_of_steps(self):
         self._values.pop('maxNumberOfSteps', None); self._orref_is_ref.pop('maxNumberOfSteps', None)
 
+    def get_max_internal_steps_value(self):
+        return self._get_orref_value('maxInternalSteps')
+
+    def get_max_internal_steps_ref(self):
+        return self._get_orref_ref('maxInternalSteps')
+
+    def set_max_internal_steps_value(self, value):
+        self._set_orref_value('maxInternalSteps', value)
+
+    def set_max_internal_steps_ref(self, ref):
+        self._set_orref_ref('maxInternalSteps', ref)
+
+    def is_max_internal_steps_ref(self):
+        return self._is_orref_ref('maxInternalSteps')
+
+    def is_set_max_internal_steps(self):
+        return 'maxInternalSteps' in self._values
+
+    def unset_max_internal_steps(self):
+        self._values.pop('maxInternalSteps', None); self._orref_is_ref.pop('maxInternalSteps', None)
+
     def get_max_internal_step_size_value(self):
         return self._get_orref_value('maxInternalStepSize')
 
@@ -2746,6 +4149,174 @@ class OneStepODESimulation(SedBase):
 
     def unset_min_internal_step_size(self):
         self._values.pop('minInternalStepSize', None); self._orref_is_ref.pop('minInternalStepSize', None)
+
+    def get_force_physical_correctness_value(self):
+        return self._get_orref_value('forcePhysicalCorrectness')
+
+    def get_force_physical_correctness_ref(self):
+        return self._get_orref_ref('forcePhysicalCorrectness')
+
+    def set_force_physical_correctness_value(self, value):
+        self._set_orref_value('forcePhysicalCorrectness', value)
+
+    def set_force_physical_correctness_ref(self, ref):
+        self._set_orref_ref('forcePhysicalCorrectness', ref)
+
+    def is_force_physical_correctness_ref(self):
+        return self._is_orref_ref('forcePhysicalCorrectness')
+
+    def is_set_force_physical_correctness(self):
+        return 'forcePhysicalCorrectness' in self._values
+
+    def unset_force_physical_correctness(self):
+        self._values.pop('forcePhysicalCorrectness', None); self._orref_is_ref.pop('forcePhysicalCorrectness', None)
+
+    def get_integrate_reduced_model_value(self):
+        return self._get_orref_value('integrateReducedModel')
+
+    def get_integrate_reduced_model_ref(self):
+        return self._get_orref_ref('integrateReducedModel')
+
+    def set_integrate_reduced_model_value(self, value):
+        self._set_orref_value('integrateReducedModel', value)
+
+    def set_integrate_reduced_model_ref(self, ref):
+        self._set_orref_ref('integrateReducedModel', ref)
+
+    def is_integrate_reduced_model_ref(self):
+        return self._is_orref_ref('integrateReducedModel')
+
+    def is_set_integrate_reduced_model(self):
+        return 'integrateReducedModel' in self._values
+
+    def unset_integrate_reduced_model(self):
+        self._values.pop('integrateReducedModel', None); self._orref_is_ref.pop('integrateReducedModel', None)
+
+    def get_use_reduced_model_value(self):
+        return self._get_orref_value('useReducedModel')
+
+    def get_use_reduced_model_ref(self):
+        return self._get_orref_ref('useReducedModel')
+
+    def set_use_reduced_model_value(self, value):
+        self._set_orref_value('useReducedModel', value)
+
+    def set_use_reduced_model_ref(self, ref):
+        self._set_orref_ref('useReducedModel', ref)
+
+    def is_use_reduced_model_ref(self):
+        return self._is_orref_ref('useReducedModel')
+
+    def is_set_use_reduced_model(self):
+        return 'useReducedModel' in self._values
+
+    def unset_use_reduced_model(self):
+        self._values.pop('useReducedModel', None); self._orref_is_ref.pop('useReducedModel', None)
+
+    def get_use_stiff_solver_value(self):
+        return self._get_orref_value('useStiffSolver')
+
+    def get_use_stiff_solver_ref(self):
+        return self._get_orref_ref('useStiffSolver')
+
+    def set_use_stiff_solver_value(self, value):
+        self._set_orref_value('useStiffSolver', value)
+
+    def set_use_stiff_solver_ref(self, ref):
+        self._set_orref_ref('useStiffSolver', ref)
+
+    def is_use_stiff_solver_ref(self):
+        return self._is_orref_ref('useStiffSolver')
+
+    def is_set_use_stiff_solver(self):
+        return 'useStiffSolver' in self._values
+
+    def unset_use_stiff_solver(self):
+        self._values.pop('useStiffSolver', None); self._orref_is_ref.pop('useStiffSolver', None)
+
+    def get_max_b_d_forder_value(self):
+        return self._get_orref_value('maxBDForder')
+
+    def get_max_b_d_forder_ref(self):
+        return self._get_orref_ref('maxBDForder')
+
+    def set_max_b_d_forder_value(self, value):
+        self._set_orref_value('maxBDForder', value)
+
+    def set_max_b_d_forder_ref(self, ref):
+        self._set_orref_ref('maxBDForder', ref)
+
+    def is_max_b_d_forder_ref(self):
+        return self._is_orref_ref('maxBDForder')
+
+    def is_set_max_b_d_forder(self):
+        return 'maxBDForder' in self._values
+
+    def unset_max_b_d_forder(self):
+        self._values.pop('maxBDForder', None); self._orref_is_ref.pop('maxBDForder', None)
+
+    def get_max_adams_order_value(self):
+        return self._get_orref_value('maxAdamsOrder')
+
+    def get_max_adams_order_ref(self):
+        return self._get_orref_ref('maxAdamsOrder')
+
+    def set_max_adams_order_value(self, value):
+        self._set_orref_value('maxAdamsOrder', value)
+
+    def set_max_adams_order_ref(self, ref):
+        self._set_orref_ref('maxAdamsOrder', ref)
+
+    def is_max_adams_order_ref(self):
+        return self._is_orref_ref('maxAdamsOrder')
+
+    def is_set_max_adams_order(self):
+        return 'maxAdamsOrder' in self._values
+
+    def unset_max_adams_order(self):
+        self._values.pop('maxAdamsOrder', None); self._orref_is_ref.pop('maxAdamsOrder', None)
+
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -2802,6 +4373,27 @@ class OneStepODESimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -2832,6 +4424,9 @@ class OneStepODESimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -2852,15 +4447,26 @@ class OneStepODESimulation(SedBase):
         if 'independentStep' in self._values: d['independentStep'] = self._values['independentStep']
         if 'relativeTolerance' in self._values: d['relativeTolerance'] = self._values['relativeTolerance']
         if 'absoluteTolerance' in self._values: d['absoluteTolerance'] = self._values['absoluteTolerance']
+        if 'absoluteToleranceVector' in self._values: d['absoluteToleranceVector'] = self._values['absoluteToleranceVector']
         if 'absoluteToleranceAdjustmentFactor' in self._values: d['absoluteToleranceAdjustmentFactor'] = self._values['absoluteToleranceAdjustmentFactor']
         if 'toleranceForRootFinder' in self._values: d['toleranceForRootFinder'] = self._values['toleranceForRootFinder']
         if 'initialStepSize' in self._values: d['initialStepSize'] = self._values['initialStepSize']
         if 'maxNumberOfSteps' in self._values: d['maxNumberOfSteps'] = self._values['maxNumberOfSteps']
+        if 'maxInternalSteps' in self._values: d['maxInternalSteps'] = self._values['maxInternalSteps']
         if 'maxInternalStepSize' in self._values: d['maxInternalStepSize'] = self._values['maxInternalStepSize']
         if 'minInternalStepSize' in self._values: d['minInternalStepSize'] = self._values['minInternalStepSize']
+        if 'forcePhysicalCorrectness' in self._values: d['forcePhysicalCorrectness'] = self._values['forcePhysicalCorrectness']
+        if 'integrateReducedModel' in self._values: d['integrateReducedModel'] = self._values['integrateReducedModel']
+        if 'useReducedModel' in self._values: d['useReducedModel'] = self._values['useReducedModel']
+        if 'useStiffSolver' in self._values: d['useStiffSolver'] = self._values['useStiffSolver']
+        if 'maxBDForder' in self._values: d['maxBDForder'] = self._values['maxBDForder']
+        if 'maxAdamsOrder' in self._values: d['maxAdamsOrder'] = self._values['maxAdamsOrder']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -2873,7 +4479,7 @@ class OneStepODESimulation(SedBase):
 
 class OneStepStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/OneStepStochasticSimulation/."""
-    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', False, ['OneStepStochasticSimulation-0004', 'OneStepStochasticSimulation-0005'], None, 'OneStepStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', False, ['OneStepStochasticSimulation-0004', 'OneStepStochasticSimulation-0005'], None, 'OneStepStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'oneStepStochastic'
     _TYPE_RULE_ID = 'OneStepStochasticSimulation-0006'
@@ -2955,6 +4561,27 @@ class OneStepStochasticSimulation(SedBase):
     def unset_time_dependent_relative_tolerance(self):
         self._values.pop('timeDependentRelativeTolerance', None); self._orref_is_ref.pop('timeDependentRelativeTolerance', None)
 
+    def get_variable_step_size_value(self):
+        return self._get_orref_value('variableStepSize')
+
+    def get_variable_step_size_ref(self):
+        return self._get_orref_ref('variableStepSize')
+
+    def set_variable_step_size_value(self, value):
+        self._set_orref_value('variableStepSize', value)
+
+    def set_variable_step_size_ref(self, ref):
+        self._set_orref_ref('variableStepSize', ref)
+
+    def is_variable_step_size_ref(self):
+        return self._is_orref_ref('variableStepSize')
+
+    def is_set_variable_step_size(self):
+        return 'variableStepSize' in self._values
+
+    def unset_variable_step_size(self):
+        self._values.pop('variableStepSize', None); self._orref_is_ref.pop('variableStepSize', None)
+
     def get_minimum_time_step_value(self):
         return self._get_orref_value('minimumTimeStep')
 
@@ -2996,6 +4623,69 @@ class OneStepStochasticSimulation(SedBase):
 
     def unset_maximum_time_step(self):
         self._values.pop('maximumTimeStep', None); self._orref_is_ref.pop('maximumTimeStep', None)
+
+    def get_non_negative_value(self):
+        return self._get_orref_value('nonNegative')
+
+    def get_non_negative_ref(self):
+        return self._get_orref_ref('nonNegative')
+
+    def set_non_negative_value(self, value):
+        self._set_orref_value('nonNegative', value)
+
+    def set_non_negative_ref(self, ref):
+        self._set_orref_ref('nonNegative', ref)
+
+    def is_non_negative_ref(self):
+        return self._is_orref_ref('nonNegative')
+
+    def is_set_non_negative(self):
+        return 'nonNegative' in self._values
+
+    def unset_non_negative(self):
+        self._values.pop('nonNegative', None); self._orref_is_ref.pop('nonNegative', None)
+
+    def get_max_output_rows_value(self):
+        return self._get_orref_value('maxOutputRows')
+
+    def get_max_output_rows_ref(self):
+        return self._get_orref_ref('maxOutputRows')
+
+    def set_max_output_rows_value(self, value):
+        self._set_orref_value('maxOutputRows', value)
+
+    def set_max_output_rows_ref(self, ref):
+        self._set_orref_ref('maxOutputRows', ref)
+
+    def is_max_output_rows_ref(self):
+        return self._is_orref_ref('maxOutputRows')
+
+    def is_set_max_output_rows(self):
+        return 'maxOutputRows' in self._values
+
+    def unset_max_output_rows(self):
+        self._values.pop('maxOutputRows', None); self._orref_is_ref.pop('maxOutputRows', None)
+
+    def get_max_num_steps_value(self):
+        return self._get_orref_value('maxNumSteps')
+
+    def get_max_num_steps_ref(self):
+        return self._get_orref_ref('maxNumSteps')
+
+    def set_max_num_steps_value(self, value):
+        self._set_orref_value('maxNumSteps', value)
+
+    def set_max_num_steps_ref(self, ref):
+        self._set_orref_ref('maxNumSteps', ref)
+
+    def is_max_num_steps_ref(self):
+        return self._is_orref_ref('maxNumSteps')
+
+    def is_set_max_num_steps(self):
+        return 'maxNumSteps' in self._values
+
+    def unset_max_num_steps(self):
+        self._values.pop('maxNumSteps', None); self._orref_is_ref.pop('maxNumSteps', None)
 
     def get_model(self):
         if 'model' not in self._values: raise ApiError('model is not set')
@@ -3052,6 +4742,27 @@ class OneStepStochasticSimulation(SedBase):
     def unset_independent_variable_init(self):
         self._values.pop('independentVariableInit', None); self._orref_is_ref.pop('independentVariableInit', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -3082,6 +4793,9 @@ class OneStepStochasticSimulation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._working_algorithms.items()):
@@ -3102,11 +4816,16 @@ class OneStepStochasticSimulation(SedBase):
         if 'independentStep' in self._values: d['independentStep'] = self._values['independentStep']
         if 'seed' in self._values: d['seed'] = self._values['seed']
         if 'timeDependentRelativeTolerance' in self._values: d['timeDependentRelativeTolerance'] = self._values['timeDependentRelativeTolerance']
+        if 'variableStepSize' in self._values: d['variableStepSize'] = self._values['variableStepSize']
         if 'minimumTimeStep' in self._values: d['minimumTimeStep'] = self._values['minimumTimeStep']
         if 'maximumTimeStep' in self._values: d['maximumTimeStep'] = self._values['maximumTimeStep']
+        if 'nonNegative' in self._values: d['nonNegative'] = self._values['nonNegative']
+        if 'maxOutputRows' in self._values: d['maxOutputRows'] = self._values['maxOutputRows']
+        if 'maxNumSteps' in self._values: d['maxNumSteps'] = self._values['maxNumSteps']
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -3119,7 +4838,7 @@ class OneStepStochasticSimulation(SedBase):
 
 class ParameterRange(SedBase):
     """Generated from test-specsheets/tasks/ParameterRange/."""
-    _FIELDS = [FieldSpec('modelElement', 'StringOrRef', True, ['ParameterRange-0002', 'ParameterRange-0003'], 'ParameterRange-0001', 'ParameterRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('values', 'string', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('values', 'string', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('modelElement', 'StringOrRef', True, ['ParameterRange-0002', 'ParameterRange-0003'], 'ParameterRange-0001', 'ParameterRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('interval', 'NumberOrRef', False, ['NumericRange-0005', 'NumericRange-0006'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('numberOfSteps', 'IntegerOrRef', False, ['NumericRange-0007', 'NumericRange-0008'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('scale', 'any', False, ['NumericRange-0009', 'NumericRange-0010'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'modelElement'}
     _TYPE_CONST = 'parameterRange'
     _TYPE_RULE_ID = 'ParameterRange-0016'
@@ -3200,31 +4919,102 @@ class ParameterRange(SedBase):
     def unset_end(self):
         self._values.pop('end', None); self._orref_is_ref.pop('end', None)
 
-    def get_values(self):
-        if 'values' not in self._values: raise ApiError('values is not set')
-        return self._values['values']
+    def get_interval_value(self):
+        return self._get_orref_value('interval')
 
-    def set_values(self, value):
-        self._values['values'] = value
+    def get_interval_ref(self):
+        return self._get_orref_ref('interval')
+
+    def set_interval_value(self, value):
+        self._set_orref_value('interval', value)
+
+    def set_interval_ref(self, ref):
+        self._set_orref_ref('interval', ref)
+
+    def is_interval_ref(self):
+        return self._is_orref_ref('interval')
+
+    def is_set_interval(self):
+        return 'interval' in self._values
+
+    def unset_interval(self):
+        self._values.pop('interval', None); self._orref_is_ref.pop('interval', None)
+
+    def get_number_of_steps_value(self):
+        return self._get_orref_value('numberOfSteps')
+
+    def get_number_of_steps_ref(self):
+        return self._get_orref_ref('numberOfSteps')
+
+    def set_number_of_steps_value(self, value):
+        self._set_orref_value('numberOfSteps', value)
+
+    def set_number_of_steps_ref(self, ref):
+        self._set_orref_ref('numberOfSteps', ref)
+
+    def is_number_of_steps_ref(self):
+        return self._is_orref_ref('numberOfSteps')
+
+    def is_set_number_of_steps(self):
+        return 'numberOfSteps' in self._values
+
+    def unset_number_of_steps(self):
+        self._values.pop('numberOfSteps', None); self._orref_is_ref.pop('numberOfSteps', None)
+
+    def get_scale(self):
+        if 'scale' not in self._values: raise ApiError('scale is not set')
+        return self._values['scale']
+
+    def set_scale(self, value):
+        self._values['scale'] = value
+
+    def is_set_scale(self):
+        return 'scale' in self._values
+
+    def unset_scale(self):
+        self._values.pop('scale', None)
+
+    def get_values_value(self):
+        return self._get_orref_value('values')
+
+    def get_values_ref(self):
+        return self._get_orref_ref('values')
+
+    def set_values_value(self, value):
+        self._set_orref_value('values', value)
+
+    def set_values_ref(self, ref):
+        self._set_orref_ref('values', ref)
+
+    def is_values_ref(self):
+        return self._is_orref_ref('values')
 
     def is_set_values(self):
         return 'values' in self._values
 
     def unset_values(self):
-        self._values.pop('values', None)
+        self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
-    def get_values(self):
-        if 'values' not in self._values: raise ApiError('values is not set')
-        return self._values['values']
+    def get_values_value(self):
+        return self._get_orref_value('values')
 
-    def set_values(self, value):
-        self._values['values'] = value
+    def get_values_ref(self):
+        return self._get_orref_ref('values')
+
+    def set_values_value(self, value):
+        self._set_orref_value('values', value)
+
+    def set_values_ref(self, ref):
+        self._set_orref_ref('values', ref)
+
+    def is_values_ref(self):
+        return self._is_orref_ref('values')
 
     def is_set_values(self):
         return 'values' in self._values
 
     def unset_values(self):
-        self._values.pop('values', None)
+        self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -3242,6 +5032,9 @@ class ParameterRange(SedBase):
         kids = []
         kids.extend(self._task_parameters.items())
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -3261,6 +5054,9 @@ class ParameterRange(SedBase):
         if 'modelElement' in self._values: d['modelElement'] = self._values['modelElement']
         if 'start' in self._values: d['start'] = self._values['start']
         if 'end' in self._values: d['end'] = self._values['end']
+        if 'interval' in self._values: d['interval'] = self._values['interval']
+        if 'numberOfSteps' in self._values: d['numberOfSteps'] = self._values['numberOfSteps']
+        if 'scale' in self._values: d['scale'] = self._values['scale']
         if 'values' in self._values: d['values'] = self._values['values']
         if 'values' in self._values: d['values'] = self._values['values']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
@@ -3274,7 +5070,7 @@ class ParameterRange(SedBase):
 
 class ParameterScan(SedBase):
     """Generated from test-specsheets/tasks/ParameterScan/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('outputVariableMap', 'string', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRangeInline', item_discriminator=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask'), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AggregationCalculation'), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRange', item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model', 'parameterRanges'}
     _TYPE_CONST = 'parameterScan'
     _TYPE_RULE_ID = 'ParameterScan-0006'
@@ -3289,7 +5085,7 @@ class ParameterScan(SedBase):
         super().__init__()
         self._parameter_ranges = ListCollection()
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
-        self._aggregate_output_variables = IdKeyedCollection(_dispatch_AggregationCalculation)
+        self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
 
     def get_type(self):
@@ -3308,18 +5104,26 @@ class ParameterScan(SedBase):
     def unset_model(self):
         self._values.pop('model', None)
 
-    def get_output_variable_map(self):
-        if 'outputVariableMap' not in self._values: raise ApiError('output_variable_map is not set')
-        return self._values['outputVariableMap']
+    def get_output_variable_map_value(self):
+        return self._get_orref_value('outputVariableMap')
 
-    def set_output_variable_map(self, value):
-        self._values['outputVariableMap'] = value
+    def get_output_variable_map_ref(self):
+        return self._get_orref_ref('outputVariableMap')
+
+    def set_output_variable_map_value(self, value):
+        self._set_orref_value('outputVariableMap', value)
+
+    def set_output_variable_map_ref(self, ref):
+        self._set_orref_ref('outputVariableMap', ref)
+
+    def is_output_variable_map_ref(self):
+        return self._is_orref_ref('outputVariableMap')
 
     def is_set_output_variable_map(self):
         return 'outputVariableMap' in self._values
 
     def unset_output_variable_map(self):
-        self._values.pop('outputVariableMap', None)
+        self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
 
     def get_parameter_ranges(self):
         return self._parameter_ranges.items()
@@ -3389,6 +5193,11 @@ class ParameterScan(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'subTasks': return self._sub_tasks
+        if field_name == 'aggregateOutputVariables': return self._aggregate_output_variables
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._parameter_ranges.items()):
@@ -3426,7 +5235,7 @@ class ParameterScan(SedBase):
 
 class Range(SedBase):
     """Generated from test-specsheets/tasks/Range/."""
-    _FIELDS = [FieldSpec('values', 'string', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'range'
     _TYPE_RULE_ID = 'Range-0003'
@@ -3444,18 +5253,26 @@ class Range(SedBase):
     def get_type(self):
         return 'range'
 
-    def get_values(self):
-        if 'values' not in self._values: raise ApiError('values is not set')
-        return self._values['values']
+    def get_values_value(self):
+        return self._get_orref_value('values')
 
-    def set_values(self, value):
-        self._values['values'] = value
+    def get_values_ref(self):
+        return self._get_orref_ref('values')
+
+    def set_values_value(self, value):
+        self._set_orref_value('values', value)
+
+    def set_values_ref(self, ref):
+        self._set_orref_ref('values', ref)
+
+    def is_values_ref(self):
+        return self._is_orref_ref('values')
 
     def is_set_values(self):
         return 'values' in self._values
 
     def unset_values(self):
-        self._values.pop('values', None)
+        self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -3473,6 +5290,9 @@ class Range(SedBase):
         kids = []
         kids.extend(self._task_parameters.items())
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -3501,7 +5321,7 @@ class Range(SedBase):
 
 class RelabelData(SedBase):
     """Generated from test-specsheets/tasks/RelabelData/."""
-    _FIELDS = [FieldSpec('input', 'SIdRef', True, 'RelabelData-0002', 'RelabelData-0001', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('input', 'SIdRef', True, 'RelabelData-0002', 'RelabelData-0001', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('labels', 'ArrayOrRef', True, ['RelabelData-0004', 'RelabelData-0005'], 'RelabelData-0003', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'input', 'labels'}
     _TYPE_CONST = 'relabelData'
     _TYPE_RULE_ID = 'RelabelData-0006'
@@ -3532,6 +5352,27 @@ class RelabelData(SedBase):
     def unset_input(self):
         self._values.pop('input', None)
 
+    def get_labels_value(self):
+        return self._get_orref_value('labels')
+
+    def get_labels_ref(self):
+        return self._get_orref_ref('labels')
+
+    def set_labels_value(self, value):
+        self._set_orref_value('labels', value)
+
+    def set_labels_ref(self, ref):
+        self._set_orref_ref('labels', ref)
+
+    def is_labels_ref(self):
+        return self._is_orref_ref('labels')
+
+    def is_set_labels(self):
+        return 'labels' in self._values
+
+    def unset_labels(self):
+        self._values.pop('labels', None); self._orref_is_ref.pop('labels', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3549,6 +5390,9 @@ class RelabelData(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -3565,6 +5409,7 @@ class RelabelData(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'relabelData')
         if 'input' in self._values: d['input'] = self._values['input']
+        if 'labels' in self._values: d['labels'] = self._values['labels']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -3576,7 +5421,7 @@ class RelabelData(SedBase):
 
 class Scatter(SedBase):
     """Generated from test-specsheets/tasks/Scatter/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'string', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask'), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AggregationCalculation'), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'scatter'
     _TYPE_RULE_ID = 'Scatter-0003'
@@ -3590,24 +5435,32 @@ class Scatter(SedBase):
     def __init__(self):
         super().__init__()
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
-        self._aggregate_output_variables = IdKeyedCollection(_dispatch_AggregationCalculation)
+        self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
 
     def get_type(self):
         return 'scatter'
 
-    def get_output_variable_map(self):
-        if 'outputVariableMap' not in self._values: raise ApiError('output_variable_map is not set')
-        return self._values['outputVariableMap']
+    def get_output_variable_map_value(self):
+        return self._get_orref_value('outputVariableMap')
 
-    def set_output_variable_map(self, value):
-        self._values['outputVariableMap'] = value
+    def get_output_variable_map_ref(self):
+        return self._get_orref_ref('outputVariableMap')
+
+    def set_output_variable_map_value(self, value):
+        self._set_orref_value('outputVariableMap', value)
+
+    def set_output_variable_map_ref(self, ref):
+        self._set_orref_ref('outputVariableMap', ref)
+
+    def is_output_variable_map_ref(self):
+        return self._is_orref_ref('outputVariableMap')
 
     def is_set_output_variable_map(self):
         return 'outputVariableMap' in self._values
 
     def unset_output_variable_map(self):
-        self._values.pop('outputVariableMap', None)
+        self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
 
     def get_sub_tasks(self):
         return self._sub_tasks.ids()
@@ -3664,6 +5517,11 @@ class Scatter(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'subTasks': return self._sub_tasks
+        if field_name == 'aggregateOutputVariables': return self._aggregate_output_variables
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._sub_tasks.ids():
@@ -3697,7 +5555,7 @@ class Scatter(SedBase):
 
 class Span(SedBase):
     """Generated from test-specsheets/tasks/Span/."""
-    _FIELDS = [FieldSpec('start', 'NumberOrRef', True, ['Span-0002', 'Span-0003'], 'Span-0001', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('end', 'NumberOrRef', True, ['Span-0005', 'Span-0006'], 'Span-0004', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('start', 'NumberOrRef', True, ['Span-0002', 'Span-0003'], 'Span-0001', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', True, ['Span-0005', 'Span-0006'], 'Span-0004', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'start', 'end'}
     _TYPE_CONST = 'span'
     _TYPE_RULE_ID = 'Span-0007'
@@ -3760,6 +5618,9 @@ class Span(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -3785,7 +5646,7 @@ class Span(SedBase):
 
 class SteadyState(SedBase):
     """Generated from test-specsheets/tasks/SteadyState/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', True, None, 'SteadyState-0002', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputModel', 'BooleanOrRef', False, ['SteadyState-0005', 'SteadyState-0006'], None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'steadyState'
     _TYPE_RULE_ID = 'SteadyState-0003'
@@ -3837,6 +5698,48 @@ class SteadyState(SedBase):
     def unset_independent_variable(self):
         self._values.pop('independentVariable', None); self._orref_is_ref.pop('independentVariable', None)
 
+    def get_output_variables_value(self):
+        return self._get_orref_value('outputVariables')
+
+    def get_output_variables_ref(self):
+        return self._get_orref_ref('outputVariables')
+
+    def set_output_variables_value(self, value):
+        self._set_orref_value('outputVariables', value)
+
+    def set_output_variables_ref(self, ref):
+        self._set_orref_ref('outputVariables', ref)
+
+    def is_output_variables_ref(self):
+        return self._is_orref_ref('outputVariables')
+
+    def is_set_output_variables(self):
+        return 'outputVariables' in self._values
+
+    def unset_output_variables(self):
+        self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
+
+    def get_output_model_value(self):
+        return self._get_orref_value('outputModel')
+
+    def get_output_model_ref(self):
+        return self._get_orref_ref('outputModel')
+
+    def set_output_model_value(self, value):
+        self._set_orref_value('outputModel', value)
+
+    def set_output_model_ref(self, ref):
+        self._set_orref_ref('outputModel', ref)
+
+    def is_output_model_ref(self):
+        return self._is_orref_ref('outputModel')
+
+    def is_set_output_model(self):
+        return 'outputModel' in self._values
+
+    def unset_output_model(self):
+        self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3853,6 +5756,9 @@ class SteadyState(SedBase):
         kids = []
         kids.extend(self._task_parameters.items())
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -3871,6 +5777,8 @@ class SteadyState(SedBase):
         d['_type'] = self._values.get('_type', 'steadyState')
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
+        if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -3882,7 +5790,7 @@ class SteadyState(SedBase):
 
 class StringFormation(SedBase):
     """Generated from test-specsheets/tasks/StringFormation/."""
-    _FIELDS = [FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('concatenate', 'ArrayOrRef', True, ['StringFormation-0002', 'StringFormation-0003'], 'StringFormation-0001', 'StringFormation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'concatenate'}
     _TYPE_CONST = 'stringFormation'
     _TYPE_RULE_ID = 'StringFormation-0004'
@@ -3899,6 +5807,27 @@ class StringFormation(SedBase):
 
     def get_type(self):
         return 'stringFormation'
+
+    def get_concatenate_value(self):
+        return self._get_orref_value('concatenate')
+
+    def get_concatenate_ref(self):
+        return self._get_orref_ref('concatenate')
+
+    def set_concatenate_value(self, value):
+        self._set_orref_value('concatenate', value)
+
+    def set_concatenate_ref(self, ref):
+        self._set_orref_ref('concatenate', ref)
+
+    def is_concatenate_ref(self):
+        return self._is_orref_ref('concatenate')
+
+    def is_set_concatenate(self):
+        return 'concatenate' in self._values
+
+    def unset_concatenate(self):
+        self._values.pop('concatenate', None); self._orref_is_ref.pop('concatenate', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -3917,6 +5846,9 @@ class StringFormation(SedBase):
         kids.extend(self._task_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
@@ -3932,6 +5864,7 @@ class StringFormation(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'stringFormation')
+        if 'concatenate' in self._values: d['concatenate'] = self._values['concatenate']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
@@ -3943,7 +5876,7 @@ class StringFormation(SedBase):
 
 class Plot2D(SedBase):
     """Generated from test-specsheets/outputs/Plot2D/."""
-    _FIELDS = [FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('curves', 'dict', True, 'Plot2D-0002', 'Plot2D-0001', 'Plot2D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractCurve'), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, ['Plot-0001', 'Plot-0002'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('curves', 'dict', True, 'Plot2D-0002', 'Plot2D-0001', 'Plot2D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractCurve', is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'curves'}
     _TYPE_CONST = 'plot2D'
     _TYPE_RULE_ID = 'Plot2D-0004'
@@ -3961,6 +5894,27 @@ class Plot2D(SedBase):
 
     def get_type(self):
         return 'plot2D'
+
+    def get_legend_value(self):
+        return self._get_orref_value('legend')
+
+    def get_legend_ref(self):
+        return self._get_orref_ref('legend')
+
+    def set_legend_value(self, value):
+        self._set_orref_value('legend', value)
+
+    def set_legend_ref(self, ref):
+        self._set_orref_ref('legend', ref)
+
+    def is_legend_ref(self):
+        return self._is_orref_ref('legend')
+
+    def is_set_legend(self):
+        return 'legend' in self._values
+
+    def unset_legend(self):
+        self._values.pop('legend', None); self._orref_is_ref.pop('legend', None)
 
     def get_height_value(self):
         return self._get_orref_value('height')
@@ -4040,6 +5994,10 @@ class Plot2D(SedBase):
         kids.extend(self._output_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'curves': return self._curves
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._curves.ids():
@@ -4057,6 +6015,7 @@ class Plot2D(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'plot2D')
+        if 'legend' in self._values: d['legend'] = self._values['legend']
         if 'height' in self._values: d['height'] = self._values['height']
         if 'width' in self._values: d['width'] = self._values['width']
         if len(self._curves): d['curves'] = {i: self._curves.get(i).to_json_value() for i in self._curves.ids()}
@@ -4071,7 +6030,7 @@ class Plot2D(SedBase):
 
 class Plot3D(SedBase):
     """Generated from test-specsheets/outputs/Plot3D/."""
-    _FIELDS = [FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('surfaces', 'dict', True, 'Plot3D-0002', 'Plot3D-0001', 'Plot3D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='Surface'), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, ['Plot-0001', 'Plot-0002'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('surfaces', 'dict', True, 'Plot3D-0002', 'Plot3D-0001', 'Plot3D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Surface', item_discriminator=None, is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'surfaces'}
     _TYPE_CONST = 'plot3D'
     _TYPE_RULE_ID = 'Plot3D-0004'
@@ -4084,11 +6043,32 @@ class Plot3D(SedBase):
 
     def __init__(self):
         super().__init__()
-        self._surfaces = IdKeyedCollection(_dispatch_Surface)
+        self._surfaces = IdKeyedCollection(lambda tv, _cls=Surface: (_cls, False))
         self._output_parameters = ListCollection()
 
     def get_type(self):
         return 'plot3D'
+
+    def get_legend_value(self):
+        return self._get_orref_value('legend')
+
+    def get_legend_ref(self):
+        return self._get_orref_ref('legend')
+
+    def set_legend_value(self, value):
+        self._set_orref_value('legend', value)
+
+    def set_legend_ref(self, ref):
+        self._set_orref_ref('legend', ref)
+
+    def is_legend_ref(self):
+        return self._is_orref_ref('legend')
+
+    def is_set_legend(self):
+        return 'legend' in self._values
+
+    def unset_legend(self):
+        self._values.pop('legend', None); self._orref_is_ref.pop('legend', None)
 
     def get_height_value(self):
         return self._get_orref_value('height')
@@ -4168,6 +6148,10 @@ class Plot3D(SedBase):
         kids.extend(self._output_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        if field_name == 'surfaces': return self._surfaces
+        return None
+
     def _children_with_locations(self):
         out = []
         for i in self._surfaces.ids():
@@ -4185,6 +6169,7 @@ class Plot3D(SedBase):
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'plot3D')
+        if 'legend' in self._values: d['legend'] = self._values['legend']
         if 'height' in self._values: d['height'] = self._values['height']
         if 'width' in self._values: d['width'] = self._values['width']
         if len(self._surfaces): d['surfaces'] = {i: self._surfaces.get(i).to_json_value() for i in self._surfaces.ids()}
@@ -4199,7 +6184,7 @@ class Plot3D(SedBase):
 
 class Report(SedBase):
     """Generated from test-specsheets/outputs/Report/."""
-    _FIELDS = [FieldSpec('data', 'SIdRef', True, 'Report-0002', 'Report-0001', 'Report-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None)]
+    _FIELDS = [FieldSpec('data', 'SIdRef', True, 'Report-0002', 'Report-0001', 'Report-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'data'}
     _TYPE_CONST = 'report'
     _TYPE_RULE_ID = 'Report-0003'
@@ -4247,6 +6232,9 @@ class Report(SedBase):
         kids.extend(self._output_parameters.items())
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         for idx, item in enumerate(self._output_parameters.items()):
@@ -4272,13 +6260,13 @@ class Report(SedBase):
         return self._own_json_value()
 
 
-class Annotation(SedBase):
-    """Generated from test-specsheets/auxiliary/Annotation/."""
-    _FIELDS = []
-    _REQUIRED_NAMES = {'qualifier', 'value'}
+class Surface(SedBase):
+    """Generated from test-specsheets/outputs/Surface/."""
+    _FIELDS = [FieldSpec('surfaceType', 'string', True, ['Surface-0002', 'Surface-0003'], 'Surface-0001', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('x', 'SIdRef', True, 'Surface-0005', 'Surface-0004', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('y', 'SIdRef', True, 'Surface-0007', 'Surface-0006', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('z', 'SIdRef', True, 'Surface-0009', 'Surface-0008', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'Surface-0010', None, 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('order', 'IntegerOrRef', False, ['Surface-0011', 'Surface-0012'], None, 'Surface-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _REQUIRED_NAMES = {'surfaceType', 'x', 'y', 'z'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
-    _OWN_CATCHALL = 'Annotation-0000'
+    _OWN_CATCHALL = 'Surface-0000'
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
@@ -4288,9 +6276,98 @@ class Annotation(SedBase):
     def __init__(self):
         super().__init__()
 
+    def get_surface_type(self):
+        if 'surfaceType' not in self._values: raise ApiError('surface_type is not set')
+        return self._values['surfaceType']
+
+    def set_surface_type(self, value):
+        self._values['surfaceType'] = value
+
+    def is_set_surface_type(self):
+        return 'surfaceType' in self._values
+
+    def unset_surface_type(self):
+        self._values.pop('surfaceType', None)
+
+    def get_x(self):
+        if 'x' not in self._values: raise ApiError('x is not set')
+        return self._values['x']
+
+    def set_x(self, value):
+        self._values['x'] = value
+
+    def is_set_x(self):
+        return 'x' in self._values
+
+    def unset_x(self):
+        self._values.pop('x', None)
+
+    def get_y(self):
+        if 'y' not in self._values: raise ApiError('y is not set')
+        return self._values['y']
+
+    def set_y(self, value):
+        self._values['y'] = value
+
+    def is_set_y(self):
+        return 'y' in self._values
+
+    def unset_y(self):
+        self._values.pop('y', None)
+
+    def get_z(self):
+        if 'z' not in self._values: raise ApiError('z is not set')
+        return self._values['z']
+
+    def set_z(self, value):
+        self._values['z'] = value
+
+    def is_set_z(self):
+        return 'z' in self._values
+
+    def unset_z(self):
+        self._values.pop('z', None)
+
+    def get_style(self):
+        if 'style' not in self._values: raise ApiError('style is not set')
+        return self._values['style']
+
+    def set_style(self, value):
+        self._values['style'] = value
+
+    def is_set_style(self):
+        return 'style' in self._values
+
+    def unset_style(self):
+        self._values.pop('style', None)
+
+    def get_order_value(self):
+        return self._get_orref_value('order')
+
+    def get_order_ref(self):
+        return self._get_orref_ref('order')
+
+    def set_order_value(self, value):
+        self._set_orref_value('order', value)
+
+    def set_order_ref(self, ref):
+        self._set_orref_ref('order', ref)
+
+    def is_order_ref(self):
+        return self._is_orref_ref('order')
+
+    def is_set_order(self):
+        return 'order' in self._values
+
+    def unset_order(self):
+        self._values.pop('order', None); self._orref_is_ref.pop('order', None)
+
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -4304,6 +6381,83 @@ class Annotation(SedBase):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
+        if 'surfaceType' in self._values: d['surfaceType'] = self._values['surfaceType']
+        if 'x' in self._values: d['x'] = self._values['x']
+        if 'y' in self._values: d['y'] = self._values['y']
+        if 'z' in self._values: d['z'] = self._values['z']
+        if 'style' in self._values: d['style'] = self._values['style']
+        if 'order' in self._values: d['order'] = self._values['order']
+        for (pfx, key), value in self._ns_attrs.items():
+            d[f'{pfx}@{key}'] = value
+        return d
+
+    def to_json_value(self):
+        return self._own_json_value()
+
+
+class Annotation(SedBase):
+    """Generated from test-specsheets/auxiliary/Annotation/."""
+    _FIELDS = [FieldSpec('qualifier', 'any', True, 'Annotation-0002', 'Annotation-0001', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('value', 'any', True, None, 'Annotation-0003', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _REQUIRED_NAMES = {'qualifier', 'value'}
+    _TYPE_CONST = None
+    _TYPE_RULE_ID = None
+    _OWN_CATCHALL = 'Annotation-0000'
+    _NAME_RULE_ID = 'SEDBase-0001'
+    _DESC_RULE_ID = 'SEDBase-0002'
+    _BASE_CATCHALL = 'SEDBase-0000'
+    _NAMESPACE_FIELDS = {}
+    _NAMESPACE_CATCHALL = {}
+
+    def __init__(self):
+        super().__init__()
+
+    def get_qualifier(self):
+        if 'qualifier' not in self._values: raise ApiError('qualifier is not set')
+        return self._values['qualifier']
+
+    def set_qualifier(self, value):
+        self._values['qualifier'] = value
+
+    def is_set_qualifier(self):
+        return 'qualifier' in self._values
+
+    def unset_qualifier(self):
+        self._values.pop('qualifier', None)
+
+    def get_value(self):
+        if 'value' not in self._values: raise ApiError('value is not set')
+        return self._values['value']
+
+    def set_value(self, value):
+        self._values['value'] = value
+
+    def is_set_value(self):
+        return 'value' in self._values
+
+    def unset_value(self):
+        self._values.pop('value', None)
+
+    def _children(self):
+        kids = []
+        return kids
+
+    def _get_id_collection(self, field_name):
+        return None
+
+    def _children_with_locations(self):
+        out = []
+        return out
+
+    def _own_id_for_message(self):
+        p = self.get_parent()
+        return '?'
+
+    def _own_json_value(self):
+        d = {}
+        if self._name is not None: d['name'] = self._name
+        if self._description is not None: d['description'] = self._description
+        if 'qualifier' in self._values: d['qualifier'] = self._values['qualifier']
+        if 'value' in self._values: d['value'] = self._values['value']
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4314,7 +6468,7 @@ class Annotation(SedBase):
 
 class Axis(SedBase):
     """Generated from test-specsheets/auxiliary/Axis/."""
-    _FIELDS = [FieldSpec('min', 'NumberOrRef', False, ['Axis-0003', 'Axis-0004'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('max', 'NumberOrRef', False, ['Axis-0005', 'Axis-0006'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('style', 'SIdRef', False, 'Axis-0009', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('scale', 'any', False, ['Axis-0001', 'Axis-0002'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('min', 'NumberOrRef', False, ['Axis-0003', 'Axis-0004'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('max', 'NumberOrRef', False, ['Axis-0005', 'Axis-0006'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('grid', 'BooleanOrRef', False, ['Axis-0007', 'Axis-0008'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'Axis-0009', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('reverse', 'BooleanOrRef', False, ['Axis-0010', 'Axis-0011'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -4327,6 +6481,19 @@ class Axis(SedBase):
 
     def __init__(self):
         super().__init__()
+
+    def get_scale(self):
+        if 'scale' not in self._values: raise ApiError('scale is not set')
+        return self._values['scale']
+
+    def set_scale(self, value):
+        self._values['scale'] = value
+
+    def is_set_scale(self):
+        return 'scale' in self._values
+
+    def unset_scale(self):
+        self._values.pop('scale', None)
 
     def get_min_value(self):
         return self._get_orref_value('min')
@@ -4370,6 +6537,27 @@ class Axis(SedBase):
     def unset_max(self):
         self._values.pop('max', None); self._orref_is_ref.pop('max', None)
 
+    def get_grid_value(self):
+        return self._get_orref_value('grid')
+
+    def get_grid_ref(self):
+        return self._get_orref_ref('grid')
+
+    def set_grid_value(self, value):
+        self._set_orref_value('grid', value)
+
+    def set_grid_ref(self, ref):
+        self._set_orref_ref('grid', ref)
+
+    def is_grid_ref(self):
+        return self._is_orref_ref('grid')
+
+    def is_set_grid(self):
+        return 'grid' in self._values
+
+    def unset_grid(self):
+        self._values.pop('grid', None); self._orref_is_ref.pop('grid', None)
+
     def get_style(self):
         if 'style' not in self._values: raise ApiError('style is not set')
         return self._values['style']
@@ -4383,9 +6571,33 @@ class Axis(SedBase):
     def unset_style(self):
         self._values.pop('style', None)
 
+    def get_reverse_value(self):
+        return self._get_orref_value('reverse')
+
+    def get_reverse_ref(self):
+        return self._get_orref_ref('reverse')
+
+    def set_reverse_value(self, value):
+        self._set_orref_value('reverse', value)
+
+    def set_reverse_ref(self, ref):
+        self._set_orref_ref('reverse', ref)
+
+    def is_reverse_ref(self):
+        return self._is_orref_ref('reverse')
+
+    def is_set_reverse(self):
+        return 'reverse' in self._values
+
+    def unset_reverse(self):
+        self._values.pop('reverse', None); self._orref_is_ref.pop('reverse', None)
+
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -4399,9 +6611,12 @@ class Axis(SedBase):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
+        if 'scale' in self._values: d['scale'] = self._values['scale']
         if 'min' in self._values: d['min'] = self._values['min']
         if 'max' in self._values: d['max'] = self._values['max']
+        if 'grid' in self._values: d['grid'] = self._values['grid']
         if 'style' in self._values: d['style'] = self._values['style']
+        if 'reverse' in self._values: d['reverse'] = self._values['reverse']
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4412,7 +6627,7 @@ class Axis(SedBase):
 
 class Curve(SedBase):
     """Generated from test-specsheets/auxiliary/Curve/."""
-    _FIELDS = [FieldSpec('curveType', 'string', True, ['Curve-0002', 'Curve-0003'], 'Curve-0001', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('y', 'SIdRef', True, 'Curve-0005', 'Curve-0004', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('xErrorUpper', 'SIdRef', False, 'Curve-0006', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('xErrorLower', 'SIdRef', False, 'Curve-0007', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('yErrorUpper', 'SIdRef', False, 'Curve-0008', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('yErrorLower', 'SIdRef', False, 'Curve-0009', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('yFrom', 'SIdRef', False, 'Curve-0010', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('yTo', 'SIdRef', False, 'Curve-0011', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('x', 'SIdRef', True, 'AbstractCurve-0002', 'AbstractCurve-0001', 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('style', 'SIdRef', False, 'AbstractCurve-0005', None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None), FieldSpec('yAxis', 'string', False, ['AbstractCurve-0006', 'AbstractCurve-0007'], None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('curveType', 'string', True, ['Curve-0002', 'Curve-0003'], 'Curve-0001', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('y', 'SIdRef', True, 'Curve-0005', 'Curve-0004', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('xErrorUpper', 'SIdRef', False, 'Curve-0006', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('xErrorLower', 'SIdRef', False, 'Curve-0007', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yErrorUpper', 'SIdRef', False, 'Curve-0008', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yErrorLower', 'SIdRef', False, 'Curve-0009', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yFrom', 'SIdRef', False, 'Curve-0010', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yTo', 'SIdRef', False, 'Curve-0011', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('x', 'SIdRef', True, 'AbstractCurve-0002', 'AbstractCurve-0001', 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('order', 'IntegerOrRef', False, ['AbstractCurve-0003', 'AbstractCurve-0004'], None, 'AbstractCurve-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'AbstractCurve-0005', None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yAxis', 'StringOrRef', False, ['AbstractCurve-0006', 'AbstractCurve-0007'], None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'curveType', 'y', 'x'}
     _TYPE_CONST = 'curve'
     _TYPE_RULE_ID = 'Curve-0012'
@@ -4546,6 +6761,27 @@ class Curve(SedBase):
     def unset_x(self):
         self._values.pop('x', None)
 
+    def get_order_value(self):
+        return self._get_orref_value('order')
+
+    def get_order_ref(self):
+        return self._get_orref_ref('order')
+
+    def set_order_value(self, value):
+        self._set_orref_value('order', value)
+
+    def set_order_ref(self, ref):
+        self._set_orref_ref('order', ref)
+
+    def is_order_ref(self):
+        return self._is_orref_ref('order')
+
+    def is_set_order(self):
+        return 'order' in self._values
+
+    def unset_order(self):
+        self._values.pop('order', None); self._orref_is_ref.pop('order', None)
+
     def get_style(self):
         if 'style' not in self._values: raise ApiError('style is not set')
         return self._values['style']
@@ -4559,22 +6795,33 @@ class Curve(SedBase):
     def unset_style(self):
         self._values.pop('style', None)
 
-    def get_y_axis(self):
-        if 'yAxis' not in self._values: raise ApiError('y_axis is not set')
-        return self._values['yAxis']
+    def get_y_axis_value(self):
+        return self._get_orref_value('yAxis')
 
-    def set_y_axis(self, value):
-        self._values['yAxis'] = value
+    def get_y_axis_ref(self):
+        return self._get_orref_ref('yAxis')
+
+    def set_y_axis_value(self, value):
+        self._set_orref_value('yAxis', value)
+
+    def set_y_axis_ref(self, ref):
+        self._set_orref_ref('yAxis', ref)
+
+    def is_y_axis_ref(self):
+        return self._is_orref_ref('yAxis')
 
     def is_set_y_axis(self):
         return 'yAxis' in self._values
 
     def unset_y_axis(self):
-        self._values.pop('yAxis', None)
+        self._values.pop('yAxis', None); self._orref_is_ref.pop('yAxis', None)
 
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -4598,6 +6845,7 @@ class Curve(SedBase):
         if 'yFrom' in self._values: d['yFrom'] = self._values['yFrom']
         if 'yTo' in self._values: d['yTo'] = self._values['yTo']
         if 'x' in self._values: d['x'] = self._values['x']
+        if 'order' in self._values: d['order'] = self._values['order']
         if 'style' in self._values: d['style'] = self._values['style']
         if 'yAxis' in self._values: d['yAxis'] = self._values['yAxis']
         for (pfx, key), value in self._ns_attrs.items():
@@ -4608,9 +6856,80 @@ class Curve(SedBase):
         return self._own_json_value()
 
 
+class LoopVariable(SedBase):
+    """Generated from test-specsheets/auxiliary/LoopVariable/."""
+    _FIELDS = [FieldSpec('initialValue', 'any', True, None, 'LoopVariable-0001', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('subsequentValues', 'SIdRef', True, 'LoopVariable-0003', 'LoopVariable-0002', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _REQUIRED_NAMES = {'initialValue', 'subsequentValues'}
+    _TYPE_CONST = None
+    _TYPE_RULE_ID = None
+    _OWN_CATCHALL = 'LoopVariable-0000'
+    _NAME_RULE_ID = 'SEDBase-0001'
+    _DESC_RULE_ID = 'SEDBase-0002'
+    _BASE_CATCHALL = 'SEDBase-0000'
+    _NAMESPACE_FIELDS = {}
+    _NAMESPACE_CATCHALL = {}
+
+    def __init__(self):
+        super().__init__()
+
+    def get_initial_value(self):
+        if 'initialValue' not in self._values: raise ApiError('initial_value is not set')
+        return self._values['initialValue']
+
+    def set_initial_value(self, value):
+        self._values['initialValue'] = value
+
+    def is_set_initial_value(self):
+        return 'initialValue' in self._values
+
+    def unset_initial_value(self):
+        self._values.pop('initialValue', None)
+
+    def get_subsequent_values(self):
+        if 'subsequentValues' not in self._values: raise ApiError('subsequent_values is not set')
+        return self._values['subsequentValues']
+
+    def set_subsequent_values(self, value):
+        self._values['subsequentValues'] = value
+
+    def is_set_subsequent_values(self):
+        return 'subsequentValues' in self._values
+
+    def unset_subsequent_values(self):
+        self._values.pop('subsequentValues', None)
+
+    def _children(self):
+        kids = []
+        return kids
+
+    def _get_id_collection(self, field_name):
+        return None
+
+    def _children_with_locations(self):
+        out = []
+        return out
+
+    def _own_id_for_message(self):
+        p = self.get_parent()
+        return '?'
+
+    def _own_json_value(self):
+        d = {}
+        if self._name is not None: d['name'] = self._name
+        if self._description is not None: d['description'] = self._description
+        if 'initialValue' in self._values: d['initialValue'] = self._values['initialValue']
+        if 'subsequentValues' in self._values: d['subsequentValues'] = self._values['subsequentValues']
+        for (pfx, key), value in self._ns_attrs.items():
+            d[f'{pfx}@{key}'] = value
+        return d
+
+    def to_json_value(self):
+        return self._own_json_value()
+
+
 class OutputParameter(SedBase):
     """Generated from test-specsheets/auxiliary/OutputParameter/."""
-    _FIELDS = []
+    _FIELDS = [FieldSpec('value', 'any', True, None, 'OutputParameter-0001', 'OutputParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -4624,9 +6943,25 @@ class OutputParameter(SedBase):
     def __init__(self):
         super().__init__()
 
+    def get_value(self):
+        if 'value' not in self._values: raise ApiError('value is not set')
+        return self._values['value']
+
+    def set_value(self, value):
+        self._values['value'] = value
+
+    def is_set_value(self):
+        return 'value' in self._values
+
+    def unset_value(self):
+        self._values.pop('value', None)
+
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -4640,6 +6975,7 @@ class OutputParameter(SedBase):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
+        if 'value' in self._values: d['value'] = self._values['value']
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4650,7 +6986,7 @@ class OutputParameter(SedBase):
 
 class TaskParameter(SedBase):
     """Generated from test-specsheets/auxiliary/TaskParameter/."""
-    _FIELDS = []
+    _FIELDS = [FieldSpec('value', 'any', True, None, 'TaskParameter-0001', 'TaskParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -4664,9 +7000,25 @@ class TaskParameter(SedBase):
     def __init__(self):
         super().__init__()
 
+    def get_value(self):
+        if 'value' not in self._values: raise ApiError('value is not set')
+        return self._values['value']
+
+    def set_value(self, value):
+        self._values['value'] = value
+
+    def is_set_value(self):
+        return 'value' in self._values
+
+    def unset_value(self):
+        self._values.pop('value', None)
+
     def _children(self):
         kids = []
         return kids
+
+    def _get_id_collection(self, field_name):
+        return None
 
     def _children_with_locations(self):
         out = []
@@ -4680,6 +7032,7 @@ class TaskParameter(SedBase):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
+        if 'value' in self._values: d['value'] = self._values['value']
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4690,7 +7043,7 @@ class TaskParameter(SedBase):
 
 class WorkingAlgorithm(SedBase):
     """Generated from test-specsheets/auxiliary/WorkingAlgorithm/."""
-    _FIELDS = [FieldSpec('algorithm', 'StringOrRef', True, None, 'WorkingAlgorithm-0001', 'WorkingAlgorithm-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None)]
+    _FIELDS = [FieldSpec('algorithm', 'StringOrRef', True, None, 'WorkingAlgorithm-0001', 'WorkingAlgorithm-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
     _REQUIRED_NAMES = {'algorithm'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -4729,6 +7082,9 @@ class WorkingAlgorithm(SedBase):
         kids = []
         return kids
 
+    def _get_id_collection(self, field_name):
+        return None
+
     def _children_with_locations(self):
         out = []
         return out
@@ -4753,18 +7109,30 @@ class WorkingAlgorithm(SedBase):
 def _dispatch_AbstractTask(type_value):
     branches = {
         'aggregationCalculation': AggregationCalculation,
+        'boundedODESimulation': BoundedODESimulation,
+        'boundedStochasticSimulation': BoundedStochasticSimulation,
         'calculation': Calculation,
         'createDataBlock': CreateDataBlock,
         'csvImport': CsvImport,
         'dataImport': DataImport,
         'drawFromDistribution': DrawFromDistribution,
+        'explicitODESimulation': ExplicitODESimulation,
+        'explicitStochasticSimulation': ExplicitStochasticSimulation,
         'fluxBalanceAnalysis': FluxBalanceAnalysis,
         'jacobianFull': JacobianFull,
         'jacobianReduced': JacobianReduced,
+        'loop': Loop,
         'modelChange': ModelChange,
         'modelElementList': ModelElementList,
         'modelImport': ModelImport,
+        'numericRange': NumericRange,
+        'oneStepODE': OneStepODESimulation,
+        'oneStepStochastic': OneStepStochasticSimulation,
+        'parameterRange': ParameterRange,
+        'parameterScan': ParameterScan,
+        'range': Range,
         'relabelData': RelabelData,
+        'scatter': Scatter,
         'steadyState': SteadyState,
         'stringFormation': StringFormation,
     }
@@ -4795,6 +7163,8 @@ def parse_AbstractTask(raw: dict):
 
 def _dispatch_RangeInline(type_value):
     branches = {
+        'numericRange': NumericRange,
+        'parameterRange': ParameterRange,
         'range': Range,
     }
     return branches.get(type_value)
@@ -4824,6 +7194,8 @@ def parse_RangeInline(raw: dict):
 
 def _dispatch_AbstractOutput(type_value):
     branches = {
+        'plot2D': Plot2D,
+        'plot3D': Plot3D,
         'report': Report,
     }
     return branches.get(type_value)
@@ -4885,10 +7257,10 @@ def _load_fields(obj, raw: dict):
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']
     for spec in obj._FIELDS:
-        if spec.name not in raw or spec.kind in ('dict', 'array'):
+        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict'):
             continue
         v = raw[spec.name]
-        if spec.kind in ('StringOrRef', 'NumberOrRef'):
+        if spec.kind in ('StringOrRef', 'NumberOrRef', 'IntegerOrRef', 'BooleanOrRef', 'ArrayOrRef', 'DictOrRef'):
             if is_reference(v):
                 obj._set_orref_ref(spec.name, v)
             else:
@@ -4926,16 +7298,21 @@ def _load_fields(obj, raw: dict):
                     'id': obj._own_id_for_message(), 'value': raw_value}))
                 continue
             coll = getattr(obj, '_' + _pyname(spec.name))
-            dispatch = globals()['parse_' + spec.item_discriminator]
+            dispatch = globals()['parse_' + spec.item_discriminator] if spec.item_discriminator else None
             for item_id, item_raw in raw_value.items():
                 if not SID_PATTERN.match(item_id):
                     rid = spec.rule_id or spec.origin_catchall
                     obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
                         'attr': spec.name, 'class': obj.__class__.__name__,
                         'id': obj._own_id_for_message(), 'value': item_id}))
-                child, problem = dispatch(item_raw)
-                if problem is not None:
-                    obj._load_problems.append(problem)
+                if dispatch is not None:
+                    child, problem = dispatch(item_raw)
+                    if problem is not None:
+                        obj._load_problems.append(problem)
+                else:
+                    # Plain (non-discriminated) item class: no _type dispatch.
+                    child = globals()[spec.item_class]()
+                    _load_fields(child, item_raw)
                 if child is not None:
                     coll.add(item_id, child)
         elif spec.kind == 'array' and spec.name in raw:
@@ -4952,6 +7329,26 @@ def _load_fields(obj, raw: dict):
                 child = item_cls()
                 _load_fields(child, item_raw)
                 coll.add(child)
+        elif spec.kind == 'any-dict' and spec.name in raw:
+            # Every value is stored as-is - a plain JSON value, never
+            # constructed as a class instance (see spec.py's _classify_type
+            # additionalProperties branch and _collection_accessors' any-dict
+            # branch above).
+            raw_value = raw[spec.name]
+            if not isinstance(raw_value, dict):
+                rid = spec.rule_id or spec.origin_catchall
+                obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                    'attr': spec.name, 'class': obj.__class__.__name__,
+                    'id': obj._own_id_for_message(), 'value': raw_value}))
+                continue
+            coll = getattr(obj, '_' + _pyname(spec.name))
+            for item_id, item_value in raw_value.items():
+                if not SID_PATTERN.match(item_id):
+                    rid = spec.rule_id or spec.origin_catchall
+                    obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                        'attr': spec.name, 'class': obj.__class__.__name__,
+                        'id': obj._own_id_for_message(), 'value': item_id}))
+                coll.add(item_id, item_value)
 
 
 def _pyname(name):

@@ -19,7 +19,6 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Range extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("values", "string", false, ["Range-0001", "Range-0002"], null, "Range-0000", null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
@@ -34,11 +33,6 @@ public final class Range extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "range"; }
-
-    public String getValues() { if (!values.containsKey("values")) throw new ApiError("values" + " is not set"); return values.get("values").asText(); }
-    public void setValues(String value) { values.put("values", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetValues() { return values.containsKey("values"); }
-    public void unsetValues() { values.remove("values"); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -73,7 +67,6 @@ public final class Range extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("range"));
-        if (values.containsKey("values")) d.set("values", values.get("values"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;

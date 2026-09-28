@@ -4,5 +4,6 @@ from . import rules_data  # noqa: F401  (populates RULE_CATALOG on import)
 from .model import TestDocument, FancyWidget, SimpleWidget, SimpleReport, Choice, Note, WeightedChoice, AcmeWidget
 from .io import read_from_string, read_from_file, write_to_string, write_to_file
 from ._runtime import ApiError, ValidationProblem
+from .math_ast import ASTNode, ASTNodeType, MathSyntaxError, parse as parse_math, to_string as math_to_string
 
-__all__ = ['TestDocument', 'FancyWidget', 'SimpleWidget', 'SimpleReport', 'Choice', 'Note', 'WeightedChoice', 'AcmeWidget', 'read_from_string', 'read_from_file', 'write_to_string', 'write_to_file', 'ApiError', 'ValidationProblem']
+__all__ = ['TestDocument', 'FancyWidget', 'SimpleWidget', 'SimpleReport', 'Choice', 'Note', 'WeightedChoice', 'AcmeWidget', 'read_from_string', 'read_from_file', 'write_to_string', 'write_to_file', 'ApiError', 'ValidationProblem', 'ASTNode', 'ASTNodeType', 'MathSyntaxError', 'parse_math', 'math_to_string']

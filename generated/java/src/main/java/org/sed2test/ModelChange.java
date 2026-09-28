@@ -20,8 +20,6 @@ import java.util.Set;
 public final class ModelChange extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("inputModel", "SIdRef", true, "ModelChange-0002", "ModelChange-0001", "ModelChange-0000", null, null, null, null, null),
-        new FieldSpec("setValues", "string", false, ["ModelChange-0003", "ModelChange-0004"], null, "ModelChange-0000", null, null, null, null, null),
-        new FieldSpec("replaceElements", "string", false, ["ModelChange-0009", "ModelChange-0010"], null, "ModelChange-0000", null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("inputModel");
@@ -41,16 +39,6 @@ public final class ModelChange extends SedBase {
     public void setInputModel(String value) { values.put("inputModel", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
     public boolean isSetInputModel() { return values.containsKey("inputModel"); }
     public void unsetInputModel() { values.remove("inputModel"); }
-
-    public String getSetValues() { if (!values.containsKey("setValues")) throw new ApiError("setValues" + " is not set"); return values.get("setValues").asText(); }
-    public void setSetValues(String value) { values.put("setValues", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetSetValues() { return values.containsKey("setValues"); }
-    public void unsetSetValues() { values.remove("setValues"); }
-
-    public String getReplaceElements() { if (!values.containsKey("replaceElements")) throw new ApiError("replaceElements" + " is not set"); return values.get("replaceElements").asText(); }
-    public void setReplaceElements(String value) { values.put("replaceElements", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetReplaceElements() { return values.containsKey("replaceElements"); }
-    public void unsetReplaceElements() { values.remove("replaceElements"); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -86,8 +74,6 @@ public final class ModelChange extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("modelChange"));
         if (values.containsKey("inputModel")) d.set("inputModel", values.get("inputModel"));
-        if (values.containsKey("setValues")) d.set("setValues", values.get("setValues"));
-        if (values.containsKey("replaceElements")) d.set("replaceElements", values.get("replaceElements"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;

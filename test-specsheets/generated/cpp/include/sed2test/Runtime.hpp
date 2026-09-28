@@ -1,5 +1,5 @@
-// Shared runtime for the generated libsed2test package. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// Shared runtime. GENERATED - do not
+// hand-edit; regenerate via generator/generate.py.
 #pragma once
 
 #include <algorithm>

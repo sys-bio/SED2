@@ -20,10 +20,9 @@ import java.util.Set;
 public final class ParameterScan extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null),
-        new FieldSpec("outputVariableMap", "string", false, ["Repeat-0002", "Repeat-0003"], null, "Repeat-0000", null, null, null, null, null),
-        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRangeInline", null),
+        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null),
         new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, null, "AggregationCalculation"),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "parameterRanges");
@@ -46,11 +45,6 @@ public final class ParameterScan extends SedBase {
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
     public boolean isSetModel() { return values.containsKey("model"); }
     public void unsetModel() { values.remove("model"); }
-
-    public String getOutputVariableMap() { if (!values.containsKey("outputVariableMap")) throw new ApiError("outputVariableMap" + " is not set"); return values.get("outputVariableMap").asText(); }
-    public void setOutputVariableMap(String value) { values.put("outputVariableMap", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetOutputVariableMap() { return values.containsKey("outputVariableMap"); }
-    public void unsetOutputVariableMap() { values.remove("outputVariableMap"); }
 
     public List<SedBase> getParameterRanges() { return parameterRanges.items(); }
     public void addParameterRanges(SedBase obj) { parameterRanges.add(obj); obj.attach(this, getDocument()); }
@@ -121,7 +115,6 @@ public final class ParameterScan extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("parameterScan"));
         if (values.containsKey("model")) d.set("model", values.get("model"));
-        if (values.containsKey("outputVariableMap")) d.set("outputVariableMap", values.get("outputVariableMap"));
         if (subTasks.size() > 0) { ObjectNode sub = d.putObject("subTasks"); for (String i : subTasks.ids()) sub.set(i, subTasks.get(i).toJsonValue()); }
         if (aggregateOutputVariables.size() > 0) { ObjectNode sub = d.putObject("aggregateOutputVariables"); for (String i : aggregateOutputVariables.ids()) sub.set(i, aggregateOutputVariables.get(i).toJsonValue()); }
         if (parameterRanges.size() > 0) { ArrayNode arr = d.putArray("parameterRanges"); for (SedBase item : parameterRanges.items()) arr.add(item.toJsonValue()); }

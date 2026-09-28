@@ -19,6 +19,7 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ModelImport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
+        new FieldSpec("language", "StringOrRef", true, ["ModelImport-0005", "ModelImport-0006"], "ModelImport-0004", "ModelImport-0000", null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location", "language");
@@ -33,6 +34,14 @@ public final class ModelImport extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "modelImport"; }
+
+    public String getLanguageValue() { return getOrRefValueNode("language").asText(); }
+    public String getLanguageRef() { return getOrRefRefNode("language").asText(); }
+    public void setLanguageValue(String value) { setOrRefValueNode("language", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
+    public void setLanguageRef(String ref) { setOrRefRefNode("language", ref); }
+    public boolean isLanguageRef() { return isOrRefRef("language"); }
+    public boolean isSetLanguage() { return values.containsKey("language"); }
+    public void unsetLanguage() { values.remove("language"); orRefIsRef.remove("language"); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -67,6 +76,7 @@ public final class ModelImport extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("modelImport"));
+        if (values.containsKey("language")) d.set("language", values.get("language"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;

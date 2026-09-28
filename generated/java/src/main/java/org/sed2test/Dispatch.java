@@ -44,18 +44,30 @@ public final class Dispatch {
         SedBase obj = null;
         switch (tv) {
             case "aggregationCalculation": obj = new AggregationCalculation(); break;
+            case "boundedODESimulation": obj = new BoundedODESimulation(); break;
+            case "boundedStochasticSimulation": obj = new BoundedStochasticSimulation(); break;
             case "calculation": obj = new Calculation(); break;
             case "createDataBlock": obj = new CreateDataBlock(); break;
             case "csvImport": obj = new CsvImport(); break;
             case "dataImport": obj = new DataImport(); break;
             case "drawFromDistribution": obj = new DrawFromDistribution(); break;
+            case "explicitODESimulation": obj = new ExplicitODESimulation(); break;
+            case "explicitStochasticSimulation": obj = new ExplicitStochasticSimulation(); break;
             case "fluxBalanceAnalysis": obj = new FluxBalanceAnalysis(); break;
             case "jacobianFull": obj = new JacobianFull(); break;
             case "jacobianReduced": obj = new JacobianReduced(); break;
+            case "loop": obj = new Loop(); break;
             case "modelChange": obj = new ModelChange(); break;
             case "modelElementList": obj = new ModelElementList(); break;
             case "modelImport": obj = new ModelImport(); break;
+            case "numericRange": obj = new NumericRange(); break;
+            case "oneStepODE": obj = new OneStepODESimulation(); break;
+            case "oneStepStochastic": obj = new OneStepStochasticSimulation(); break;
+            case "parameterRange": obj = new ParameterRange(); break;
+            case "parameterScan": obj = new ParameterScan(); break;
+            case "range": obj = new Range(); break;
             case "relabelData": obj = new RelabelData(); break;
+            case "scatter": obj = new Scatter(); break;
             case "steadyState": obj = new SteadyState(); break;
             case "stringFormation": obj = new StringFormation(); break;
         }
@@ -80,6 +92,8 @@ public final class Dispatch {
         String tv = raw.get("_type").asText();
         SedBase obj = null;
         switch (tv) {
+            case "numericRange": obj = new NumericRange(); break;
+            case "parameterRange": obj = new ParameterRange(); break;
             case "range": obj = new Range(); break;
         }
         if (obj != null) {
@@ -103,6 +117,8 @@ public final class Dispatch {
         String tv = raw.get("_type").asText();
         SedBase obj = null;
         switch (tv) {
+            case "plot2D": obj = new Plot2D(); break;
+            case "plot3D": obj = new Plot3D(); break;
             case "report": obj = new Report(); break;
         }
         if (obj != null) {
@@ -156,7 +172,7 @@ public final class Dispatch {
         switch (className) {
             case "Annotation": return new Annotation();
             case "OutputParameter": return new OutputParameter();
-            case "ParameterRangeInline": return new ParameterRangeInline();
+            case "ParameterRange": return new ParameterRange();
             case "TaskParameter": return new TaskParameter();
             case "WorkingAlgorithm": return new WorkingAlgorithm();
             default: throw new ApiError("unknown item class " + className);

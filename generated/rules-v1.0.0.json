@@ -2730,7 +2730,7 @@
   "SEDBase-0006": {
     "class": "SEDBase",
     "rule": "Every colon-delimited segment of a reference must resolve to an existing element.",
-    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{location}'.",
+    "message": "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{subvalue}'.",
     "severity": "error",
     "status": "active",
     "check": "handwritten"

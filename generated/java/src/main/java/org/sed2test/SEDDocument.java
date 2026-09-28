@@ -20,13 +20,11 @@ import java.util.Set;
 public final class SEDDocument extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("version", "string", true, ["SEDDocument-0002", "SEDDocument-0003"], "SEDDocument-0001", "SEDDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null),
-        new FieldSpec("constants", "dict", false, "SEDDocument-0005", null, "SEDDocument-0000", null, null, null, null, "AnyValueOrRef"),
         new FieldSpec("tasks", "dict", false, "SEDDocument-0006", null, "SEDDocument-0000", null, null, null, null, "AbstractTask"),
         new FieldSpec("outputs", "dict", false, "SEDDocument-0007", null, "SEDDocument-0000", null, null, null, null, "AbstractOutput"),
-        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, null, "Style")
+        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, "Style", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("version");
-    private final IdKeyedCollection<SedBase> constants = new IdKeyedCollection<>();
     private final IdKeyedCollection<SedBase> tasks = new IdKeyedCollection<>();
     private final IdKeyedCollection<SedBase> outputs = new IdKeyedCollection<>();
     private final IdKeyedCollection<SedBase> styles = new IdKeyedCollection<>();
@@ -44,13 +42,6 @@ public final class SEDDocument extends SedBase {
     public void setVersion(String value) { values.put("version", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
     public boolean isSetVersion() { return values.containsKey("version"); }
     public void unsetVersion() { values.remove("version"); }
-
-    public List<String> getConstants() { return constants.ids(); }
-    public SedBase getConstantsItem(String itemId) { return constants.get(itemId); }
-    public void addConstants(String itemId, SedBase obj) { constants.add(itemId, obj); obj.attach(this, getDocument()); }
-    public void insertConstants(int index, String itemId, SedBase obj) { constants.insert(index, itemId, obj); obj.attach(this, getDocument()); }
-    public void removeConstants(String itemId) { constants.remove(itemId); }
-    public void setIdOnConstants(String oldId, String newId) { constants.setId(oldId, newId); }
 
     public List<String> getTasks() { return tasks.ids(); }
     public SedBase getTasksItem(String itemId) { return tasks.get(itemId); }
@@ -76,7 +67,6 @@ public final class SEDDocument extends SedBase {
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
-        for (String i : constants.ids()) kids.add(constants.get(i));
         for (String i : tasks.ids()) kids.add(tasks.get(i));
         for (String i : outputs.ids()) kids.add(outputs.get(i));
         for (String i : styles.ids()) kids.add(styles.get(i));
@@ -86,7 +76,6 @@ public final class SEDDocument extends SedBase {
     @Override
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
-        for (String i : constants.ids()) out.add(new ChildLoc(constants.get(i), "/constants/" + i));
         for (String i : tasks.ids()) out.add(new ChildLoc(tasks.get(i), "/tasks/" + i));
         for (String i : outputs.ids()) out.add(new ChildLoc(outputs.get(i), "/outputs/" + i));
         for (String i : styles.ids()) out.add(new ChildLoc(styles.get(i), "/styles/" + i));
@@ -96,7 +85,6 @@ public final class SEDDocument extends SedBase {
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {
         switch (fieldName) {
-            case "constants": return constants;
             case "tasks": return tasks;
             case "outputs": return outputs;
             case "styles": return styles;
@@ -110,7 +98,6 @@ public final class SEDDocument extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         if (values.containsKey("version")) d.set("version", values.get("version"));
-        if (constants.size() > 0) { ObjectNode sub = d.putObject("constants"); for (String i : constants.ids()) sub.set(i, constants.get(i).toJsonValue()); }
         if (tasks.size() > 0) { ObjectNode sub = d.putObject("tasks"); for (String i : tasks.ids()) sub.set(i, tasks.get(i).toJsonValue()); }
         if (outputs.size() > 0) { ObjectNode sub = d.putObject("outputs"); for (String i : outputs.ids()) sub.set(i, outputs.get(i).toJsonValue()); }
         if (styles.size() > 0) { ObjectNode sub = d.putObject("styles"); for (String i : styles.ids()) sub.set(i, styles.get(i).toJsonValue()); }

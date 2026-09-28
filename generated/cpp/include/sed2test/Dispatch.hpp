@@ -35,18 +35,30 @@ inline DispatchResult parse_AbstractTask(const jsoncons::json& raw) {
     std::string tv = raw.at("_type").as<std::string>();
     std::unique_ptr<SedBase> obj;
     if (tv == "aggregationCalculation") obj = std::make_unique<AggregationCalculation>();
+    else if (tv == "boundedODESimulation") obj = std::make_unique<BoundedODESimulation>();
+    else if (tv == "boundedStochasticSimulation") obj = std::make_unique<BoundedStochasticSimulation>();
     else if (tv == "calculation") obj = std::make_unique<Calculation>();
     else if (tv == "createDataBlock") obj = std::make_unique<CreateDataBlock>();
     else if (tv == "csvImport") obj = std::make_unique<CsvImport>();
     else if (tv == "dataImport") obj = std::make_unique<DataImport>();
     else if (tv == "drawFromDistribution") obj = std::make_unique<DrawFromDistribution>();
+    else if (tv == "explicitODESimulation") obj = std::make_unique<ExplicitODESimulation>();
+    else if (tv == "explicitStochasticSimulation") obj = std::make_unique<ExplicitStochasticSimulation>();
     else if (tv == "fluxBalanceAnalysis") obj = std::make_unique<FluxBalanceAnalysis>();
     else if (tv == "jacobianFull") obj = std::make_unique<JacobianFull>();
     else if (tv == "jacobianReduced") obj = std::make_unique<JacobianReduced>();
+    else if (tv == "loop") obj = std::make_unique<Loop>();
     else if (tv == "modelChange") obj = std::make_unique<ModelChange>();
     else if (tv == "modelElementList") obj = std::make_unique<ModelElementList>();
     else if (tv == "modelImport") obj = std::make_unique<ModelImport>();
+    else if (tv == "numericRange") obj = std::make_unique<NumericRange>();
+    else if (tv == "oneStepODE") obj = std::make_unique<OneStepODESimulation>();
+    else if (tv == "oneStepStochastic") obj = std::make_unique<OneStepStochasticSimulation>();
+    else if (tv == "parameterRange") obj = std::make_unique<ParameterRange>();
+    else if (tv == "parameterScan") obj = std::make_unique<ParameterScan>();
+    else if (tv == "range") obj = std::make_unique<Range>();
     else if (tv == "relabelData") obj = std::make_unique<RelabelData>();
+    else if (tv == "scatter") obj = std::make_unique<Scatter>();
     else if (tv == "steadyState") obj = std::make_unique<SteadyState>();
     else if (tv == "stringFormation") obj = std::make_unique<StringFormation>();
     if (obj) {
@@ -70,7 +82,9 @@ inline DispatchResult parse_RangeInline(const jsoncons::json& raw) {
     }
     std::string tv = raw.at("_type").as<std::string>();
     std::unique_ptr<SedBase> obj;
-    if (tv == "range") obj = std::make_unique<Range>();
+    if (tv == "numericRange") obj = std::make_unique<NumericRange>();
+    else if (tv == "parameterRange") obj = std::make_unique<ParameterRange>();
+    else if (tv == "range") obj = std::make_unique<Range>();
     if (obj) {
         load_fields(obj.get(), raw);
         return DispatchResult{std::move(obj), std::nullopt};
@@ -92,7 +106,9 @@ inline DispatchResult parse_AbstractOutput(const jsoncons::json& raw) {
     }
     std::string tv = raw.at("_type").as<std::string>();
     std::unique_ptr<SedBase> obj;
-    if (tv == "report") obj = std::make_unique<Report>();
+    if (tv == "plot2D") obj = std::make_unique<Plot2D>();
+    else if (tv == "plot3D") obj = std::make_unique<Plot3D>();
+    else if (tv == "report") obj = std::make_unique<Report>();
     if (obj) {
         load_fields(obj.get(), raw);
         return DispatchResult{std::move(obj), std::nullopt};
@@ -141,7 +157,7 @@ inline DispatchResult dispatch_parse(const std::string& disc_name, const jsoncon
 inline std::unique_ptr<SedBase> new_item_instance(const std::string& class_name) {
     if (class_name == "Annotation") return std::make_unique<Annotation>();
     else if (class_name == "OutputParameter") return std::make_unique<OutputParameter>();
-    else if (class_name == "ParameterRangeInline") return std::make_unique<ParameterRangeInline>();
+    else if (class_name == "ParameterRange") return std::make_unique<ParameterRange>();
     else if (class_name == "TaskParameter") return std::make_unique<TaskParameter>();
     else if (class_name == "WorkingAlgorithm") return std::make_unique<WorkingAlgorithm>();
     throw ApiError("unknown item class " + class_name);

@@ -22,8 +22,7 @@ public final class ParameterRange extends SedBase {
         new FieldSpec("modelElement", "StringOrRef", true, ["ParameterRange-0002", "ParameterRange-0003"], "ParameterRange-0001", "ParameterRange-0000", null, null, null, null, null),
         new FieldSpec("start", "NumberOrRef", false, ["NumericRange-0001", "NumericRange-0002"], null, "NumericRange-0000", null, null, null, null, null),
         new FieldSpec("end", "NumberOrRef", false, ["NumericRange-0003", "NumericRange-0004"], null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("values", "string", false, ["NumericRange-0011", "NumericRange-0012"], null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("values", "string", false, ["Range-0001", "Range-0002"], null, "Range-0000", null, null, null, null, null),
+        new FieldSpec("interval", "NumberOrRef", false, ["NumericRange-0005", "NumericRange-0006"], null, "NumericRange-0000", null, 0.0, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("modelElement");
@@ -63,15 +62,13 @@ public final class ParameterRange extends SedBase {
     public boolean isSetEnd() { return values.containsKey("end"); }
     public void unsetEnd() { values.remove("end"); orRefIsRef.remove("end"); }
 
-    public String getValues() { if (!values.containsKey("values")) throw new ApiError("values" + " is not set"); return values.get("values").asText(); }
-    public void setValues(String value) { values.put("values", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetValues() { return values.containsKey("values"); }
-    public void unsetValues() { values.remove("values"); }
-
-    public String getValues() { if (!values.containsKey("values")) throw new ApiError("values" + " is not set"); return values.get("values").asText(); }
-    public void setValues(String value) { values.put("values", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetValues() { return values.containsKey("values"); }
-    public void unsetValues() { values.remove("values"); }
+    public double getIntervalValue() { return getOrRefValueNode("interval").asDouble(); }
+    public String getIntervalRef() { return getOrRefRefNode("interval").asText(); }
+    public void setIntervalValue(double value) { setOrRefValueNode("interval", DoubleNode.valueOf(value)); }
+    public void setIntervalRef(String ref) { setOrRefRefNode("interval", ref); }
+    public boolean isIntervalRef() { return isOrRefRef("interval"); }
+    public boolean isSetInterval() { return values.containsKey("interval"); }
+    public void unsetInterval() { values.remove("interval"); orRefIsRef.remove("interval"); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -109,8 +106,7 @@ public final class ParameterRange extends SedBase {
         if (values.containsKey("modelElement")) d.set("modelElement", values.get("modelElement"));
         if (values.containsKey("start")) d.set("start", values.get("start"));
         if (values.containsKey("end")) d.set("end", values.get("end"));
-        if (values.containsKey("values")) d.set("values", values.get("values"));
-        if (values.containsKey("values")) d.set("values", values.get("values"));
+        if (values.containsKey("interval")) d.set("interval", values.get("interval"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;

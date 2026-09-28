@@ -19,9 +19,8 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Scatter extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("outputVariableMap", "string", false, ["Repeat-0002", "Repeat-0003"], null, "Repeat-0000", null, null, null, null, null),
         new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, null, "AggregationCalculation"),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
@@ -38,11 +37,6 @@ public final class Scatter extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "scatter"; }
-
-    public String getOutputVariableMap() { if (!values.containsKey("outputVariableMap")) throw new ApiError("outputVariableMap" + " is not set"); return values.get("outputVariableMap").asText(); }
-    public void setOutputVariableMap(String value) { values.put("outputVariableMap", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetOutputVariableMap() { return values.containsKey("outputVariableMap"); }
-    public void unsetOutputVariableMap() { values.remove("outputVariableMap"); }
 
     public List<String> getSubTasks() { return subTasks.ids(); }
     public SedBase getSubTasksItem(String itemId) { return subTasks.get(itemId); }
@@ -104,7 +98,6 @@ public final class Scatter extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("scatter"));
-        if (values.containsKey("outputVariableMap")) d.set("outputVariableMap", values.get("outputVariableMap"));
         if (subTasks.size() > 0) { ObjectNode sub = d.putObject("subTasks"); for (String i : subTasks.ids()) sub.set(i, subTasks.get(i).toJsonValue()); }
         if (aggregateOutputVariables.size() > 0) { ObjectNode sub = d.putObject("aggregateOutputVariables"); for (String i : aggregateOutputVariables.ids()) sub.set(i, aggregateOutputVariables.get(i).toJsonValue()); }
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }

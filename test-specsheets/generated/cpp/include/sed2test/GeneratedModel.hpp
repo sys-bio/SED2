@@ -1,4 +1,4 @@
-// Generated concrete SED2 classes for libsed2test. GENERATED - do not
+// Generated concrete SED2 classes. GENERATED - do not
 // hand-edit; regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 

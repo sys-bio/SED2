@@ -1,4 +1,4 @@
-// Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+// Generated rule catalogue. GENERATED - do not hand-edit;
 // regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 

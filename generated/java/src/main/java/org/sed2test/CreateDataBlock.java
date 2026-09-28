@@ -19,7 +19,6 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class CreateDataBlock extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("data", "string", true, ["CreateDataBlock-0002", "CreateDataBlock-0003"], "CreateDataBlock-0001", "CreateDataBlock-0000", null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("data");
@@ -34,11 +33,6 @@ public final class CreateDataBlock extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "createDataBlock"; }
-
-    public String getData() { if (!values.containsKey("data")) throw new ApiError("data" + " is not set"); return values.get("data").asText(); }
-    public void setData(String value) { values.put("data", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetData() { return values.containsKey("data"); }
-    public void unsetData() { values.remove("data"); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -73,7 +67,6 @@ public final class CreateDataBlock extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("createDataBlock"));
-        if (values.containsKey("data")) d.set("data", values.get("data"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;

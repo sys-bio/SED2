@@ -1,6 +1,6 @@
 package org.sed2test;
 
-/** Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+/** Generated rule catalogue. GENERATED - do not hand-edit;
  * regenerate via generator/generate.py. */
 public final class RulesData {
     private RulesData() {}
@@ -347,7 +347,7 @@ public final class RulesData {
         RuleCatalog.CATALOG.put("SEDBase-0003", new RuleCatalog.Entry("The notes attribute of a SEDBase-derived element, if present, must be a markdown-formatted string.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a markdown-formatted string.", "error"));
         RuleCatalog.CATALOG.put("SEDBase-0004", new RuleCatalog.Entry("The annotations attribute of a SEDBase-derived element, if present, must be an array of Annotation objects.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of Annotation objects.", "error"));
         RuleCatalog.CATALOG.put("SEDBase-0005", new RuleCatalog.Entry("The first segment of a reference must name one of SEDDocument's ID-keyed collections: tasks, constants, outputs, or styles.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' starts with an unknown collection; it must start with #tasks, #constants, #outputs, or #styles.", "error"));
-        RuleCatalog.CATALOG.put("SEDBase-0006", new RuleCatalog.Entry("Every colon-delimited segment of a reference must resolve to an existing element.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{location}'.", "error"));
+        RuleCatalog.CATALOG.put("SEDBase-0006", new RuleCatalog.Entry("Every colon-delimited segment of a reference must resolve to an existing element.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{subvalue}'.", "error"));
         RuleCatalog.CATALOG.put("SEDBase-0007", new RuleCatalog.Entry("A reference must not target an AbstractOutput, or anything contained in one.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' targets an output; outputs may never be used as input.", "error"));
         RuleCatalog.CATALOG.put("SEDBase-0008", new RuleCatalog.Entry("A dot-accessor in a reference must be one the target declares valid.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses accessor '{subvalue}', which is not a valid output of its target.", "error"));
         RuleCatalog.CATALOG.put("SEDBase-0009", new RuleCatalog.Entry("A reference must not apply more bracket indices than its target has dimensions.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' applies {count} indices, but its target has only {expected-count} dimension(s).", "error"));

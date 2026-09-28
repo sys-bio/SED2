@@ -66,6 +66,282 @@ def is_reference(value: Any) -> bool:
     return isinstance(value, str) and value.startswith("#")
 
 
+# ---- reference parsing/resolution (Design.md's Cross-references section, ---
+# core-spec.md Section 4 / core/Types/v1.0.0/description.md's "References"
+# paragraph). A reference is '#' + a colon-delimited containment path + an
+# optional chain of dot-accessors/bracket-indices, e.g.
+# "#tasks:loop1:subTasks:sim1.model['S1']". _parse_reference is pure syntax
+# (never touches a document); get_sed_reference walks a parsed reference's
+# containment path against an actual document (SEDBase-0006) to the target
+# SedBase element, the getSEDReference() Design.md names. Neither one
+# resolves the trailing dot-accessor/index chain against outputs.json -
+# that's SEDBase-0008 through -0015's concern (hasSubvalue()-style
+# plausibility, not yet implemented - see Task #10's tracked scope), so
+# .accessors is parsed and carried but not yet interpreted here.
+_REF_COLLECTIONS = ("tasks", "constants", "outputs", "styles")
+
+
+@dataclass
+class RefIndex:
+    kind: str            # 'int' | 'label' | 'range'
+    value: Any            # int | str | (int_or_None, int_or_None)
+
+
+@dataclass
+class ParsedReference:
+    raw: str
+    collection: Optional[str]      # the segment right after '#', or None if empty
+    path: list                     # colon-segments after the collection
+    accessors: list                # [('dot', name), ('index', RefIndex), ...] in order
+
+
+def _parse_ref_index(part: str) -> RefIndex:
+    part = part.strip()
+    if ":" in part:
+        a, b = part.split(":", 1)
+        a = int(a) if a.strip() else None
+        b = int(b) if b.strip() else None
+        return RefIndex("range", (a, b))
+    if len(part) >= 2 and part[0] == part[-1] and part[0] in ("'", '"'):
+        return RefIndex("label", part[1:-1])
+    try:
+        return RefIndex("int", int(part))
+    except ValueError:
+        return RefIndex("label", part)  # bare unquoted label - lenient fallback
+
+
+def _parse_reference(text: str) -> ParsedReference:
+    body = text[1:] if text.startswith("#") else text
+    m = re.search(r"[.\[]", body)
+    path_part = body[: m.start()] if m else body
+    accessor_part = body[m.start():] if m else ""
+    segments = path_part.split(":") if path_part else []
+    collection = segments[0] if segments else None
+    path = segments[1:]
+    accessors: list = []
+    i, n = 0, len(accessor_part)
+    while i < n:
+        ch = accessor_part[i]
+        if ch == ".":
+            mm = re.match(r"\.([A-Za-z_][A-Za-z0-9_]*)", accessor_part[i:])
+            if not mm:
+                break
+            accessors.append(("dot", mm.group(1)))
+            i += mm.end()
+        elif ch == "[":
+            close = accessor_part.find("]", i)
+            if close == -1:
+                break
+            inner = accessor_part[i + 1 : close]
+            for part in inner.split(","):
+                if part.strip():
+                    accessors.append(("index", _parse_ref_index(part)))
+            i = close + 1
+        else:
+            break
+    return ParsedReference(raw=text, collection=collection, path=path, accessors=accessors)
+
+
+def get_sed_reference(document, parsed: ParsedReference):
+    """Walks parsed.path's containment tree against `document` one
+    colon-segment at a time (SEDBase-0006). Returns (element, resolved_path)
+    on success - resolved_path is the '#...'-prefixed string of everything
+    walked - or (None, longest_resolved_prefix) on failure, per SEDBase-0006's
+    own spec ("the longest prefix that failed to resolve"). Returns
+    (None, None) outright when there's no document to walk (e.g. a class
+    validated directly, never attached to one) or the collection name itself
+    is unrecognized (SEDBase-0005's own concern, not this rule's)."""
+    if document is None or parsed.collection not in _REF_COLLECTIONS:
+        return None, None
+    coll = document._get_id_collection(parsed.collection)
+    prefix = "#" + parsed.collection
+    if coll is None or not parsed.path:
+        return None, prefix
+    remaining = list(parsed.path)
+    first_id = remaining.pop(0)
+    if first_id not in coll.ids():
+        return None, prefix
+    current = coll.get(first_id)
+    prefix = prefix + ":" + first_id
+    while remaining:
+        if len(remaining) < 2:
+            # A lone trailing segment names a plain attribute, not an
+            # ID-keyed child collection - SEDBase-0006: "a segment naming a
+            # plain attribute... does not resolve".
+            return None, prefix
+        subcoll_name, item_id = remaining.pop(0), remaining.pop(0)
+        subcoll = current._get_id_collection(subcoll_name)
+        if subcoll is None or item_id not in subcoll.ids():
+            return None, prefix
+        current = subcoll.get(item_id)
+        prefix = prefix + ":" + subcoll_name + ":" + item_id
+    return current, prefix
+
+
+def _check_reference_field(value, *, document, class_name, id_value, attr, location) -> list:
+    """Shared per-type dispatcher for the reference-resolution rules
+    (SEDBase-0005 through -0007 so far - see Task #10's tracked scope for
+    -0008 through -0015, which need outputs.json and aren't implemented
+    yet). Called for every SIdRef/*OrRef-kind field whose value is a
+    reference (is_reference(value)); mirrors _check_math_field's shape and
+    local-import-to-avoid-circularity convention (see its own docstring)."""
+    try:
+        from ._rules import sedbase_0005, sedbase_0006, sedbase_0007
+    except ImportError:
+        # This tree's own model.rules never defined SEDBase-0005 (see
+        # _copy_handwritten_rules_py's docstring) - its own reference
+        # convention (if it has one at all) isn't the tasks/constants/
+        # outputs/styles vocabulary these rules check, so skip rather
+        # than misapply a foreign convention or crash.
+        return []
+
+    parsed = _parse_reference(value)
+    kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
+                  make_problem=make_problem)
+    problems = sedbase_0005.check(parsed, **kwargs)
+    if problems:
+        return problems  # unknown collection - nothing further can resolve
+    problems = problems + sedbase_0007.check(parsed, **kwargs)
+    resolved, resolved_prefix = get_sed_reference(document, parsed)
+    problems = problems + sedbase_0006.check(parsed, resolved, resolved_prefix, **kwargs)
+    return problems
+
+
+def _check_math_field(value, *, class_name, id_value, attr, location) -> list:
+    """Shared per-type dispatcher for the math-grammar rules (Types-0001
+    through Types-0004 - Design.md's Validation section: "a rule filed
+    under SEDBase or Types that applies wherever a field of a given
+    declared type occurs... is called from a shared per-type helper that
+    every class's generated validate() invokes automatically for each of
+    its own fields of that type"). Called only for a FieldSpec with
+    is_math=True, and only when its value is a literal string - never a
+    reference: per Types-0001.md, "When the math attribute is itself a
+    reference, this and the following math rules... apply only if the
+    reference resolves statically to a string constant", which is out of
+    scope until reference resolution exists (Design.md's Cross-references
+    section), so a referenced math field is silently skipped here.
+
+    The four templates/python/rules/Types-000N.py files (copied verbatim
+    into ._rules/ at generate time - see Design.md's "fixed function-name
+    convention, not a spliced fragment") take every collaborator they need
+    as a keyword argument rather than importing this module themselves, so
+    each stays independently callable and testable in isolation; this
+    function is the only place that wires them together. The imports below
+    are local (not at module level) to avoid a circular import, since
+    ._rules/*.py and ._predefined_functions.py both exist only once this
+    module has already finished loading."""
+    from . import math_ast as _math_ast
+    from ._predefined_functions import FUNCTIONS, CONSTANTS
+    try:
+        from ._rules import types_0001, types_0002, types_0003, types_0004
+    except ImportError:
+        # This tree's own model.rules never defined Types-0001 (see
+        # _copy_handwritten_rules_py's docstring) - is_math should never be
+        # True anywhere in that case, but degrade to a no-op rather than
+        # crash if it somehow is.
+        return []
+
+    problems = types_0001.check(
+        value, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        make_problem=make_problem, math_parse=_math_ast.parse,
+        MathSyntaxError=_math_ast.MathSyntaxError)
+    if problems:
+        return problems  # unparseable - nothing left to walk for 0002-0004
+    ast = _math_ast.parse(value)
+    problems = problems + types_0002.check(
+        ast, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        make_problem=make_problem, functions=FUNCTIONS)
+    problems = problems + types_0003.check(
+        ast, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        make_problem=make_problem, functions=FUNCTIONS)
+    problems = problems + types_0004.check(
+        ast, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        make_problem=make_problem, constants=CONSTANTS)
+    return problems
+
+
+def _walk_with_locations(obj, prefix=""):
+    """Yields (descendant, absolute_location) for obj itself and every
+    SedBase-derived descendant reachable through _children_with_locations(),
+    depth-first - the same recursion validate() itself uses to build each
+    problem's own location, reused here for the whole-document namespace
+    scan below, which needs to inspect every node's own raw _type/_ns_attrs
+    directly rather than just collect the ValidationProblems each node's own
+    validate() call would already report. An any-dict field's raw-JSON
+    entries are never yielded (they're excluded from _children_with_
+    locations() already - see emit_model_py's any-dict branch), which is
+    correct here too: an opaque stored value can't itself carry a namespace-
+    prefixed attribute key or _type in the schema's own sense."""
+    yield obj, prefix
+    for child, child_loc in obj._children_with_locations():
+        yield from _walk_with_locations(child, prefix + child_loc)
+
+
+def _check_namespace_usage_and_version(document) -> list:
+    """SEDDocument-0009 through -0011 (Design.md's Namespaces/Versioning
+    sections) - whole-document checks, called once from _validate_own when
+    _IS_DOCUMENT_CLASS is set (see there), matching Design.md's Validation
+    section: "a rule filed under SEDDocument that needs the whole document
+    ... is called once, from SEDDocument's own validate()". Degrades to a
+    no-op tree-wide when this tree's own model.rules never defined
+    SEDDocument-0009 (e.g. test-specsheets' TestDocument, which has no
+    namespace/version rules of its own), matching every other handwritten-
+    rule dispatcher's ImportError guard in this module (see
+    _check_math_field/_check_reference_field)."""
+    try:
+        from ._rules import seddocument_0009, seddocument_0010, seddocument_0011
+    except ImportError:
+        return []
+
+    # "used" means any attribute key or _type value of the form
+    # prefix@identifier, anywhere in the document (SEDDocument-0009.md) -
+    # registered and unregistered prefixes alike. The <prefix>@version
+    # declaration itself (only ever stored on the document root) doesn't
+    # count as a use of that prefix.
+    declared = {}   # prefix -> "/<prefix>@version" (its own declaration site)
+    for (pfx, key) in document._ns_attrs:
+        if key == "version":
+            declared[pfx] = f"/{pfx}@version"
+
+    used = {}       # prefix -> [locations]
+    for obj, loc in _walk_with_locations(document):
+        for (pfx, key) in obj._ns_attrs:
+            if obj is document and key == "version":
+                continue
+            used.setdefault(pfx, []).append(f"{loc}/{pfx}@{key}")
+        if hasattr(obj, "get_type"):
+            type_value = obj.get_type()
+            if isinstance(type_value, str) and "@" in type_value:
+                used.setdefault(type_value.split("@", 1)[0], []).append(f"{loc}/_type")
+
+    problems = []
+    for pfx, locations in used.items():
+        if pfx in declared:
+            continue
+        for loc in locations:
+            problems.extend(seddocument_0009.check(prefix=pfx, location=loc, make_problem=make_problem))
+    for pfx, loc in declared.items():
+        if pfx not in used:
+            problems.extend(seddocument_0010.check(prefix=pfx, location=loc, make_problem=make_problem))
+    problems.extend(seddocument_0011.check(document=document, make_problem=make_problem))
+    return problems
+
+
+def _check_constants_ordering(document) -> list:
+    """SEDDocument-0013 (Design.md's Validation section scoping paragraph:
+    "SEDDocument's own... constant-ordering... checks" are call-once-from-
+    SEDDocument handwritten rules) - degrades to a no-op the same way as
+    every other handwritten-rule dispatcher when this tree's own model.rules
+    never defined SEDDocument-0013 (e.g. test-specsheets' TestDocument)."""
+    try:
+        from ._rules import seddocument_0013
+    except ImportError:
+        return []
+    return seddocument_0013.check(
+        document=document, make_problem=make_problem,
+        is_reference=is_reference, parse_reference=_parse_reference)
+
+
 # ---- per-field leaf validation, via the real JSON Schema validator --------
 _LEAF_SCHEMAS = {
     "string": {"type": "string"},
@@ -76,6 +352,10 @@ _LEAF_SCHEMAS = {
     "SIdRef": {"type": "string", "pattern": SIDREF_PATTERN.pattern},
     "StringOrRef": {"anyOf": [{"type": "string"}]},
     "NumberOrRef": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": SIDREF_PATTERN.pattern}]},
+    "IntegerOrRef": {"anyOf": [{"type": "integer"}, {"type": "string", "pattern": SIDREF_PATTERN.pattern}]},
+    "BooleanOrRef": {"anyOf": [{"type": "boolean"}, {"type": "string", "pattern": SIDREF_PATTERN.pattern}]},
+    "ArrayOrRef": {"anyOf": [{"type": "array"}, {"type": "string", "pattern": SIDREF_PATTERN.pattern}]},
+    "DictOrRef": {"anyOf": [{"type": "object"}, {"type": "string", "pattern": SIDREF_PATTERN.pattern}]},
 }
 
 
@@ -102,11 +382,12 @@ def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, p
 class FieldSpec:
     __slots__ = ("name", "kind", "required", "rule_id", "required_rule_id",
                  "origin_catchall", "minimum", "exclusive_minimum", "pattern",
-                 "item_class", "item_discriminator")
+                 "item_class", "item_discriminator", "is_math")
 
     def __init__(self, name, kind, required, rule_id, required_rule_id,
                  origin_catchall, minimum=None, exclusive_minimum=None,
-                 pattern=None, item_class=None, item_discriminator=None):
+                 pattern=None, item_class=None, item_discriminator=None,
+                 is_math=False):
         self.name = name
         self.kind = kind
         self.required = required
@@ -118,9 +399,19 @@ class FieldSpec:
         self.pattern = pattern
         self.item_class = item_class
         self.item_discriminator = item_discriminator
+        self.is_math = is_math
 
 
-LEAF_KINDS = {"string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef"}
+LEAF_KINDS = {"string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
+              "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"}
+
+# Every LEAF_KINDS member whose value can structurally BE a reference (a
+# plain "string"/"integer"/etc. field's schema never admits one) - SIdRef is
+# always a reference, and every *OrRef kind's own anyOf includes one (see
+# _LEAF_SCHEMAS). Drives _check_reference_field's dispatch in _validate_own
+# below (SEDBase-0005 through -0007 so far).
+_REFERENCE_CAPABLE_KINDS = {"SIdRef", "StringOrRef", "NumberOrRef", "IntegerOrRef",
+                            "BooleanOrRef", "ArrayOrRef", "DictOrRef"}
 
 
 class SedBase:
@@ -138,6 +429,15 @@ class SedBase:
     _NAMESPACE_FIELDS: dict = {}       # prefix -> [FieldSpec, ...]
     _NAMESPACE_CATCHALL: dict = {}     # prefix -> "<Class>-<prefix>-0000"
     _KNOWN_NAMESPACE_PREFIXES: set = set()
+    # True only on the generated document root class (SEDDocument/
+    # TestDocument/...) - gates the whole-document checks (SEDDocument-0009
+    # through -0011: namespace-usage-vs-declared-version, version-newer-
+    # than-known) in _validate_own below, which only make sense run once,
+    # from the document root, never per-node (Design.md's Validation
+    # section: "a rule filed under SEDDocument that needs the whole
+    # document... is called once, from SEDDocument's own validate()").
+    _IS_DOCUMENT_CLASS: bool = False
+    _MAX_KNOWN_DOCUMENT_VERSION: Optional[str] = None
     # The universal name/description mixin (TestBaseFields/SEDBaseFields)
     # isn't a per-class FieldSpec - its own rule IDs are set once, the same
     # on every concrete class, from the base mixin's own validation rules.
@@ -161,6 +461,14 @@ class SedBase:
 
     def get_document(self):
         return self._document_ref() if self._document_ref else None
+
+    def _get_id_collection(self, field_name):
+        """Default for classes with no ID-keyed collection fields at all
+        (namespace-unknown holders, leaf classes) - every generated concrete
+        class overrides this with its own dict-kind/any-dict-kind fields
+        (see emit_model_py). Used by get_sed_reference()'s containment-tree
+        walk (SEDBase-0006)."""
+        return None
 
     def _attach(self, parent, document):
         self._parent_ref = weakref.ref(parent) if parent is not None else None
@@ -334,6 +642,28 @@ class SedBase:
                         rid, "/" + spec.name, attr=spec.name,
                         **{"class": self.__class__.__name__, "id": self._own_id_for_message(),
                            "value": value}))
+                elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value):
+                    problems.extend(_check_reference_field(
+                        value, document=self.get_document(), class_name=self.__class__.__name__,
+                        id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+                elif spec.is_math and isinstance(value, str):
+                    problems.extend(_check_math_field(
+                        value, class_name=self.__class__.__name__, id_value=self._own_id_for_message(),
+                        attr=spec.name, location="/" + spec.name))
+            elif spec.kind == "any" and is_reference(value):
+                # A scalar AnyValueOrRef field (e.g. LoopVariable.initialValue,
+                # AggregationCalculation.input) isn't in LEAF_KINDS - "any
+                # JSON value" has no leaf_value_ok() schema to check against -
+                # but core/Types/v1.0.0/description.md's AnyValueOrRef entry
+                # is explicit that an SIdRef string may still substitute for
+                # it, so it needs the same reference-resolution dispatch as
+                # every *OrRef-kind field above.
+                problems.extend(_check_reference_field(
+                    value, document=self.get_document(), class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+        if self._IS_DOCUMENT_CLASS:
+            problems.extend(_check_namespace_usage_and_version(self))
+            problems.extend(_check_constants_ordering(self))
         return problems
 
     def _own_id_for_message(self) -> str:

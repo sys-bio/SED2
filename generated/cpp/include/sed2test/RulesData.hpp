@@ -1,4 +1,4 @@
-// Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+// Generated rule catalogue. GENERATED - do not hand-edit;
 // regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 
@@ -351,7 +351,7 @@ inline void register_rules() {
     RuleCatalog::catalog()["SEDBase-0003"] = RuleCatalog::Entry{"The notes attribute of a SEDBase-derived element, if present, must be a markdown-formatted string.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a markdown-formatted string.", "error"};
     RuleCatalog::catalog()["SEDBase-0004"] = RuleCatalog::Entry{"The annotations attribute of a SEDBase-derived element, if present, must be an array of Annotation objects.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of Annotation objects.", "error"};
     RuleCatalog::catalog()["SEDBase-0005"] = RuleCatalog::Entry{"The first segment of a reference must name one of SEDDocument's ID-keyed collections: tasks, constants, outputs, or styles.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' starts with an unknown collection; it must start with #tasks, #constants, #outputs, or #styles.", "error"};
-    RuleCatalog::catalog()["SEDBase-0006"] = RuleCatalog::Entry{"Every colon-delimited segment of a reference must resolve to an existing element.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{location}'.", "error"};
+    RuleCatalog::catalog()["SEDBase-0006"] = RuleCatalog::Entry{"Every colon-delimited segment of a reference must resolve to an existing element.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' does not resolve: no element exists at '{subvalue}'.", "error"};
     RuleCatalog::catalog()["SEDBase-0007"] = RuleCatalog::Entry{"A reference must not target an AbstractOutput, or anything contained in one.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' targets an output; outputs may never be used as input.", "error"};
     RuleCatalog::catalog()["SEDBase-0008"] = RuleCatalog::Entry{"A dot-accessor in a reference must be one the target declares valid.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' uses accessor '{subvalue}', which is not a valid output of its target.", "error"};
     RuleCatalog::catalog()["SEDBase-0009"] = RuleCatalog::Entry{"A reference must not apply more bracket indices than its target has dimensions.", "Reference '{value}' in attribute '{attr}' of {class} '{id}' applies {count} indices, but its target has only {expected-count} dimension(s).", "error"};

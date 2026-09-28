@@ -1,6 +1,6 @@
 package org.sed2test;
 
-/** Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+/** Generated rule catalogue. GENERATED - do not hand-edit;
  * regenerate via generator/generate.py. */
 public final class RulesData {
     private RulesData() {}

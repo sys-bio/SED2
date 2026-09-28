@@ -19,10 +19,9 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Loop extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("outputVariableMap", "string", false, ["Repeat-0002", "Repeat-0003"], null, "Repeat-0000", null, null, null, null, null),
-        new FieldSpec("loopVariables", "dict", true, "Loop-0003", "Loop-0002", "Loop-0000", null, null, null, null, "LoopVariable"),
+        new FieldSpec("loopVariables", "dict", true, "Loop-0003", "Loop-0002", "Loop-0000", null, null, null, "LoopVariable", null),
         new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, null, "AggregationCalculation"),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("loopVariables");
@@ -40,11 +39,6 @@ public final class Loop extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "loop"; }
-
-    public String getOutputVariableMap() { if (!values.containsKey("outputVariableMap")) throw new ApiError("outputVariableMap" + " is not set"); return values.get("outputVariableMap").asText(); }
-    public void setOutputVariableMap(String value) { values.put("outputVariableMap", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public boolean isSetOutputVariableMap() { return values.containsKey("outputVariableMap"); }
-    public void unsetOutputVariableMap() { values.remove("outputVariableMap"); }
 
     public List<String> getLoopVariables() { return loopVariables.ids(); }
     public SedBase getLoopVariablesItem(String itemId) { return loopVariables.get(itemId); }
@@ -116,7 +110,6 @@ public final class Loop extends SedBase {
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("loop"));
-        if (values.containsKey("outputVariableMap")) d.set("outputVariableMap", values.get("outputVariableMap"));
         if (loopVariables.size() > 0) { ObjectNode sub = d.putObject("loopVariables"); for (String i : loopVariables.ids()) sub.set(i, loopVariables.get(i).toJsonValue()); }
         if (subTasks.size() > 0) { ObjectNode sub = d.putObject("subTasks"); for (String i : subTasks.ids()) sub.set(i, subTasks.get(i).toJsonValue()); }
         if (aggregateOutputVariables.size() > 0) { ObjectNode sub = d.putObject("aggregateOutputVariables"); for (String i : aggregateOutputVariables.ids()) sub.set(i, aggregateOutputVariables.get(i).toJsonValue()); }

@@ -29,7 +29,7 @@ public final class Curve extends SedBase {
         new FieldSpec("yTo", "SIdRef", false, "Curve-0011", null, "Curve-0000", null, null, null, null, null),
         new FieldSpec("x", "SIdRef", true, "AbstractCurve-0002", "AbstractCurve-0001", "AbstractCurve-0000", null, null, null, null, null),
         new FieldSpec("style", "SIdRef", false, "AbstractCurve-0005", null, "AbstractCurve-0000", null, null, null, null, null),
-        new FieldSpec("yAxis", "string", false, ["AbstractCurve-0006", "AbstractCurve-0007"], null, "AbstractCurve-0000", null, null, null, null, null)
+        new FieldSpec("yAxis", "StringOrRef", false, ["AbstractCurve-0006", "AbstractCurve-0007"], null, "AbstractCurve-0000", null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("curveType", "y", "x");
 
@@ -93,10 +93,13 @@ public final class Curve extends SedBase {
     public boolean isSetStyle() { return values.containsKey("style"); }
     public void unsetStyle() { values.remove("style"); }
 
-    public String getYAxis() { if (!values.containsKey("yAxis")) throw new ApiError("yAxis" + " is not set"); return values.get("yAxis").asText(); }
-    public void setYAxis(String value) { values.put("yAxis", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
+    public String getYAxisValue() { return getOrRefValueNode("yAxis").asText(); }
+    public String getYAxisRef() { return getOrRefRefNode("yAxis").asText(); }
+    public void setYAxisValue(String value) { setOrRefValueNode("yAxis", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
+    public void setYAxisRef(String ref) { setOrRefRefNode("yAxis", ref); }
+    public boolean isYAxisRef() { return isOrRefRef("yAxis"); }
     public boolean isSetYAxis() { return values.containsKey("yAxis"); }
-    public void unsetYAxis() { values.remove("yAxis"); }
+    public void unsetYAxis() { values.remove("yAxis"); orRefIsRef.remove("yAxis"); }
 
     @Override
     public ObjectNode ownJsonValue() {

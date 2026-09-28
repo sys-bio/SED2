@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Top-level read/write entry points for libsed2test. GENERATED - do not
+/** Top-level read/write entry points. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class Io {
     private static final ObjectMapper MAPPER = new ObjectMapper();
