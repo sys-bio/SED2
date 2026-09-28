@@ -33,11 +33,19 @@
 # commit it's testing), and proceed straight to tests with nothing more to
 # commit.
 #
-# Two independent regenerate+test pipelines:
-#   - test-specsheets/ -> test-specsheets/generated/  (Phase 1, working)
-#   - specsheets/      -> generated/                  (Phase 2, not started)
-# See regenerate-main below for why that second one is expected to fail
-# today, and why it has no downstream test jobs yet.
+# Two regenerate targets, one job: test-specsheets/ -> test-specsheets/
+# generated/ (Phase 1, working) and specsheets/ -> generated/ (Phase 2, not
+# started - see the regenerate job below for why that one is expected to
+# fail today). Both live in the *same* job, committed with a single
+# `git add`/commit/push covering both trees, specifically so there's only
+# ever one push per run - two independent jobs each pushing their own
+# regeneration raced on the same ref and got a non-fast-forward rejection
+# the first time this ran. A real failure regenerating test-specsheets/ still
+# fails the job for real (that pipeline is proven and a break there is a
+# real bug); a failure regenerating the real spec is caught with
+# continue-on-error and only turned into a warning annotation, specifically
+# so it never blocks the commit or the downstream test-python/test-java/
+# test-cpp jobs, which only depend on the test-specsheets/ half.
 
 name: CI
 
@@ -63,11 +71,11 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------
-  # test-specsheets/ -> test-specsheets/generated/   (Phase 1)
+  # Regenerate both trees, commit once if either changed.
   # ---------------------------------------------------------------------
 
-  regenerate-test:
-    name: Regenerate test-specsheets/generated (self-healing)
+  regenerate:
+    name: Regenerate generated/ directories (self-healing)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +85,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Delete existing generated directory, if any
+      # -- test-specsheets/ -> test-specsheets/generated/  (Phase 1, proven) --
+      # A failure here is a real regression - no continue-on-error, this is
+      # allowed to fail the job.
+
+      - name: Delete existing test-specsheets/generated, if any
         run: rm -rf "$TEST_GEN_OUT"
 
       - name: Regenerate from test-specsheets/ (all three targets)
@@ -89,39 +101,72 @@ jobs:
             --base-mixin TestBase \
             --lang python,java,cpp
 
+      # -- specsheets/ -> generated/  (Phase 2, not started - see below) --
+      # Expected to fail today (see the regenerate-main-equivalent notes at
+      # the bottom of this file's history / Design.md); continue-on-error
+      # keeps that from blocking the commit step or the test-specsheets/
+      # test jobs below, which don't depend on this half at all.
+
+      - name: Delete existing generated/, if any
+        run: rm -rf "$MAIN_GEN_OUT"
+
+      - name: Regenerate from specsheets/ (all three targets) - Phase 2, expected to fail for now
+        id: regen_main
+        continue-on-error: true
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$MAIN_SPEC_ROOT" \
+            --out "$MAIN_GEN_OUT" \
+            --doc-class SEDDocument \
+            --base-mixin SEDBase \
+            --lang python,java,cpp
+
+      - name: Warn if the real-spec regenerate failed
+        if: steps.regen_main.outcome == 'failure'
+        run: |
+          echo "::warning::specsheets/ -> generated/ regeneration failed. Expected until Phase 2 (pointing the generator at the real spec) is done - see Design.md. This does not block test-specsheets/ or its tests."
+
+      # -- Commit both trees together, one push --
+
       - name: Commit regenerated output if it changed
         if: github.event_name != 'pull_request'
         run: |
-          git add -A -- "$TEST_GEN_OUT"
+          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if git diff --cached --quiet; then
-            echo "No changes - test-specsheets/generated already matches the generator's output."
+            echo "No changes - generated output already matches the generator."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Regenerate test-specsheets/generated from test-specsheets/"
+            git commit -m "Regenerate generated directories from spec"
             git push origin "HEAD:${{ github.ref_name }}"
           fi
 
       - name: Fail if this PR's committed output is stale
         if: github.event_name == 'pull_request'
         run: |
-          git add -A -- "$TEST_GEN_OUT"
+          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if ! git diff --cached --quiet; then
-            echo "::error::test-specsheets/generated doesn't match what generator/ produces from test-specsheets/. Run the generator locally and commit the result." >&2
+            echo "::error::A generated/ directory doesn't match what generator/ currently produces. Run the generator locally and commit the result." >&2
             git diff --cached --stat
             exit 1
           fi
 
-      - name: Upload regenerated output for the test jobs
+      - name: Upload test-specsheets/generated for the test jobs
         uses: actions/upload-artifact@v4
         with:
           name: test-specsheets-generated
           path: test-specsheets/generated
           retention-days: 7
 
+  # ---------------------------------------------------------------------
+  # test-specsheets/ target tests - only depend on the test-specsheets/
+  # half of the regenerate job above, so a Phase-2 (real spec) failure
+  # there never blocks these.
+  # ---------------------------------------------------------------------
+
   test-python:
     name: Python target (test-specsheets/)
-    needs: regenerate-test
+    needs: regenerate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -147,7 +192,7 @@ jobs:
 
   test-java:
     name: Java target (test-specsheets/)
-    needs: regenerate-test
+    needs: regenerate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -173,7 +218,7 @@ jobs:
 
   test-cpp:
     name: C++ target (test-specsheets/)
-    needs: regenerate-test
+    needs: regenerate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -203,64 +248,15 @@ jobs:
   # specsheets/ -> generated/   (Phase 2 - not started, see Design.md)
   #
   # The generator has only ever been run against the small synthetic
-  # test-specsheets/ tree above. specsheets/ is the real, 51-class spec
+  # test-specsheets/ tree. specsheets/ is the real, 51-class spec
   # (doc-class SEDDocument, base mixin SEDBase); pointing the generator at
-  # it is future work. This job is wired up now, as asked, so it starts
-  # self-healing the moment Phase 2 makes it succeed - but until then the
-  # "Regenerate" step below is *expected* to fail, and that failure is the
-  # correct, honest signal that Phase 2 isn't done, not a broken workflow.
-  # It's a standalone job (no `needs` to or from it) so it can be red
-  # without blocking the working Phase 1 pipeline above.
+  # it is future work, handled above in the shared regenerate job (the
+  # "Regenerate from specsheets/" step is expected to fail until then, and
+  # is only ever a warning, never a blocker - see that job's comments).
   #
   # There's deliberately no test-python-main/test-java-main/test-cpp-main
-  # yet: those need a real fixtures/ tree and hand-written test harnesses
-  # for the real spec, neither of which exists yet either (see Design.md's
-  # Repository Layout and Testing sections). Add them here, same shape as
-  # the test-specsheets jobs above, once those exist.
+  # job yet: those need a real fixtures/ tree and hand-written test
+  # harnesses for the real spec, neither of which exists yet either (see
+  # Design.md's Repository Layout and Testing sections). Add them here,
+  # same shape as the test-specsheets jobs above, once those exist.
   # ---------------------------------------------------------------------
-
-  regenerate-main:
-    name: Regenerate generated/ from specsheets/ (Phase 2 - expected to fail for now)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Delete existing generated directory, if any
-        run: rm -rf "$MAIN_GEN_OUT"
-
-      - name: Regenerate from specsheets/ (all three targets)
-        run: |
-          python3 generator/generate.py \
-            --spec-root "$MAIN_SPEC_ROOT" \
-            --out "$MAIN_GEN_OUT" \
-            --doc-class SEDDocument \
-            --base-mixin SEDBase \
-            --lang python,java,cpp
-
-      - name: Commit regenerated output if it changed
-        if: github.event_name != 'pull_request'
-        run: |
-          git add -A -- "$MAIN_GEN_OUT"
-          if git diff --cached --quiet; then
-            echo "No changes - generated/ already matches the generator's output."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Regenerate generated/ from specsheets/"
-            git push origin "HEAD:${{ github.ref_name }}"
-          fi
-
-      - name: Fail if this PR's committed output is stale
-        if: github.event_name == 'pull_request'
-        run: |
-          git add -A -- "$MAIN_GEN_OUT"
-          if ! git diff --cached --quiet; then
-            echo "::error::generated/ doesn't match what generator/ produces from specsheets/. Run the generator locally and commit the result." >&2
-            git diff --cached --stat
-            exit 1
-          fi
