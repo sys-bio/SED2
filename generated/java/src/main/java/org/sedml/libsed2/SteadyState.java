@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SteadyState extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, null, "SteadyState-0001", "SteadyState-0000", null, null, null, null, null),
-        new FieldSpec("independentVariable", "StringOrRef", false, "SteadyState-0004", null, "SteadyState-0000", null, null, null, null, null),
-        new FieldSpec("outputVariables", "ArrayOrRef", true, null, "SteadyState-0002", "SteadyState-0000", null, null, null, null, null),
-        new FieldSpec("outputModel", "BooleanOrRef", false, "SteadyState-0005", null, "SteadyState-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("model", "SIdRef", true, null, "SteadyState-0001", "SteadyState-0000", null, null, null, null, null, false),
+        new FieldSpec("independentVariable", "StringOrRef", false, "SteadyState-0004", null, "SteadyState-0000", null, null, null, null, null, false),
+        new FieldSpec("outputVariables", "ArrayOrRef", true, null, "SteadyState-0002", "SteadyState-0000", null, null, null, null, null, false),
+        new FieldSpec("outputModel", "BooleanOrRef", false, "SteadyState-0005", null, "SteadyState-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "outputVariables");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();

@@ -19,14 +19,14 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Axis extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("scale", "StringOrRef", false, "Axis-0001", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("min", "NumberOrRef", false, "Axis-0003", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("max", "NumberOrRef", false, "Axis-0005", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("grid", "BooleanOrRef", false, "Axis-0007", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("style", "SIdRef", false, "Axis-0009", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("reverse", "BooleanOrRef", false, "Axis-0010", null, "Axis-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("scale", "StringOrRef", false, "Axis-0001", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("min", "NumberOrRef", false, "Axis-0003", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("max", "NumberOrRef", false, "Axis-0005", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("grid", "BooleanOrRef", false, "Axis-0007", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("style", "SIdRef", false, "Axis-0009", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("reverse", "BooleanOrRef", false, "Axis-0010", null, "Axis-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final ListCollection<SedBase> annotations = new ListCollection<>();

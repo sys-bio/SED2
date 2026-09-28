@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Scatter extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline")
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final IdKeyedCollection<SedBase> subTasks = new IdKeyedCollection<>();

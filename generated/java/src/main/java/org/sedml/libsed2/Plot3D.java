@@ -19,16 +19,16 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Plot3D extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("legend", "BooleanOrRef", false, "Plot-0001", null, "Plot-0000", null, null, null, null, null),
-        new FieldSpec("height", "NumberOrRef", false, "Plot-0003", null, "Plot-0000", null, null, null, null, null),
-        new FieldSpec("width", "NumberOrRef", false, "Plot-0005", null, "Plot-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("surfaces", "dict", true, "Plot3D-0002", "Plot3D-0001", "Plot3D-0000", null, null, null, "Surface", null),
-        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null),
-        new FieldSpec("zAxis", "ref-class", false, "Plot3D-0003", null, "Plot3D-0000", null, null, null, "Axis", null),
-        new FieldSpec("xAxis", "ref-class", false, "Plot-0007", null, "Plot-0000", null, null, null, "Axis", null),
-        new FieldSpec("yAxis", "ref-class", false, "Plot-0008", null, "Plot-0000", null, null, null, "Axis", null)
+        new FieldSpec("legend", "BooleanOrRef", false, "Plot-0001", null, "Plot-0000", null, null, null, null, null, false),
+        new FieldSpec("height", "NumberOrRef", false, "Plot-0003", null, "Plot-0000", null, null, null, null, null, false),
+        new FieldSpec("width", "NumberOrRef", false, "Plot-0005", null, "Plot-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("surfaces", "dict", true, "Plot3D-0002", "Plot3D-0001", "Plot3D-0000", null, null, null, "Surface", null, false),
+        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
+        new FieldSpec("zAxis", "ref-class", false, "Plot3D-0003", null, "Plot3D-0000", null, null, null, "Axis", null, false),
+        new FieldSpec("xAxis", "ref-class", false, "Plot-0007", null, "Plot-0000", null, null, null, "Axis", null, false),
+        new FieldSpec("yAxis", "ref-class", false, "Plot-0008", null, "Plot-0000", null, null, null, "Axis", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("surfaces");
     private final IdKeyedCollection<SedBase> surfaces = new IdKeyedCollection<>();

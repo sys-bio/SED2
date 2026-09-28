@@ -19,7 +19,7 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Choice extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("label", "StringOrRef", false, "Choice-0003", null, "Choice-0000", null, null, null, null, null)
+        new FieldSpec("label", "StringOrRef", false, "Choice-0003", null, "Choice-0000", null, null, null, null, null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
 

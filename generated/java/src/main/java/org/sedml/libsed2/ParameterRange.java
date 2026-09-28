@@ -19,17 +19,17 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ParameterRange extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("modelElement", "StringOrRef", true, "ParameterRange-0002", "ParameterRange-0001", "ParameterRange-0000", null, null, null, null, null),
-        new FieldSpec("start", "NumberOrRef", false, "NumericRange-0001", null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("end", "NumberOrRef", false, "NumericRange-0003", null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("interval", "NumberOrRef", false, "NumericRange-0005", null, "NumericRange-0000", null, 0.0, null, null, null),
-        new FieldSpec("numberOfSteps", "IntegerOrRef", false, "NumericRange-0007", null, "NumericRange-0000", null, 0.0, null, null, null),
-        new FieldSpec("scale", "StringOrRef", false, "NumericRange-0009", null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("values", "ArrayOrRef", false, "NumericRange-0011", null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("values", "ArrayOrRef", false, "Range-0001", null, "Range-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("modelElement", "StringOrRef", true, "ParameterRange-0002", "ParameterRange-0001", "ParameterRange-0000", null, null, null, null, null, false),
+        new FieldSpec("start", "NumberOrRef", false, "NumericRange-0001", null, "NumericRange-0000", null, null, null, null, null, false),
+        new FieldSpec("end", "NumberOrRef", false, "NumericRange-0003", null, "NumericRange-0000", null, null, null, null, null, false),
+        new FieldSpec("interval", "NumberOrRef", false, "NumericRange-0005", null, "NumericRange-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("numberOfSteps", "IntegerOrRef", false, "NumericRange-0007", null, "NumericRange-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("scale", "StringOrRef", false, "NumericRange-0009", null, "NumericRange-0000", null, null, null, null, null, false),
+        new FieldSpec("values", "ArrayOrRef", false, "NumericRange-0011", null, "NumericRange-0000", null, null, null, null, null, false),
+        new FieldSpec("values", "ArrayOrRef", false, "Range-0001", null, "Range-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("modelElement");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();

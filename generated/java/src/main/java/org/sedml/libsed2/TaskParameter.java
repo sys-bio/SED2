@@ -19,9 +19,9 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class TaskParameter extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("value", "any", true, null, "TaskParameter-0001", "TaskParameter-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("value", "any", true, null, "TaskParameter-0001", "TaskParameter-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("value");
     private final ListCollection<SedBase> annotations = new ListCollection<>();

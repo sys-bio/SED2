@@ -19,9 +19,9 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class TestDocument extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("version", "string", true, null, "TestDocument-0001", "TestDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null),
-        new FieldSpec("widgets", "dict", false, "TestDocument-0002", null, "TestDocument-0000", null, null, null, null, "AbstractWidget"),
-        new FieldSpec("reports", "dict", false, "TestDocument-0003", null, "TestDocument-0000", null, null, null, null, "AbstractReport")
+        new FieldSpec("version", "string", true, null, "TestDocument-0001", "TestDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false),
+        new FieldSpec("widgets", "dict", false, "TestDocument-0002", null, "TestDocument-0000", null, null, null, null, "AbstractWidget", false),
+        new FieldSpec("reports", "dict", false, "TestDocument-0003", null, "TestDocument-0000", null, null, null, null, "AbstractReport", false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("version");
     private final IdKeyedCollection<SedBase> widgets = new IdKeyedCollection<>();

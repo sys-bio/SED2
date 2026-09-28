@@ -14,12 +14,57 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(jsoncons)
 
+# Unlike the Python/Java ANTLR targets, ANTLR's Cpp target has no
+# header-only runtime option, so it must be built from source here. Its
+# own CMakeLists defaults ANTLR_BUILD_CPP_TESTS to ON, which pulls in an
+# internal googletest fetch (a raw-archive URL, not the git-clone-style
+# access our own googletest FetchContent below uses) that this project
+# does not need and that can fail against a restrictive network egress
+# policy - turned off along with the other targets this library has no
+# use for (demo executable, install rules, shared lib).
+set(WITH_DEMO OFF CACHE BOOL "" FORCE)
+set(ANTLR4_INSTALL OFF CACHE BOOL "" FORCE)
+set(ANTLR_BUILD_CPP_TESTS OFF CACHE BOOL "" FORCE)
+set(ANTLR_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ANTLR_BUILD_STATIC ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  antlr4
+  GIT_REPOSITORY https://github.com/antlr/antlr4.git
+  GIT_TAG 4.13.2
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR runtime/Cpp
+)
+FetchContent_MakeAvailable(antlr4)
+
+# libsed2 is otherwise header-only (see generator/emit_cpp.py's module
+# docstring) - the one exception is the ANTLR-generated math lexer/parser,
+# which ANTLR only emits as compiled .cpp/.h pairs (see
+# antlr_tool.generate_cpp_math_parser). Those few files are built into
+# this small static library instead of being force-fit into the
+# header-only convention, and linked into the INTERFACE library below so
+# consumers of libsed2 pick them up transparently.
+add_library(libsed2_math STATIC
+  src/antlr/mathLexer.cpp
+  src/antlr/mathParser.cpp
+  src/antlr/mathVisitor.cpp
+  src/antlr/mathBaseVisitor.cpp
+)
+target_include_directories(libsed2_math PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# ANTLR's generated .cpp files #include their sibling headers by bare name
+# (e.g. #include "mathLexer.h"), not by their include/libsed2/antlr/ path,
+# so that directory needs to be on the include path too - PRIVATE since
+# this is purely an artifact of how the generated .cpp files are written,
+# not part of libsed2_math's own public interface.
+target_include_directories(libsed2_math PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/libsed2/antlr)
+target_link_libraries(libsed2_math PUBLIC antlr4_static)
+
 # libsed2 is header-only (see generator/emit_cpp.py's module docstring),
 # so it is exposed as an INTERFACE library: nothing to compile here, only
-# include paths and its jsoncons dependency to propagate to consumers.
+# include paths and its jsoncons/libsed2_math dependencies to propagate to
+# consumers.
 add_library(libsed2 INTERFACE)
 target_include_directories(libsed2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(libsed2 INTERFACE jsoncons)
+target_link_libraries(libsed2 INTERFACE jsoncons libsed2_math)
 
 option(LIBSED2_BUILD_TESTS "Build the fixture test suite" ON)
 if(LIBSED2_BUILD_TESTS)

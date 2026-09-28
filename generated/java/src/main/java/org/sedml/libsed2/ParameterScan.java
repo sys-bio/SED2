@@ -19,15 +19,15 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ParameterScan extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null),
-        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null),
-        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline")
+        new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null, false),
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null, false),
+        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "parameterRanges");
     private final ListCollection<SedBase> parameterRanges = new ListCollection<>();

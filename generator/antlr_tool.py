@@ -92,3 +92,85 @@ def generate_python_math_parser(dest_pkg_dir: str, cache_dir: str | None = None)
             '"""ANTLR4-generated math lexer/parser (see generator/math.g4). '
             'GENERATED - do not hand-edit; regenerate via generator/generate.py."""\n'
         )
+
+
+def generate_java_math_parser(dest_pkg_dir: str, package: str, cache_dir: str | None = None) -> None:
+    """Invokes the ANTLR tool on math.g4 for the Java target and writes
+    mathLexer.java / mathParser.java / mathVisitor.java / mathBaseVisitor.java
+    into dest_pkg_dir - normally <package-dir>/antlr/ inside the generated
+    Java package (see emit_java.py's MathAst.java, which imports from
+    <package>.antlr, mirroring generate_python_math_parser's ._antlr
+    placement). `package` is the Java package declaration ANTLR bakes into
+    each generated file's own `package ...;` line - callers pass
+    "<java_package>.antlr" so these files compile as a subpackage of the
+    caller's chosen package (see emit_java_package's java_package option).
+    Raises RuntimeError with the tool's own stdout/stderr on any grammar or
+    tool-invocation failure, same as generate_python_math_parser."""
+    jar_path = ensure_antlr_jar(cache_dir)
+    with tempfile.TemporaryDirectory() as tmp:
+        # Same -Xexact-output-dir + bare-filename + cwd=grammar-dir trick as
+        # generate_python_math_parser, for the same reason: a deterministic
+        # "# Generated from math.g4 by ANTLR ..." header regardless of where
+        # this repo is checked out. -package makes ANTLR emit `package
+        # <package>;` in each file instead of leaving it off.
+        cmd = [
+            "java", "-jar", jar_path,
+            "-Dlanguage=Java", "-visitor", "-no-listener",
+            "-package", package,
+            "-Xexact-output-dir",
+            "-o", tmp,
+            os.path.basename(GRAMMAR_PATH),
+        ]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=os.path.dirname(GRAMMAR_PATH)
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                "ANTLR tool failed on generator/math.g4 (Java target):\n"
+                f"{result.stdout}\n{result.stderr}"
+            )
+        os.makedirs(dest_pkg_dir, exist_ok=True)
+        for name in ("mathLexer.java", "mathParser.java", "mathVisitor.java", "mathBaseVisitor.java"):
+            shutil.copyfile(os.path.join(tmp, name), os.path.join(dest_pkg_dir, name))
+
+
+def generate_cpp_math_parser(dest_include_dir: str, dest_src_dir: str, namespace: str,
+                              cache_dir: str | None = None) -> None:
+    """Invokes the ANTLR tool on math.g4 for the Cpp target and splits its
+    output the way the rest of the generated C++ library is laid out
+    (headers under include/<ns>/antlr/, the one bit of actual compiled
+    source under src/antlr/ - see emit_cpp.py's _cmake_lists, which links
+    those .cpp files into a small static library alongside the fetched
+    ANTLR4 C++ runtime, since ANTLR's C++ target has no header-only mode
+    unlike this library's own hand-written headers). `namespace` is the
+    C++ namespace ANTLR bakes into each generated file's own `namespace
+    ...  { ... }` block - callers pass "<cpp_namespace>::antlr" so this
+    nests as a subnamespace of the caller's chosen namespace (ANTLR's
+    -package flag accepts "::"-separated C++ namespaces directly, same
+    flag as generate_java_math_parser's dotted Java package). Raises
+    RuntimeError with the tool's own stdout/stderr on any grammar or
+    tool-invocation failure, same as the other two generate_*_math_parser
+    functions."""
+    jar_path = ensure_antlr_jar(cache_dir)
+    with tempfile.TemporaryDirectory() as tmp:
+        cmd = [
+            "java", "-jar", jar_path,
+            "-Dlanguage=Cpp", "-visitor", "-no-listener",
+            "-package", namespace,
+            "-Xexact-output-dir",
+            "-o", tmp,
+            os.path.basename(GRAMMAR_PATH),
+        ]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=os.path.dirname(GRAMMAR_PATH)
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                "ANTLR tool failed on generator/math.g4 (Cpp target):\n"
+                f"{result.stdout}\n{result.stderr}"
+            )
+        os.makedirs(dest_include_dir, exist_ok=True)
+        os.makedirs(dest_src_dir, exist_ok=True)
+        for base in ("mathLexer", "mathParser", "mathVisitor", "mathBaseVisitor"):
+            shutil.copyfile(os.path.join(tmp, base + ".h"), os.path.join(dest_include_dir, base + ".h"))
+            shutil.copyfile(os.path.join(tmp, base + ".cpp"), os.path.join(dest_src_dir, base + ".cpp"))

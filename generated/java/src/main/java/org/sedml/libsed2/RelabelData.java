@@ -19,11 +19,11 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class RelabelData extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("input", "SIdRef", true, "RelabelData-0002", "RelabelData-0001", "RelabelData-0000", null, null, null, null, null),
-        new FieldSpec("labels", "ArrayOrRef", true, "RelabelData-0004", "RelabelData-0003", "RelabelData-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("input", "SIdRef", true, "RelabelData-0002", "RelabelData-0001", "RelabelData-0000", null, null, null, null, null, false),
+        new FieldSpec("labels", "ArrayOrRef", true, "RelabelData-0004", "RelabelData-0003", "RelabelData-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("input", "labels");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();

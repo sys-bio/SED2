@@ -19,8 +19,8 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class MathWidget extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("math", "StringOrRef", true, "MathWidget-0002", "MathWidget-0001", "MathWidget-0000", null, null, null, null, null),
-        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null)
+        new FieldSpec("math", "StringOrRef", true, "MathWidget-0002", "MathWidget-0001", "MathWidget-0000", null, null, null, null, null, true),
+        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("math");
 

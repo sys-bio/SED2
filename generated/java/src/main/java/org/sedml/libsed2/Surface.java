@@ -19,14 +19,14 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Surface extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("surfaceType", "StringOrRef", true, "Surface-0002", "Surface-0001", "Surface-0000", null, null, null, null, null),
-        new FieldSpec("x", "SIdRef", true, "Surface-0005", "Surface-0004", "Surface-0000", null, null, null, null, null),
-        new FieldSpec("y", "SIdRef", true, "Surface-0007", "Surface-0006", "Surface-0000", null, null, null, null, null),
-        new FieldSpec("z", "SIdRef", true, "Surface-0009", "Surface-0008", "Surface-0000", null, null, null, null, null),
-        new FieldSpec("style", "SIdRef", false, "Surface-0010", null, "Surface-0000", null, null, null, null, null),
-        new FieldSpec("order", "IntegerOrRef", false, "Surface-0011", null, "Surface-0000", 0.0, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("surfaceType", "StringOrRef", true, "Surface-0002", "Surface-0001", "Surface-0000", null, null, null, null, null, false),
+        new FieldSpec("x", "SIdRef", true, "Surface-0005", "Surface-0004", "Surface-0000", null, null, null, null, null, false),
+        new FieldSpec("y", "SIdRef", true, "Surface-0007", "Surface-0006", "Surface-0000", null, null, null, null, null, false),
+        new FieldSpec("z", "SIdRef", true, "Surface-0009", "Surface-0008", "Surface-0000", null, null, null, null, null, false),
+        new FieldSpec("style", "SIdRef", false, "Surface-0010", null, "Surface-0000", null, null, null, null, null, false),
+        new FieldSpec("order", "IntegerOrRef", false, "Surface-0011", null, "Surface-0000", 0.0, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("surfaceType", "x", "y", "z");
     private final ListCollection<SedBase> annotations = new ListCollection<>();

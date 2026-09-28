@@ -3,6 +3,13 @@
 #pragma once
 
 #include "Runtime.hpp"
+// SedBase::validate_own() (Runtime.hpp) only *declares*
+// MathRules::check_math_field() (to break a header cycle - see
+// MathRules.hpp's docstring); this is the one place, upstream of every
+// concrete class below and every consumer that includes this file, that
+// pulls in its actual `inline` definition so the symbol is always
+// available wherever validate_own() might be called.
+#include "MathRules.hpp"
 
 #include <memory>
 #include <string>
@@ -15,9 +22,9 @@ class TestDocument : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"version", "string", true, std::nullopt, std::string("TestDocument-0001"), "TestDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt},
-            FieldSpec{"widgets", "dict", false, std::string("TestDocument-0002"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractWidget")},
-            FieldSpec{"reports", "dict", false, std::string("TestDocument-0003"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport")}
+            FieldSpec{"version", "string", true, std::nullopt, std::string("TestDocument-0001"), "TestDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt, false},
+            FieldSpec{"widgets", "dict", false, std::string("TestDocument-0002"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractWidget"), false},
+            FieldSpec{"reports", "dict", false, std::string("TestDocument-0003"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false}
         };
         return specs;
     }
@@ -93,12 +100,12 @@ class FancyWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("FancyWidget-0001"), "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"retries", "integer", false, std::string("WidgetOptions-0001"), std::nullopt, "WidgetOptions-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"timeoutSeconds", "number", false, std::string("WidgetOptions-0002"), std::nullopt, "WidgetOptions-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"choices", "dict", false, std::nullopt, std::nullopt, "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("ChoiceInline")},
-            FieldSpec{"notes", "array", false, std::nullopt, std::nullopt, "WidgetOptions-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt}
+            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("FancyWidget-0001"), "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"retries", "integer", false, std::string("WidgetOptions-0001"), std::nullopt, "WidgetOptions-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"timeoutSeconds", "number", false, std::string("WidgetOptions-0002"), std::nullopt, "WidgetOptions-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"choices", "dict", false, std::nullopt, std::nullopt, "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("ChoiceInline"), false},
+            FieldSpec{"notes", "array", false, std::nullopt, std::nullopt, "WidgetOptions-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false}
         };
         return specs;
     }
@@ -202,8 +209,8 @@ class MathWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"math", "StringOrRef", true, std::string("MathWidget-0002"), std::string("MathWidget-0001"), "MathWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"math", "StringOrRef", true, std::string("MathWidget-0002"), std::string("MathWidget-0001"), "MathWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -253,8 +260,8 @@ class SimpleWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("SimpleWidget-0001"), "SimpleWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("SimpleWidget-0001"), "SimpleWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -271,7 +278,7 @@ public:
     std::string class_name() const override { return "SimpleWidget"; }
     const std::map<std::string, std::vector<FieldSpec>>& namespace_fields() const override {
         static const std::map<std::string, std::vector<FieldSpec>> m = {
-            {"acme", {FieldSpec{"acme@priority", "NumberOrRef", false, std::string("SimpleWidget-acme-0001"), std::nullopt, "SimpleWidget-acme-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}}}
+            {"acme", {FieldSpec{"acme@priority", "NumberOrRef", false, std::string("SimpleWidget-acme-0001"), std::nullopt, "SimpleWidget-acme-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}}}
         };
         return m;
     }
@@ -327,15 +334,15 @@ class TypesWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"anyValue", "any", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"enabled", "BooleanOrRef", false, std::string("TypesWidget-0001"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"count", "IntegerOrRef", false, std::string("TypesWidget-0003"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"items", "ArrayOrRef", false, std::string("TypesWidget-0004"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"settings", "DictOrRef", false, std::string("TypesWidget-0005"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"extras", "any-dict", false, std::string("TypesWidget-0007"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"primaryNote", "ref-class", false, std::string("TypesWidget-0006"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt},
-            FieldSpec{"report", "ref-discriminator", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport")}
+            FieldSpec{"anyValue", "any", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"enabled", "BooleanOrRef", false, std::string("TypesWidget-0001"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"count", "IntegerOrRef", false, std::string("TypesWidget-0003"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"items", "ArrayOrRef", false, std::string("TypesWidget-0004"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"settings", "DictOrRef", false, std::string("TypesWidget-0005"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"extras", "any-dict", false, std::string("TypesWidget-0007"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"primaryNote", "ref-class", false, std::string("TypesWidget-0006"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false},
+            FieldSpec{"report", "ref-discriminator", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false}
         };
         return specs;
     }
@@ -464,8 +471,8 @@ class SimpleReport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"source", "SIdRef", true, std::nullopt, std::string("SimpleReport-0001"), "SimpleReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"format", "StringOrRef", false, std::string("AbstractReport-0001"), std::nullopt, "AbstractReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"source", "SIdRef", true, std::nullopt, std::string("SimpleReport-0001"), "SimpleReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"format", "StringOrRef", false, std::string("AbstractReport-0001"), std::nullopt, "AbstractReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -512,7 +519,7 @@ class Choice : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -549,7 +556,7 @@ class Note : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"text", "StringOrRef", true, std::nullopt, std::string("Note-0001"), "Note-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"text", "StringOrRef", true, std::nullopt, std::string("Note-0001"), "Note-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -588,8 +595,8 @@ class WeightedChoice : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"weight", "NumberOrRef", true, std::nullopt, std::string("WeightedChoice-0001"), "WeightedChoice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"weight", "NumberOrRef", true, std::nullopt, std::string("WeightedChoice-0001"), "WeightedChoice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -639,8 +646,8 @@ class AcmeWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"acme@acmeLevel", "NumberOrRef", true, std::nullopt, std::string("acme-AcmeWidget-0001"), "AcmeWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"acme@acmeLevel", "NumberOrRef", true, std::nullopt, std::string("acme-AcmeWidget-0001"), "AcmeWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }

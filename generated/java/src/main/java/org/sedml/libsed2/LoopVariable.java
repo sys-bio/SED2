@@ -19,10 +19,10 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class LoopVariable extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("initialValue", "any", true, null, "LoopVariable-0001", "LoopVariable-0000", null, null, null, null, null),
-        new FieldSpec("subsequentValues", "SIdRef", true, "LoopVariable-0003", "LoopVariable-0002", "LoopVariable-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("initialValue", "any", true, null, "LoopVariable-0001", "LoopVariable-0000", null, null, null, null, null, false),
+        new FieldSpec("subsequentValues", "SIdRef", true, "LoopVariable-0003", "LoopVariable-0002", "LoopVariable-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("initialValue", "subsequentValues");
     private final ListCollection<SedBase> annotations = new ListCollection<>();

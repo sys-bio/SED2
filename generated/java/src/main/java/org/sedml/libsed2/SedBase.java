@@ -310,6 +310,15 @@ public abstract class SedBase {
                     ph.put("id", ownIdForMessage());
                     ph.put("value", value.isTextual() ? value.asText() : value.toString());
                     problems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                } else if (spec.isMath && value.isTextual()) {
+                    // Types-0001..0004 (Design.md's Math section) - only for
+                    // a literal string value that already passed its own
+                    // leaf schema check above; a $-reference form of an
+                    // OrRef math field is out of scope (see MathRules.java /
+                    // templates/python/rules/Types-0001.py's docstring).
+                    problems.addAll(MathRules.checkMathField(
+                            value.asText(), getClass().getSimpleName(), ownIdForMessage(),
+                            spec.name, "/" + spec.name));
                 }
             }
         }

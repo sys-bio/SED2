@@ -60,6 +60,7 @@ struct FieldSpec {
     std::optional<std::string> pattern;
     std::optional<std::string> item_class;
     std::optional<std::string> item_discriminator;
+    bool is_math = false;  // x-math (Design.md's Math section / Types-0001..0004)
 };
 
 /// Rule catalogue + ValidationProblem factory. Populated by
@@ -117,6 +118,19 @@ private:
             pos += to.length();
         }
     }
+};
+
+/// Forward-declared here (full declaration, no body) so SedBase::validate_own()
+/// below can call MathRules::check_math_field() for any FieldSpec::is_math
+/// field - the body lives in MathRules.hpp as an out-of-line `inline`
+/// definition, since MathRules.hpp itself needs ValidationProblem/RuleCatalog
+/// from this header and the two would otherwise include each other. See
+/// MathRules.hpp's own docstring/comment for the other half of this split.
+class MathRules {
+public:
+    static std::vector<ValidationProblem> check_math_field(
+            const std::string& value, const std::string& class_name, const std::string& id_value,
+            const std::string& attr, const std::string& location);
 };
 
 /// Per-field leaf validation, via the real JSON Schema validator
@@ -521,6 +535,16 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
                 ph["id"] = own_id_for_message();
                 ph["value"] = value.is_string() ? value.as<std::string>() : value.to_string();
                 problems.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
+            } else if (spec.is_math && value.is_string()) {
+                // Types-0001..0004 (Design.md's Math section) - only for a
+                // literal string value that already passed its own leaf
+                // schema check above; a $-reference form of an OrRef math
+                // field is out of scope (see MathRules.hpp / emit_java.py's
+                // identical comment on the Java port).
+                auto math_problems = MathRules::check_math_field(
+                        value.as<std::string>(), class_name(), own_id_for_message(),
+                        spec.name, "/" + spec.name);
+                problems.insert(problems.end(), math_problems.begin(), math_problems.end());
             }
         }
     }

@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SEDDocument extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("version", "string", true, "SEDDocument-0002", "SEDDocument-0001", "SEDDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("constants", "any-dict", false, "SEDDocument-0005", null, "SEDDocument-0000", null, null, null, null, null),
-        new FieldSpec("tasks", "dict", false, "SEDDocument-0006", null, "SEDDocument-0000", null, null, null, null, "AbstractTask"),
-        new FieldSpec("outputs", "dict", false, "SEDDocument-0007", null, "SEDDocument-0000", null, null, null, null, "AbstractOutput"),
-        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, "Style", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("version", "string", true, "SEDDocument-0002", "SEDDocument-0001", "SEDDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("constants", "any-dict", false, "SEDDocument-0005", null, "SEDDocument-0000", null, null, null, null, null, false),
+        new FieldSpec("tasks", "dict", false, "SEDDocument-0006", null, "SEDDocument-0000", null, null, null, null, "AbstractTask", false),
+        new FieldSpec("outputs", "dict", false, "SEDDocument-0007", null, "SEDDocument-0000", null, null, null, null, "AbstractOutput", false),
+        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, "Style", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("version");
     private final IdKeyedCollection<JsonNode> constants = new IdKeyedCollection<>();

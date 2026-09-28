@@ -3,6 +3,13 @@
 #pragma once
 
 #include "Runtime.hpp"
+// SedBase::validate_own() (Runtime.hpp) only *declares*
+// MathRules::check_math_field() (to break a header cycle - see
+// MathRules.hpp's docstring); this is the one place, upstream of every
+// concrete class below and every consumer that includes this file, that
+// pulls in its actual `inline` definition so the symbol is always
+// available wherever validate_own() might be called.
+#include "MathRules.hpp"
 
 #include <memory>
 #include <string>
@@ -15,13 +22,13 @@ class SEDDocument : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"version", "string", true, std::string("SEDDocument-0002"), std::string("SEDDocument-0001"), "SEDDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"constants", "any-dict", false, std::string("SEDDocument-0005"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"tasks", "dict", false, std::string("SEDDocument-0006"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"outputs", "dict", false, std::string("SEDDocument-0007"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractOutput")},
-            FieldSpec{"styles", "dict", false, std::string("SEDDocument-0008"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Style"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"version", "string", true, std::string("SEDDocument-0002"), std::string("SEDDocument-0001"), "SEDDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"constants", "any-dict", false, std::string("SEDDocument-0005"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"tasks", "dict", false, std::string("SEDDocument-0006"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask"), false},
+            FieldSpec{"outputs", "dict", false, std::string("SEDDocument-0007"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractOutput"), false},
+            FieldSpec{"styles", "dict", false, std::string("SEDDocument-0008"), std::nullopt, "SEDDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Style"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -163,11 +170,11 @@ class AggregationCalculation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"input", "any", true, std::nullopt, std::string("AggregationCalculation-0001"), "AggregationCalculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"appliedDimensions", "ArrayOrRef", false, std::string("AggregationCalculation-0002"), std::nullopt, "AggregationCalculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"input", "any", true, std::nullopt, std::string("AggregationCalculation-0001"), "AggregationCalculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"appliedDimensions", "ArrayOrRef", false, std::string("AggregationCalculation-0002"), std::nullopt, "AggregationCalculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -256,33 +263,33 @@ class BoundedODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"independentVariableSpan", "ref-class", true, std::string("BoundedODESimulation-0005"), std::string("BoundedODESimulation-0004"), "BoundedODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Span"), std::nullopt}
+            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"independentVariableSpan", "ref-class", true, std::string("BoundedODESimulation-0005"), std::string("BoundedODESimulation-0004"), "BoundedODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Span"), std::nullopt, false}
         };
         return specs;
     }
@@ -575,23 +582,23 @@ class BoundedStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"independentVariableSpan", "ref-class", true, std::string("BoundedStochasticSimulation-0005"), std::string("BoundedStochasticSimulation-0004"), "BoundedStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Span"), std::nullopt}
+            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"independentVariableSpan", "ref-class", true, std::string("BoundedStochasticSimulation-0005"), std::string("BoundedStochasticSimulation-0004"), "BoundedStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Span"), std::nullopt, false}
         };
         return specs;
     }
@@ -794,10 +801,10 @@ class Calculation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"math", "StringOrRef", true, std::string("Calculation-0002"), std::string("Calculation-0001"), "Calculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"math", "StringOrRef", true, std::string("Calculation-0002"), std::string("Calculation-0001"), "Calculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -880,10 +887,10 @@ class CreateDataBlock : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"data", "DictOrRef", true, std::string("CreateDataBlock-0002"), std::string("CreateDataBlock-0001"), "CreateDataBlock-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"data", "DictOrRef", true, std::string("CreateDataBlock-0002"), std::string("CreateDataBlock-0001"), "CreateDataBlock-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -966,17 +973,17 @@ class CsvImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"location", "StringOrRef", true, std::string("CsvImport-0002"), std::string("CsvImport-0001"), "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"organization", "StringOrRef", false, std::string("CsvImport-0004"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"separator", "StringOrRef", false, std::string("CsvImport-0006"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"headers", "BooleanOrRef", false, std::string("CsvImport-0008"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"columnNames", "ArrayOrRef", false, std::string("CsvImport-0010"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"ncols", "IntegerOrRef", false, std::string("CsvImport-0012"), std::nullopt, "CsvImport-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"nrows", "IntegerOrRef", false, std::string("CsvImport-0014"), std::nullopt, "CsvImport-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"units", "ArrayOrRef", false, std::string("CsvImport-0016"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"location", "StringOrRef", true, std::string("CsvImport-0002"), std::string("CsvImport-0001"), "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"organization", "StringOrRef", false, std::string("CsvImport-0004"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"separator", "StringOrRef", false, std::string("CsvImport-0006"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"headers", "BooleanOrRef", false, std::string("CsvImport-0008"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"columnNames", "ArrayOrRef", false, std::string("CsvImport-0010"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"ncols", "IntegerOrRef", false, std::string("CsvImport-0012"), std::nullopt, "CsvImport-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"nrows", "IntegerOrRef", false, std::string("CsvImport-0014"), std::nullopt, "CsvImport-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"units", "ArrayOrRef", false, std::string("CsvImport-0016"), std::nullopt, "CsvImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -1122,11 +1129,11 @@ class DataImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"location", "StringOrRef", true, std::string("DataImport-0002"), std::string("DataImport-0001"), "DataImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"format", "StringOrRef", true, std::string("DataImport-0005"), std::string("DataImport-0004"), "DataImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"location", "StringOrRef", true, std::string("DataImport-0002"), std::string("DataImport-0001"), "DataImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"format", "StringOrRef", true, std::string("DataImport-0005"), std::string("DataImport-0004"), "DataImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -1218,12 +1225,12 @@ class DrawFromDistribution : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"distribution", "StringOrRef", true, std::string("DrawFromDistribution-0008"), std::string("DrawFromDistribution-0007"), "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputPersistent", "BooleanOrRef", false, std::string("DrawFromDistribution-0004"), std::nullopt, "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"arguments", "ArrayOrRef", true, std::string("DrawFromDistribution-0002"), std::string("DrawFromDistribution-0001"), "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"distribution", "StringOrRef", true, std::string("DrawFromDistribution-0008"), std::string("DrawFromDistribution-0007"), "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputPersistent", "BooleanOrRef", false, std::string("DrawFromDistribution-0004"), std::nullopt, "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"arguments", "ArrayOrRef", true, std::string("DrawFromDistribution-0002"), std::string("DrawFromDistribution-0001"), "DrawFromDistribution-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -1324,33 +1331,33 @@ class ExplicitODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"independentVariableRange", "ref-class", true, std::string("ExplicitODESimulation-0005"), std::string("ExplicitODESimulation-0004"), "ExplicitODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("NumericRange"), std::nullopt}
+            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"independentVariableRange", "ref-class", true, std::string("ExplicitODESimulation-0005"), std::string("ExplicitODESimulation-0004"), "ExplicitODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("NumericRange"), std::nullopt, false}
         };
         return specs;
     }
@@ -1643,23 +1650,23 @@ class ExplicitStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"independentVariableRange", "ref-class", true, std::string("ExplicitStochasticSimulation-0005"), std::string("ExplicitStochasticSimulation-0004"), "ExplicitStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("NumericRange"), std::nullopt}
+            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"independentVariableRange", "ref-class", true, std::string("ExplicitStochasticSimulation-0005"), std::string("ExplicitStochasticSimulation-0004"), "ExplicitStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("NumericRange"), std::nullopt, false}
         };
         return specs;
     }
@@ -1862,12 +1869,12 @@ class FluxBalanceAnalysis : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::string("FluxBalanceAnalysis-0002"), std::string("FluxBalanceAnalysis-0001"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", true, std::string("FluxBalanceAnalysis-0004"), std::string("FluxBalanceAnalysis-0003"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("FluxBalanceAnalysis-0006"), std::nullopt, "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"model", "SIdRef", true, std::string("FluxBalanceAnalysis-0002"), std::string("FluxBalanceAnalysis-0001"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", true, std::string("FluxBalanceAnalysis-0004"), std::string("FluxBalanceAnalysis-0003"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("FluxBalanceAnalysis-0006"), std::nullopt, "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -1965,10 +1972,10 @@ class JacobianFull : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::string("JacobianFull-0002"), std::string("JacobianFull-0001"), "JacobianFull-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"model", "SIdRef", true, std::string("JacobianFull-0002"), std::string("JacobianFull-0001"), "JacobianFull-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2048,10 +2055,10 @@ class JacobianReduced : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::string("JacobianReduced-0002"), std::string("JacobianReduced-0001"), "JacobianReduced-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"model", "SIdRef", true, std::string("JacobianReduced-0002"), std::string("JacobianReduced-0001"), "JacobianReduced-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2131,14 +2138,14 @@ class Loop : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"loopVariables", "dict", true, std::string("Loop-0003"), std::string("Loop-0002"), "Loop-0000", std::nullopt, std::nullopt, std::nullopt, std::string("LoopVariable"), std::nullopt},
-            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline")}
+            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"loopVariables", "dict", true, std::string("Loop-0003"), std::string("Loop-0002"), "Loop-0000", std::nullopt, std::nullopt, std::nullopt, std::string("LoopVariable"), std::nullopt, false},
+            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask"), false},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false}
         };
         return specs;
     }
@@ -2275,14 +2282,14 @@ class ModelChange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"inputModel", "SIdRef", true, std::string("ModelChange-0002"), std::string("ModelChange-0001"), "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"setValues", "DictOrRef", false, std::string("ModelChange-0003"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"removeElements", "ArrayOrRef", false, std::string("ModelChange-0005"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"addElements", "ArrayOrRef", false, std::string("ModelChange-0007"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"replaceElements", "DictOrRef", false, std::string("ModelChange-0009"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"inputModel", "SIdRef", true, std::string("ModelChange-0002"), std::string("ModelChange-0001"), "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"setValues", "DictOrRef", false, std::string("ModelChange-0003"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"removeElements", "ArrayOrRef", false, std::string("ModelChange-0005"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"addElements", "ArrayOrRef", false, std::string("ModelChange-0007"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"replaceElements", "DictOrRef", false, std::string("ModelChange-0009"), std::nullopt, "ModelChange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2398,14 +2405,14 @@ class ModelElementList : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::string("ModelElementList-0002"), std::string("ModelElementList-0001"), "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"includeElements", "ArrayOrRef", false, std::string("ModelElementList-0003"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"includeTypes", "ArrayOrRef", false, std::string("ModelElementList-0005"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"excludeElements", "ArrayOrRef", false, std::string("ModelElementList-0007"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"excludeTypes", "ArrayOrRef", false, std::string("ModelElementList-0009"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"model", "SIdRef", true, std::string("ModelElementList-0002"), std::string("ModelElementList-0001"), "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"includeElements", "ArrayOrRef", false, std::string("ModelElementList-0003"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"includeTypes", "ArrayOrRef", false, std::string("ModelElementList-0005"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"excludeElements", "ArrayOrRef", false, std::string("ModelElementList-0007"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"excludeTypes", "ArrayOrRef", false, std::string("ModelElementList-0009"), std::nullopt, "ModelElementList-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2521,11 +2528,11 @@ class ModelImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"location", "StringOrRef", true, std::string("ModelImport-0002"), std::string("ModelImport-0001"), "ModelImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"language", "StringOrRef", true, std::string("ModelImport-0005"), std::string("ModelImport-0004"), "ModelImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"location", "StringOrRef", true, std::string("ModelImport-0002"), std::string("ModelImport-0001"), "ModelImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"language", "StringOrRef", true, std::string("ModelImport-0005"), std::string("ModelImport-0004"), "ModelImport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2617,16 +2624,16 @@ class NumericRange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"start", "NumberOrRef", false, std::string("NumericRange-0001"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"end", "NumberOrRef", false, std::string("NumericRange-0003"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"interval", "NumberOrRef", false, std::string("NumericRange-0005"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"numberOfSteps", "IntegerOrRef", false, std::string("NumericRange-0007"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"scale", "StringOrRef", false, std::string("NumericRange-0009"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "ArrayOrRef", false, std::string("NumericRange-0011"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"start", "NumberOrRef", false, std::string("NumericRange-0001"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"end", "NumberOrRef", false, std::string("NumericRange-0003"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"interval", "NumberOrRef", false, std::string("NumericRange-0005"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"numberOfSteps", "IntegerOrRef", false, std::string("NumericRange-0007"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"scale", "StringOrRef", false, std::string("NumericRange-0009"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"values", "ArrayOrRef", false, std::string("NumericRange-0011"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -2750,33 +2757,33 @@ class OneStepODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"independentStep", "NumberOrRef", true, std::string("OneStepODESimulation-0005"), std::string("OneStepODESimulation-0004"), "OneStepODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"independentStep", "NumberOrRef", true, std::string("OneStepODESimulation-0005"), std::string("OneStepODESimulation-0004"), "OneStepODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"relativeTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0001"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteTolerance", "NumberOrRef", false, std::string("AbstractODESimulation-0003"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceVector", "ArrayOrRef", false, std::string("AbstractODESimulation-0005"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"absoluteToleranceAdjustmentFactor", "NumberOrRef", false, std::string("AbstractODESimulation-0007"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"toleranceForRootFinder", "NumberOrRef", false, std::string("AbstractODESimulation-0009"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"initialStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0011"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumberOfSteps", "NumberOrRef", false, std::string("AbstractODESimulation-0013"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalSteps", "IntegerOrRef", false, std::string("AbstractODESimulation-0015"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0017"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minInternalStepSize", "NumberOrRef", false, std::string("AbstractODESimulation-0019"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"forcePhysicalCorrectness", "BooleanOrRef", false, std::string("AbstractODESimulation-0021"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"integrateReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0023"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useReducedModel", "BooleanOrRef", false, std::string("AbstractODESimulation-0025"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"useStiffSolver", "BooleanOrRef", false, std::string("AbstractODESimulation-0027"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxBDForder", "IntegerOrRef", false, std::string("AbstractODESimulation-0029"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxAdamsOrder", "IntegerOrRef", false, std::string("AbstractODESimulation-0031"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractODESimulation-0033"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractODESimulation-0035"), std::nullopt, "AbstractODESimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3064,23 +3071,23 @@ class OneStepStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"independentStep", "NumberOrRef", false, std::string("OneStepStochasticSimulation-0004"), std::nullopt, "OneStepStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"independentStep", "NumberOrRef", false, std::string("OneStepStochasticSimulation-0004"), std::nullopt, "OneStepStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"seed", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0001"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"timeDependentRelativeTolerance", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0003"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"variableStepSize", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0005"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"minimumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0007"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maximumTimeStep", "NumberOrRef", false, std::string("AbstractStochasticSimulation-0009"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"nonNegative", "BooleanOrRef", false, std::string("AbstractStochasticSimulation-0011"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxOutputRows", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0013"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"maxNumSteps", "IntegerOrRef", false, std::string("AbstractStochasticSimulation-0015"), std::nullopt, "AbstractStochasticSimulation-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"model", "SIdRef", false, std::string("AbstractSimulation-0001"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("AbstractSimulation-0002"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariableInit", "NumberOrRef", false, std::string("AbstractSimulation-0004"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", false, std::string("AbstractSimulation-0006"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("AbstractSimulation-0008"), std::nullopt, "AbstractSimulation-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3274,17 +3281,17 @@ class ParameterRange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"modelElement", "StringOrRef", true, std::string("ParameterRange-0002"), std::string("ParameterRange-0001"), "ParameterRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"start", "NumberOrRef", false, std::string("NumericRange-0001"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"end", "NumberOrRef", false, std::string("NumericRange-0003"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"interval", "NumberOrRef", false, std::string("NumericRange-0005"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"numberOfSteps", "IntegerOrRef", false, std::string("NumericRange-0007"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"scale", "StringOrRef", false, std::string("NumericRange-0009"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "ArrayOrRef", false, std::string("NumericRange-0011"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"modelElement", "StringOrRef", true, std::string("ParameterRange-0002"), std::string("ParameterRange-0001"), "ParameterRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"start", "NumberOrRef", false, std::string("NumericRange-0001"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"end", "NumberOrRef", false, std::string("NumericRange-0003"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"interval", "NumberOrRef", false, std::string("NumericRange-0005"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"numberOfSteps", "IntegerOrRef", false, std::string("NumericRange-0007"), std::nullopt, "NumericRange-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"scale", "StringOrRef", false, std::string("NumericRange-0009"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"values", "ArrayOrRef", false, std::string("NumericRange-0011"), std::nullopt, "NumericRange-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3421,15 +3428,15 @@ class ParameterScan : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::string("ParameterScan-0002"), std::string("ParameterScan-0001"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"parameterRanges", "array", true, std::string("ParameterScan-0004"), std::string("ParameterScan-0003"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::string("ParameterRange"), std::nullopt},
-            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline")}
+            FieldSpec{"model", "SIdRef", true, std::string("ParameterScan-0002"), std::string("ParameterScan-0001"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"parameterRanges", "array", true, std::string("ParameterScan-0004"), std::string("ParameterScan-0003"), "ParameterScan-0000", std::nullopt, std::nullopt, std::nullopt, std::string("ParameterRange"), std::nullopt, false},
+            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask"), false},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false}
         };
         return specs;
     }
@@ -3570,10 +3577,10 @@ class Range : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"values", "ArrayOrRef", false, std::string("Range-0001"), std::nullopt, "Range-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3652,11 +3659,11 @@ class RelabelData : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"input", "SIdRef", true, std::string("RelabelData-0002"), std::string("RelabelData-0001"), "RelabelData-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"labels", "ArrayOrRef", true, std::string("RelabelData-0004"), std::string("RelabelData-0003"), "RelabelData-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"input", "SIdRef", true, std::string("RelabelData-0002"), std::string("RelabelData-0001"), "RelabelData-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"labels", "ArrayOrRef", true, std::string("RelabelData-0004"), std::string("RelabelData-0003"), "RelabelData-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3745,13 +3752,13 @@ class Scatter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask")},
-            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline")}
+            FieldSpec{"outputVariableMap", "DictOrRef", false, std::string("Repeat-0002"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask"), false},
+            FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false}
         };
         return specs;
     }
@@ -3872,10 +3879,10 @@ class Span : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"start", "NumberOrRef", true, std::string("Span-0002"), std::string("Span-0001"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"end", "NumberOrRef", true, std::string("Span-0005"), std::string("Span-0004"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"start", "NumberOrRef", true, std::string("Span-0002"), std::string("Span-0001"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"end", "NumberOrRef", true, std::string("Span-0005"), std::string("Span-0004"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -3957,13 +3964,13 @@ class SteadyState : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"model", "SIdRef", true, std::nullopt, std::string("SteadyState-0001"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"independentVariable", "StringOrRef", false, std::string("SteadyState-0004"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputVariables", "ArrayOrRef", true, std::nullopt, std::string("SteadyState-0002"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("SteadyState-0005"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"model", "SIdRef", true, std::nullopt, std::string("SteadyState-0001"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"independentVariable", "StringOrRef", false, std::string("SteadyState-0004"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputVariables", "ArrayOrRef", true, std::nullopt, std::string("SteadyState-0002"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("SteadyState-0005"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4070,10 +4077,10 @@ class StringFormation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"concatenate", "ArrayOrRef", true, std::string("StringFormation-0002"), std::string("StringFormation-0001"), "StringFormation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"concatenate", "ArrayOrRef", true, std::string("StringFormation-0002"), std::string("StringFormation-0001"), "StringFormation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4156,16 +4163,16 @@ class Plot2D : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"legend", "BooleanOrRef", false, std::string("Plot-0001"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"height", "NumberOrRef", false, std::string("Plot-0003"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"width", "NumberOrRef", false, std::string("Plot-0005"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"curves", "dict", true, std::string("Plot2D-0002"), std::string("Plot2D-0001"), "Plot2D-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractCurve")},
-            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"rightYAxis", "ref-class", false, std::string("Plot2D-0003"), std::nullopt, "Plot2D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt},
-            FieldSpec{"xAxis", "ref-class", false, std::string("Plot-0007"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt},
-            FieldSpec{"yAxis", "ref-class", false, std::string("Plot-0008"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt}
+            FieldSpec{"legend", "BooleanOrRef", false, std::string("Plot-0001"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"height", "NumberOrRef", false, std::string("Plot-0003"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"width", "NumberOrRef", false, std::string("Plot-0005"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"curves", "dict", true, std::string("Plot2D-0002"), std::string("Plot2D-0001"), "Plot2D-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractCurve"), false},
+            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"rightYAxis", "ref-class", false, std::string("Plot2D-0003"), std::nullopt, "Plot2D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false},
+            FieldSpec{"xAxis", "ref-class", false, std::string("Plot-0007"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false},
+            FieldSpec{"yAxis", "ref-class", false, std::string("Plot-0008"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false}
         };
         return specs;
     }
@@ -4316,16 +4323,16 @@ class Plot3D : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"legend", "BooleanOrRef", false, std::string("Plot-0001"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"height", "NumberOrRef", false, std::string("Plot-0003"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"width", "NumberOrRef", false, std::string("Plot-0005"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"surfaces", "dict", true, std::string("Plot3D-0002"), std::string("Plot3D-0001"), "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Surface"), std::nullopt},
-            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt},
-            FieldSpec{"zAxis", "ref-class", false, std::string("Plot3D-0003"), std::nullopt, "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt},
-            FieldSpec{"xAxis", "ref-class", false, std::string("Plot-0007"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt},
-            FieldSpec{"yAxis", "ref-class", false, std::string("Plot-0008"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt}
+            FieldSpec{"legend", "BooleanOrRef", false, std::string("Plot-0001"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"height", "NumberOrRef", false, std::string("Plot-0003"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"width", "NumberOrRef", false, std::string("Plot-0005"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"surfaces", "dict", true, std::string("Plot3D-0002"), std::string("Plot3D-0001"), "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Surface"), std::nullopt, false},
+            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false},
+            FieldSpec{"zAxis", "ref-class", false, std::string("Plot3D-0003"), std::nullopt, "Plot3D-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false},
+            FieldSpec{"xAxis", "ref-class", false, std::string("Plot-0007"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false},
+            FieldSpec{"yAxis", "ref-class", false, std::string("Plot-0008"), std::nullopt, "Plot-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Axis"), std::nullopt, false}
         };
         return specs;
     }
@@ -4476,10 +4483,10 @@ class Report : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"data", "SIdRef", true, std::string("Report-0002"), std::string("Report-0001"), "Report-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"data", "SIdRef", true, std::string("Report-0002"), std::string("Report-0001"), "Report-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"outputParameters", "array", false, std::string("AbstractOutput-0001"), std::nullopt, "AbstractOutput-0000", std::nullopt, std::nullopt, std::nullopt, std::string("OutputParameter"), std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4559,14 +4566,14 @@ class Surface : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"surfaceType", "StringOrRef", true, std::string("Surface-0002"), std::string("Surface-0001"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"x", "SIdRef", true, std::string("Surface-0005"), std::string("Surface-0004"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"y", "SIdRef", true, std::string("Surface-0007"), std::string("Surface-0006"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"z", "SIdRef", true, std::string("Surface-0009"), std::string("Surface-0008"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"style", "SIdRef", false, std::string("Surface-0010"), std::nullopt, "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"order", "IntegerOrRef", false, std::string("Surface-0011"), std::nullopt, "Surface-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"surfaceType", "StringOrRef", true, std::string("Surface-0002"), std::string("Surface-0001"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"x", "SIdRef", true, std::string("Surface-0005"), std::string("Surface-0004"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"y", "SIdRef", true, std::string("Surface-0007"), std::string("Surface-0006"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"z", "SIdRef", true, std::string("Surface-0009"), std::string("Surface-0008"), "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"style", "SIdRef", false, std::string("Surface-0010"), std::nullopt, "Surface-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"order", "IntegerOrRef", false, std::string("Surface-0011"), std::nullopt, "Surface-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4670,8 +4677,8 @@ class Annotation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"qualifier", "any", true, std::string("Annotation-0002"), std::string("Annotation-0001"), "Annotation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"value", "any", true, std::nullopt, std::string("Annotation-0003"), "Annotation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"qualifier", "any", true, std::string("Annotation-0002"), std::string("Annotation-0001"), "Annotation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"value", "any", true, std::nullopt, std::string("Annotation-0003"), "Annotation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
         };
         return specs;
     }
@@ -4713,14 +4720,14 @@ class Axis : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"scale", "StringOrRef", false, std::string("Axis-0001"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"min", "NumberOrRef", false, std::string("Axis-0003"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"max", "NumberOrRef", false, std::string("Axis-0005"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"grid", "BooleanOrRef", false, std::string("Axis-0007"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"style", "SIdRef", false, std::string("Axis-0009"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"reverse", "BooleanOrRef", false, std::string("Axis-0010"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"scale", "StringOrRef", false, std::string("Axis-0001"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"min", "NumberOrRef", false, std::string("Axis-0003"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"max", "NumberOrRef", false, std::string("Axis-0005"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"grid", "BooleanOrRef", false, std::string("Axis-0007"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"style", "SIdRef", false, std::string("Axis-0009"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"reverse", "BooleanOrRef", false, std::string("Axis-0010"), std::nullopt, "Axis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4829,20 +4836,20 @@ class Curve : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"curveType", "StringOrRef", true, std::string("Curve-0002"), std::string("Curve-0001"), "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"y", "SIdRef", true, std::string("Curve-0005"), std::string("Curve-0004"), "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"xErrorUpper", "SIdRef", false, std::string("Curve-0006"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"xErrorLower", "SIdRef", false, std::string("Curve-0007"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yErrorUpper", "SIdRef", false, std::string("Curve-0008"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yErrorLower", "SIdRef", false, std::string("Curve-0009"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yFrom", "SIdRef", false, std::string("Curve-0010"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yTo", "SIdRef", false, std::string("Curve-0011"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"x", "SIdRef", true, std::string("AbstractCurve-0002"), std::string("AbstractCurve-0001"), "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"order", "IntegerOrRef", false, std::string("AbstractCurve-0003"), std::nullopt, "AbstractCurve-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"style", "SIdRef", false, std::string("AbstractCurve-0005"), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"yAxis", "StringOrRef", false, std::string("AbstractCurve-0006"), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"curveType", "StringOrRef", true, std::string("Curve-0002"), std::string("Curve-0001"), "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"y", "SIdRef", true, std::string("Curve-0005"), std::string("Curve-0004"), "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"xErrorUpper", "SIdRef", false, std::string("Curve-0006"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"xErrorLower", "SIdRef", false, std::string("Curve-0007"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"yErrorUpper", "SIdRef", false, std::string("Curve-0008"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"yErrorLower", "SIdRef", false, std::string("Curve-0009"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"yFrom", "SIdRef", false, std::string("Curve-0010"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"yTo", "SIdRef", false, std::string("Curve-0011"), std::nullopt, "Curve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"x", "SIdRef", true, std::string("AbstractCurve-0002"), std::string("AbstractCurve-0001"), "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"order", "IntegerOrRef", false, std::string("AbstractCurve-0003"), std::nullopt, "AbstractCurve-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"style", "SIdRef", false, std::string("AbstractCurve-0005"), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"yAxis", "StringOrRef", false, std::string("AbstractCurve-0006"), std::nullopt, "AbstractCurve-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -4987,10 +4994,10 @@ class LoopVariable : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"initialValue", "any", true, std::nullopt, std::string("LoopVariable-0001"), "LoopVariable-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"subsequentValues", "SIdRef", true, std::string("LoopVariable-0003"), std::string("LoopVariable-0002"), "LoopVariable-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"initialValue", "any", true, std::nullopt, std::string("LoopVariable-0001"), "LoopVariable-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"subsequentValues", "SIdRef", true, std::string("LoopVariable-0003"), std::string("LoopVariable-0002"), "LoopVariable-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -5064,9 +5071,9 @@ class OutputParameter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "any", true, std::nullopt, std::string("OutputParameter-0001"), "OutputParameter-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"value", "any", true, std::nullopt, std::string("OutputParameter-0001"), "OutputParameter-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -5134,9 +5141,9 @@ class TaskParameter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "any", true, std::nullopt, std::string("TaskParameter-0001"), "TaskParameter-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"value", "any", true, std::nullopt, std::string("TaskParameter-0001"), "TaskParameter-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }
@@ -5204,9 +5211,9 @@ class WorkingAlgorithm : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"algorithm", "StringOrRef", true, std::nullopt, std::string("WorkingAlgorithm-0001"), "WorkingAlgorithm-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt}
+            FieldSpec{"algorithm", "StringOrRef", true, std::nullopt, std::string("WorkingAlgorithm-0001"), "WorkingAlgorithm-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false}
         };
         return specs;
     }

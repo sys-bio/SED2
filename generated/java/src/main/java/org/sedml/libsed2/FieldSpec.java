@@ -13,10 +13,11 @@ public final class FieldSpec {
     public final String pattern;           // nullable
     public final String itemClass;         // nullable
     public final String itemDiscriminator; // nullable
+    public final boolean isMath;           // x-math (Design.md's Math section / Types-0001..0004)
 
     public FieldSpec(String name, String kind, boolean required, String ruleId, String requiredRuleId,
                       String originCatchall, Double minimum, Double exclusiveMinimum, String pattern,
-                      String itemClass, String itemDiscriminator) {
+                      String itemClass, String itemDiscriminator, boolean isMath) {
         this.name = name;
         this.kind = kind;
         this.required = required;
@@ -28,5 +29,6 @@ public final class FieldSpec {
         this.pattern = pattern;
         this.itemClass = itemClass;
         this.itemDiscriminator = itemDiscriminator;
+        this.isMath = isMath;
     }
 }

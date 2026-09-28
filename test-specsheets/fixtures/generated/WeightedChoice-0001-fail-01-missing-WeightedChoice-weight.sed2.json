@@ -1,11 +1,11 @@
 {
   "version": "v1.0.0",
   "widgets": {
-    "x6": {
+    "x7": {
       "_type": "fancyWidget",
       "value": "x",
       "choices": {
-        "x5": {
+        "x6": {
           "_type": "weightedChoice"
         }
       }

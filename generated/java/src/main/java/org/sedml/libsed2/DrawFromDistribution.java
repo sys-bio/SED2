@@ -19,12 +19,12 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class DrawFromDistribution extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("distribution", "StringOrRef", true, "DrawFromDistribution-0008", "DrawFromDistribution-0007", "DrawFromDistribution-0000", null, null, null, null, null),
-        new FieldSpec("outputPersistent", "BooleanOrRef", false, "DrawFromDistribution-0004", null, "DrawFromDistribution-0000", null, null, null, null, null),
-        new FieldSpec("arguments", "ArrayOrRef", true, "DrawFromDistribution-0002", "DrawFromDistribution-0001", "DrawFromDistribution-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("distribution", "StringOrRef", true, "DrawFromDistribution-0008", "DrawFromDistribution-0007", "DrawFromDistribution-0000", null, null, null, null, null, false),
+        new FieldSpec("outputPersistent", "BooleanOrRef", false, "DrawFromDistribution-0004", null, "DrawFromDistribution-0000", null, null, null, null, null, false),
+        new FieldSpec("arguments", "ArrayOrRef", true, "DrawFromDistribution-0002", "DrawFromDistribution-0001", "DrawFromDistribution-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("distribution", "arguments");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();

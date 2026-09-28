@@ -19,12 +19,12 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SimpleWidget extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("value", "StringOrRef", true, null, "SimpleWidget-0001", "SimpleWidget-0000", null, null, null, null, null),
-        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null)
+        new FieldSpec("value", "StringOrRef", true, null, "SimpleWidget-0001", "SimpleWidget-0000", null, null, null, null, null, false),
+        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("value");
     private static final Map<String, List<FieldSpec>> NAMESPACE_FIELDS = Map.of(
-        "acme", List.of(new FieldSpec("acme@priority", "NumberOrRef", false, "SimpleWidget-acme-0001", null, "SimpleWidget-acme-0000", null, null, null, null, null))
+        "acme", List.of(new FieldSpec("acme@priority", "NumberOrRef", false, "SimpleWidget-acme-0001", null, "SimpleWidget-acme-0000", null, null, null, null, null, false))
     );
     private static final Map<String, String> NAMESPACE_CATCHALL = Map.of("acme", "SimpleWidget-acme-0000");
     private static final Set<String> KNOWN_NAMESPACE_PREFIXES = Set.of("acme");

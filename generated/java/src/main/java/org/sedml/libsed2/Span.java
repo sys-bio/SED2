@@ -19,10 +19,10 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Span extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("start", "NumberOrRef", true, "Span-0002", "Span-0001", "Span-0000", null, null, null, null, null),
-        new FieldSpec("end", "NumberOrRef", true, "Span-0005", "Span-0004", "Span-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("start", "NumberOrRef", true, "Span-0002", "Span-0001", "Span-0000", null, null, null, null, null, false),
+        new FieldSpec("end", "NumberOrRef", true, "Span-0005", "Span-0004", "Span-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("start", "end");
     private final ListCollection<SedBase> annotations = new ListCollection<>();

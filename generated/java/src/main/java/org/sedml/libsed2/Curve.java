@@ -19,20 +19,20 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Curve extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("curveType", "StringOrRef", true, "Curve-0002", "Curve-0001", "Curve-0000", null, null, null, null, null),
-        new FieldSpec("y", "SIdRef", true, "Curve-0005", "Curve-0004", "Curve-0000", null, null, null, null, null),
-        new FieldSpec("xErrorUpper", "SIdRef", false, "Curve-0006", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("xErrorLower", "SIdRef", false, "Curve-0007", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("yErrorUpper", "SIdRef", false, "Curve-0008", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("yErrorLower", "SIdRef", false, "Curve-0009", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("yFrom", "SIdRef", false, "Curve-0010", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("yTo", "SIdRef", false, "Curve-0011", null, "Curve-0000", null, null, null, null, null),
-        new FieldSpec("x", "SIdRef", true, "AbstractCurve-0002", "AbstractCurve-0001", "AbstractCurve-0000", null, null, null, null, null),
-        new FieldSpec("order", "IntegerOrRef", false, "AbstractCurve-0003", null, "AbstractCurve-0000", 0.0, null, null, null, null),
-        new FieldSpec("style", "SIdRef", false, "AbstractCurve-0005", null, "AbstractCurve-0000", null, null, null, null, null),
-        new FieldSpec("yAxis", "StringOrRef", false, "AbstractCurve-0006", null, "AbstractCurve-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("curveType", "StringOrRef", true, "Curve-0002", "Curve-0001", "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("y", "SIdRef", true, "Curve-0005", "Curve-0004", "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("xErrorUpper", "SIdRef", false, "Curve-0006", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("xErrorLower", "SIdRef", false, "Curve-0007", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("yErrorUpper", "SIdRef", false, "Curve-0008", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("yErrorLower", "SIdRef", false, "Curve-0009", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("yFrom", "SIdRef", false, "Curve-0010", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("yTo", "SIdRef", false, "Curve-0011", null, "Curve-0000", null, null, null, null, null, false),
+        new FieldSpec("x", "SIdRef", true, "AbstractCurve-0002", "AbstractCurve-0001", "AbstractCurve-0000", null, null, null, null, null, false),
+        new FieldSpec("order", "IntegerOrRef", false, "AbstractCurve-0003", null, "AbstractCurve-0000", 0.0, null, null, null, null, false),
+        new FieldSpec("style", "SIdRef", false, "AbstractCurve-0005", null, "AbstractCurve-0000", null, null, null, null, null, false),
+        new FieldSpec("yAxis", "StringOrRef", false, "AbstractCurve-0006", null, "AbstractCurve-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("curveType", "y", "x");
     private final ListCollection<SedBase> annotations = new ListCollection<>();

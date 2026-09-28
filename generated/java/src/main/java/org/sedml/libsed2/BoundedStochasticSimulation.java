@@ -19,23 +19,23 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class BoundedStochasticSimulation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("seed", "NumberOrRef", false, "AbstractStochasticSimulation-0001", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("timeDependentRelativeTolerance", "NumberOrRef", false, "AbstractStochasticSimulation-0003", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractStochasticSimulation-0005", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("minimumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0007", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("maximumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0009", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("nonNegative", "BooleanOrRef", false, "AbstractStochasticSimulation-0011", null, "AbstractStochasticSimulation-0000", null, null, null, null, null),
-        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractStochasticSimulation-0013", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null),
-        new FieldSpec("maxNumSteps", "IntegerOrRef", false, "AbstractStochasticSimulation-0015", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null),
-        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null),
-        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null),
-        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null),
-        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null),
-        new FieldSpec("independentVariableSpan", "ref-class", true, "BoundedStochasticSimulation-0005", "BoundedStochasticSimulation-0004", "BoundedStochasticSimulation-0000", null, null, null, "Span", null)
+        new FieldSpec("seed", "NumberOrRef", false, "AbstractStochasticSimulation-0001", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("timeDependentRelativeTolerance", "NumberOrRef", false, "AbstractStochasticSimulation-0003", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractStochasticSimulation-0005", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("minimumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0007", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("maximumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0009", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("nonNegative", "BooleanOrRef", false, "AbstractStochasticSimulation-0011", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractStochasticSimulation-0013", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("maxNumSteps", "IntegerOrRef", false, "AbstractStochasticSimulation-0015", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
+        new FieldSpec("independentVariableSpan", "ref-class", true, "BoundedStochasticSimulation-0005", "BoundedStochasticSimulation-0004", "BoundedStochasticSimulation-0000", null, null, null, "Span", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("independentVariableSpan");
     private final ListCollection<SedBase> workingAlgorithms = new ListCollection<>();

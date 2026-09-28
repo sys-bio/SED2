@@ -131,10 +131,11 @@ public final class FieldSpec {{
     public final String pattern;           // nullable
     public final String itemClass;         // nullable
     public final String itemDiscriminator; // nullable
+    public final boolean isMath;           // x-math (Design.md's Math section / Types-0001..0004)
 
     public FieldSpec(String name, String kind, boolean required, String ruleId, String requiredRuleId,
                       String originCatchall, Double minimum, Double exclusiveMinimum, String pattern,
-                      String itemClass, String itemDiscriminator) {{
+                      String itemClass, String itemDiscriminator, boolean isMath) {{
         this.name = name;
         this.kind = kind;
         this.required = required;
@@ -146,6 +147,7 @@ public final class FieldSpec {{
         this.pattern = pattern;
         this.itemClass = itemClass;
         this.itemDiscriminator = itemDiscriminator;
+        this.isMath = isMath;
     }}
 }}
 '''
@@ -750,6 +752,15 @@ public abstract class SedBase {{
                     ph.put("id", ownIdForMessage());
                     ph.put("value", value.isTextual() ? value.asText() : value.toString());
                     problems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                }} else if (spec.isMath && value.isTextual()) {{
+                    // Types-0001..0004 (Design.md's Math section) - only for
+                    // a literal string value that already passed its own
+                    // leaf schema check above; a $-reference form of an
+                    // OrRef math field is out of scope (see MathRules.java /
+                    // templates/python/rules/Types-0001.py's docstring).
+                    problems.addAll(MathRules.checkMathField(
+                            value.asText(), getClass().getSimpleName(), ownIdForMessage(),
+                            spec.name, "/" + spec.name));
                 }}
             }}
         }}
@@ -774,6 +785,529 @@ public abstract class SedBase {{
 '''
 
 
+def _math_ast_java() -> str:
+    """MathAst.java - Java port of emit_python.py's math_ast.py (the
+    RUNTIME-embedded ASTNode/_Builder/parse() trio), trimmed to what
+    MathRules.java's Types-0002/-0003/-0004 checks actually walk (no
+    to_string()/_render - that's for round-tripping parsed math back to
+    text, not needed by validation). Builds on the ANTLR-generated
+    mathLexer/mathParser/mathBaseVisitor in the `{PKG}.antlr` subpackage
+    (see antlr_tool.generate_java_math_parser, called from
+    emit_java_package) - same math.g4 grammar as the Python target, so this
+    desugaring (relational-chain / logical-run flattening, '%' -> rem(),
+    unary '!' -> not()) mirrors _Builder in emit_python.py's math_ast.py
+    exactly; see that class's own comments for the semantics. GENERATED -
+    do not hand-edit; regenerate via generator/generate.py."""
+    return f'''package {PKG};
+
+import {PKG}.antlr.mathLexer;
+import {PKG}.antlr.mathParser;
+import {PKG}.antlr.mathBaseVisitor;
+import org.antlr.v4.runtime.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/** SED2 math-grammar AST + parser (Types-0001's "well-formed expression"
+ * check and the shared tree the other three Types rules walk). GENERATED -
+ * do not hand-edit; regenerate via generator/generate.py. */
+public final class MathAst {{
+    private MathAst() {{}}
+
+    public enum NodeType {{
+        NUMBER, REFERENCE, NAME, FUNCTION_CALL, ARRAY,
+        UMINUS, UPLUS, ADD, SUB, MUL, DIV, POW
+    }}
+
+    /** Borrows the rough interface of libsbml's ASTNode, minus the XML
+     * dependency - same design note as emit_python.py's ASTNode. */
+    public static final class Node {{
+        public final NodeType nodeType;
+        public final String text;   // NUMBER / REFERENCE: the raw source lexeme
+        public final String name;   // NAME / FUNCTION_CALL: the identifier
+        public final List<Node> children;
+
+        Node(NodeType nodeType, String text, String name, List<Node> children) {{
+            this.nodeType = nodeType;
+            this.text = text;
+            this.name = name;
+            this.children = children;
+        }}
+
+        public boolean isNumber() {{ return nodeType == NodeType.NUMBER; }}
+        public boolean isReference() {{ return nodeType == NodeType.REFERENCE; }}
+        public boolean isName() {{ return nodeType == NodeType.NAME; }}
+        public boolean isFunctionCall() {{ return nodeType == NodeType.FUNCTION_CALL; }}
+        public int getNumChildren() {{ return children.size(); }}
+        public Node getChild(int index) {{ return children.get(index); }}
+
+        /** Depth-first (this node first, then each child) - the traversal
+         * MathRules.java uses for Types-0002 through Types-0004. */
+        public List<Node> walk() {{
+            List<Node> out = new ArrayList<>();
+            walkInto(out);
+            return out;
+        }}
+
+        private void walkInto(List<Node> out) {{
+            out.add(this);
+            for (Node c : children) c.walkInto(out);
+        }}
+    }}
+
+    /** Raised by parse() when the text isn't a well-formed SED2 math
+     * expression - the condition Types-0001 reports, with this exception's
+     * message as its {{parse-message}}. */
+    public static final class MathSyntaxError extends RuntimeException {{
+        public MathSyntaxError(String message) {{ super(message); }}
+    }}
+
+    private static final Map<String, String> RELOP_KIND = Map.of(
+            "==", "eq", "!=", "neq", "<>", "neq", "><", "neq",
+            "<", "lt", ">", "gt", "<=", "leq", ">=", "geq");
+
+    /** a < b < c -> lt(a, b, c); a < b <= c -> and(lt(a, b), leq(b, c)) -
+     * see emit_python.py's _build_relational for the full rationale this
+     * mirrors verbatim. */
+    private static Node buildRelational(List<Node> operands, List<String> kinds) {{
+        if (kinds.isEmpty()) return operands.get(0);
+        List<Node> runNodes = new ArrayList<>();
+        int i = 0;
+        int n = kinds.size();
+        while (i < n) {{
+            String kind = kinds.get(i);
+            List<Node> runOperands = new ArrayList<>();
+            runOperands.add(operands.get(i));
+            runOperands.add(operands.get(i + 1));
+            int j = i + 1;
+            if (!kind.equals("neq")) {{
+                while (j < n && kinds.get(j).equals(kind)) {{
+                    runOperands.add(operands.get(j + 1));
+                    j++;
+                }}
+            }}
+            runNodes.add(new Node(NodeType.FUNCTION_CALL, null, kind, runOperands));
+            i = j;
+        }}
+        if (runNodes.size() == 1) return runNodes.get(0);
+        return new Node(NodeType.FUNCTION_CALL, null, "and", runNodes);
+    }}
+
+    /** a && b && c -> and(a, b, c); a && b || c -> or(and(a, b), c) - see
+     * emit_python.py's _flatten_logical for the full rationale this
+     * mirrors verbatim. */
+    private static Node flattenLogical(List<Node> operands, List<String> ops) {{
+        if (ops.isEmpty()) return operands.get(0);
+        List<String> groupOps = new ArrayList<>();
+        List<List<Node>> groupOperands = new ArrayList<>();
+        String currentOp = ops.get(0);
+        List<Node> currentOperands = new ArrayList<>();
+        currentOperands.add(operands.get(0));
+        currentOperands.add(operands.get(1));
+        for (int i = 1; i < ops.size(); i++) {{
+            if (ops.get(i).equals(currentOp)) {{
+                currentOperands.add(operands.get(i + 1));
+            }} else {{
+                groupOps.add(currentOp);
+                groupOperands.add(currentOperands);
+                currentOp = ops.get(i);
+                currentOperands = new ArrayList<>();
+                currentOperands.add(groupOperands.get(groupOperands.size() - 1)
+                        .get(groupOperands.get(groupOperands.size() - 1).size() - 1));
+                currentOperands.add(operands.get(i + 1));
+            }}
+        }}
+        groupOps.add(currentOp);
+        groupOperands.add(currentOperands);
+        Node result = new Node(NodeType.FUNCTION_CALL, null, groupOps.get(0), groupOperands.get(0));
+        for (int g = 1; g < groupOps.size(); g++) {{
+            List<Node> children = new ArrayList<>();
+            children.add(result);
+            children.addAll(groupOperands.get(g).subList(1, groupOperands.get(g).size()));
+            result = new Node(NodeType.FUNCTION_CALL, null, groupOps.get(g), children);
+        }}
+        return result;
+    }}
+
+    private static final class Builder extends mathBaseVisitor<Node> {{
+        @Override
+        public Node visitStart(mathParser.StartContext ctx) {{ return visit(ctx.expr()); }}
+
+        @Override
+        public Node visitExpr(mathParser.ExprContext ctx) {{ return visit(ctx.logical()); }}
+
+        @Override
+        public Node visitLogical(mathParser.LogicalContext ctx) {{
+            List<mathParser.RelationalContext> relationals = ctx.relational();
+            if (relationals.size() == 1) return visit(relationals.get(0));
+            List<Node> operands = new ArrayList<>();
+            for (mathParser.RelationalContext r : relationals) operands.add(visit(r));
+            List<String> ops = new ArrayList<>();
+            for (int i = 1; i < ctx.getChildCount(); i += 2) {{
+                ops.add(ctx.getChild(i).getText().equals("&&") ? "and" : "or");
+            }}
+            return flattenLogical(operands, ops);
+        }}
+
+        @Override
+        public Node visitRelational(mathParser.RelationalContext ctx) {{
+            List<mathParser.AdditiveContext> additives = ctx.additive();
+            if (additives.size() == 1) return visit(additives.get(0));
+            List<Node> operands = new ArrayList<>();
+            for (mathParser.AdditiveContext a : additives) operands.add(visit(a));
+            List<String> kinds = new ArrayList<>();
+            for (mathParser.RelopContext r : ctx.relop()) kinds.add(RELOP_KIND.get(r.getText()));
+            return buildRelational(operands, kinds);
+        }}
+
+        @Override
+        public Node visitAdditive(mathParser.AdditiveContext ctx) {{
+            List<mathParser.MultiplicativeContext> muls = ctx.multiplicative();
+            Node node = visit(muls.get(0));
+            int idx = 1;
+            for (int i = 1; i < ctx.getChildCount(); i += 2) {{
+                String opText = ctx.getChild(i).getText();
+                Node rhs = visit(muls.get(idx));
+                idx++;
+                node = new Node(opText.equals("+") ? NodeType.ADD : NodeType.SUB, null, null, List.of(node, rhs));
+            }}
+            return node;
+        }}
+
+        @Override
+        public Node visitMultiplicative(mathParser.MultiplicativeContext ctx) {{
+            List<mathParser.UnaryContext> units = ctx.unary();
+            Node node = visit(units.get(0));
+            int idx = 1;
+            for (int i = 1; i < ctx.getChildCount(); i += 2) {{
+                String opText = ctx.getChild(i).getText();
+                Node rhs = visit(units.get(idx));
+                idx++;
+                if (opText.equals("*")) {{
+                    node = new Node(NodeType.MUL, null, null, List.of(node, rhs));
+                }} else if (opText.equals("/")) {{
+                    node = new Node(NodeType.DIV, null, null, List.of(node, rhs));
+                }} else {{
+                    // infix '%' is rem(), dividend's-sign semantics (Grammar)
+                    node = new Node(NodeType.FUNCTION_CALL, null, "rem", List.of(node, rhs));
+                }}
+            }}
+            return node;
+        }}
+
+        @Override
+        public Node visitUnaryOp(mathParser.UnaryOpContext ctx) {{
+            String opText = ctx.getChild(0).getText();
+            Node operand = visit(ctx.unary());
+            if (opText.equals("!")) {{
+                return new Node(NodeType.FUNCTION_CALL, null, "not", List.of(operand));
+            }}
+            return new Node(opText.equals("-") ? NodeType.UMINUS : NodeType.UPLUS, null, null, List.of(operand));
+        }}
+
+        @Override
+        public Node visitUnaryPower(mathParser.UnaryPowerContext ctx) {{ return visit(ctx.power()); }}
+
+        @Override
+        public Node visitPower(mathParser.PowerContext ctx) {{
+            Node base = visit(ctx.atom());
+            if (ctx.unary() != null) {{
+                return new Node(NodeType.POW, null, null, List.of(base, visit(ctx.unary())));
+            }}
+            return base;
+        }}
+
+        @Override
+        public Node visitNumberAtom(mathParser.NumberAtomContext ctx) {{
+            return new Node(NodeType.NUMBER, ctx.getText(), null, List.of());
+        }}
+
+        @Override
+        public Node visitReferenceAtom(mathParser.ReferenceAtomContext ctx) {{
+            return new Node(NodeType.REFERENCE, ctx.getText(), null, List.of());
+        }}
+
+        @Override
+        public Node visitIdentAtom(mathParser.IdentAtomContext ctx) {{
+            return new Node(NodeType.NAME, null, ctx.getText(), List.of());
+        }}
+
+        @Override
+        public Node visitCallAtom(mathParser.CallAtomContext ctx) {{
+            String name = ctx.IDENTIFIER().getText();
+            List<Node> args = new ArrayList<>();
+            if (ctx.arglist() != null) {{
+                for (mathParser.ExprContext e : ctx.arglist().expr()) args.add(visit(e));
+            }}
+            return new Node(NodeType.FUNCTION_CALL, null, name, args);
+        }}
+
+        @Override
+        public Node visitArrayAtom(mathParser.ArrayAtomContext ctx) {{
+            List<Node> args = new ArrayList<>();
+            if (ctx.arglist() != null) {{
+                for (mathParser.ExprContext e : ctx.arglist().expr()) args.add(visit(e));
+            }}
+            return new Node(NodeType.ARRAY, null, null, args);
+        }}
+
+        @Override
+        public Node visitParenAtom(mathParser.ParenAtomContext ctx) {{ return visit(ctx.expr()); }}
+    }}
+
+    private static final class CollectingErrorListener extends BaseErrorListener {{
+        final List<String> errors = new ArrayList<>();
+
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+                                 int charPositionInLine, String msg, RecognitionException e) {{
+            errors.add("line " + line + ":" + charPositionInLine + " " + msg);
+        }}
+    }}
+
+    /** Parses a SED2 math string into a Node tree (Types-0001). Throws
+     * MathSyntaxError with the parser's own message on any malformed
+     * input. */
+    public static Node parse(String text) {{
+        CollectingErrorListener listener = new CollectingErrorListener();
+        mathLexer lexer = new mathLexer(CharStreams.fromString(text));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(listener);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        mathParser parser = new mathParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(listener);
+        mathParser.StartContext tree = parser.start();
+        if (!listener.errors.isEmpty()) {{
+            throw new MathSyntaxError(String.join("; ", listener.errors));
+        }}
+        return new Builder().visit(tree);
+    }}
+}}
+'''
+
+
+def _math_rules_java() -> str:
+    """MathRules.java - Types-0001 through Types-0004 (Design.md's Math
+    section), combined into one dispatcher (checkMathField) the way
+    emit_python.py's _check_math_field wires together
+    templates/python/rules/Types-000N.py's four `check()` functions. Java
+    has no equivalent of Python's per-rule-ID templates/<lang>/rules/
+    directory (see this module's docstring's "Unlike the Python target..."
+    note on the reference-resolution rules that DIDN'T get ported for the
+    same reason) - these four checks are simple and self-contained enough
+    to live directly here rather than inventing a Java analog of that
+    convention. GENERATED - do not hand-edit; regenerate via
+    generator/generate.py."""
+    return f'''package {PKG};
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Types-0001..0004: the shared math-grammar rules any field with
+ * FieldSpec.isMath (x-math) runs on its own literal string value - see
+ * SedBase.validateOwn(). GENERATED - do not hand-edit; regenerate via
+ * generator/generate.py. */
+public final class MathRules {{
+    private MathRules() {{}}
+
+    /** value is the field's own raw string - never a reference: SedBase's
+     * validateOwn() only calls here for a literal string value (Types-
+     * 0001.md: "When the math attribute is itself a reference, ... apply
+     * only if the reference resolves statically to a string constant",
+     * out of scope until reference resolution exists for Java - see this
+     * module's docstring). Returns [] if value parses and every function
+     * call / bare identifier it contains checks out; otherwise one
+     * ValidationProblem per violation (Types-0001 short-circuits the rest,
+     * same as emit_python.py's _check_math_field - an unparseable
+     * expression has no tree left to walk for 0002-0004). */
+    public static List<ValidationProblem> checkMathField(
+            String value, String className, String idValue, String attr, String location) {{
+        List<ValidationProblem> problems = new ArrayList<>();
+        MathAst.Node ast;
+        try {{
+            ast = MathAst.parse(value);
+        }} catch (MathAst.MathSyntaxError e) {{
+            Map<String, Object> ph = new HashMap<>();
+            ph.put("attr", attr);
+            ph.put("class", className);
+            ph.put("id", idValue);
+            ph.put("expr", value);
+            ph.put("parse-message", e.getMessage());
+            problems.add(RuleCatalog.makeProblem("Types-0001", location, ph));
+            return problems;
+        }}
+        for (MathAst.Node node : ast.walk()) {{
+            if (node.isFunctionCall() && !PredefinedFunctions.FUNCTIONS.containsKey(node.name)) {{
+                Map<String, Object> ph = new HashMap<>();
+                ph.put("attr", attr);
+                ph.put("class", className);
+                ph.put("id", idValue);
+                ph.put("function", node.name);
+                problems.add(RuleCatalog.makeProblem("Types-0002", location, ph));
+            }}
+        }}
+        for (MathAst.Node node : ast.walk()) {{
+            if (!node.isFunctionCall()) continue;
+            PredefinedFunctions.Arity spec = PredefinedFunctions.FUNCTIONS.get(node.name);
+            if (spec == null) continue;  // Types-0002's concern, not a duplicate diagnosis here
+            int count = node.getNumChildren();
+            if (!spec.ok(count)) {{
+                Map<String, Object> ph = new HashMap<>();
+                ph.put("attr", attr);
+                ph.put("class", className);
+                ph.put("id", idValue);
+                ph.put("function", node.name);
+                ph.put("count", count);
+                ph.put("expected-count", spec.format());
+                problems.add(RuleCatalog.makeProblem("Types-0003", location, ph));
+            }}
+        }}
+        for (MathAst.Node node : ast.walk()) {{
+            if (node.isName() && !PredefinedFunctions.CONSTANTS.contains(node.name)) {{
+                Map<String, Object> ph = new HashMap<>();
+                ph.put("attr", attr);
+                ph.put("class", className);
+                ph.put("id", idValue);
+                ph.put("value", node.name);
+                problems.add(RuleCatalog.makeProblem("Types-0004", location, ph));
+            }}
+        }}
+        return problems;
+    }}
+}}
+'''
+
+
+def _normalize_arity_java(raw) -> tuple:
+    """Same two-shape contract as emit_python.py's _normalize_arity
+    (kept as an independent copy rather than a cross-module import - see
+    this module's docstring on Java/Python emitters staying self-
+    contained): ("set", sorted_list_of_ints) for a fixed handful of allowed
+    counts, or ("range", min, max) with max possibly None for unbounded."""
+    if isinstance(raw, bool):
+        raise ValueError(f"unrecognized arity shape: {raw!r}")
+    if isinstance(raw, int):
+        return ("set", [raw])
+    if isinstance(raw, list):
+        return ("set", sorted(set(raw)))
+    if isinstance(raw, dict):
+        return ("range", raw.get("min", 0), raw.get("max"))
+    raise ValueError(f"unrecognized arity shape: {raw!r}")
+
+
+def emit_predefined_functions_java(registry_path: str | None = None) -> str:
+    """Java analog of emit_python.py's emit_predefined_functions_py -
+    compiles schema/predefined-functions.json into PredefinedFunctions.java
+    (FUNCTIONS: name -> Arity, CONSTANTS: set of names) for MathRules.java's
+    Types-0002/-0003/-0004 checks. Pure derived data (Design.md's
+    Validation section), so generated fresh every run like its Python
+    counterpart, not copied from a template."""
+    registry_path = registry_path or os.path.join(_repo_root(), "schema", "predefined-functions.json")
+    with open(registry_path) as f:
+        registry = _json.load(f)
+    functions: dict[str, tuple] = {}
+    for entry in registry.get("functions", []):
+        functions[entry["name"]] = _normalize_arity_java(entry["arity"])
+    for entry in registry.get("distrib", []):
+        lengths = sorted(set(len(variant) for variant in entry["variants"]))
+        functions[entry["name"]] = ("set", lengths)
+    constants = sorted(set(entry["name"] for entry in registry.get("constants", [])))
+
+    def _fmt_entry(name: str, spec: tuple) -> str:
+        if spec[0] == "set":
+            vals = ", ".join(str(v) for v in spec[1])
+            return f"        FUNCTIONS.put({_java_lit(name)}, Arity.ofSet({vals}));"
+        _, lo, hi = spec
+        hi_lit = "null" if hi is None else str(hi)
+        return f"        FUNCTIONS.put({_java_lit(name)}, Arity.ofRange({lo}, {hi_lit}));"
+
+    lines = [
+        f"package {PKG};",
+        "",
+        "import java.util.ArrayList;",
+        "import java.util.Arrays;",
+        "import java.util.HashMap;",
+        "import java.util.HashSet;",
+        "import java.util.List;",
+        "import java.util.Map;",
+        "import java.util.Set;",
+        "import java.util.TreeSet;",
+        "",
+        "/** Compiled math function/constant registry for Types-0002/-0003/-0004's",
+        " * math-grammar checks (mirrors generator/emit_python.py's",
+        " * emit_predefined_functions_py / _predefined_functions.py). GENERATED",
+        " * from schema/predefined-functions.json by generator/generate.py - do",
+        " * not hand-edit. */",
+        "public final class PredefinedFunctions {",
+        "    private PredefinedFunctions() {}",
+        "",
+        "    /** ('set', {2, 4}) for a fixed handful of allowed argument counts",
+        "     * (an exact arity normalizes to a one-element set), or ('range', min,",
+        "     * max) with max possibly null for unbounded (e.g. min/max/sum's",
+        '     * {"min": 1, "max": null}) - same two-shape contract as',
+        "     * emit_python.py's _normalize_arity / templates/python/rules/",
+        "     * Types-0003.py's _arity_ok/_format_arity. */",
+        "    public static final class Arity {",
+        "        public final boolean isRange;",
+        "        public final Set<Integer> values;  // set only",
+        "        public final int min;              // range only",
+        "        public final Integer max;          // range only; null = unbounded",
+        "",
+        "        private Arity(boolean isRange, Set<Integer> values, int min, Integer max) {",
+        "            this.isRange = isRange;",
+        "            this.values = values;",
+        "            this.min = min;",
+        "            this.max = max;",
+        "        }",
+        "",
+        "        static Arity ofSet(int... vals) {",
+        "            Set<Integer> s = new TreeSet<>();",
+        "            for (int v : vals) s.add(v);",
+        "            return new Arity(false, s, 0, null);",
+        "        }",
+        "",
+        "        static Arity ofRange(int lo, Integer hi) {",
+        "            return new Arity(true, null, lo, hi);",
+        "        }",
+        "",
+        "        public boolean ok(int count) {",
+        "            if (!isRange) return values.contains(count);",
+        "            return count >= min && (max == null || count <= max);",
+        "        }",
+        "",
+        '        /** Renders this arity for a {expected-count} placeholder -',
+        '         * "2 or 4", "1", "1 or more", "2 to 4". */',
+        "        public String format() {",
+        "            if (!isRange) {",
+        "                List<String> parts = new ArrayList<>();",
+        "                for (int v : values) parts.add(String.valueOf(v));",
+        '                return String.join(" or ", parts);',
+        "            }",
+        '            if (max == null) return min + " or more";',
+        "            if (min == max) return String.valueOf(min);",
+        '            return min + " to " + max;',
+        "        }",
+        "    }",
+        "",
+        "    public static final Map<String, Arity> FUNCTIONS = new HashMap<>();",
+        "    public static final Set<String> CONSTANTS = new HashSet<>(Arrays.asList(",
+        "        " + ", ".join(_java_lit(c) for c in constants),
+        "    ));",
+        "",
+        "    static {",
+    ]
+    for name in sorted(functions):
+        lines.append(_fmt_entry(name, functions[name]))
+    lines.append("    }")
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def runtime_files() -> dict:
     return {
         "ValidationProblem.java": _validation_problem_java(),
@@ -784,6 +1318,8 @@ def runtime_files() -> dict:
         "IdKeyedCollection.java": _id_keyed_collection_java(),
         "ListCollection.java": _list_collection_java(),
         "SedBase.java": _sed_base_java(),
+        "MathAst.java": _math_ast_java(),
+        "MathRules.java": _math_rules_java(),
     }
 
 
@@ -810,7 +1346,7 @@ def _field_spec_expr(f: Field) -> str:
         f"new FieldSpec({_java_lit(f.name)}, {_java_lit(t.kind)}, {str(f.required).lower()}, "
         f"{_java_lit(f.rule_id)}, {_java_lit(f.required_rule_id)}, {_java_lit(f.origin_class + '-0000')}, "
         f"{_java_double_lit(t.minimum)}, {_java_double_lit(t.exclusive_minimum)}, {_java_lit(t.pattern)}, "
-        f"{_java_lit(t.item_class)}, {_java_lit(t.item_discriminator)})"
+        f"{_java_lit(t.item_class)}, {_java_lit(t.item_discriminator)}, {str(f.is_math).lower()})"
     )
 
 
@@ -1640,7 +2176,7 @@ def _copy_fixture_test_java(out_dir: str, java_package: str) -> None:
         f.write(content)
 
 
-def _pom_xml(group_id: str, artifact_id: str, description: str) -> str:
+def _pom_xml(group_id: str, artifact_id: str, description: str, antlr_runtime_version: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
@@ -1665,6 +2201,16 @@ def _pom_xml(group_id: str, artifact_id: str, description: str) -> str:
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
       <version>1.5.1</version>
+    </dependency>
+    <!-- Build-time-only dependency of the *generator* is the ANTLR tool jar
+         (antlr_tool.py); this is the small runtime the ANTLR-generated
+         mathLexer/mathParser/mathBaseVisitor (MathAst.java) need at
+         compile+run time - same pinned version, mirrors emit_python.py's
+         antlr4-python3-runtime pyproject.toml dependency. -->
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>{antlr_runtime_version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -1707,6 +2253,8 @@ def emit_java_package(
     maven_group_id: str | None = None,
     maven_artifact_id: str = "libsed2test",
     description: str | None = None,
+    build_math: bool = True,
+    antlr_cache_dir: str | None = None,
 ) -> None:
     global PKG
     PKG = java_package
@@ -1735,8 +2283,21 @@ def emit_java_package(
         f.write(emit_rules_data_java(model))
     with open(os.path.join(pkg_dir, "Io.java"), "w") as f:
         f.write(emit_io_java(model))
+    with open(os.path.join(pkg_dir, "PredefinedFunctions.java"), "w") as f:
+        f.write(emit_predefined_functions_java())
+
+    from .antlr_tool import generate_java_math_parser, ANTLR_VERSION
+    if build_math:
+        # ANTLR tool is a build-time-only dependency of the generator itself
+        # (Design.md's Parser Strategy) - runs here, writes the generated
+        # mathLexer.java/mathParser.java/mathVisitor.java/mathBaseVisitor.java
+        # into <pkg>/antlr/, which MathAst.java above imports from. Mirrors
+        # emit_python.py's generate_python_math_parser call exactly (same
+        # build_math escape hatch for callers that want to skip the ANTLR
+        # jar's one-time download, e.g. offline tests).
+        generate_java_math_parser(os.path.join(pkg_dir, "antlr"), PKG + ".antlr", cache_dir=antlr_cache_dir)
 
     with open(os.path.join(out_dir, "pom.xml"), "w") as f:
-        f.write(_pom_xml(maven_group_id, maven_artifact_id, description))
+        f.write(_pom_xml(maven_group_id, maven_artifact_id, description, ANTLR_VERSION))
 
     _copy_fixture_test_java(out_dir, PKG)

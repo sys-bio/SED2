@@ -19,17 +19,17 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class CsvImport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("location", "StringOrRef", true, "CsvImport-0002", "CsvImport-0001", "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("organization", "StringOrRef", false, "CsvImport-0004", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("separator", "StringOrRef", false, "CsvImport-0006", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("headers", "BooleanOrRef", false, "CsvImport-0008", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("columnNames", "ArrayOrRef", false, "CsvImport-0010", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("ncols", "IntegerOrRef", false, "CsvImport-0012", null, "CsvImport-0000", null, 0.0, null, null, null),
-        new FieldSpec("nrows", "IntegerOrRef", false, "CsvImport-0014", null, "CsvImport-0000", null, 0.0, null, null, null),
-        new FieldSpec("units", "ArrayOrRef", false, "CsvImport-0016", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+        new FieldSpec("location", "StringOrRef", true, "CsvImport-0002", "CsvImport-0001", "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("organization", "StringOrRef", false, "CsvImport-0004", null, "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("separator", "StringOrRef", false, "CsvImport-0006", null, "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("headers", "BooleanOrRef", false, "CsvImport-0008", null, "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("columnNames", "ArrayOrRef", false, "CsvImport-0010", null, "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("ncols", "IntegerOrRef", false, "CsvImport-0012", null, "CsvImport-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("nrows", "IntegerOrRef", false, "CsvImport-0014", null, "CsvImport-0000", null, 0.0, null, null, null, false),
+        new FieldSpec("units", "ArrayOrRef", false, "CsvImport-0016", null, "CsvImport-0000", null, null, null, null, null, false),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
