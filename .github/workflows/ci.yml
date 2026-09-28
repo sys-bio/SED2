@@ -1,15 +1,43 @@
-# SED2 generator CI - Phase 1 skeleton, scoped to test-specsheets/ (the
-# small synthetic tree the generator was bootstrapped and verified against;
-# see test-specsheets/README.md and Design.md's Testing section). Once the
-# generator is proven against the real 51-class specsheets/ tree (Phase 2),
-# re-point SPEC_ROOT below at specsheets/ and drop the test-specsheets/
-# scoping note in each job's name.
+# SED2 generator CI.
 #
-# Each language job independently: runs the generator fresh against
-# test-specsheets/, copies that language's hand-written fixture-test glue
-# from templates/<lang>/tests/ (never regenerated - see Design.md's Code
-# Generation section) alongside the generated output, and runs the full
-# fixture suite (test-specsheets/fixtures/*.sed2.json) for that target.
+# Nothing generated is ever hand-edited (see Design.md's Code Generation
+# section), so a generated/ directory that's out of sync with generator/ +
+# specsheets/ (or test-specsheets/) is itself a bug. This workflow makes
+# that impossible to leave unnoticed: on every run it deletes each
+# generated/ directory, regenerates it fresh from source, and either
+# (a) the regenerated output matches what's already committed - nothing to
+#     do, proceed straight to testing it, or
+# (b) it doesn't - on a direct push/workflow_dispatch, commit the fresh
+#     output right back (self-healing: the tree in git can never drift from
+#     what generator/ actually produces); on a pull_request, fail the job
+#     instead of pushing to someone else's branch, with a diff explaining
+#     what to regenerate locally.
+#
+# Determinism note: this scheme only stays a one-shot self-heal, never a
+# commit-on-every-run loop, if the generator's output is byte-identical
+# across repeated runs against unchanged input - no timestamps, UUIDs, PIDs,
+# or hash-order-dependent set/dict iteration leaking into generated source.
+# Verified by running the generator twice in a row and diffing the output
+# trees (identical) plus an audit of generator/*.py for those patterns
+# before this workflow was written; worth re-checking the same way if the
+# generator ever grows a new source of that kind. Separately: the commit
+# below is made with the default GITHUB_TOKEN, which GitHub deliberately
+# does *not* treat as a workflow trigger - so this push does not start a
+# second CI run (no PAT/deploy key is configured for that). That's fine
+# here: the jobs that test the regenerated output are downstream (needs:)
+# jobs in this *same* run, not a second triggered run, so testing still
+# happens every time regardless of whether a commit was made. If a PAT is
+# added later specifically to make the commit trigger a fresh run too, the
+# determinism property above is what keeps that from looping: that second
+# run would regenerate, find no diff (since it's the same input as the
+# commit it's testing), and proceed straight to tests with nothing more to
+# commit.
+#
+# Two independent regenerate+test pipelines:
+#   - test-specsheets/ -> test-specsheets/generated/  (Phase 1, working)
+#   - specsheets/      -> generated/                  (Phase 2, not started)
+# See regenerate-main below for why that second one is expected to fail
+# today, and why it has no downstream test jobs yet.
 
 name: CI
 
@@ -20,81 +48,123 @@ on:
     branches: [develop]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
-  SPEC_ROOT: test-specsheets
-  GEN_OUT: test-specsheets/generated
+  TEST_SPEC_ROOT: test-specsheets
+  TEST_GEN_OUT: test-specsheets/generated
+  MAIN_SPEC_ROOT: specsheets
+  MAIN_GEN_OUT: generated
 
 jobs:
-  generate:
-    name: Generator (schema composition + codegen, all targets)
+  # ---------------------------------------------------------------------
+  # test-specsheets/ -> test-specsheets/generated/   (Phase 1)
+  # ---------------------------------------------------------------------
+
+  regenerate-test:
+    name: Regenerate test-specsheets/generated (self-healing)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run generator for all three targets
+
+      - name: Delete existing generated directory, if any
+        run: rm -rf "$TEST_GEN_OUT"
+
+      - name: Regenerate from test-specsheets/ (all three targets)
         run: |
           python3 generator/generate.py \
-            --spec-root "$SPEC_ROOT" \
-            --out "$GEN_OUT" \
+            --spec-root "$TEST_SPEC_ROOT" \
+            --out "$TEST_GEN_OUT" \
             --doc-class TestDocument \
             --base-mixin TestBase \
             --lang python,java,cpp
 
+      - name: Commit regenerated output if it changed
+        if: github.event_name != 'pull_request'
+        run: |
+          git add -A -- "$TEST_GEN_OUT"
+          if git diff --cached --quiet; then
+            echo "No changes - test-specsheets/generated already matches the generator's output."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Regenerate test-specsheets/generated from test-specsheets/"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Fail if this PR's committed output is stale
+        if: github.event_name == 'pull_request'
+        run: |
+          git add -A -- "$TEST_GEN_OUT"
+          if ! git diff --cached --quiet; then
+            echo "::error::test-specsheets/generated doesn't match what generator/ produces from test-specsheets/. Run the generator locally and commit the result." >&2
+            git diff --cached --stat
+            exit 1
+          fi
+
+      - name: Upload regenerated output for the test jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-specsheets-generated
+          path: test-specsheets/generated
+          retention-days: 7
+
   test-python:
     name: Python target (test-specsheets/)
-    needs: generate
+    needs: regenerate-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Generate Python package
-        run: |
-          python3 generator/generate.py \
-            --spec-root "$SPEC_ROOT" \
-            --out "$GEN_OUT" \
-            --doc-class TestDocument \
-            --base-mixin TestBase \
-            --lang python
+      - name: Replace checked-out generated/ with this run's fresh copy
+        run: rm -rf "$TEST_GEN_OUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-specsheets-generated
+          path: test-specsheets/generated
       - name: Install libsed2test + test deps
         run: |
-          pip install -e "$GEN_OUT/python"
+          pip install -e "$TEST_GEN_OUT/python"
           pip install pytest
       - name: Copy hand-written fixture-test glue
-        run: cp templates/python/tests/test_fixtures.py "$GEN_OUT/python/"
+        run: cp templates/python/tests/test_fixtures.py "$TEST_GEN_OUT/python/"
       - name: Run fixture suite
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
-        run: pytest "$GEN_OUT/python/test_fixtures.py" -q
+        run: pytest "$TEST_GEN_OUT/python/test_fixtures.py" -q
 
   test-java:
     name: Java target (test-specsheets/)
-    needs: generate
+    needs: regenerate-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-      - name: Generate Java package
-        run: |
-          python3 generator/generate.py \
-            --spec-root "$SPEC_ROOT" \
-            --out "$GEN_OUT" \
-            --doc-class TestDocument \
-            --base-mixin TestBase \
-            --lang java
+      - name: Replace checked-out generated/ with this run's fresh copy
+        run: rm -rf "$TEST_GEN_OUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-specsheets-generated
+          path: test-specsheets/generated
       - name: Copy hand-written fixture-test glue
         run: |
-          mkdir -p "$GEN_OUT/java/src/test/java/org/sed2test"
-          cp templates/java/tests/FixtureTest.java "$GEN_OUT/java/src/test/java/org/sed2test/"
+          mkdir -p "$TEST_GEN_OUT/java/src/test/java/org/sed2test"
+          cp templates/java/tests/FixtureTest.java "$TEST_GEN_OUT/java/src/test/java/org/sed2test/"
       - name: Run fixture suite
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
@@ -103,25 +173,20 @@ jobs:
 
   test-cpp:
     name: C++ target (test-specsheets/)
-    needs: generate
+    needs: regenerate-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Replace checked-out generated/ with this run's fresh copy
+        run: rm -rf "$TEST_GEN_OUT"
+      - uses: actions/download-artifact@v4
         with:
-          python-version: "3.11"
-      - name: Generate C++ package
-        run: |
-          python3 generator/generate.py \
-            --spec-root "$SPEC_ROOT" \
-            --out "$GEN_OUT" \
-            --doc-class TestDocument \
-            --base-mixin TestBase \
-            --lang cpp
+          name: test-specsheets-generated
+          path: test-specsheets/generated
       - name: Copy hand-written fixture-test glue
         run: |
-          mkdir -p "$GEN_OUT/cpp/tests"
-          cp templates/cpp/tests/FixtureTest.cpp "$GEN_OUT/cpp/tests/"
+          mkdir -p "$TEST_GEN_OUT/cpp/tests"
+          cp templates/cpp/tests/FixtureTest.cpp "$TEST_GEN_OUT/cpp/tests/"
       - name: Configure (CMake + FetchContent for jsoncons/GoogleTest)
         working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -133,3 +198,69 @@ jobs:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/test-specsheets/fixtures
         working-directory: ${{ github.workspace }}/test-specsheets/generated/cpp/build
         run: ./fixture_tests
+
+  # ---------------------------------------------------------------------
+  # specsheets/ -> generated/   (Phase 2 - not started, see Design.md)
+  #
+  # The generator has only ever been run against the small synthetic
+  # test-specsheets/ tree above. specsheets/ is the real, 51-class spec
+  # (doc-class SEDDocument, base mixin SEDBase); pointing the generator at
+  # it is future work. This job is wired up now, as asked, so it starts
+  # self-healing the moment Phase 2 makes it succeed - but until then the
+  # "Regenerate" step below is *expected* to fail, and that failure is the
+  # correct, honest signal that Phase 2 isn't done, not a broken workflow.
+  # It's a standalone job (no `needs` to or from it) so it can be red
+  # without blocking the working Phase 1 pipeline above.
+  #
+  # There's deliberately no test-python-main/test-java-main/test-cpp-main
+  # yet: those need a real fixtures/ tree and hand-written test harnesses
+  # for the real spec, neither of which exists yet either (see Design.md's
+  # Repository Layout and Testing sections). Add them here, same shape as
+  # the test-specsheets jobs above, once those exist.
+  # ---------------------------------------------------------------------
+
+  regenerate-main:
+    name: Regenerate generated/ from specsheets/ (Phase 2 - expected to fail for now)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Delete existing generated directory, if any
+        run: rm -rf "$MAIN_GEN_OUT"
+
+      - name: Regenerate from specsheets/ (all three targets)
+        run: |
+          python3 generator/generate.py \
+            --spec-root "$MAIN_SPEC_ROOT" \
+            --out "$MAIN_GEN_OUT" \
+            --doc-class SEDDocument \
+            --base-mixin SEDBase \
+            --lang python,java,cpp
+
+      - name: Commit regenerated output if it changed
+        if: github.event_name != 'pull_request'
+        run: |
+          git add -A -- "$MAIN_GEN_OUT"
+          if git diff --cached --quiet; then
+            echo "No changes - generated/ already matches the generator's output."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Regenerate generated/ from specsheets/"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Fail if this PR's committed output is stale
+        if: github.event_name == 'pull_request'
+        run: |
+          git add -A -- "$MAIN_GEN_OUT"
+          if ! git diff --cached --quiet; then
+            echo "::error::generated/ doesn't match what generator/ produces from specsheets/. Run the generator locally and commit the result." >&2
+            git diff --cached --stat
+            exit 1
+          fi
