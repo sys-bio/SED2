@@ -1,4 +1,4 @@
-"""Shared runtime for the generated libsed2test package. GENERATED - do not
+"""Shared runtime for the generated libsed2 package. GENERATED - do not
 hand-edit; regenerate from test-specsheets/ via generator/generate.py."""
 from __future__ import annotations
 
@@ -178,13 +178,25 @@ def get_sed_reference(document, parsed: ParsedReference):
     return current, prefix
 
 
-def _check_reference_field(value, *, document, class_name, id_value, attr, location) -> list:
-    """Shared per-type dispatcher for the reference-resolution rules
-    (SEDBase-0005 through -0007 so far - see Task #10's tracked scope for
-    -0008 through -0015, which need outputs.json and aren't implemented
-    yet). Called for every SIdRef/*OrRef-kind field whose value is a
-    reference (is_reference(value)); mirrors _check_math_field's shape and
-    local-import-to-avoid-circularity convention (see its own docstring)."""
+def _check_reference_field(value, *, document, class_name, id_value, attr, location,
+                            referrer=None, field_kind=None, ref_type_rule_id=None,
+                            expected_enum=None) -> list:
+    """Shared per-type dispatcher for every reference-resolution rule
+    (SEDBase-0005 through -0015, plus the formulaic ref-type rules that
+    piggyback on -0015's scalar-reduction check - Design.md's Validation
+    section, "the formulaic 'if a reference, must resolve to type X' rules
+    ... needing no per-rule authorship"). Called for every SIdRef/*OrRef/
+    any-kind field whose value is a reference (is_reference(value));
+    mirrors _check_math_field's shape and local-import-to-avoid-
+    circularity convention (see its own docstring). `referrer` is the
+    element carrying this reference (self, in _validate_own) - needed only
+    by SEDBase-0013's own containment-tree scoping check, so it's the one
+    argument every OTHER caller in this module besides _validate_own's own
+    two call sites can safely omit. `field_kind`/`ref_type_rule_id`/
+    `expected_enum` drive the ref-type dispatch at the very end and can
+    likewise be omitted wherever there's no field-level ref-type rule to
+    check (an "any"-kind AnyValueOrRef field, or a plain SIdRef field that
+    only ever had one rule id to begin with)."""
     try:
         from ._rules import sedbase_0005, sedbase_0006, sedbase_0007
     except ImportError:
@@ -204,6 +216,440 @@ def _check_reference_field(value, *, document, class_name, id_value, attr, locat
     problems = problems + sedbase_0007.check(parsed, **kwargs)
     resolved, resolved_prefix = get_sed_reference(document, parsed)
     problems = problems + sedbase_0006.check(parsed, resolved, resolved_prefix, **kwargs)
+    if resolved is None or parsed.collection == "outputs":
+        # Nothing further to check against - either the reference didn't
+        # resolve at all (SEDBase-0006 already reported it), or it targets
+        # an Output (SEDBase-0007 already reported it; core-spec.md's
+        # Outputs are never a data SOURCE, so there's no "shape" to check
+        # an accessor/index chain against in the first place).
+        return problems
+    if parsed.collection != "constants":
+        # A constants target is a raw JSON value (IdKeyedCollection stores
+        # any-dict entries as-is, never dispatched to a SedBase instance -
+        # see this module's own any-dict handling notes elsewhere), so
+        # there's no containment ancestry to walk and SEDBase-0013's own
+        # Repeat-scoping concept doesn't apply to it at all.
+        problems = problems + _check_repeat_scoping(
+            referrer, resolved, parsed, class_name=class_name, id_value=id_value, location=location, value=value)
+    if parsed.collection == "tasks":
+        # AbstractTask-0003's own chronological rule - only ever meaningful
+        # for a '#tasks:...' target (a constants target has no ordering
+        # concept beyond SEDDocument-0013's own separate constants-only
+        # check; core-spec.md Section 3 exempts Output/Style referrers
+        # entirely, which _check_task_order detects on its own via
+        # _task_chain(referrer, ...) returning None for them).
+        problems = problems + _check_task_order(
+            referrer, resolved, document, parsed, class_name=class_name, id_value=id_value,
+            attr=attr, location=location, value=value)
+    problems = problems + _check_output_shape_and_ref_type(
+        parsed, resolved, document, class_name=class_name, id_value=id_value, attr=attr, location=location,
+        value=value, field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+    return problems
+
+
+# ---- SEDBase-0013: Repeat subTasks/range/index/loopVariables scoping ------
+# Pure containment-tree ancestry, no outputs.json/shape involved at all -
+# see SEDBase-0013.md's own text and templates/python/rules/SEDBase-0013.py.
+
+def _nearest_repeat_ancestor(elem):
+    cur = elem
+    while cur is not None:
+        if cur._get_id_collection("subTasks") is not None:
+            return cur
+        cur = cur.get_parent()
+    return None
+
+
+def _is_ancestor_or_self(candidate, elem):
+    cur = elem
+    while cur is not None:
+        if cur is candidate:
+            return True
+        cur = cur.get_parent()
+    return False
+
+
+def _check_repeat_scoping(referrer, resolved, parsed, *, class_name, id_value, location, value) -> list:
+    try:
+        from ._rules import sedbase_0013
+    except ImportError:
+        return []
+    dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+    is_repeat_itself = resolved._get_id_collection("subTasks") is not None
+    if is_repeat_itself:
+        # A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
+        # is never scoped (SEDBase-0013.md's own clarifying paragraph -
+        # "#tasks:loop1 or #tasks:loop1.aggregates ... from anywhere");
+        # only its .range/.index outputs are, since those only have a
+        # value during one iteration.
+        target_repeat = resolved if dot_name in ("range", "index") else None
+    else:
+        parent = resolved.get_parent()
+        target_repeat = _nearest_repeat_ancestor(parent) if parent is not None else None
+    if target_repeat is None or referrer is None:
+        return []
+    if _is_ancestor_or_self(target_repeat, referrer):
+        return []
+    return sedbase_0013.check(
+        False, target_repeat._own_id_for_message(), value=value,
+        class_name=class_name, id_value=id_value, location=location, make_problem=make_problem)
+
+
+# ---- AbstractTask-0003: the chronological ("no forward reference") rule --
+# core-spec.md Section 3 - see AbstractTask-0003.md's own worked-out cases
+# and templates/python/rules/AbstractTask-0003.py.
+
+def _dict_membership(node):
+    """(owner, coll_name, node_id, index) if node's own parent stores node
+    directly under a 'tasks' or 'subTasks' id-keyed collection - the two
+    collection kinds the chronological rule cares about (SEDDocument.tasks
+    itself, and a Repeat-family class's own subTasks) - else None. A
+    node stored under any OTHER id-keyed field (loopVariables,
+    aggregateOutputVariables, constants, outputs, styles, ...) doesn't
+    match here, which is exactly what lets _task_chain below collapse a
+    reference living in one of those fields down to its owning task's own
+    chronological position (see LoopVariable-0004.py's own docstring)."""
+    parent = node.get_parent()
+    if parent is None:
+        return None
+    for coll_name in ("tasks", "subTasks"):
+        coll = parent._get_id_collection(coll_name)
+        if coll is None:
+            continue
+        ids = list(coll.ids())
+        for idx, iid in enumerate(ids):
+            if coll.get(iid) is node:
+                return (parent, coll_name, iid, idx)
+    return None
+
+
+def _task_chain(elem, doc):
+    """The chain of dict-membership steps from SEDDocument.tasks down to
+    whichever tasks/subTasks entry directly contains `elem` (elem itself,
+    if elem IS such an entry) - outermost first, as a list of (id, index)
+    pairs. None if elem isn't reachable inside doc.tasks at all (an
+    Output/Style element, or doc itself) - core-spec.md Section 3: nothing
+    outside the tasks tree has a chronological position to compare."""
+    node = elem
+    chain = []
+    while node is not None and node is not doc:
+        m = _dict_membership(node)
+        if m is not None:
+            owner, coll_name, node_id, idx = m
+            chain.append((node_id, idx))
+            node = owner
+            continue
+        node = node.get_parent()
+    if not chain:
+        return None
+    chain.reverse()
+    return chain
+
+
+def _task_order_ok(rchain, tchain):
+    """AbstractTask-0003.md's own chronological comparison, walked level by
+    level (both chains are outermost-first): the first level where the two
+    chains name a DIFFERENT task-dict entry is the decisive one - the
+    target must be strictly earlier there ("a task appearing earlier in
+    the same tasks dictionary" / "an earlier sibling subTask", recursively
+    at whatever depth that turns out to be). If every level of the SHORTER
+    chain matches, the two chains share a task-lineage prefix:
+      - target chain no longer than referrer's: target names referrer's
+        own task, or an ancestor Repeat of it ("R itself, or any Repeat
+        enclosing R") - fine, UNLESS the two chains are the exact same
+        length (target IS referrer's own task - "a task never references
+        itself").
+      - target chain longer: target is a descendant subTask of referrer's
+        own task (Repeat-0008/-0009's own scenario: R's outputVariableMap/
+        aggregateOutputVariables referencing one of R's own subTasks) -
+        always fine, no ordering concept applies going downward."""
+    n = min(len(rchain), len(tchain))
+    for i in range(n):
+        rid, ridx = rchain[i]
+        tid, tidx = tchain[i]
+        if rid != tid:
+            return tidx < ridx
+    if len(tchain) <= len(rchain):
+        return len(tchain) < len(rchain)
+    return True
+
+
+def _check_task_order(referrer, resolved, document, parsed, *, class_name, id_value, attr, location, value) -> list:
+    try:
+        from ._rules import abstracttask_0003
+    except ImportError:
+        return []
+    if referrer is None or document is None:
+        return []
+    rchain = _task_chain(referrer, document)
+    if rchain is None:
+        # The referring element itself isn't inside SEDDocument.tasks at
+        # all (e.g. a Curve under outputs/ referencing a task) -
+        # core-spec.md Section 3: outputs always come chronologically
+        # after every task, so no ordering constraint applies to them.
+        return []
+    tchain = _task_chain(resolved, document)
+    if tchain is None:
+        return []
+    ok = _task_order_ok(rchain, tchain)
+    return abstracttask_0003.check(
+        ok, value=value, class_name=class_name, id_value=id_value,
+        attr=attr, location=location, make_problem=make_problem)
+
+
+# ---- Repeat-0008/-0009/-0010: a Repeat-family instance's own children ----
+# outputVariableMap/aggregateOutputVariables must stay scoped to that same
+# instance's own subTasks, and an aggregateOutputVariables entry may never
+# define appliedDimensions - see each rule's own templates/python/rules/
+# file. Detected by class SHAPE (_get_id_collection('subTasks') is not
+# None), not by name, so this applies uniformly to every Repeat-family
+# class (Loop/ParameterScan/Scatter in the real spec) without hardcoding
+# any of their names here.
+
+def _check_repeat_own_children(self) -> list:
+    try:
+        from ._rules import repeat_0008, repeat_0009, repeat_0010
+    except ImportError:
+        return []
+    if self._get_id_collection("subTasks") is None:
+        return []
+    document = self.get_document()
+
+    def _resolves_to_own_child(ref_value):
+        parsed = _parse_reference(ref_value)
+        resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
+        return resolved is not None and resolved.get_parent() is self
+
+    problems = []
+    ovm = self._values.get("outputVariableMap")
+    if isinstance(ovm, dict):
+        for key, entry_value in ovm.items():
+            if not is_reference(entry_value):
+                continue
+            if not _resolves_to_own_child(entry_value):
+                problems.extend(repeat_0008.check(
+                    False, value=entry_value, class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr=key,
+                    location=f"/outputVariableMap/{key}", make_problem=make_problem))
+    agg_coll = self._get_id_collection("aggregateOutputVariables")
+    if agg_coll is not None:
+        for entry_id in agg_coll.ids():
+            entry = agg_coll.get(entry_id)
+            entry_json = entry._own_json_value()
+            if "appliedDimensions" in entry_json:
+                problems.extend(repeat_0010.check(
+                    True, value=entry_json["appliedDimensions"], class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr="appliedDimensions",
+                    location=f"/aggregateOutputVariables/{entry_id}/appliedDimensions",
+                    make_problem=make_problem))
+            input_value = entry_json.get("input")
+            if input_value is not None and is_reference(input_value) and not _resolves_to_own_child(input_value):
+                problems.extend(repeat_0009.check(
+                    False, value=input_value, class_name=self.__class__.__name__,
+                    id_value=self._own_id_for_message(), attr="input",
+                    location=f"/aggregateOutputVariables/{entry_id}/input", make_problem=make_problem))
+    return problems
+
+
+# ---- LoopVariable-0004: subsequentValues stays scoped to the enclosing ---
+# Loop's own subTasks - same shape as Repeat-0008/-0009 above, but for the
+# one field a LoopVariable itself carries.
+
+def _check_loop_variable_scope(self) -> list:
+    try:
+        from ._rules import loopvariable_0004
+    except ImportError:
+        return []
+    if "subsequentValues" not in self._values:
+        return []
+    value = self._values["subsequentValues"]
+    if not is_reference(value):
+        return []
+    enclosing = self.get_parent()
+    if enclosing is None:
+        return []
+    document = self.get_document()
+    parsed = _parse_reference(value)
+    resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
+    ok = resolved is not None and resolved.get_parent() is enclosing
+    if ok:
+        return []
+    return loopvariable_0004.check(
+        False, value=value, id_value=self._own_id_for_message(),
+        location="/subsequentValues", make_problem=make_problem)
+
+
+# ---- SEDBase-0008 through -0012/-0014/-0015, plus the formulaic ref-type -
+# rules (Design.md's Validation section) - core-spec.md Section 8's
+# outputs.json-driven hasSubvalue()-style shape resolution, via
+# outputs_shape.py (imported lazily, mirroring _check_math_field's own
+# local-import convention).
+
+_SCALAR_ORREF_EXPECTED = {
+    "NumberOrRef": "number", "StringOrRef": "string",
+    "IntegerOrRef": "integer", "BooleanOrRef": "boolean",
+}
+# ArrayOrRef/DictOrRef deliberately excluded - SEDBase-0015.md's own text
+# only ever discusses a reference "required to resolve to a scalar value";
+# it has nothing to say about a reference that's SUPPOSED to stay shaped,
+# so there's no well-specified ref-type check to derive for those two kinds
+# here. (A handful of real fields use them - see Design.md's Validation
+# section note on this gap - left for future work rather than guessed at.)
+
+
+def _fmt_literal(value) -> str:
+    try:
+        return json.dumps(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _literal_matches_kind(value, field_kind, expected_enum):
+    """Only called once a constant's own literal value has already been
+    fully indexed down (index_into_literal) - a REAL value, not a
+    derived/declared type name, so enum membership can be checked exactly
+    here (unlike _ref_type_matches_declared below, for a task-output
+    target)."""
+    if field_kind == "NumberOrRef":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if field_kind == "IntegerOrRef":
+        return (isinstance(value, int) and not isinstance(value, bool)) or \
+               (isinstance(value, float) and value.is_integer())
+    if field_kind == "BooleanOrRef":
+        return isinstance(value, bool)
+    if field_kind == "StringOrRef":
+        if not isinstance(value, str):
+            return False
+        if expected_enum is not None:
+            return value in expected_enum
+        return True
+    return None
+
+
+def _ref_type_matches_declared(expected, actual_declared_type):
+    """A task-output target has no actual VALUE to type-check (nothing has
+    been simulated) - only outputs.json's own declared "type" for the
+    suffix entry (annotatedData/stringList; "model" never reaches here,
+    since it carries no "dimensions" and so never reduces to a scalar via
+    SEDBase-0015). Coarse by necessity: an annotatedData cell is always
+    treated as number-shaped, a stringList entry as string-shaped: enum
+    membership can never be verified this way (there is no literal value to
+    check it against), so an enum-constrained StringOrRef field referencing
+    a task output can only be checked at this coarse "string family" level,
+    never rejected on enum grounds."""
+    mapped = {"annotatedData": "number", "stringList": "string"}.get(actual_declared_type)
+    if mapped is None:
+        return None
+    return mapped == expected
+
+
+def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0012, *,
+                              class_name, id_value, attr, location, value,
+                              field_kind, ref_type_rule_id, expected_enum) -> list:
+    kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
+                  make_problem=make_problem, value=value)
+    dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+    if dot_name is not None:
+        # SEDBase-0008.md: "For a constants ... target, no dot-accessor is
+        # valid."
+        return list(sedbase_0008.check(False, dot_name, **kwargs))
+    from . import outputs_shape as _oshape
+    index_accessors = [v for k, v in parsed.accessors if k == "index"]
+    const_value = resolved
+    if isinstance(const_value, str) and is_reference(const_value):
+        # SEDBase-0012.md: "A constant whose value is itself a reference is
+        # followed first." One hop only - a constant-of-a-constant chain
+        # deeper than that isn't a documented case.
+        inner_parsed = _parse_reference(const_value)
+        inner_resolved, _ = get_sed_reference(document, inner_parsed)
+        const_value = inner_resolved
+    try:
+        final_value = _oshape.index_into_literal(const_value, index_accessors)
+    except _oshape.NotIndexable as e:
+        bad = e.args[0] if e.args else ""
+        return list(sedbase_0012.check(False, bad, _fmt_literal(const_value), **kwargs))
+    if ref_type_rule_id is None or field_kind not in _SCALAR_ORREF_EXPECTED:
+        return []
+    if _literal_matches_kind(final_value, field_kind, expected_enum) is False:
+        return [make_problem(
+            ref_type_rule_id, location, attr=attr, value=value,
+            **{"class": class_name, "id": id_value, "resolved-value": _fmt_literal(final_value)})]
+    return []
+
+
+def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, id_value, attr, location,
+                                      value, field_kind, ref_type_rule_id, expected_enum) -> list:
+    try:
+        from ._rules import sedbase_0008, sedbase_0009, sedbase_0010, sedbase_0011, sedbase_0012, sedbase_0014, sedbase_0015
+    except ImportError:
+        # This tree's own model.rules never defined SEDBase-0008 (a
+        # different spec tree with no outputs.json-shaped tasks/ vocabulary
+        # at all) - degrade to a no-op, matching every other handwritten-
+        # rule dispatcher's ImportError guard in this module.
+        return []
+
+    if parsed.collection == "constants":
+        return _check_constant_accessor(
+            parsed, resolved, document, sedbase_0008, sedbase_0012,
+            class_name=class_name, id_value=id_value, attr=attr, location=location, value=value,
+            field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+
+    kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
+                  make_problem=make_problem, value=value)
+    outputs_json = getattr(resolved, "_OUTPUTS_JSON", None)
+    if outputs_json is None:
+        # styles / outputs-collection-but-already-handled-above / a nested
+        # non-tasks/-class element reached via a tasks: path (LoopVariable,
+        # TaskParameter, ...) - SEDBase-0008.md's "For a constants,
+        # loopVariables, or styles target, no dot-accessor is valid"
+        # category. A bare reference (no accessor at all) is always fine
+        # for these - only a dot-accessor on top is invalid - and there's
+        # no outputs.json-driven shape to check brackets against either
+        # way, so this dispatcher goes no further for them.
+        dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
+        if dot_name is None:
+            return []
+        return list(sedbase_0008.check(False, dot_name, **kwargs))
+
+    from . import outputs_shape as _oshape
+    depth = [0]
+
+    def shape_of(ref_string):
+        depth[0] += 1
+        if depth[0] > 25:
+            raise _oshape.NotStatic("shapeOf() recursion too deep")
+        parsed2 = _parse_reference(ref_string)
+        inner, _ = get_sed_reference(document, parsed2)
+        inner_outputs_json = getattr(inner, "_OUTPUTS_JSON", None) if inner is not None else None
+        if inner_outputs_json is None:
+            raise _oshape.NotStatic("shapeOf() target has no outputs.json")
+        inner_ok, _entry, _before, inner_after, _dot, _idx = _oshape.resolve_output(
+            inner_outputs_json, inner._own_json_value(), parsed2.accessors, shape_of)
+        if inner_ok is not True or inner_after is None:
+            raise _oshape.NotStatic("shapeOf() target shape not statically known")
+        return inner_after
+
+    ok, entry, dims_before, dims_after, dot_name, index_accessors = _oshape.resolve_output(
+        outputs_json, resolved._own_json_value(), parsed.accessors, shape_of)
+
+    problems = list(sedbase_0008.check(ok, dot_name, **kwargs))
+    if ok is not True:
+        return problems
+    problems += sedbase_0009.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0010.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0011.check(dims_before, index_accessors, **kwargs)
+    problems += sedbase_0014.check(dims_before, index_accessors, **kwargs)
+
+    if ref_type_rule_id is not None and field_kind in _SCALAR_ORREF_EXPECTED:
+        expected = _SCALAR_ORREF_EXPECTED[field_kind]
+        problems += sedbase_0015.check(dims_after, expected, **kwargs)
+        if dims_after is not None and len(dims_after) == 0:
+            actual_declared = entry.get("type") if entry else None
+            if _ref_type_matches_declared(expected, actual_declared) is False:
+                problems.append(make_problem(
+                    ref_type_rule_id, location, attr=attr, value=value,
+                    **{"class": class_name, "id": id_value,
+                       "resolved-value": f"a {actual_declared} value"}))
     return problems
 
 
@@ -359,19 +805,52 @@ _LEAF_SCHEMAS = {
 }
 
 
-def leaf_schema_for(kind: str, minimum=None, exclusive_minimum=None, pattern=None) -> dict:
+def leaf_schema_for(kind: str, minimum=None, exclusive_minimum=None, pattern=None,
+                     min_length=None, enum=None) -> dict:
     base = dict(_LEAF_SCHEMAS[kind])
+    # minimum/exclusiveMinimum are numeric-only JSON Schema keywords - a
+    # no-op against a non-numeric instance (a reference string, for an
+    # *OrRef kind) per the JSON Schema spec, so bolting them on at the top
+    # level (sibling to "anyOf") is always safe.
     if minimum is not None:
         base = {**base, "minimum": minimum}
     if exclusive_minimum is not None:
         base = {**base, "exclusiveMinimum": exclusive_minimum}
-    if pattern is not None and kind == "string":
-        base = {**base, "pattern": pattern}
+    string_constraints = {}
+    if pattern is not None:
+        string_constraints["pattern"] = pattern
+    if min_length is not None:
+        string_constraints["minLength"] = min_length
+    if enum is not None:
+        string_constraints["enum"] = list(enum)
+    if string_constraints:
+        if kind == "StringOrRef":
+            # Unlike minimum/exclusiveMinimum above, pattern/minLength/enum
+            # are STRING-only keywords - and a StringOrRef's reference form
+            # is *also* a plain string, so bolting these on at the top level
+            # would incorrectly reject a perfectly valid reference too (it
+            # isn't a no-op the way a numeric keyword is against a string
+            # instance). Split explicitly into "the literal value, meeting
+            # these constraints" vs. "a reference-shaped string" instead of
+            # _LEAF_SCHEMAS["StringOrRef"]'s own single unconstrained
+            # {"type": "string"} branch.
+            base = {"anyOf": [
+                {"type": "string", **string_constraints},
+                {"type": "string", "pattern": SIDREF_PATTERN.pattern},
+            ]}
+        else:
+            # "string"/"SId"/"SIdRef" - never a reference alternative to
+            # worry about, so a direct bolt-on is fine (SId/SIdRef never
+            # actually carry these - _classify_type returns them without
+            # collecting further constraints - but handled generically
+            # rather than asserting that stays true).
+            base = {**base, **string_constraints}
     return base
 
 
-def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, pattern=None) -> bool:
-    schema = leaf_schema_for(kind, minimum, exclusive_minimum, pattern)
+def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, pattern=None,
+                   min_length=None, enum=None) -> bool:
+    schema = leaf_schema_for(kind, minimum, exclusive_minimum, pattern, min_length, enum)
     try:
         jsonschema.validate(value, schema)
         return True
@@ -382,12 +861,13 @@ def leaf_value_ok(kind: str, value: Any, minimum=None, exclusive_minimum=None, p
 class FieldSpec:
     __slots__ = ("name", "kind", "required", "rule_id", "required_rule_id",
                  "origin_catchall", "minimum", "exclusive_minimum", "pattern",
-                 "item_class", "item_discriminator", "is_math")
+                 "item_class", "item_discriminator", "is_math", "min_length",
+                 "enum", "ref_type_rule_id")
 
     def __init__(self, name, kind, required, rule_id, required_rule_id,
                  origin_catchall, minimum=None, exclusive_minimum=None,
                  pattern=None, item_class=None, item_discriminator=None,
-                 is_math=False):
+                 is_math=False, min_length=None, enum=None, ref_type_rule_id=None):
         self.name = name
         self.kind = kind
         self.required = required
@@ -400,6 +880,9 @@ class FieldSpec:
         self.item_class = item_class
         self.item_discriminator = item_discriminator
         self.is_math = is_math
+        self.min_length = min_length
+        self.enum = enum
+        self.ref_type_rule_id = ref_type_rule_id
 
 
 LEAF_KINDS = {"string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
@@ -438,6 +921,12 @@ class SedBase:
     # document... is called once, from SEDDocument's own validate()").
     _IS_DOCUMENT_CLASS: bool = False
     _MAX_KNOWN_DOCUMENT_VERSION: Optional[str] = None
+    # core-spec.md Section 8's per-class outputs.json envelope (see
+    # emit_model_py's own per-class attribute emission below) - None for
+    # every class except a concrete tasks/ one, matching FlatClass.
+    # outputs_json's own None default (Design.md's Validation section,
+    # SEDBase-0008 through -0015).
+    _OUTPUTS_JSON: Optional[dict] = None
     # The universal name/description mixin (TestBaseFields/SEDBaseFields)
     # isn't a per-class FieldSpec - its own rule IDs are set once, the same
     # on every concrete class, from the base mixin's own validation rules.
@@ -636,16 +1125,52 @@ class SedBase:
                 continue
             value = instance[spec.name]
             if spec.kind in LEAF_KINDS:
-                if not leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern):
+                if not leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern,
+                                      spec.min_length, spec.enum):
                     rid = spec.rule_id or spec.origin_catchall
-                    problems.append(make_problem(
-                        rid, "/" + spec.name, attr=spec.name,
-                        **{"class": self.__class__.__name__, "id": self._own_id_for_message(),
-                           "value": value}))
+                    extra = {"class": self.__class__.__name__, "id": self._own_id_for_message(),
+                             "value": value}
+                    if spec.enum is not None:
+                        # A rule fired from an enum-constrained leaf's own
+                        # message template may reference {allowed} (e.g.
+                        # Curve-0002/Surface's own curveType/surfaceType
+                        # rules) - harmless to always include, since
+                        # _fmt_message only substitutes placeholders the
+                        # template actually names.
+                        extra["allowed"] = ", ".join(repr(v) for v in spec.enum)
+                    problems.append(make_problem(rid, "/" + spec.name, attr=spec.name, **extra))
                 elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value):
                     problems.extend(_check_reference_field(
                         value, document=self.get_document(), class_name=self.__class__.__name__,
-                        id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+                        id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
+                        referrer=self, field_kind=spec.kind, ref_type_rule_id=spec.ref_type_rule_id,
+                        expected_enum=spec.enum))
+                elif spec.kind == "DictOrRef" and isinstance(value, dict):
+                    # The dict-literal branch of a DictOrRef field (e.g.
+                    # Repeat.outputVariableMap: an SId-keyed map of column
+                    # name -> SIdRef) - is_reference(value) above is False
+                    # for this whole-field-is-a-dict shape, so each entry
+                    # gets its OWN reference-resolution dispatch here
+                    # (SEDBase-0005 through -0015, same as any other
+                    # reference-capable field) rather than the field as a
+                    # single unit. ref_type_rule_id is deliberately omitted
+                    # (None) - the field's own ref_type_rule_id describes
+                    # what the WHOLE FIELD must resolve to when IT is a
+                    # reference (the other anyOf branch, handled above),
+                    # not what each entry's own target must be; no per-entry
+                    # expected type is declared for a DictOrRef's dict-form
+                    # (Design.md's Validation section note on this scope
+                    # limitation - see _SCALAR_ORREF_EXPECTED's own
+                    # docstring in this module).
+                    for key, entry_value in value.items():
+                        if is_reference(entry_value):
+                            problems.extend(_check_reference_field(
+                                entry_value, document=self.get_document(),
+                                class_name=self.__class__.__name__,
+                                id_value=self._own_id_for_message(), attr=spec.name,
+                                location=f"/{spec.name}/{key}",
+                                referrer=self, field_kind=spec.kind,
+                                ref_type_rule_id=None, expected_enum=None))
                 elif spec.is_math and isinstance(value, str):
                     problems.extend(_check_math_field(
                         value, class_name=self.__class__.__name__, id_value=self._own_id_for_message(),
@@ -660,13 +1185,56 @@ class SedBase:
                 # every *OrRef-kind field above.
                 problems.extend(_check_reference_field(
                     value, document=self.get_document(), class_name=self.__class__.__name__,
-                    id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name))
+                    id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
+                    referrer=self, field_kind="any", ref_type_rule_id=None, expected_enum=None))
         if self._IS_DOCUMENT_CLASS:
             problems.extend(_check_namespace_usage_and_version(self))
             problems.extend(_check_constants_ordering(self))
+        # Repeat-0008/-0009/-0010 (own-subTasks scoping for a Repeat-family
+        # instance's outputVariableMap/aggregateOutputVariables) and
+        # LoopVariable-0004 (own-Loop scoping for subsequentValues) each
+        # internally no-op for every class they don't apply to (a cheap
+        # class-shape check, not a class-name check - see their own
+        # docstrings) - called unconditionally here, the same as every
+        # other per-instance handwritten check above.
+        problems.extend(_check_repeat_own_children(self))
+        problems.extend(_check_loop_variable_scope(self))
         return problems
 
+    def _id_collection_names(self) -> list:
+        """Every id-keyed collection field name THIS class declares (see
+        emit_model_py's own per-class emission) - the default here (empty)
+        covers every class with none (a leaf class with no dict/any-dict
+        field of its own, and every discriminator's own Unknown* holder,
+        which never overrides this). Used only by _own_id_for_message
+        below, which needs to search a PARENT's own collections for self -
+        _get_id_collection(name) already does the actual lookup once a
+        name is in hand, this just enumerates the names to try."""
+        return []
+
     def _own_id_for_message(self) -> str:
+        """This element's own SId, for a validation message's {id}
+        placeholder - Design.md's Classes section: id is implicit, the key
+        under which an element is stored in its owning collection, never a
+        field on the element itself (see spec.py's own field-flattening,
+        which never produces an 'id' FieldSpec). So this walks up to the
+        parent and searches every id-keyed collection IT declares for
+        whichever key maps to self - generic over every concrete class,
+        with no per-class override needed. Falls back to '?' for anything
+        genuinely id-less: the document root (no parent at all), an
+        array-item class (TaskParameter, WorkingAlgorithm, ...) stored
+        positionally rather than by id, or an unattached/standalone
+        instance no parent has claimed yet."""
+        parent = self.get_parent()
+        if parent is None:
+            return "?"
+        for name in parent._id_collection_names():
+            coll = parent._get_id_collection(name)
+            if coll is None:
+                continue
+            for iid in coll.ids():
+                if coll.get(iid) is self:
+                    return iid
         return "?"
 
     def _own_json_value(self) -> dict:

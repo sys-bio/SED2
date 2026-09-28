@@ -1,4 +1,4 @@
-# Generated from /home/claude/sys-bio/sed2/generator/math.g4 by ANTLR 4.13.2
+# Generated from /home/runner/work/SED2/SED2/generator/math.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO

@@ -1,4 +1,4 @@
-"""Top-level read/write entry points for libsed2test. GENERATED."""
+"""Top-level read/write entry points for libsed2. GENERATED."""
 from __future__ import annotations
 import json
 from .model import SEDDocument, _load_fields

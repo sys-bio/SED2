@@ -1,5 +1,5 @@
 """ASTNode: parses/serializes SED2 math strings into a tree and back
-(Design.md's Math section). GENERATED for the libsed2test package - do not
+(Design.md's Math section). GENERATED for the libsed2 package - do not
 hand-edit; regenerate via generator/generate.py. The grammar itself lives in
 generator/math.g4; this module hand-builds the AST from the ANTLR parse
 tree and re-serializes it, applying the libsbml-L3-infix-parser-derived

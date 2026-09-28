@@ -1,4 +1,4 @@
-"""Generated concrete SED2 classes for libsed2test. GENERATED - do not
+"""Generated concrete SED2 classes for libsed2. GENERATED - do not
 hand-edit; regenerate from test-specsheets/ via generator/generate.py."""
 from __future__ import annotations
 
@@ -120,7 +120,7 @@ class UnknownAbstractCurve(SedBase):
 
 class SEDDocument(SedBase):
     """Generated from test-specsheets/core/SEDDocument/."""
-    _FIELDS = [FieldSpec('version', 'string', True, ['SEDDocument-0002', 'SEDDocument-0003'], 'SEDDocument-0001', 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False), FieldSpec('constants', 'any-dict', False, 'SEDDocument-0005', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('tasks', 'dict', False, 'SEDDocument-0006', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('outputs', 'dict', False, 'SEDDocument-0007', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractOutput', is_math=False), FieldSpec('styles', 'dict', False, 'SEDDocument-0008', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Style', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('version', 'string', True, 'SEDDocument-0002', 'SEDDocument-0001', 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='SEDDocument-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('constants', 'any-dict', False, 'SEDDocument-0005', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('tasks', 'dict', False, 'SEDDocument-0006', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputs', 'dict', False, 'SEDDocument-0007', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractOutput', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('styles', 'dict', False, 'SEDDocument-0008', None, 'SEDDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Style', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'version'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -139,6 +139,7 @@ class SEDDocument(SedBase):
         self._tasks = IdKeyedCollection(_dispatch_AbstractTask)
         self._outputs = IdKeyedCollection(_dispatch_AbstractOutput)
         self._styles = IdKeyedCollection(lambda tv, _cls=Style: (_cls, False))
+        self._annotations = ListCollection()
         self._attach(None, self)
 
     def get_version(self):
@@ -153,6 +154,19 @@ class SEDDocument(SedBase):
 
     def unset_version(self):
         self._values.pop('version', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_constants(self):
         return self._constants.ids()
@@ -226,11 +240,24 @@ class SEDDocument(SedBase):
     def set_id_on_styles(self, old_id, new_id):
         self._styles.set_id(old_id, new_id)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._tasks.get(i) for i in self._tasks.ids())
         kids.extend(self._outputs.get(i) for i in self._outputs.ids())
         kids.extend(self._styles.get(i) for i in self._styles.ids())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -248,21 +275,24 @@ class SEDDocument(SedBase):
             out.append((self._outputs.get(i), '/outputs/' + i))
         for i in self._styles.ids():
             out.append((self._styles.get(i), '/styles/' + i))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['constants', 'tasks', 'outputs', 'styles']
 
     def _own_json_value(self):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         if 'version' in self._values: d['version'] = self._values['version']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._constants): d['constants'] = {i: self._constants.get(i) for i in self._constants.ids()}
         if len(self._tasks): d['tasks'] = {i: self._tasks.get(i).to_json_value() for i in self._tasks.ids()}
         if len(self._outputs): d['outputs'] = {i: self._outputs.get(i).to_json_value() for i in self._outputs.ids()}
         if len(self._styles): d['styles'] = {i: self._styles.get(i).to_json_value() for i in self._styles.ids()}
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -298,9 +328,8 @@ class Style(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -316,7 +345,7 @@ class Style(SedBase):
 
 class AggregationCalculation(SedBase):
     """Generated from test-specsheets/tasks/AggregationCalculation/."""
-    _FIELDS = [FieldSpec('input', 'any', True, None, 'AggregationCalculation-0001', 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('appliedDimensions', 'ArrayOrRef', False, ['AggregationCalculation-0002', 'AggregationCalculation-0003'], None, 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('input', 'any', True, None, 'AggregationCalculation-0001', 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('appliedDimensions', 'ArrayOrRef', False, 'AggregationCalculation-0002', None, 'AggregationCalculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AggregationCalculation-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'input'}
     _TYPE_CONST = 'aggregationCalculation'
     _TYPE_RULE_ID = 'AggregationCalculation-0004'
@@ -324,12 +353,14 @@ class AggregationCalculation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input) - dim(appliedDimensions or outermost)', 'note': "shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'aggregationCalculation'
@@ -368,6 +399,19 @@ class AggregationCalculation(SedBase):
     def unset_applied_dimensions(self):
         self._values.pop('appliedDimensions', None); self._orref_is_ref.pop('appliedDimensions', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -380,9 +424,22 @@ class AggregationCalculation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -392,11 +449,12 @@ class AggregationCalculation(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -405,7 +463,9 @@ class AggregationCalculation(SedBase):
         d['_type'] = self._values.get('_type', 'aggregationCalculation')
         if 'input' in self._values: d['input'] = self._values['input']
         if 'appliedDimensions' in self._values: d['appliedDimensions'] = self._values['appliedDimensions']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -416,7 +476,7 @@ class AggregationCalculation(SedBase):
 
 class BoundedODESimulation(SedBase):
     """Generated from test-specsheets/tasks/BoundedODESimulation/."""
-    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0001', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0002'), FieldSpec('absoluteTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0003', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0004'), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, 'AbstractODESimulation-0005', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0006'), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, 'AbstractODESimulation-0007', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0008'), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, 'AbstractODESimulation-0009', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0010'), FieldSpec('initialStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0011', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0012'), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, 'AbstractODESimulation-0013', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0014'), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, 'AbstractODESimulation-0015', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0016'), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0017', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0018'), FieldSpec('minInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0019', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0020'), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, 'AbstractODESimulation-0021', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0022'), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0023', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0024'), FieldSpec('useReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0025', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0026'), FieldSpec('useStiffSolver', 'BooleanOrRef', False, 'AbstractODESimulation-0027', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0028'), FieldSpec('maxBDForder', 'IntegerOrRef', False, 'AbstractODESimulation-0029', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0030'), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, 'AbstractODESimulation-0031', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0032'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractODESimulation-0033', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0034'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractODESimulation-0035', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0036'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariableSpan', 'ref-class', True, 'BoundedODESimulation-0005', 'BoundedODESimulation-0004', 'BoundedODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Span', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'independentVariableSpan'}
     _TYPE_CONST = 'boundedODESimulation'
     _TYPE_RULE_ID = 'BoundedODESimulation-0006'
@@ -424,6 +484,7 @@ class BoundedODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -431,6 +492,8 @@ class BoundedODESimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._independent_variable_span = None
 
     def get_type(self):
         return 'boundedODESimulation'
@@ -889,6 +952,19 @@ class BoundedODESimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -913,10 +989,37 @@ class BoundedODESimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_independent_variable_span(self):
+        if self._independent_variable_span is None: raise ApiError('independent_variable_span is not set')
+        return self._independent_variable_span
+
+    def set_independent_variable_span(self, obj):
+        self._independent_variable_span = obj; obj._attach(self, self.get_document())
+
+    def is_set_independent_variable_span(self):
+        return self._independent_variable_span is not None
+
+    def unset_independent_variable_span(self):
+        self._independent_variable_span = None
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._independent_variable_span is not None: kids.append(self._independent_variable_span)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -928,11 +1031,13 @@ class BoundedODESimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._independent_variable_span is not None: out.append((self._independent_variable_span, '/independentVariableSpan'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -961,8 +1066,11 @@ class BoundedODESimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._independent_variable_span is not None: d['independentVariableSpan'] = self._independent_variable_span.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -973,7 +1081,7 @@ class BoundedODESimulation(SedBase):
 
 class BoundedStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/BoundedStochasticSimulation/."""
-    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, 'AbstractStochasticSimulation-0001', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0002'), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, 'AbstractStochasticSimulation-0003', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0004'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0005', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0006'), FieldSpec('minimumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0007', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0008'), FieldSpec('maximumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0009', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0010'), FieldSpec('nonNegative', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0011', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0012'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0013', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0014'), FieldSpec('maxNumSteps', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0015', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0016'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariableSpan', 'ref-class', True, 'BoundedStochasticSimulation-0005', 'BoundedStochasticSimulation-0004', 'BoundedStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Span', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'independentVariableSpan'}
     _TYPE_CONST = 'boundedStochasticSimulation'
     _TYPE_RULE_ID = 'BoundedStochasticSimulation-0006'
@@ -981,6 +1089,7 @@ class BoundedStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -988,6 +1097,8 @@ class BoundedStochasticSimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._independent_variable_span = None
 
     def get_type(self):
         return 'boundedStochasticSimulation'
@@ -1236,6 +1347,19 @@ class BoundedStochasticSimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -1260,10 +1384,37 @@ class BoundedStochasticSimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_independent_variable_span(self):
+        if self._independent_variable_span is None: raise ApiError('independent_variable_span is not set')
+        return self._independent_variable_span
+
+    def set_independent_variable_span(self, obj):
+        self._independent_variable_span = obj; obj._attach(self, self.get_document())
+
+    def is_set_independent_variable_span(self):
+        return self._independent_variable_span is not None
+
+    def unset_independent_variable_span(self):
+        self._independent_variable_span = None
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._independent_variable_span is not None: kids.append(self._independent_variable_span)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1275,11 +1426,13 @@ class BoundedStochasticSimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._independent_variable_span is not None: out.append((self._independent_variable_span, '/independentVariableSpan'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1298,8 +1451,11 @@ class BoundedStochasticSimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._independent_variable_span is not None: d['independentVariableSpan'] = self._independent_variable_span.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1310,7 +1466,7 @@ class BoundedStochasticSimulation(SedBase):
 
 class Calculation(SedBase):
     """Generated from test-specsheets/tasks/Calculation/."""
-    _FIELDS = [FieldSpec('math', 'StringOrRef', True, ['Calculation-0002', 'Calculation-0003'], 'Calculation-0001', 'Calculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('math', 'StringOrRef', True, 'Calculation-0002', 'Calculation-0001', 'Calculation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True, min_length=None, enum=None, ref_type_rule_id='Calculation-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'math'}
     _TYPE_CONST = 'calculation'
     _TYPE_RULE_ID = 'Calculation-0004'
@@ -1318,12 +1474,14 @@ class Calculation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values"}}, '[id].model': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'calculation'
@@ -1349,6 +1507,19 @@ class Calculation(SedBase):
     def unset_math(self):
         self._values.pop('math', None); self._orref_is_ref.pop('math', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1361,9 +1532,22 @@ class Calculation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1373,11 +1557,12 @@ class Calculation(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1385,7 +1570,9 @@ class Calculation(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'calculation')
         if 'math' in self._values: d['math'] = self._values['math']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1396,7 +1583,7 @@ class Calculation(SedBase):
 
 class CreateDataBlock(SedBase):
     """Generated from test-specsheets/tasks/CreateDataBlock/."""
-    _FIELDS = [FieldSpec('data', 'DictOrRef', True, ['CreateDataBlock-0002', 'CreateDataBlock-0003'], 'CreateDataBlock-0001', 'CreateDataBlock-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('data', 'DictOrRef', True, 'CreateDataBlock-0002', 'CreateDataBlock-0001', 'CreateDataBlock-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CreateDataBlock-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'data'}
     _TYPE_CONST = 'createDataBlock'
     _TYPE_RULE_ID = 'CreateDataBlock-0004'
@@ -1404,12 +1591,14 @@ class CreateDataBlock(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(data)'}, 'labels': {'source': 'static', 'expr': 'keys(data)'}, 'note': "base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case"}]}, '[id].model': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'createDataBlock'
@@ -1435,6 +1624,19 @@ class CreateDataBlock(SedBase):
     def unset_data(self):
         self._values.pop('data', None); self._orref_is_ref.pop('data', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1447,9 +1649,22 @@ class CreateDataBlock(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1459,11 +1674,12 @@ class CreateDataBlock(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1471,7 +1687,9 @@ class CreateDataBlock(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'createDataBlock')
         if 'data' in self._values: d['data'] = self._values['data']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1482,7 +1700,7 @@ class CreateDataBlock(SedBase):
 
 class CsvImport(SedBase):
     """Generated from test-specsheets/tasks/CsvImport/."""
-    _FIELDS = [FieldSpec('location', 'any', True, ['CsvImport-0002', 'CsvImport-0003'], 'CsvImport-0001', 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('organization', 'StringOrRef', False, ['CsvImport-0004', 'CsvImport-0005'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('separator', 'StringOrRef', False, ['CsvImport-0006', 'CsvImport-0007'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('headers', 'BooleanOrRef', False, ['CsvImport-0008', 'CsvImport-0009'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('columnNames', 'ArrayOrRef', False, ['CsvImport-0010', 'CsvImport-0011'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('ncols', 'IntegerOrRef', False, ['CsvImport-0012', 'CsvImport-0013'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nrows', 'IntegerOrRef', False, ['CsvImport-0014', 'CsvImport-0015'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('units', 'ArrayOrRef', False, ['CsvImport-0016', 'CsvImport-0017'], None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('location', 'StringOrRef', True, 'CsvImport-0002', 'CsvImport-0001', 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=1, enum=None, ref_type_rule_id='CsvImport-0003'), FieldSpec('organization', 'StringOrRef', False, 'CsvImport-0004', None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0005'), FieldSpec('separator', 'StringOrRef', False, 'CsvImport-0006', None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0007'), FieldSpec('headers', 'BooleanOrRef', False, 'CsvImport-0008', None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0009'), FieldSpec('columnNames', 'ArrayOrRef', False, 'CsvImport-0010', None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0011'), FieldSpec('ncols', 'IntegerOrRef', False, 'CsvImport-0012', None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0013'), FieldSpec('nrows', 'IntegerOrRef', False, 'CsvImport-0014', None, 'CsvImport-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0015'), FieldSpec('units', 'ArrayOrRef', False, 'CsvImport-0016', None, 'CsvImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='CsvImport-0017'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'location'}
     _TYPE_CONST = 'csvImport'
     _TYPE_RULE_ID = 'CsvImport-0018'
@@ -1490,28 +1708,38 @@ class CsvImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'location', 'extract': 'rowCount', 'note': 'row count, read from the CSV file at location'}, 'labels': None}, {'size': {'source': 'input-file', 'from': 'location', 'extract': 'columnCount', 'note': 'column count, read from the CSV file at location together with organization/headers/ncols'}, 'labels': {'source': 'input-file', 'from': 'location', 'extract': 'columnHeaders', 'note': 'column labels, read from the CSV header row when headers is true, else from columnNames'}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'csvImport'
 
-    def get_location(self):
-        if 'location' not in self._values: raise ApiError('location is not set')
-        return self._values['location']
+    def get_location_value(self):
+        return self._get_orref_value('location')
 
-    def set_location(self, value):
-        self._values['location'] = value
+    def get_location_ref(self):
+        return self._get_orref_ref('location')
+
+    def set_location_value(self, value):
+        self._set_orref_value('location', value)
+
+    def set_location_ref(self, ref):
+        self._set_orref_ref('location', ref)
+
+    def is_location_ref(self):
+        return self._is_orref_ref('location')
 
     def is_set_location(self):
         return 'location' in self._values
 
     def unset_location(self):
-        self._values.pop('location', None)
+        self._values.pop('location', None); self._orref_is_ref.pop('location', None)
 
     def get_organization_value(self):
         return self._get_orref_value('organization')
@@ -1660,6 +1888,19 @@ class CsvImport(SedBase):
     def unset_units(self):
         self._values.pop('units', None); self._orref_is_ref.pop('units', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1672,9 +1913,22 @@ class CsvImport(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1684,11 +1938,12 @@ class CsvImport(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1703,7 +1958,9 @@ class CsvImport(SedBase):
         if 'ncols' in self._values: d['ncols'] = self._values['ncols']
         if 'nrows' in self._values: d['nrows'] = self._values['nrows']
         if 'units' in self._values: d['units'] = self._values['units']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1714,7 +1971,7 @@ class CsvImport(SedBase):
 
 class DataImport(SedBase):
     """Generated from test-specsheets/tasks/DataImport/."""
-    _FIELDS = [FieldSpec('location', 'any', True, ['DataImport-0002', 'DataImport-0003'], 'DataImport-0001', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('format', 'any', True, ['DataImport-0005', 'DataImport-0006'], 'DataImport-0004', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('location', 'StringOrRef', True, 'DataImport-0002', 'DataImport-0001', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=1, enum=None, ref_type_rule_id='DataImport-0003'), FieldSpec('format', 'StringOrRef', True, 'DataImport-0005', 'DataImport-0004', 'DataImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=1, enum=None, ref_type_rule_id='DataImport-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'location', 'format'}
     _TYPE_CONST = 'dataImport'
     _TYPE_RULE_ID = 'DataImport-0007'
@@ -1722,41 +1979,72 @@ class DataImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'input-file', 'from': 'location', 'extract': 'shape', 'note': 'shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)'}}, '[id].model': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'dataImport'
 
-    def get_location(self):
-        if 'location' not in self._values: raise ApiError('location is not set')
-        return self._values['location']
+    def get_location_value(self):
+        return self._get_orref_value('location')
 
-    def set_location(self, value):
-        self._values['location'] = value
+    def get_location_ref(self):
+        return self._get_orref_ref('location')
+
+    def set_location_value(self, value):
+        self._set_orref_value('location', value)
+
+    def set_location_ref(self, ref):
+        self._set_orref_ref('location', ref)
+
+    def is_location_ref(self):
+        return self._is_orref_ref('location')
 
     def is_set_location(self):
         return 'location' in self._values
 
     def unset_location(self):
-        self._values.pop('location', None)
+        self._values.pop('location', None); self._orref_is_ref.pop('location', None)
 
-    def get_format(self):
-        if 'format' not in self._values: raise ApiError('format is not set')
-        return self._values['format']
+    def get_format_value(self):
+        return self._get_orref_value('format')
 
-    def set_format(self, value):
-        self._values['format'] = value
+    def get_format_ref(self):
+        return self._get_orref_ref('format')
+
+    def set_format_value(self, value):
+        self._set_orref_value('format', value)
+
+    def set_format_ref(self, ref):
+        self._set_orref_ref('format', ref)
+
+    def is_format_ref(self):
+        return self._is_orref_ref('format')
 
     def is_set_format(self):
         return 'format' in self._values
 
     def unset_format(self):
-        self._values.pop('format', None)
+        self._values.pop('format', None); self._orref_is_ref.pop('format', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -1770,9 +2058,22 @@ class DataImport(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1782,11 +2083,12 @@ class DataImport(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1795,7 +2097,9 @@ class DataImport(SedBase):
         d['_type'] = self._values.get('_type', 'dataImport')
         if 'location' in self._values: d['location'] = self._values['location']
         if 'format' in self._values: d['format'] = self._values['format']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1806,7 +2110,7 @@ class DataImport(SedBase):
 
 class DrawFromDistribution(SedBase):
     """Generated from test-specsheets/tasks/DrawFromDistribution/."""
-    _FIELDS = [FieldSpec('distribution', 'string', True, ['DrawFromDistribution-0008', 'DrawFromDistribution-0009'], 'DrawFromDistribution-0007', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputPersistent', 'BooleanOrRef', False, ['DrawFromDistribution-0004', 'DrawFromDistribution-0005'], None, 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('arguments', 'ArrayOrRef', True, ['DrawFromDistribution-0002', 'DrawFromDistribution-0003'], 'DrawFromDistribution-0001', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('distribution', 'StringOrRef', True, 'DrawFromDistribution-0008', 'DrawFromDistribution-0007', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('http://www.sbml.org/sbml/symbols/distrib/normal', 'http://www.sbml.org/sbml/symbols/distrib/uniform', 'http://www.sbml.org/sbml/symbols/distrib/bernoulli', 'http://www.sbml.org/sbml/symbols/distrib/binomial', 'http://www.sbml.org/sbml/symbols/distrib/cauchy', 'http://www.sbml.org/sbml/symbols/distrib/chisquare', 'http://www.sbml.org/sbml/symbols/distrib/exponential', 'http://www.sbml.org/sbml/symbols/distrib/gamma', 'http://www.sbml.org/sbml/symbols/distrib/laplace', 'http://www.sbml.org/sbml/symbols/distrib/lognormal', 'http://www.sbml.org/sbml/symbols/distrib/poisson', 'http://www.sbml.org/sbml/symbols/distrib/rayleigh'), ref_type_rule_id='DrawFromDistribution-0009'), FieldSpec('outputPersistent', 'BooleanOrRef', False, 'DrawFromDistribution-0004', None, 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='DrawFromDistribution-0005'), FieldSpec('arguments', 'ArrayOrRef', True, 'DrawFromDistribution-0002', 'DrawFromDistribution-0001', 'DrawFromDistribution-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='DrawFromDistribution-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'distribution', 'arguments'}
     _TYPE_CONST = 'drawFromDistribution'
     _TYPE_RULE_ID = 'DrawFromDistribution-0006'
@@ -1814,28 +2118,38 @@ class DrawFromDistribution(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [], 'note': 'currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)'}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'drawFromDistribution'
 
-    def get_distribution(self):
-        if 'distribution' not in self._values: raise ApiError('distribution is not set')
-        return self._values['distribution']
+    def get_distribution_value(self):
+        return self._get_orref_value('distribution')
 
-    def set_distribution(self, value):
-        self._values['distribution'] = value
+    def get_distribution_ref(self):
+        return self._get_orref_ref('distribution')
+
+    def set_distribution_value(self, value):
+        self._set_orref_value('distribution', value)
+
+    def set_distribution_ref(self, ref):
+        self._set_orref_ref('distribution', ref)
+
+    def is_distribution_ref(self):
+        return self._is_orref_ref('distribution')
 
     def is_set_distribution(self):
         return 'distribution' in self._values
 
     def unset_distribution(self):
-        self._values.pop('distribution', None)
+        self._values.pop('distribution', None); self._orref_is_ref.pop('distribution', None)
 
     def get_output_persistent_value(self):
         return self._get_orref_value('outputPersistent')
@@ -1879,6 +2193,19 @@ class DrawFromDistribution(SedBase):
     def unset_arguments(self):
         self._values.pop('arguments', None); self._orref_is_ref.pop('arguments', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -1891,9 +2218,22 @@ class DrawFromDistribution(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -1903,11 +2243,12 @@ class DrawFromDistribution(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -1917,7 +2258,9 @@ class DrawFromDistribution(SedBase):
         if 'distribution' in self._values: d['distribution'] = self._values['distribution']
         if 'outputPersistent' in self._values: d['outputPersistent'] = self._values['outputPersistent']
         if 'arguments' in self._values: d['arguments'] = self._values['arguments']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -1928,7 +2271,7 @@ class DrawFromDistribution(SedBase):
 
 class ExplicitODESimulation(SedBase):
     """Generated from test-specsheets/tasks/ExplicitODESimulation/."""
-    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('relativeTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0001', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0002'), FieldSpec('absoluteTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0003', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0004'), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, 'AbstractODESimulation-0005', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0006'), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, 'AbstractODESimulation-0007', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0008'), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, 'AbstractODESimulation-0009', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0010'), FieldSpec('initialStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0011', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0012'), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, 'AbstractODESimulation-0013', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0014'), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, 'AbstractODESimulation-0015', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0016'), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0017', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0018'), FieldSpec('minInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0019', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0020'), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, 'AbstractODESimulation-0021', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0022'), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0023', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0024'), FieldSpec('useReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0025', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0026'), FieldSpec('useStiffSolver', 'BooleanOrRef', False, 'AbstractODESimulation-0027', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0028'), FieldSpec('maxBDForder', 'IntegerOrRef', False, 'AbstractODESimulation-0029', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0030'), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, 'AbstractODESimulation-0031', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0032'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractODESimulation-0033', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0034'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractODESimulation-0035', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0036'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariableRange', 'ref-class', True, 'ExplicitODESimulation-0005', 'ExplicitODESimulation-0004', 'ExplicitODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='NumericRange', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'independentVariableRange'}
     _TYPE_CONST = 'explicitODESimulation'
     _TYPE_RULE_ID = 'ExplicitODESimulation-0006'
@@ -1936,6 +2279,7 @@ class ExplicitODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(independentVariableRange)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1943,6 +2287,8 @@ class ExplicitODESimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._independent_variable_range = None
 
     def get_type(self):
         return 'explicitODESimulation'
@@ -2401,6 +2747,19 @@ class ExplicitODESimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -2425,10 +2784,37 @@ class ExplicitODESimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_independent_variable_range(self):
+        if self._independent_variable_range is None: raise ApiError('independent_variable_range is not set')
+        return self._independent_variable_range
+
+    def set_independent_variable_range(self, obj):
+        self._independent_variable_range = obj; obj._attach(self, self.get_document())
+
+    def is_set_independent_variable_range(self):
+        return self._independent_variable_range is not None
+
+    def unset_independent_variable_range(self):
+        self._independent_variable_range = None
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._independent_variable_range is not None: kids.append(self._independent_variable_range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -2440,11 +2826,13 @@ class ExplicitODESimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._independent_variable_range is not None: out.append((self._independent_variable_range, '/independentVariableRange'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -2473,8 +2861,11 @@ class ExplicitODESimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._independent_variable_range is not None: d['independentVariableRange'] = self._independent_variable_range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -2485,7 +2876,7 @@ class ExplicitODESimulation(SedBase):
 
 class ExplicitStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/ExplicitStochasticSimulation/."""
-    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('seed', 'NumberOrRef', False, 'AbstractStochasticSimulation-0001', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0002'), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, 'AbstractStochasticSimulation-0003', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0004'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0005', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0006'), FieldSpec('minimumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0007', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0008'), FieldSpec('maximumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0009', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0010'), FieldSpec('nonNegative', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0011', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0012'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0013', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0014'), FieldSpec('maxNumSteps', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0015', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0016'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariableRange', 'ref-class', True, 'ExplicitStochasticSimulation-0005', 'ExplicitStochasticSimulation-0004', 'ExplicitStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='NumericRange', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'independentVariableRange'}
     _TYPE_CONST = 'explicitStochasticSimulation'
     _TYPE_RULE_ID = 'ExplicitStochasticSimulation-0006'
@@ -2493,6 +2884,7 @@ class ExplicitStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'independentVariableRange.numberOfSteps'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -2500,6 +2892,8 @@ class ExplicitStochasticSimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._independent_variable_range = None
 
     def get_type(self):
         return 'explicitStochasticSimulation'
@@ -2748,6 +3142,19 @@ class ExplicitStochasticSimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -2772,10 +3179,37 @@ class ExplicitStochasticSimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_independent_variable_range(self):
+        if self._independent_variable_range is None: raise ApiError('independent_variable_range is not set')
+        return self._independent_variable_range
+
+    def set_independent_variable_range(self, obj):
+        self._independent_variable_range = obj; obj._attach(self, self.get_document())
+
+    def is_set_independent_variable_range(self):
+        return self._independent_variable_range is not None
+
+    def unset_independent_variable_range(self):
+        self._independent_variable_range = None
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._independent_variable_range is not None: kids.append(self._independent_variable_range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -2787,11 +3221,13 @@ class ExplicitStochasticSimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._independent_variable_range is not None: out.append((self._independent_variable_range, '/independentVariableRange'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -2810,8 +3246,11 @@ class ExplicitStochasticSimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._independent_variable_range is not None: d['independentVariableRange'] = self._independent_variable_range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -2822,7 +3261,7 @@ class ExplicitStochasticSimulation(SedBase):
 
 class FluxBalanceAnalysis(SedBase):
     """Generated from test-specsheets/tasks/FluxBalanceAnalysis/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', True, ['FluxBalanceAnalysis-0004', 'FluxBalanceAnalysis-0005'], 'FluxBalanceAnalysis-0003', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputModel', 'BooleanOrRef', False, ['FluxBalanceAnalysis-0006', 'FluxBalanceAnalysis-0007'], None, 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputVariables', 'ArrayOrRef', True, 'FluxBalanceAnalysis-0004', 'FluxBalanceAnalysis-0003', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='FluxBalanceAnalysis-0005'), FieldSpec('outputModel', 'BooleanOrRef', False, 'FluxBalanceAnalysis-0006', None, 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='FluxBalanceAnalysis-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'fluxBalanceAnalysis'
     _TYPE_RULE_ID = 'FluxBalanceAnalysis-0008'
@@ -2830,12 +3269,14 @@ class FluxBalanceAnalysis(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'valid': 'outputModel == true', 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'fluxBalanceAnalysis'
@@ -2895,6 +3336,19 @@ class FluxBalanceAnalysis(SedBase):
     def unset_output_model(self):
         self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -2907,9 +3361,22 @@ class FluxBalanceAnalysis(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -2919,11 +3386,12 @@ class FluxBalanceAnalysis(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -2933,7 +3401,9 @@ class FluxBalanceAnalysis(SedBase):
         if 'model' in self._values: d['model'] = self._values['model']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -2944,7 +3414,7 @@ class FluxBalanceAnalysis(SedBase):
 
 class JacobianFull(SedBase):
     """Generated from test-specsheets/tasks/JacobianFull/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianFull-0002', 'JacobianFull-0001', 'JacobianFull-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianFull-0002', 'JacobianFull-0001', 'JacobianFull-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'jacobianFull'
     _TYPE_RULE_ID = 'JacobianFull-0003'
@@ -2952,12 +3422,14 @@ class JacobianFull(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'row count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "row labels = the model's ordered species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'column count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "column labels = the model's ordered species list"}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'jacobianFull'
@@ -2975,6 +3447,19 @@ class JacobianFull(SedBase):
     def unset_model(self):
         self._values.pop('model', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -2987,9 +3472,22 @@ class JacobianFull(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -2999,11 +3497,12 @@ class JacobianFull(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3011,7 +3510,9 @@ class JacobianFull(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'jacobianFull')
         if 'model' in self._values: d['model'] = self._values['model']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3022,7 +3523,7 @@ class JacobianFull(SedBase):
 
 class JacobianReduced(SedBase):
     """Generated from test-specsheets/tasks/JacobianReduced/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianReduced-0002', 'JacobianReduced-0001', 'JacobianReduced-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'JacobianReduced-0002', 'JacobianReduced-0001', 'JacobianReduced-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'jacobianReduced'
     _TYPE_RULE_ID = 'JacobianReduced-0003'
@@ -3030,12 +3531,14 @@ class JacobianReduced(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row labels = the model's ordered, reduced species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column labels = the model's ordered, reduced species list"}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'jacobianReduced'
@@ -3053,6 +3556,19 @@ class JacobianReduced(SedBase):
     def unset_model(self):
         self._values.pop('model', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3065,9 +3581,22 @@ class JacobianReduced(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3077,11 +3606,12 @@ class JacobianReduced(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3089,7 +3619,9 @@ class JacobianReduced(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'jacobianReduced')
         if 'model' in self._values: d['model'] = self._values['model']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3100,7 +3632,7 @@ class JacobianReduced(SedBase):
 
 class Loop(SedBase):
     """Generated from test-specsheets/tasks/Loop/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='LoopVariable', item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='LoopVariable', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'loopVariables'}
     _TYPE_CONST = 'loop'
     _TYPE_RULE_ID = 'Loop-0005'
@@ -3108,6 +3640,7 @@ class Loop(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "2D or more: first dimension = one row per iteration (iteration count is not knowable ahead of the loop actually running - Loop's exact termination condition is an open design question, see core-spec.md Section 10); remaining dimension(s) = one column per entry of outputVariableMap"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within the loop'}, '[id].index': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within the loop'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3117,6 +3650,8 @@ class Loop(SedBase):
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
         self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._range = None
 
     def get_type(self):
         return 'loop'
@@ -3141,6 +3676,19 @@ class Loop(SedBase):
 
     def unset_output_variable_map(self):
         self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_loop_variables(self):
         return self._loop_variables.ids()
@@ -3208,12 +3756,39 @@ class Loop(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_range(self):
+        if self._range is None: raise ApiError('range is not set')
+        return self._range
+
+    def set_range(self, obj):
+        self._range = obj; obj._attach(self, self.get_document())
+
+    def is_set_range(self):
+        return self._range is not None
+
+    def unset_range(self):
+        self._range = None
+
     def _children(self):
         kids = []
         kids.extend(self._loop_variables.get(i) for i in self._loop_variables.ids())
         kids.extend(self._sub_tasks.get(i) for i in self._sub_tasks.ids())
         kids.extend(self._aggregate_output_variables.get(i) for i in self._aggregate_output_variables.ids())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._range is not None: kids.append(self._range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3232,11 +3807,13 @@ class Loop(SedBase):
             out.append((self._aggregate_output_variables.get(i), '/aggregateOutputVariables/' + i))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._range is not None: out.append((self._range, '/range'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['loopVariables', 'subTasks', 'aggregateOutputVariables']
 
     def _own_json_value(self):
         d = {}
@@ -3244,10 +3821,13 @@ class Loop(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'loop')
         if 'outputVariableMap' in self._values: d['outputVariableMap'] = self._values['outputVariableMap']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._loop_variables): d['loopVariables'] = {i: self._loop_variables.get(i).to_json_value() for i in self._loop_variables.ids()}
         if len(self._sub_tasks): d['subTasks'] = {i: self._sub_tasks.get(i).to_json_value() for i in self._sub_tasks.ids()}
         if len(self._aggregate_output_variables): d['aggregateOutputVariables'] = {i: self._aggregate_output_variables.get(i).to_json_value() for i in self._aggregate_output_variables.ids()}
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._range is not None: d['range'] = self._range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3258,7 +3838,7 @@ class Loop(SedBase):
 
 class ModelChange(SedBase):
     """Generated from test-specsheets/tasks/ModelChange/."""
-    _FIELDS = [FieldSpec('inputModel', 'SIdRef', True, 'ModelChange-0002', 'ModelChange-0001', 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('setValues', 'DictOrRef', False, ['ModelChange-0003', 'ModelChange-0004'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('removeElements', 'ArrayOrRef', False, ['ModelChange-0005', 'ModelChange-0006'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('addElements', 'ArrayOrRef', False, ['ModelChange-0007', 'ModelChange-0008'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('replaceElements', 'DictOrRef', False, ['ModelChange-0009', 'ModelChange-0010'], None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('inputModel', 'SIdRef', True, 'ModelChange-0002', 'ModelChange-0001', 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('setValues', 'DictOrRef', False, 'ModelChange-0003', None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelChange-0004'), FieldSpec('removeElements', 'ArrayOrRef', False, 'ModelChange-0005', None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelChange-0006'), FieldSpec('addElements', 'ArrayOrRef', False, 'ModelChange-0007', None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelChange-0008'), FieldSpec('replaceElements', 'DictOrRef', False, 'ModelChange-0009', None, 'ModelChange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelChange-0010'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'inputModel'}
     _TYPE_CONST = 'modelChange'
     _TYPE_RULE_ID = 'ModelChange-0011'
@@ -3266,12 +3846,14 @@ class ModelChange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'modelChange'
@@ -3373,6 +3955,19 @@ class ModelChange(SedBase):
     def unset_replace_elements(self):
         self._values.pop('replaceElements', None); self._orref_is_ref.pop('replaceElements', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3385,9 +3980,22 @@ class ModelChange(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3397,11 +4005,12 @@ class ModelChange(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3413,7 +4022,9 @@ class ModelChange(SedBase):
         if 'removeElements' in self._values: d['removeElements'] = self._values['removeElements']
         if 'addElements' in self._values: d['addElements'] = self._values['addElements']
         if 'replaceElements' in self._values: d['replaceElements'] = self._values['replaceElements']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3424,7 +4035,7 @@ class ModelChange(SedBase):
 
 class ModelElementList(SedBase):
     """Generated from test-specsheets/tasks/ModelElementList/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ModelElementList-0002', 'ModelElementList-0001', 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('includeElements', 'ArrayOrRef', False, ['ModelElementList-0003', 'ModelElementList-0004'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('includeTypes', 'ArrayOrRef', False, ['ModelElementList-0005', 'ModelElementList-0006'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('excludeElements', 'ArrayOrRef', False, ['ModelElementList-0007', 'ModelElementList-0008'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('excludeTypes', 'ArrayOrRef', False, ['ModelElementList-0009', 'ModelElementList-0010'], None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ModelElementList-0002', 'ModelElementList-0001', 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('includeElements', 'ArrayOrRef', False, 'ModelElementList-0003', None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelElementList-0004'), FieldSpec('includeTypes', 'ArrayOrRef', False, 'ModelElementList-0005', None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelElementList-0006'), FieldSpec('excludeElements', 'ArrayOrRef', False, 'ModelElementList-0007', None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelElementList-0008'), FieldSpec('excludeTypes', 'ArrayOrRef', False, 'ModelElementList-0009', None, 'ModelElementList-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ModelElementList-0010'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model'}
     _TYPE_CONST = 'modelElementList'
     _TYPE_RULE_ID = 'ModelElementList-0011'
@@ -3432,12 +4043,14 @@ class ModelElementList(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': False}, '[id].strings': {'valid': True, 'type': 'stringList', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'the matched element ids themselves'}}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'modelElementList'
@@ -3539,6 +4152,19 @@ class ModelElementList(SedBase):
     def unset_exclude_types(self):
         self._values.pop('excludeTypes', None); self._orref_is_ref.pop('excludeTypes', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3551,9 +4177,22 @@ class ModelElementList(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3563,11 +4202,12 @@ class ModelElementList(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3579,7 +4219,9 @@ class ModelElementList(SedBase):
         if 'includeTypes' in self._values: d['includeTypes'] = self._values['includeTypes']
         if 'excludeElements' in self._values: d['excludeElements'] = self._values['excludeElements']
         if 'excludeTypes' in self._values: d['excludeTypes'] = self._values['excludeTypes']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3590,7 +4232,7 @@ class ModelElementList(SedBase):
 
 class ModelImport(SedBase):
     """Generated from test-specsheets/tasks/ModelImport/."""
-    _FIELDS = [FieldSpec('location', 'any', True, ['ModelImport-0002', 'ModelImport-0003'], 'ModelImport-0001', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('language', 'StringOrRef', True, ['ModelImport-0005', 'ModelImport-0006'], 'ModelImport-0004', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('location', 'StringOrRef', True, 'ModelImport-0002', 'ModelImport-0001', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=1, enum=None, ref_type_rule_id='ModelImport-0003'), FieldSpec('language', 'StringOrRef', True, 'ModelImport-0005', 'ModelImport-0004', 'ModelImport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=1, enum=None, ref_type_rule_id='ModelImport-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'location', 'language'}
     _TYPE_CONST = 'modelImport'
     _TYPE_RULE_ID = 'ModelImport-0007'
@@ -3598,28 +4240,38 @@ class ModelImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'modelImport'
 
-    def get_location(self):
-        if 'location' not in self._values: raise ApiError('location is not set')
-        return self._values['location']
+    def get_location_value(self):
+        return self._get_orref_value('location')
 
-    def set_location(self, value):
-        self._values['location'] = value
+    def get_location_ref(self):
+        return self._get_orref_ref('location')
+
+    def set_location_value(self, value):
+        self._set_orref_value('location', value)
+
+    def set_location_ref(self, ref):
+        self._set_orref_ref('location', ref)
+
+    def is_location_ref(self):
+        return self._is_orref_ref('location')
 
     def is_set_location(self):
         return 'location' in self._values
 
     def unset_location(self):
-        self._values.pop('location', None)
+        self._values.pop('location', None); self._orref_is_ref.pop('location', None)
 
     def get_language_value(self):
         return self._get_orref_value('language')
@@ -3642,6 +4294,19 @@ class ModelImport(SedBase):
     def unset_language(self):
         self._values.pop('language', None); self._orref_is_ref.pop('language', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -3654,9 +4319,22 @@ class ModelImport(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3666,11 +4344,12 @@ class ModelImport(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3679,7 +4358,9 @@ class ModelImport(SedBase):
         d['_type'] = self._values.get('_type', 'modelImport')
         if 'location' in self._values: d['location'] = self._values['location']
         if 'language' in self._values: d['language'] = self._values['language']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3690,7 +4371,7 @@ class ModelImport(SedBase):
 
 class NumericRange(SedBase):
     """Generated from test-specsheets/tasks/NumericRange/."""
-    _FIELDS = [FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('interval', 'NumberOrRef', False, ['NumericRange-0005', 'NumericRange-0006'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('numberOfSteps', 'IntegerOrRef', False, ['NumericRange-0007', 'NumericRange-0008'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('scale', 'any', False, ['NumericRange-0009', 'NumericRange-0010'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('start', 'NumberOrRef', False, 'NumericRange-0001', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0002'), FieldSpec('end', 'NumberOrRef', False, 'NumericRange-0003', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0004'), FieldSpec('interval', 'NumberOrRef', False, 'NumericRange-0005', None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0006'), FieldSpec('numberOfSteps', 'IntegerOrRef', False, 'NumericRange-0007', None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0008'), FieldSpec('scale', 'StringOrRef', False, 'NumericRange-0009', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('linear', 'log10'), ref_type_rule_id='NumericRange-0010'), FieldSpec('values', 'ArrayOrRef', False, 'NumericRange-0011', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0012'), FieldSpec('values', 'ArrayOrRef', False, 'Range-0001', None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Range-0002'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'numericRange'
     _TYPE_RULE_ID = 'NumericRange-0013'
@@ -3698,12 +4379,14 @@ class NumericRange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'numericRange'
@@ -3792,18 +4475,26 @@ class NumericRange(SedBase):
     def unset_number_of_steps(self):
         self._values.pop('numberOfSteps', None); self._orref_is_ref.pop('numberOfSteps', None)
 
-    def get_scale(self):
-        if 'scale' not in self._values: raise ApiError('scale is not set')
-        return self._values['scale']
+    def get_scale_value(self):
+        return self._get_orref_value('scale')
 
-    def set_scale(self, value):
-        self._values['scale'] = value
+    def get_scale_ref(self):
+        return self._get_orref_ref('scale')
+
+    def set_scale_value(self, value):
+        self._set_orref_value('scale', value)
+
+    def set_scale_ref(self, ref):
+        self._set_orref_ref('scale', ref)
+
+    def is_scale_ref(self):
+        return self._is_orref_ref('scale')
 
     def is_set_scale(self):
         return 'scale' in self._values
 
     def unset_scale(self):
-        self._values.pop('scale', None)
+        self._values.pop('scale', None); self._orref_is_ref.pop('scale', None)
 
     def get_values_value(self):
         return self._get_orref_value('values')
@@ -3846,6 +4537,19 @@ class NumericRange(SedBase):
 
     def unset_values(self):
         self._values.pop('values', None); self._orref_is_ref.pop('values', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -3859,9 +4563,22 @@ class NumericRange(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -3871,11 +4588,12 @@ class NumericRange(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -3889,7 +4607,9 @@ class NumericRange(SedBase):
         if 'scale' in self._values: d['scale'] = self._values['scale']
         if 'values' in self._values: d['values'] = self._values['values']
         if 'values' in self._values: d['values'] = self._values['values']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -3900,7 +4620,7 @@ class NumericRange(SedBase):
 
 class OneStepODESimulation(SedBase):
     """Generated from test-specsheets/tasks/OneStepODESimulation/."""
-    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', True, ['OneStepODESimulation-0005', 'OneStepODESimulation-0006'], 'OneStepODESimulation-0004', 'OneStepODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('relativeTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0001', 'AbstractODESimulation-0002'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteTolerance', 'NumberOrRef', False, ['AbstractODESimulation-0003', 'AbstractODESimulation-0004'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, ['AbstractODESimulation-0005', 'AbstractODESimulation-0006'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, ['AbstractODESimulation-0007', 'AbstractODESimulation-0008'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, ['AbstractODESimulation-0009', 'AbstractODESimulation-0010'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('initialStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0011', 'AbstractODESimulation-0012'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, ['AbstractODESimulation-0013', 'AbstractODESimulation-0014'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, ['AbstractODESimulation-0015', 'AbstractODESimulation-0016'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0017', 'AbstractODESimulation-0018'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minInternalStepSize', 'NumberOrRef', False, ['AbstractODESimulation-0019', 'AbstractODESimulation-0020'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, ['AbstractODESimulation-0021', 'AbstractODESimulation-0022'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0023', 'AbstractODESimulation-0024'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useReducedModel', 'BooleanOrRef', False, ['AbstractODESimulation-0025', 'AbstractODESimulation-0026'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('useStiffSolver', 'BooleanOrRef', False, ['AbstractODESimulation-0027', 'AbstractODESimulation-0028'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxBDForder', 'IntegerOrRef', False, ['AbstractODESimulation-0029', 'AbstractODESimulation-0030'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, ['AbstractODESimulation-0031', 'AbstractODESimulation-0032'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractODESimulation-0033', 'AbstractODESimulation-0034'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractODESimulation-0035', 'AbstractODESimulation-0036'], None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', True, 'OneStepODESimulation-0005', 'OneStepODESimulation-0004', 'OneStepODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='OneStepODESimulation-0006'), FieldSpec('relativeTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0001', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0002'), FieldSpec('absoluteTolerance', 'NumberOrRef', False, 'AbstractODESimulation-0003', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0004'), FieldSpec('absoluteToleranceVector', 'ArrayOrRef', False, 'AbstractODESimulation-0005', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0006'), FieldSpec('absoluteToleranceAdjustmentFactor', 'NumberOrRef', False, 'AbstractODESimulation-0007', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0008'), FieldSpec('toleranceForRootFinder', 'NumberOrRef', False, 'AbstractODESimulation-0009', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0010'), FieldSpec('initialStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0011', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0012'), FieldSpec('maxNumberOfSteps', 'NumberOrRef', False, 'AbstractODESimulation-0013', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0014'), FieldSpec('maxInternalSteps', 'IntegerOrRef', False, 'AbstractODESimulation-0015', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0016'), FieldSpec('maxInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0017', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0018'), FieldSpec('minInternalStepSize', 'NumberOrRef', False, 'AbstractODESimulation-0019', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0020'), FieldSpec('forcePhysicalCorrectness', 'BooleanOrRef', False, 'AbstractODESimulation-0021', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0022'), FieldSpec('integrateReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0023', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0024'), FieldSpec('useReducedModel', 'BooleanOrRef', False, 'AbstractODESimulation-0025', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0026'), FieldSpec('useStiffSolver', 'BooleanOrRef', False, 'AbstractODESimulation-0027', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0028'), FieldSpec('maxBDForder', 'IntegerOrRef', False, 'AbstractODESimulation-0029', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0030'), FieldSpec('maxAdamsOrder', 'IntegerOrRef', False, 'AbstractODESimulation-0031', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0032'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractODESimulation-0033', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0034'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractODESimulation-0035', None, 'AbstractODESimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractODESimulation-0036'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'independentStep'}
     _TYPE_CONST = 'oneStepODE'
     _TYPE_RULE_ID = 'OneStepODESimulation-0007'
@@ -3908,6 +4628,7 @@ class OneStepODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3915,6 +4636,7 @@ class OneStepODESimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'oneStepODE'
@@ -4394,6 +5116,19 @@ class OneStepODESimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -4418,10 +5153,23 @@ class OneStepODESimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -4433,11 +5181,12 @@ class OneStepODESimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -4467,8 +5216,10 @@ class OneStepODESimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4479,7 +5230,7 @@ class OneStepODESimulation(SedBase):
 
 class OneStepStochasticSimulation(SedBase):
     """Generated from test-specsheets/tasks/OneStepStochasticSimulation/."""
-    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', False, ['OneStepStochasticSimulation-0004', 'OneStepStochasticSimulation-0005'], None, 'OneStepStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('seed', 'NumberOrRef', False, ['AbstractStochasticSimulation-0001', 'AbstractStochasticSimulation-0002'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, ['AbstractStochasticSimulation-0003', 'AbstractStochasticSimulation-0004'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('variableStepSize', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0005', 'AbstractStochasticSimulation-0006'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('minimumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0007', 'AbstractStochasticSimulation-0008'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maximumTimeStep', 'NumberOrRef', False, ['AbstractStochasticSimulation-0009', 'AbstractStochasticSimulation-0010'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('nonNegative', 'BooleanOrRef', False, ['AbstractStochasticSimulation-0011', 'AbstractStochasticSimulation-0012'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxOutputRows', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0013', 'AbstractStochasticSimulation-0014'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('maxNumSteps', 'IntegerOrRef', False, ['AbstractStochasticSimulation-0015', 'AbstractStochasticSimulation-0016'], None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, ['AbstractSimulation-0002', 'AbstractSimulation-0003'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariableInit', 'NumberOrRef', False, ['AbstractSimulation-0004', 'AbstractSimulation-0005'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', False, ['AbstractSimulation-0006', 'AbstractSimulation-0007'], None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('independentStep', 'NumberOrRef', False, 'OneStepStochasticSimulation-0004', None, 'OneStepStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='OneStepStochasticSimulation-0005'), FieldSpec('seed', 'NumberOrRef', False, 'AbstractStochasticSimulation-0001', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0002'), FieldSpec('timeDependentRelativeTolerance', 'NumberOrRef', False, 'AbstractStochasticSimulation-0003', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0004'), FieldSpec('variableStepSize', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0005', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0006'), FieldSpec('minimumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0007', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0008'), FieldSpec('maximumTimeStep', 'NumberOrRef', False, 'AbstractStochasticSimulation-0009', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0010'), FieldSpec('nonNegative', 'BooleanOrRef', False, 'AbstractStochasticSimulation-0011', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0012'), FieldSpec('maxOutputRows', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0013', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0014'), FieldSpec('maxNumSteps', 'IntegerOrRef', False, 'AbstractStochasticSimulation-0015', None, 'AbstractStochasticSimulation-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractStochasticSimulation-0016'), FieldSpec('model', 'SIdRef', False, 'AbstractSimulation-0001', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'AbstractSimulation-0002', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0003'), FieldSpec('independentVariableInit', 'NumberOrRef', False, 'AbstractSimulation-0004', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0005'), FieldSpec('outputVariables', 'ArrayOrRef', False, 'AbstractSimulation-0006', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractSimulation-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('workingAlgorithms', 'array', False, 'AbstractSimulation-0008', None, 'AbstractSimulation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'oneStepStochastic'
     _TYPE_RULE_ID = 'OneStepStochasticSimulation-0006'
@@ -4487,6 +5238,7 @@ class OneStepStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}, '[id].independentStep': {'valid': '!provided(independentStep)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': '1'}, 'labels': None}], 'note': 'the actual elapsed step; present only when independentStep was NOT given as input'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -4494,6 +5246,7 @@ class OneStepStochasticSimulation(SedBase):
         super().__init__()
         self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'oneStepStochastic'
@@ -4763,6 +5516,19 @@ class OneStepStochasticSimulation(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_working_algorithms(self):
         return self._working_algorithms.items()
 
@@ -4787,10 +5553,23 @@ class OneStepStochasticSimulation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -4802,11 +5581,12 @@ class OneStepStochasticSimulation(SedBase):
             out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -4826,8 +5606,10 @@ class OneStepStochasticSimulation(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'independentVariableInit' in self._values: d['independentVariableInit'] = self._values['independentVariableInit']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -4838,7 +5620,7 @@ class OneStepStochasticSimulation(SedBase):
 
 class ParameterRange(SedBase):
     """Generated from test-specsheets/tasks/ParameterRange/."""
-    _FIELDS = [FieldSpec('modelElement', 'StringOrRef', True, ['ParameterRange-0002', 'ParameterRange-0003'], 'ParameterRange-0001', 'ParameterRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('start', 'NumberOrRef', False, ['NumericRange-0001', 'NumericRange-0002'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', False, ['NumericRange-0003', 'NumericRange-0004'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('interval', 'NumberOrRef', False, ['NumericRange-0005', 'NumericRange-0006'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('numberOfSteps', 'IntegerOrRef', False, ['NumericRange-0007', 'NumericRange-0008'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('scale', 'any', False, ['NumericRange-0009', 'NumericRange-0010'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['NumericRange-0011', 'NumericRange-0012'], None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('modelElement', 'StringOrRef', True, 'ParameterRange-0002', 'ParameterRange-0001', 'ParameterRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='ParameterRange-0003'), FieldSpec('start', 'NumberOrRef', False, 'NumericRange-0001', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0002'), FieldSpec('end', 'NumberOrRef', False, 'NumericRange-0003', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0004'), FieldSpec('interval', 'NumberOrRef', False, 'NumericRange-0005', None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0006'), FieldSpec('numberOfSteps', 'IntegerOrRef', False, 'NumericRange-0007', None, 'NumericRange-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0008'), FieldSpec('scale', 'StringOrRef', False, 'NumericRange-0009', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('linear', 'log10'), ref_type_rule_id='NumericRange-0010'), FieldSpec('values', 'ArrayOrRef', False, 'NumericRange-0011', None, 'NumericRange-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='NumericRange-0012'), FieldSpec('values', 'ArrayOrRef', False, 'Range-0001', None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Range-0002'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'modelElement'}
     _TYPE_CONST = 'parameterRange'
     _TYPE_RULE_ID = 'ParameterRange-0016'
@@ -4846,12 +5628,14 @@ class ParameterRange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1', 'note': 'same derivation as NumericRange, inherited via NumericRangeCommon'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'parameterRange'
@@ -4961,18 +5745,26 @@ class ParameterRange(SedBase):
     def unset_number_of_steps(self):
         self._values.pop('numberOfSteps', None); self._orref_is_ref.pop('numberOfSteps', None)
 
-    def get_scale(self):
-        if 'scale' not in self._values: raise ApiError('scale is not set')
-        return self._values['scale']
+    def get_scale_value(self):
+        return self._get_orref_value('scale')
 
-    def set_scale(self, value):
-        self._values['scale'] = value
+    def get_scale_ref(self):
+        return self._get_orref_ref('scale')
+
+    def set_scale_value(self, value):
+        self._set_orref_value('scale', value)
+
+    def set_scale_ref(self, ref):
+        self._set_orref_ref('scale', ref)
+
+    def is_scale_ref(self):
+        return self._is_orref_ref('scale')
 
     def is_set_scale(self):
         return 'scale' in self._values
 
     def unset_scale(self):
-        self._values.pop('scale', None)
+        self._values.pop('scale', None); self._orref_is_ref.pop('scale', None)
 
     def get_values_value(self):
         return self._get_orref_value('values')
@@ -5015,6 +5807,19 @@ class ParameterRange(SedBase):
 
     def unset_values(self):
         self._values.pop('values', None); self._orref_is_ref.pop('values', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -5028,9 +5833,22 @@ class ParameterRange(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5040,11 +5858,12 @@ class ParameterRange(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5059,7 +5878,9 @@ class ParameterRange(SedBase):
         if 'scale' in self._values: d['scale'] = self._values['scale']
         if 'values' in self._values: d['values'] = self._values['values']
         if 'values' in self._values: d['values'] = self._values['values']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5070,7 +5891,7 @@ class ParameterRange(SedBase):
 
 class ParameterScan(SedBase):
     """Generated from test-specsheets/tasks/ParameterScan/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRange', item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRange', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model', 'parameterRanges'}
     _TYPE_CONST = 'parameterScan'
     _TYPE_RULE_ID = 'ParameterScan-0006'
@@ -5078,6 +5899,7 @@ class ParameterScan(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'repeat': {'over': 'parameterRanges', 'size': {'source': 'static', 'expr': 'len(self)'}, 'labels': None, 'note': "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8"}}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5087,6 +5909,8 @@ class ParameterScan(SedBase):
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
         self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._range = None
 
     def get_type(self):
         return 'parameterScan'
@@ -5124,6 +5948,19 @@ class ParameterScan(SedBase):
 
     def unset_output_variable_map(self):
         self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_parameter_ranges(self):
         return self._parameter_ranges.items()
@@ -5185,12 +6022,39 @@ class ParameterScan(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_range(self):
+        if self._range is None: raise ApiError('range is not set')
+        return self._range
+
+    def set_range(self, obj):
+        self._range = obj; obj._attach(self, self.get_document())
+
+    def is_set_range(self):
+        return self._range is not None
+
+    def unset_range(self):
+        self._range = None
+
     def _children(self):
         kids = []
         kids.extend(self._parameter_ranges.items())
         kids.extend(self._sub_tasks.get(i) for i in self._sub_tasks.ids())
         kids.extend(self._aggregate_output_variables.get(i) for i in self._aggregate_output_variables.ids())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._range is not None: kids.append(self._range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5208,11 +6072,13 @@ class ParameterScan(SedBase):
             out.append((self._aggregate_output_variables.get(i), '/aggregateOutputVariables/' + i))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._range is not None: out.append((self._range, '/range'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['subTasks', 'aggregateOutputVariables']
 
     def _own_json_value(self):
         d = {}
@@ -5221,10 +6087,13 @@ class ParameterScan(SedBase):
         d['_type'] = self._values.get('_type', 'parameterScan')
         if 'model' in self._values: d['model'] = self._values['model']
         if 'outputVariableMap' in self._values: d['outputVariableMap'] = self._values['outputVariableMap']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._parameter_ranges): d['parameterRanges'] = [it.to_json_value() for it in self._parameter_ranges.items()]
         if len(self._sub_tasks): d['subTasks'] = {i: self._sub_tasks.get(i).to_json_value() for i in self._sub_tasks.ids()}
         if len(self._aggregate_output_variables): d['aggregateOutputVariables'] = {i: self._aggregate_output_variables.get(i).to_json_value() for i in self._aggregate_output_variables.ids()}
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._range is not None: d['range'] = self._range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5235,7 +6104,7 @@ class ParameterScan(SedBase):
 
 class Range(SedBase):
     """Generated from test-specsheets/tasks/Range/."""
-    _FIELDS = [FieldSpec('values', 'ArrayOrRef', False, ['Range-0001', 'Range-0002'], None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('values', 'ArrayOrRef', False, 'Range-0001', None, 'Range-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Range-0002'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'range'
     _TYPE_RULE_ID = 'Range-0003'
@@ -5243,12 +6112,14 @@ class Range(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values)'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'range'
@@ -5274,6 +6145,19 @@ class Range(SedBase):
     def unset_values(self):
         self._values.pop('values', None); self._orref_is_ref.pop('values', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -5286,9 +6170,22 @@ class Range(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5298,11 +6195,12 @@ class Range(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5310,7 +6208,9 @@ class Range(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'range')
         if 'values' in self._values: d['values'] = self._values['values']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5321,7 +6221,7 @@ class Range(SedBase):
 
 class RelabelData(SedBase):
     """Generated from test-specsheets/tasks/RelabelData/."""
-    _FIELDS = [FieldSpec('input', 'SIdRef', True, 'RelabelData-0002', 'RelabelData-0001', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('labels', 'ArrayOrRef', True, ['RelabelData-0004', 'RelabelData-0005'], 'RelabelData-0003', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('input', 'SIdRef', True, 'RelabelData-0002', 'RelabelData-0001', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('labels', 'ArrayOrRef', True, 'RelabelData-0004', 'RelabelData-0003', 'RelabelData-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='RelabelData-0005'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'input', 'labels'}
     _TYPE_CONST = 'relabelData'
     _TYPE_RULE_ID = 'RelabelData-0006'
@@ -5329,12 +6229,14 @@ class RelabelData(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input)', 'note': "same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape"}}, '[id].model': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'relabelData'
@@ -5373,6 +6275,19 @@ class RelabelData(SedBase):
     def unset_labels(self):
         self._values.pop('labels', None); self._orref_is_ref.pop('labels', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -5385,9 +6300,22 @@ class RelabelData(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5397,11 +6325,12 @@ class RelabelData(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5410,7 +6339,9 @@ class RelabelData(SedBase):
         d['_type'] = self._values.get('_type', 'relabelData')
         if 'input' in self._values: d['input'] = self._values['input']
         if 'labels' in self._values: d['labels'] = self._values['labels']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5421,7 +6352,7 @@ class RelabelData(SedBase):
 
 class Scatter(SedBase):
     """Generated from test-specsheets/tasks/Scatter/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, ['Repeat-0002', 'Repeat-0003'], None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'scatter'
     _TYPE_RULE_ID = 'Scatter-0003'
@@ -5429,6 +6360,7 @@ class Scatter(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(range)'}, 'labels': None, 'note': "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None, 'note': 'one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here'}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the range dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Scatter's own range), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within each iteration'}, '[id].index': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within each iteration'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5437,6 +6369,8 @@ class Scatter(SedBase):
         self._sub_tasks = IdKeyedCollection(_dispatch_AbstractTask)
         self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._range = None
 
     def get_type(self):
         return 'scatter'
@@ -5461,6 +6395,19 @@ class Scatter(SedBase):
 
     def unset_output_variable_map(self):
         self._values.pop('outputVariableMap', None); self._orref_is_ref.pop('outputVariableMap', None)
+
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
 
     def get_sub_tasks(self):
         return self._sub_tasks.ids()
@@ -5510,11 +6457,38 @@ class Scatter(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_range(self):
+        if self._range is None: raise ApiError('range is not set')
+        return self._range
+
+    def set_range(self, obj):
+        self._range = obj; obj._attach(self, self.get_document())
+
+    def is_set_range(self):
+        return self._range is not None
+
+    def unset_range(self):
+        self._range = None
+
     def _children(self):
         kids = []
         kids.extend(self._sub_tasks.get(i) for i in self._sub_tasks.ids())
         kids.extend(self._aggregate_output_variables.get(i) for i in self._aggregate_output_variables.ids())
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._range is not None: kids.append(self._range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5530,11 +6504,13 @@ class Scatter(SedBase):
             out.append((self._aggregate_output_variables.get(i), '/aggregateOutputVariables/' + i))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._range is not None: out.append((self._range, '/range'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['subTasks', 'aggregateOutputVariables']
 
     def _own_json_value(self):
         d = {}
@@ -5542,9 +6518,12 @@ class Scatter(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'scatter')
         if 'outputVariableMap' in self._values: d['outputVariableMap'] = self._values['outputVariableMap']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._sub_tasks): d['subTasks'] = {i: self._sub_tasks.get(i).to_json_value() for i in self._sub_tasks.ids()}
         if len(self._aggregate_output_variables): d['aggregateOutputVariables'] = {i: self._aggregate_output_variables.get(i).to_json_value() for i in self._aggregate_output_variables.ids()}
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._range is not None: d['range'] = self._range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5555,7 +6534,7 @@ class Scatter(SedBase):
 
 class Span(SedBase):
     """Generated from test-specsheets/tasks/Span/."""
-    _FIELDS = [FieldSpec('start', 'NumberOrRef', True, ['Span-0002', 'Span-0003'], 'Span-0001', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('end', 'NumberOrRef', True, ['Span-0005', 'Span-0006'], 'Span-0004', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('start', 'NumberOrRef', True, 'Span-0002', 'Span-0001', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Span-0003'), FieldSpec('end', 'NumberOrRef', True, 'Span-0005', 'Span-0004', 'Span-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Span-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'start', 'end'}
     _TYPE_CONST = 'span'
     _TYPE_RULE_ID = 'Span-0007'
@@ -5563,11 +6542,13 @@ class Span(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'span'
@@ -5614,8 +6595,34 @@ class Span(SedBase):
     def unset_end(self):
         self._values.pop('end', None); self._orref_is_ref.pop('end', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5623,11 +6630,12 @@ class Span(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5636,6 +6644,8 @@ class Span(SedBase):
         d['_type'] = self._values.get('_type', 'span')
         if 'start' in self._values: d['start'] = self._values['start']
         if 'end' in self._values: d['end'] = self._values['end']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5646,7 +6656,7 @@ class Span(SedBase):
 
 class SteadyState(SedBase):
     """Generated from test-specsheets/tasks/SteadyState/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputVariables', 'ArrayOrRef', True, None, 'SteadyState-0002', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputModel', 'BooleanOrRef', False, ['SteadyState-0005', 'SteadyState-0006'], None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputVariables', 'ArrayOrRef', True, None, 'SteadyState-0002', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputModel', 'BooleanOrRef', False, 'SteadyState-0005', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='SteadyState-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'steadyState'
     _TYPE_RULE_ID = 'SteadyState-0003'
@@ -5654,12 +6664,14 @@ class SteadyState(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'valid': 'outputModel == true', 'type': 'model'}, '[id].strings': {'valid': False}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'steadyState'
@@ -5740,6 +6752,19 @@ class SteadyState(SedBase):
     def unset_output_model(self):
         self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -5752,9 +6777,22 @@ class SteadyState(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5764,11 +6802,12 @@ class SteadyState(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5779,7 +6818,9 @@ class SteadyState(SedBase):
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
         if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5790,7 +6831,7 @@ class SteadyState(SedBase):
 
 class StringFormation(SedBase):
     """Generated from test-specsheets/tasks/StringFormation/."""
-    _FIELDS = [FieldSpec('concatenate', 'ArrayOrRef', True, ['StringFormation-0002', 'StringFormation-0003'], 'StringFormation-0001', 'StringFormation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('concatenate', 'ArrayOrRef', True, 'StringFormation-0002', 'StringFormation-0001', 'StringFormation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='StringFormation-0003'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'concatenate'}
     _TYPE_CONST = 'stringFormation'
     _TYPE_RULE_ID = 'StringFormation-0004'
@@ -5798,12 +6839,14 @@ class StringFormation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "scalar when no element of concatenate is itself a list; otherwise N-D matching the shape of the list element(s) within concatenate (1D for one list element, higher-D when several list elements are combined pairwise, all sharing the same length/shape per dimension) - not derivable without evaluating concatenate's actual element values"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': True, 'type': 'stringList', 'dimensions': {'source': 'runtime', 'note': "same as [id]'s dimensions above; not derivable without evaluating concatenate"}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
         self._task_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'stringFormation'
@@ -5829,6 +6872,19 @@ class StringFormation(SedBase):
     def unset_concatenate(self):
         self._values.pop('concatenate', None); self._orref_is_ref.pop('concatenate', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_task_parameters(self):
         return self._task_parameters.items()
 
@@ -5841,9 +6897,22 @@ class StringFormation(SedBase):
     def remove_task_parameters(self, index):
         self._task_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._task_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -5853,11 +6922,12 @@ class StringFormation(SedBase):
         out = []
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -5865,7 +6935,9 @@ class StringFormation(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'stringFormation')
         if 'concatenate' in self._values: d['concatenate'] = self._values['concatenate']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -5876,7 +6948,7 @@ class StringFormation(SedBase):
 
 class Plot2D(SedBase):
     """Generated from test-specsheets/outputs/Plot2D/."""
-    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, ['Plot-0001', 'Plot-0002'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('curves', 'dict', True, 'Plot2D-0002', 'Plot2D-0001', 'Plot2D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractCurve', is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, 'Plot-0001', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0002'), FieldSpec('height', 'NumberOrRef', False, 'Plot-0003', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0004'), FieldSpec('width', 'NumberOrRef', False, 'Plot-0005', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('curves', 'dict', True, 'Plot2D-0002', 'Plot2D-0001', 'Plot2D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractCurve', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('rightYAxis', 'ref-class', False, 'Plot2D-0003', None, 'Plot2D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('xAxis', 'ref-class', False, 'Plot-0007', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yAxis', 'ref-class', False, 'Plot-0008', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'curves'}
     _TYPE_CONST = 'plot2D'
     _TYPE_RULE_ID = 'Plot2D-0004'
@@ -5891,6 +6963,10 @@ class Plot2D(SedBase):
         super().__init__()
         self._curves = IdKeyedCollection(_dispatch_AbstractCurve)
         self._output_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._right_y_axis = None
+        self._x_axis = None
+        self._y_axis = None
 
     def get_type(self):
         return 'plot2D'
@@ -5958,6 +7034,19 @@ class Plot2D(SedBase):
     def unset_width(self):
         self._values.pop('width', None); self._orref_is_ref.pop('width', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_curves(self):
         return self._curves.ids()
 
@@ -5988,10 +7077,65 @@ class Plot2D(SedBase):
     def remove_output_parameters(self, index):
         self._output_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_right_y_axis(self):
+        if self._right_y_axis is None: raise ApiError('right_y_axis is not set')
+        return self._right_y_axis
+
+    def set_right_y_axis(self, obj):
+        self._right_y_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_right_y_axis(self):
+        return self._right_y_axis is not None
+
+    def unset_right_y_axis(self):
+        self._right_y_axis = None
+
+    def get_x_axis(self):
+        if self._x_axis is None: raise ApiError('x_axis is not set')
+        return self._x_axis
+
+    def set_x_axis(self, obj):
+        self._x_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_x_axis(self):
+        return self._x_axis is not None
+
+    def unset_x_axis(self):
+        self._x_axis = None
+
+    def get_y_axis(self):
+        if self._y_axis is None: raise ApiError('y_axis is not set')
+        return self._y_axis
+
+    def set_y_axis(self, obj):
+        self._y_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_y_axis(self):
+        return self._y_axis is not None
+
+    def unset_y_axis(self):
+        self._y_axis = None
+
     def _children(self):
         kids = []
         kids.extend(self._curves.get(i) for i in self._curves.ids())
         kids.extend(self._output_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._right_y_axis is not None: kids.append(self._right_y_axis)
+        if self._x_axis is not None: kids.append(self._x_axis)
+        if self._y_axis is not None: kids.append(self._y_axis)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6004,11 +7148,15 @@ class Plot2D(SedBase):
             out.append((self._curves.get(i), '/curves/' + i))
         for idx, item in enumerate(self._output_parameters.items()):
             out.append((item, '/outputParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._right_y_axis is not None: out.append((self._right_y_axis, '/rightYAxis'))
+        if self._x_axis is not None: out.append((self._x_axis, '/xAxis'))
+        if self._y_axis is not None: out.append((self._y_axis, '/yAxis'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['curves']
 
     def _own_json_value(self):
         d = {}
@@ -6018,8 +7166,13 @@ class Plot2D(SedBase):
         if 'legend' in self._values: d['legend'] = self._values['legend']
         if 'height' in self._values: d['height'] = self._values['height']
         if 'width' in self._values: d['width'] = self._values['width']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._curves): d['curves'] = {i: self._curves.get(i).to_json_value() for i in self._curves.ids()}
         if len(self._output_parameters): d['outputParameters'] = [it.to_json_value() for it in self._output_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._right_y_axis is not None: d['rightYAxis'] = self._right_y_axis.to_json_value()
+        if self._x_axis is not None: d['xAxis'] = self._x_axis.to_json_value()
+        if self._y_axis is not None: d['yAxis'] = self._y_axis.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6030,7 +7183,7 @@ class Plot2D(SedBase):
 
 class Plot3D(SedBase):
     """Generated from test-specsheets/outputs/Plot3D/."""
-    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, ['Plot-0001', 'Plot-0002'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('height', 'NumberOrRef', False, ['Plot-0003', 'Plot-0004'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('width', 'NumberOrRef', False, ['Plot-0005', 'Plot-0006'], None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('surfaces', 'dict', True, 'Plot3D-0002', 'Plot3D-0001', 'Plot3D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Surface', item_discriminator=None, is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('legend', 'BooleanOrRef', False, 'Plot-0001', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0002'), FieldSpec('height', 'NumberOrRef', False, 'Plot-0003', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0004'), FieldSpec('width', 'NumberOrRef', False, 'Plot-0005', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Plot-0006'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('surfaces', 'dict', True, 'Plot3D-0002', 'Plot3D-0001', 'Plot3D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Surface', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('zAxis', 'ref-class', False, 'Plot3D-0003', None, 'Plot3D-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('xAxis', 'ref-class', False, 'Plot-0007', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yAxis', 'ref-class', False, 'Plot-0008', None, 'Plot-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Axis', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'surfaces'}
     _TYPE_CONST = 'plot3D'
     _TYPE_RULE_ID = 'Plot3D-0004'
@@ -6045,6 +7198,10 @@ class Plot3D(SedBase):
         super().__init__()
         self._surfaces = IdKeyedCollection(lambda tv, _cls=Surface: (_cls, False))
         self._output_parameters = ListCollection()
+        self._annotations = ListCollection()
+        self._z_axis = None
+        self._x_axis = None
+        self._y_axis = None
 
     def get_type(self):
         return 'plot3D'
@@ -6112,6 +7269,19 @@ class Plot3D(SedBase):
     def unset_width(self):
         self._values.pop('width', None); self._orref_is_ref.pop('width', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_surfaces(self):
         return self._surfaces.ids()
 
@@ -6142,10 +7312,65 @@ class Plot3D(SedBase):
     def remove_output_parameters(self, index):
         self._output_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
+    def get_z_axis(self):
+        if self._z_axis is None: raise ApiError('z_axis is not set')
+        return self._z_axis
+
+    def set_z_axis(self, obj):
+        self._z_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_z_axis(self):
+        return self._z_axis is not None
+
+    def unset_z_axis(self):
+        self._z_axis = None
+
+    def get_x_axis(self):
+        if self._x_axis is None: raise ApiError('x_axis is not set')
+        return self._x_axis
+
+    def set_x_axis(self, obj):
+        self._x_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_x_axis(self):
+        return self._x_axis is not None
+
+    def unset_x_axis(self):
+        self._x_axis = None
+
+    def get_y_axis(self):
+        if self._y_axis is None: raise ApiError('y_axis is not set')
+        return self._y_axis
+
+    def set_y_axis(self, obj):
+        self._y_axis = obj; obj._attach(self, self.get_document())
+
+    def is_set_y_axis(self):
+        return self._y_axis is not None
+
+    def unset_y_axis(self):
+        self._y_axis = None
+
     def _children(self):
         kids = []
         kids.extend(self._surfaces.get(i) for i in self._surfaces.ids())
         kids.extend(self._output_parameters.items())
+        kids.extend(self._annotations.items())
+        if self._z_axis is not None: kids.append(self._z_axis)
+        if self._x_axis is not None: kids.append(self._x_axis)
+        if self._y_axis is not None: kids.append(self._y_axis)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6158,11 +7383,15 @@ class Plot3D(SedBase):
             out.append((self._surfaces.get(i), '/surfaces/' + i))
         for idx, item in enumerate(self._output_parameters.items()):
             out.append((item, '/outputParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
+        if self._z_axis is not None: out.append((self._z_axis, '/zAxis'))
+        if self._x_axis is not None: out.append((self._x_axis, '/xAxis'))
+        if self._y_axis is not None: out.append((self._y_axis, '/yAxis'))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return ['surfaces']
 
     def _own_json_value(self):
         d = {}
@@ -6172,8 +7401,13 @@ class Plot3D(SedBase):
         if 'legend' in self._values: d['legend'] = self._values['legend']
         if 'height' in self._values: d['height'] = self._values['height']
         if 'width' in self._values: d['width'] = self._values['width']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._surfaces): d['surfaces'] = {i: self._surfaces.get(i).to_json_value() for i in self._surfaces.ids()}
         if len(self._output_parameters): d['outputParameters'] = [it.to_json_value() for it in self._output_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
+        if self._z_axis is not None: d['zAxis'] = self._z_axis.to_json_value()
+        if self._x_axis is not None: d['xAxis'] = self._x_axis.to_json_value()
+        if self._y_axis is not None: d['yAxis'] = self._y_axis.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6184,7 +7418,7 @@ class Plot3D(SedBase):
 
 class Report(SedBase):
     """Generated from test-specsheets/outputs/Report/."""
-    _FIELDS = [FieldSpec('data', 'SIdRef', True, 'Report-0002', 'Report-0001', 'Report-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('data', 'SIdRef', True, 'Report-0002', 'Report-0001', 'Report-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('outputParameters', 'array', False, 'AbstractOutput-0001', None, 'AbstractOutput-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='OutputParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'data'}
     _TYPE_CONST = 'report'
     _TYPE_RULE_ID = 'Report-0003'
@@ -6198,6 +7432,7 @@ class Report(SedBase):
     def __init__(self):
         super().__init__()
         self._output_parameters = ListCollection()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'report'
@@ -6215,6 +7450,19 @@ class Report(SedBase):
     def unset_data(self):
         self._values.pop('data', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
     def get_output_parameters(self):
         return self._output_parameters.items()
 
@@ -6227,9 +7475,22 @@ class Report(SedBase):
     def remove_output_parameters(self, index):
         self._output_parameters.remove(index)
 
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
         kids.extend(self._output_parameters.items())
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6239,11 +7500,12 @@ class Report(SedBase):
         out = []
         for idx, item in enumerate(self._output_parameters.items()):
             out.append((item, '/outputParameters/%d' % idx))
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6251,7 +7513,9 @@ class Report(SedBase):
         if self._description is not None: d['description'] = self._description
         d['_type'] = self._values.get('_type', 'report')
         if 'data' in self._values: d['data'] = self._values['data']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
         if len(self._output_parameters): d['outputParameters'] = [it.to_json_value() for it in self._output_parameters.items()]
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6262,7 +7526,7 @@ class Report(SedBase):
 
 class Surface(SedBase):
     """Generated from test-specsheets/outputs/Surface/."""
-    _FIELDS = [FieldSpec('surfaceType', 'string', True, ['Surface-0002', 'Surface-0003'], 'Surface-0001', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('x', 'SIdRef', True, 'Surface-0005', 'Surface-0004', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('y', 'SIdRef', True, 'Surface-0007', 'Surface-0006', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('z', 'SIdRef', True, 'Surface-0009', 'Surface-0008', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'Surface-0010', None, 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('order', 'IntegerOrRef', False, ['Surface-0011', 'Surface-0012'], None, 'Surface-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('surfaceType', 'StringOrRef', True, 'Surface-0002', 'Surface-0001', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('parametricCurve', 'surfaceMesh', 'surfaceContour', 'contour', 'heatMap', 'stackedCurves', 'bar'), ref_type_rule_id='Surface-0003'), FieldSpec('x', 'SIdRef', True, 'Surface-0005', 'Surface-0004', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('y', 'SIdRef', True, 'Surface-0007', 'Surface-0006', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('z', 'SIdRef', True, 'Surface-0009', 'Surface-0008', 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('style', 'SIdRef', False, 'Surface-0010', None, 'Surface-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('order', 'IntegerOrRef', False, 'Surface-0011', None, 'Surface-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Surface-0012'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'surfaceType', 'x', 'y', 'z'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6275,19 +7539,28 @@ class Surface(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
-    def get_surface_type(self):
-        if 'surfaceType' not in self._values: raise ApiError('surface_type is not set')
-        return self._values['surfaceType']
+    def get_surface_type_value(self):
+        return self._get_orref_value('surfaceType')
 
-    def set_surface_type(self, value):
-        self._values['surfaceType'] = value
+    def get_surface_type_ref(self):
+        return self._get_orref_ref('surfaceType')
+
+    def set_surface_type_value(self, value):
+        self._set_orref_value('surfaceType', value)
+
+    def set_surface_type_ref(self, ref):
+        self._set_orref_ref('surfaceType', ref)
+
+    def is_surface_type_ref(self):
+        return self._is_orref_ref('surfaceType')
 
     def is_set_surface_type(self):
         return 'surfaceType' in self._values
 
     def unset_surface_type(self):
-        self._values.pop('surfaceType', None)
+        self._values.pop('surfaceType', None); self._orref_is_ref.pop('surfaceType', None)
 
     def get_x(self):
         if 'x' not in self._values: raise ApiError('x is not set')
@@ -6362,8 +7635,34 @@ class Surface(SedBase):
     def unset_order(self):
         self._values.pop('order', None); self._orref_is_ref.pop('order', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6371,11 +7670,12 @@ class Surface(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6387,6 +7687,8 @@ class Surface(SedBase):
         if 'z' in self._values: d['z'] = self._values['z']
         if 'style' in self._values: d['style'] = self._values['style']
         if 'order' in self._values: d['order'] = self._values['order']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6397,7 +7699,7 @@ class Surface(SedBase):
 
 class Annotation(SedBase):
     """Generated from test-specsheets/auxiliary/Annotation/."""
-    _FIELDS = [FieldSpec('qualifier', 'any', True, 'Annotation-0002', 'Annotation-0001', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('value', 'any', True, None, 'Annotation-0003', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('qualifier', 'any', True, 'Annotation-0002', 'Annotation-0001', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('value', 'any', True, None, 'Annotation-0003', 'Annotation-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'qualifier', 'value'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6448,9 +7750,8 @@ class Annotation(SedBase):
         out = []
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6468,7 +7769,7 @@ class Annotation(SedBase):
 
 class Axis(SedBase):
     """Generated from test-specsheets/auxiliary/Axis/."""
-    _FIELDS = [FieldSpec('scale', 'any', False, ['Axis-0001', 'Axis-0002'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('min', 'NumberOrRef', False, ['Axis-0003', 'Axis-0004'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('max', 'NumberOrRef', False, ['Axis-0005', 'Axis-0006'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('grid', 'BooleanOrRef', False, ['Axis-0007', 'Axis-0008'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'Axis-0009', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('reverse', 'BooleanOrRef', False, ['Axis-0010', 'Axis-0011'], None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('scale', 'StringOrRef', False, 'Axis-0001', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('linear', 'log10'), ref_type_rule_id='Axis-0002'), FieldSpec('min', 'NumberOrRef', False, 'Axis-0003', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Axis-0004'), FieldSpec('max', 'NumberOrRef', False, 'Axis-0005', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Axis-0006'), FieldSpec('grid', 'BooleanOrRef', False, 'Axis-0007', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Axis-0008'), FieldSpec('style', 'SIdRef', False, 'Axis-0009', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('reverse', 'BooleanOrRef', False, 'Axis-0010', None, 'Axis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Axis-0011'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6481,19 +7782,28 @@ class Axis(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
-    def get_scale(self):
-        if 'scale' not in self._values: raise ApiError('scale is not set')
-        return self._values['scale']
+    def get_scale_value(self):
+        return self._get_orref_value('scale')
 
-    def set_scale(self, value):
-        self._values['scale'] = value
+    def get_scale_ref(self):
+        return self._get_orref_ref('scale')
+
+    def set_scale_value(self, value):
+        self._set_orref_value('scale', value)
+
+    def set_scale_ref(self, ref):
+        self._set_orref_ref('scale', ref)
+
+    def is_scale_ref(self):
+        return self._is_orref_ref('scale')
 
     def is_set_scale(self):
         return 'scale' in self._values
 
     def unset_scale(self):
-        self._values.pop('scale', None)
+        self._values.pop('scale', None); self._orref_is_ref.pop('scale', None)
 
     def get_min_value(self):
         return self._get_orref_value('min')
@@ -6592,8 +7902,34 @@ class Axis(SedBase):
     def unset_reverse(self):
         self._values.pop('reverse', None); self._orref_is_ref.pop('reverse', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6601,11 +7937,12 @@ class Axis(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6617,6 +7954,8 @@ class Axis(SedBase):
         if 'grid' in self._values: d['grid'] = self._values['grid']
         if 'style' in self._values: d['style'] = self._values['style']
         if 'reverse' in self._values: d['reverse'] = self._values['reverse']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6627,7 +7966,7 @@ class Axis(SedBase):
 
 class Curve(SedBase):
     """Generated from test-specsheets/auxiliary/Curve/."""
-    _FIELDS = [FieldSpec('curveType', 'string', True, ['Curve-0002', 'Curve-0003'], 'Curve-0001', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('y', 'SIdRef', True, 'Curve-0005', 'Curve-0004', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('xErrorUpper', 'SIdRef', False, 'Curve-0006', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('xErrorLower', 'SIdRef', False, 'Curve-0007', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yErrorUpper', 'SIdRef', False, 'Curve-0008', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yErrorLower', 'SIdRef', False, 'Curve-0009', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yFrom', 'SIdRef', False, 'Curve-0010', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yTo', 'SIdRef', False, 'Curve-0011', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('x', 'SIdRef', True, 'AbstractCurve-0002', 'AbstractCurve-0001', 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('order', 'IntegerOrRef', False, ['AbstractCurve-0003', 'AbstractCurve-0004'], None, 'AbstractCurve-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('style', 'SIdRef', False, 'AbstractCurve-0005', None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('yAxis', 'StringOrRef', False, ['AbstractCurve-0006', 'AbstractCurve-0007'], None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('curveType', 'StringOrRef', True, 'Curve-0002', 'Curve-0001', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('points', 'bar', 'barStacked', 'horizontalBar', 'horizontalBarStacked', 'shadedArea'), ref_type_rule_id='Curve-0003'), FieldSpec('y', 'SIdRef', True, 'Curve-0005', 'Curve-0004', 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('xErrorUpper', 'SIdRef', False, 'Curve-0006', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('xErrorLower', 'SIdRef', False, 'Curve-0007', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yErrorUpper', 'SIdRef', False, 'Curve-0008', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yErrorLower', 'SIdRef', False, 'Curve-0009', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yFrom', 'SIdRef', False, 'Curve-0010', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yTo', 'SIdRef', False, 'Curve-0011', None, 'Curve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('x', 'SIdRef', True, 'AbstractCurve-0002', 'AbstractCurve-0001', 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('order', 'IntegerOrRef', False, 'AbstractCurve-0003', None, 'AbstractCurve-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='AbstractCurve-0004'), FieldSpec('style', 'SIdRef', False, 'AbstractCurve-0005', None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('yAxis', 'StringOrRef', False, 'AbstractCurve-0006', None, 'AbstractCurve-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=('right', 'left'), ref_type_rule_id='AbstractCurve-0007'), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'curveType', 'y', 'x'}
     _TYPE_CONST = 'curve'
     _TYPE_RULE_ID = 'Curve-0012'
@@ -6640,22 +7979,31 @@ class Curve(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_type(self):
         return 'curve'
 
-    def get_curve_type(self):
-        if 'curveType' not in self._values: raise ApiError('curve_type is not set')
-        return self._values['curveType']
+    def get_curve_type_value(self):
+        return self._get_orref_value('curveType')
 
-    def set_curve_type(self, value):
-        self._values['curveType'] = value
+    def get_curve_type_ref(self):
+        return self._get_orref_ref('curveType')
+
+    def set_curve_type_value(self, value):
+        self._set_orref_value('curveType', value)
+
+    def set_curve_type_ref(self, ref):
+        self._set_orref_ref('curveType', ref)
+
+    def is_curve_type_ref(self):
+        return self._is_orref_ref('curveType')
 
     def is_set_curve_type(self):
         return 'curveType' in self._values
 
     def unset_curve_type(self):
-        self._values.pop('curveType', None)
+        self._values.pop('curveType', None); self._orref_is_ref.pop('curveType', None)
 
     def get_y(self):
         if 'y' not in self._values: raise ApiError('y is not set')
@@ -6816,8 +8164,34 @@ class Curve(SedBase):
     def unset_y_axis(self):
         self._values.pop('yAxis', None); self._orref_is_ref.pop('yAxis', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6825,11 +8199,12 @@ class Curve(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6848,6 +8223,8 @@ class Curve(SedBase):
         if 'order' in self._values: d['order'] = self._values['order']
         if 'style' in self._values: d['style'] = self._values['style']
         if 'yAxis' in self._values: d['yAxis'] = self._values['yAxis']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6858,7 +8235,7 @@ class Curve(SedBase):
 
 class LoopVariable(SedBase):
     """Generated from test-specsheets/auxiliary/LoopVariable/."""
-    _FIELDS = [FieldSpec('initialValue', 'any', True, None, 'LoopVariable-0001', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False), FieldSpec('subsequentValues', 'SIdRef', True, 'LoopVariable-0003', 'LoopVariable-0002', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('initialValue', 'any', True, None, 'LoopVariable-0001', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('subsequentValues', 'SIdRef', True, 'LoopVariable-0003', 'LoopVariable-0002', 'LoopVariable-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'initialValue', 'subsequentValues'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6871,6 +8248,7 @@ class LoopVariable(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_initial_value(self):
         if 'initialValue' not in self._values: raise ApiError('initial_value is not set')
@@ -6898,8 +8276,34 @@ class LoopVariable(SedBase):
     def unset_subsequent_values(self):
         self._values.pop('subsequentValues', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6907,11 +8311,12 @@ class LoopVariable(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
@@ -6919,6 +8324,8 @@ class LoopVariable(SedBase):
         if self._description is not None: d['description'] = self._description
         if 'initialValue' in self._values: d['initialValue'] = self._values['initialValue']
         if 'subsequentValues' in self._values: d['subsequentValues'] = self._values['subsequentValues']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6929,7 +8336,7 @@ class LoopVariable(SedBase):
 
 class OutputParameter(SedBase):
     """Generated from test-specsheets/auxiliary/OutputParameter/."""
-    _FIELDS = [FieldSpec('value', 'any', True, None, 'OutputParameter-0001', 'OutputParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('value', 'any', True, None, 'OutputParameter-0001', 'OutputParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6942,6 +8349,7 @@ class OutputParameter(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_value(self):
         if 'value' not in self._values: raise ApiError('value is not set')
@@ -6956,8 +8364,34 @@ class OutputParameter(SedBase):
     def unset_value(self):
         self._values.pop('value', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6965,17 +8399,20 @@ class OutputParameter(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         if 'value' in self._values: d['value'] = self._values['value']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6986,7 +8423,7 @@ class OutputParameter(SedBase):
 
 class TaskParameter(SedBase):
     """Generated from test-specsheets/auxiliary/TaskParameter/."""
-    _FIELDS = [FieldSpec('value', 'any', True, None, 'TaskParameter-0001', 'TaskParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('value', 'any', True, None, 'TaskParameter-0001', 'TaskParameter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -6999,6 +8436,7 @@ class TaskParameter(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_value(self):
         if 'value' not in self._values: raise ApiError('value is not set')
@@ -7013,8 +8451,34 @@ class TaskParameter(SedBase):
     def unset_value(self):
         self._values.pop('value', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -7022,17 +8486,20 @@ class TaskParameter(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         if 'value' in self._values: d['value'] = self._values['value']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -7043,7 +8510,7 @@ class TaskParameter(SedBase):
 
 class WorkingAlgorithm(SedBase):
     """Generated from test-specsheets/auxiliary/WorkingAlgorithm/."""
-    _FIELDS = [FieldSpec('algorithm', 'StringOrRef', True, None, 'WorkingAlgorithm-0001', 'WorkingAlgorithm-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False)]
+    _FIELDS = [FieldSpec('algorithm', 'StringOrRef', True, None, 'WorkingAlgorithm-0001', 'WorkingAlgorithm-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
     _REQUIRED_NAMES = {'algorithm'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -7056,6 +8523,7 @@ class WorkingAlgorithm(SedBase):
 
     def __init__(self):
         super().__init__()
+        self._annotations = ListCollection()
 
     def get_algorithm_value(self):
         return self._get_orref_value('algorithm')
@@ -7078,8 +8546,34 @@ class WorkingAlgorithm(SedBase):
     def unset_algorithm(self):
         self._values.pop('algorithm', None); self._orref_is_ref.pop('algorithm', None)
 
+    def get_notes(self):
+        if 'notes' not in self._values: raise ApiError('notes is not set')
+        return self._values['notes']
+
+    def set_notes(self, value):
+        self._values['notes'] = value
+
+    def is_set_notes(self):
+        return 'notes' in self._values
+
+    def unset_notes(self):
+        self._values.pop('notes', None)
+
+    def get_annotations(self):
+        return self._annotations.items()
+
+    def add_annotations(self, obj):
+        self._annotations.add(obj); obj._attach(self, self.get_document())
+
+    def insert_annotations(self, index, obj):
+        self._annotations.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_annotations(self, index):
+        self._annotations.remove(index)
+
     def _children(self):
         kids = []
+        kids.extend(self._annotations.items())
         return kids
 
     def _get_id_collection(self, field_name):
@@ -7087,17 +8581,20 @@ class WorkingAlgorithm(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._annotations.items()):
+            out.append((item, '/annotations/%d' % idx))
         return out
 
-    def _own_id_for_message(self):
-        p = self.get_parent()
-        return '?'
+    def _id_collection_names(self):
+        return []
 
     def _own_json_value(self):
         d = {}
         if self._name is not None: d['name'] = self._name
         if self._description is not None: d['description'] = self._description
         if 'algorithm' in self._values: d['algorithm'] = self._values['algorithm']
+        if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -7257,7 +8754,7 @@ def _load_fields(obj, raw: dict):
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']
     for spec in obj._FIELDS:
-        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict'):
+        if spec.name not in raw or spec.kind in ('dict', 'array', 'any-dict', 'ref-class', 'ref-discriminator'):
             continue
         v = raw[spec.name]
         if spec.kind in ('StringOrRef', 'NumberOrRef', 'IntegerOrRef', 'BooleanOrRef', 'ArrayOrRef', 'DictOrRef'):
@@ -7349,6 +8846,29 @@ def _load_fields(obj, raw: dict):
                         'attr': spec.name, 'class': obj.__class__.__name__,
                         'id': obj._own_id_for_message(), 'value': item_id}))
                 coll.add(item_id, item_value)
+        elif spec.kind in ('ref-class', 'ref-discriminator') and spec.name in raw:
+            # A single nested SedBase-derived child (see emit_model_py's own
+            # child_fields/_child_accessors docstring) - 'ref-class' constructs
+            # a fixed target class directly; 'ref-discriminator' dispatches on
+            # the raw JSON's own _type via the matching parse_* function, same
+            # as a dict-kind field's own discriminated items above.
+            raw_value = raw[spec.name]
+            if not isinstance(raw_value, dict):
+                rid = spec.rule_id or spec.origin_catchall
+                obj._load_problems.append(make_problem(rid, '/' + spec.name, **{
+                    'attr': spec.name, 'class': obj.__class__.__name__,
+                    'id': obj._own_id_for_message(), 'value': raw_value}))
+                continue
+            if spec.kind == 'ref-discriminator':
+                dispatch = globals()['parse_' + spec.item_discriminator]
+                child, problem = dispatch(raw_value)
+                if problem is not None:
+                    obj._load_problems.append(problem)
+            else:
+                child = globals()[spec.item_class]()
+                _load_fields(child, raw_value)
+            if child is not None:
+                setattr(obj, '_' + _pyname(spec.name), child)
 
 
 def _pyname(name):

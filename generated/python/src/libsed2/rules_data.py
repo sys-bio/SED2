@@ -1,4 +1,4 @@
-"""Generated rule catalogue for libsed2test. GENERATED - do not hand-edit."""
+"""Generated rule catalogue for libsed2. GENERATED - do not hand-edit."""
 from ._runtime import RULE_CATALOG
 
 RULE_CATALOG.update({
