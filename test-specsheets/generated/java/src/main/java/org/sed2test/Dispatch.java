@@ -52,7 +52,9 @@ public final class Dispatch {
         SedBase obj = null;
         switch (tv) {
             case "fancyWidget": obj = new FancyWidget(); break;
+            case "mathWidget": obj = new MathWidget(); break;
             case "simpleWidget": obj = new SimpleWidget(); break;
+            case "typesWidget": obj = new TypesWidget(); break;
             case "acme@acmeWidget": obj = new AcmeWidget(); break;
         }
         if (obj != null) {

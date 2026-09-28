@@ -197,6 +197,57 @@ private:
     ListCollection notes_;
 };
 
+/// Generated from test-specsheets/tasks/MathWidget/.
+class MathWidget : public SedBase {
+public:
+    const std::vector<FieldSpec>& field_specs() const override {
+        static const std::vector<FieldSpec> specs = {
+            FieldSpec{"math", "StringOrRef", true, std::string("MathWidget-0002"), std::string("MathWidget-0001"), "MathWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+        };
+        return specs;
+    }
+    const std::set<std::string>& required_names() const override {
+        static const std::set<std::string> names = {"math"};
+        return names;
+    }
+    std::optional<std::string> type_const() const override { return std::string("mathWidget"); }
+    std::optional<std::string> type_rule_id() const override { return std::string("MathWidget-0003"); }
+    std::string own_catchall() const override { return "MathWidget-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("TestBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
+    std::string base_catchall() const override { return "TestBase-0000"; }
+    std::string class_name() const override { return "MathWidget"; }
+    std::string get_type() const { return "mathWidget"; }
+
+    std::string get_math_value() const { return get_or_ref_value_node("math").as<std::string>(); }
+    std::string get_math_ref() const { return get_or_ref_ref_node("math").as<std::string>(); }
+    void set_math_value(const std::string& value) { set_or_ref_value_node("math", jsoncons::json(value)); }
+    void set_math_ref(const std::string& ref) { set_or_ref_ref_node("math", ref); }
+    bool is_math_ref() const { return is_or_ref_ref("math"); }
+    bool is_set_math() const { return values_.count("math") > 0; }
+    void unset_math() { values_.erase("math"); or_ref_is_ref_.erase("math"); }
+
+    std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
+    std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
+    bool is_label_ref() const { return is_or_ref_ref("label"); }
+    bool is_set_label() const { return values_.count("label") > 0; }
+    void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
+
+    jsoncons::json own_json_value() const override {
+        jsoncons::json d = jsoncons::json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("mathWidget");
+        if (values_.count("math")) d["math"] = values_.at("math");
+        if (values_.count("label")) d["label"] = values_.at("label");
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
+};
+
 /// Generated from test-specsheets/tasks/SimpleWidget/.
 class SimpleWidget : public SedBase {
 public:
@@ -269,6 +320,143 @@ public:
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
     }
+};
+
+/// Generated from test-specsheets/tasks/TypesWidget/.
+class TypesWidget : public SedBase {
+public:
+    const std::vector<FieldSpec>& field_specs() const override {
+        static const std::vector<FieldSpec> specs = {
+            FieldSpec{"anyValue", "any", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"enabled", "BooleanOrRef", false, std::string("TypesWidget-0001"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"count", "IntegerOrRef", false, std::string("TypesWidget-0003"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"items", "ArrayOrRef", false, std::string("TypesWidget-0004"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"settings", "DictOrRef", false, std::string("TypesWidget-0005"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"extras", "any-dict", false, std::string("TypesWidget-0007"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"primaryNote", "ref-class", false, std::string("TypesWidget-0006"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt},
+            FieldSpec{"report", "ref-discriminator", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport")}
+        };
+        return specs;
+    }
+    std::optional<std::string> type_const() const override { return std::string("typesWidget"); }
+    std::optional<std::string> type_rule_id() const override { return std::string("TypesWidget-0002"); }
+    std::string own_catchall() const override { return "TypesWidget-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("TestBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
+    std::string base_catchall() const override { return "TestBase-0000"; }
+    std::string class_name() const override { return "TypesWidget"; }
+    std::string get_type() const { return "typesWidget"; }
+
+    jsoncons::json get_anyValue() const { auto it = values_.find("anyValue"); if (it == values_.end()) throw ApiError(std::string("anyValue") + " is not set"); return it->second; }
+    void set_anyValue(const jsoncons::json& value) { values_["anyValue"] = value; }
+    bool is_set_anyValue() const { return values_.count("anyValue") > 0; }
+    void unset_anyValue() { values_.erase("anyValue"); }
+
+    bool get_enabled_value() const { return get_or_ref_value_node("enabled").as<bool>(); }
+    std::string get_enabled_ref() const { return get_or_ref_ref_node("enabled").as<std::string>(); }
+    void set_enabled_value(bool value) { set_or_ref_value_node("enabled", jsoncons::json(value)); }
+    void set_enabled_ref(const std::string& ref) { set_or_ref_ref_node("enabled", ref); }
+    bool is_enabled_ref() const { return is_or_ref_ref("enabled"); }
+    bool is_set_enabled() const { return values_.count("enabled") > 0; }
+    void unset_enabled() { values_.erase("enabled"); or_ref_is_ref_.erase("enabled"); }
+
+    int64_t get_count_value() const { return get_or_ref_value_node("count").as<int64_t>(); }
+    std::string get_count_ref() const { return get_or_ref_ref_node("count").as<std::string>(); }
+    void set_count_value(int64_t value) { set_or_ref_value_node("count", jsoncons::json(value)); }
+    void set_count_ref(const std::string& ref) { set_or_ref_ref_node("count", ref); }
+    bool is_count_ref() const { return is_or_ref_ref("count"); }
+    bool is_set_count() const { return values_.count("count") > 0; }
+    void unset_count() { values_.erase("count"); or_ref_is_ref_.erase("count"); }
+
+    jsoncons::json get_items_value() const { return get_or_ref_value_node("items"); }
+    std::string get_items_ref() const { return get_or_ref_ref_node("items").as<std::string>(); }
+    void set_items_value(const jsoncons::json& value) { set_or_ref_value_node("items", value); }
+    void set_items_ref(const std::string& ref) { set_or_ref_ref_node("items", ref); }
+    bool is_items_ref() const { return is_or_ref_ref("items"); }
+    bool is_set_items() const { return values_.count("items") > 0; }
+    void unset_items() { values_.erase("items"); or_ref_is_ref_.erase("items"); }
+
+    jsoncons::json get_settings_value() const { return get_or_ref_value_node("settings"); }
+    std::string get_settings_ref() const { return get_or_ref_ref_node("settings").as<std::string>(); }
+    void set_settings_value(const jsoncons::json& value) { set_or_ref_value_node("settings", value); }
+    void set_settings_ref(const std::string& ref) { set_or_ref_ref_node("settings", ref); }
+    bool is_settings_ref() const { return is_or_ref_ref("settings"); }
+    bool is_set_settings() const { return values_.count("settings") > 0; }
+    void unset_settings() { values_.erase("settings"); or_ref_is_ref_.erase("settings"); }
+
+    std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
+    std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
+    bool is_label_ref() const { return is_or_ref_ref("label"); }
+    bool is_set_label() const { return values_.count("label") > 0; }
+    void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
+
+    std::vector<std::string> get_extras() const { return extras_.ids(); }
+    jsoncons::json get_extras_item(const std::string& item_id) const { return extras_.get(item_id); }
+    void add_extras(const std::string& item_id, const jsoncons::json& value) { extras_.add(item_id, value); }
+    void insert_extras(size_t index, const std::string& item_id, const jsoncons::json& value) { extras_.insert(index, item_id, value); }
+    void remove_extras(const std::string& item_id) { extras_.remove(item_id); }
+    void set_id_on_extras(const std::string& old_id, const std::string& new_id) { extras_.set_id(old_id, new_id); }
+
+    SedBase* get_primaryNote() const { if (!primaryNote_) throw ApiError(std::string("primaryNote") + " is not set"); return primaryNote_.get(); }
+    void set_primaryNote(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); primaryNote_ = std::move(obj); raw->attach(this, get_document()); }
+    bool is_set_primaryNote() const { return primaryNote_ != nullptr; }
+    void unset_primaryNote() { primaryNote_.reset(); }
+
+    SedBase* get_report() const { if (!report_) throw ApiError(std::string("report") + " is not set"); return report_.get(); }
+    void set_report(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); report_ = std::move(obj); raw->attach(this, get_document()); }
+    bool is_set_report() const { return report_ != nullptr; }
+    void unset_report() { report_.reset(); }
+
+    std::vector<SedBase*> children() override {
+        std::vector<SedBase*> kids;
+        if (primaryNote_) kids.push_back(primaryNote_.get());
+        if (report_) kids.push_back(report_.get());
+        return kids;
+    }
+
+    std::vector<ChildLoc> children_with_locations() override {
+        std::vector<ChildLoc> out;
+        if (primaryNote_) out.push_back(ChildLoc{primaryNote_.get(), "/primaryNote"});
+        if (report_) out.push_back(ChildLoc{report_.get(), "/report"});
+        return out;
+    }
+
+    AnyDictCollection& get_any_dict_collection(const std::string& field_name) override {
+        if (field_name == "extras") return extras_;
+        return SedBase::get_any_dict_collection(field_name);
+    }
+
+    void set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child) override {
+        if (field_name == "primaryNote") { primaryNote_ = std::move(child); return; }
+        if (field_name == "report") { report_ = std::move(child); return; }
+        SedBase::set_child_field(field_name, std::move(child));
+    }
+
+    jsoncons::json own_json_value() const override {
+        jsoncons::json d = jsoncons::json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("typesWidget");
+        if (values_.count("anyValue")) d["anyValue"] = values_.at("anyValue");
+        if (values_.count("enabled")) d["enabled"] = values_.at("enabled");
+        if (values_.count("count")) d["count"] = values_.at("count");
+        if (values_.count("items")) d["items"] = values_.at("items");
+        if (values_.count("settings")) d["settings"] = values_.at("settings");
+        if (values_.count("label")) d["label"] = values_.at("label");
+        if (extras_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : extras_.ids()) sub[i] = extras_.get(i); d["extras"] = sub; }
+        if (primaryNote_) d["primaryNote"] = primaryNote_->to_json_value();
+        if (report_) d["report"] = report_->to_json_value();
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
+
+private:
+    AnyDictCollection extras_;
+    std::unique_ptr<SedBase> primaryNote_;
+    std::unique_ptr<SedBase> report_;
 };
 
 /// Generated from test-specsheets/outputs/SimpleReport/.

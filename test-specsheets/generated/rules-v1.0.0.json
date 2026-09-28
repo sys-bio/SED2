@@ -95,6 +95,38 @@
     "status": "active",
     "check": "schema"
   },
+  "MathWidget-0000": {
+    "class": "MathWidget",
+    "rule": "The element fails a JSON Schema constraint attributable to MathWidget that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "MathWidget-0001": {
+    "class": "MathWidget",
+    "rule": "The math attribute of a MathWidget is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "MathWidget-0002": {
+    "class": "MathWidget",
+    "rule": "The math attribute of a MathWidget must be a string or a reference.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string or a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "MathWidget-0003": {
+    "class": "MathWidget",
+    "rule": "The _type attribute of a MathWidget must be \"mathWidget\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
   "Note-0000": {
     "class": "Note",
     "rule": "The element fails a JSON Schema constraint attributable to Note that does not match any other numbered rule.",
@@ -219,6 +251,102 @@
     "class": "TestDocument",
     "rule": "The reports attribute of a TestDocument, if present, must be an object whose values are AbstractReport objects.",
     "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object whose values are AbstractReport objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Types-0001": {
+    "class": "Types",
+    "rule": "A math expression must be a well-formed expression under the SED2 infix grammar.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' could not be parsed: '{expr}'. {parse-message}",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0002": {
+    "class": "Types",
+    "rule": "Every function called in a math expression must be defined in the predefined-functions registry.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' calls unknown function '{function}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0003": {
+    "class": "Types",
+    "rule": "Every function called in a math expression must be given a number of arguments its registry entry allows.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' calls '{function}' with {count} arguments; it accepts {expected-count}.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "Types-0004": {
+    "class": "Types",
+    "rule": "Every bare identifier in a math expression must be a predefined constant.",
+    "message": "The math in attribute '{attr}' of {class} '{id}' uses '{value}', which is not a predefined constant; use a #reference for document values.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "TypesWidget-0000": {
+    "class": "TypesWidget",
+    "rule": "The element fails a JSON Schema constraint attributable to TypesWidget that does not match any other numbered rule.",
+    "message": "{schema-message} (at {location})",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0001": {
+    "class": "TypesWidget",
+    "rule": "The enabled attribute of a TypesWidget, if present, must be a boolean or a reference.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean or a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0002": {
+    "class": "TypesWidget",
+    "rule": "The _type attribute of a TypesWidget must be \"typesWidget\".",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0003": {
+    "class": "TypesWidget",
+    "rule": "The count attribute of a TypesWidget, if present, must be an integer or a reference.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an integer or a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0004": {
+    "class": "TypesWidget",
+    "rule": "The items attribute of a TypesWidget, if present, must be an array or a reference.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array or a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0005": {
+    "class": "TypesWidget",
+    "rule": "The settings attribute of a TypesWidget, if present, must be an object or a reference.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an object or a reference.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0006": {
+    "class": "TypesWidget",
+    "rule": "The primaryNote attribute of a TypesWidget, if present, must be a Note object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a Note object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "TypesWidget-0007": {
+    "class": "TypesWidget",
+    "rule": "The extras attribute of a TypesWidget, if present, must be an object whose keys are SIds.",
+    "message": "Attribute '{attr}' of {class} '{id}' is not an object keyed by valid SIds.",
     "severity": "error",
     "status": "active",
     "check": "schema"

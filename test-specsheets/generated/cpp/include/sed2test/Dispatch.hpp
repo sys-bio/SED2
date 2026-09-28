@@ -35,7 +35,9 @@ inline DispatchResult parse_AbstractWidget(const jsoncons::json& raw) {
     std::string tv = raw.at("_type").as<std::string>();
     std::unique_ptr<SedBase> obj;
     if (tv == "fancyWidget") obj = std::make_unique<FancyWidget>();
+    else if (tv == "mathWidget") obj = std::make_unique<MathWidget>();
     else if (tv == "simpleWidget") obj = std::make_unique<SimpleWidget>();
+    else if (tv == "typesWidget") obj = std::make_unique<TypesWidget>();
     else if (tv == "acme@acmeWidget") obj = std::make_unique<AcmeWidget>();
     if (obj) {
         load_fields(obj.get(), raw);

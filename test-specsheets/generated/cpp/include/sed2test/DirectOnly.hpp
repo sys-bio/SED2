@@ -16,7 +16,9 @@ namespace sed2test {
 inline const std::map<std::string, std::function<std::unique_ptr<SedBase>()>>& direct_only_classes() {
     static const std::map<std::string, std::function<std::unique_ptr<SedBase>()>> m = {
         {"FancyWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<FancyWidget>()); }},
+        {"MathWidget-0003", [] { return std::unique_ptr<SedBase>(std::make_unique<MathWidget>()); }},
         {"SimpleWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<SimpleWidget>()); }},
+        {"TypesWidget-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<TypesWidget>()); }},
         {"SimpleReport-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<SimpleReport>()); }},
         {"Choice-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<Choice>()); }},
         {"WeightedChoice-0002", [] { return std::unique_ptr<SedBase>(std::make_unique<WeightedChoice>()); }},

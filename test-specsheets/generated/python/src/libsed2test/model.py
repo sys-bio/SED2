@@ -356,6 +356,96 @@ class FancyWidget(SedBase):
         return self._own_json_value()
 
 
+class MathWidget(SedBase):
+    """Generated from test-specsheets/tasks/MathWidget/."""
+    _FIELDS = [FieldSpec('math', 'StringOrRef', True, 'MathWidget-0002', 'MathWidget-0001', 'MathWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _REQUIRED_NAMES = {'math'}
+    _TYPE_CONST = 'mathWidget'
+    _TYPE_RULE_ID = 'MathWidget-0003'
+    _OWN_CATCHALL = 'MathWidget-0000'
+    _NAME_RULE_ID = 'TestBase-0001'
+    _DESC_RULE_ID = None
+    _BASE_CATCHALL = 'TestBase-0000'
+    _NAMESPACE_FIELDS = {}
+    _NAMESPACE_CATCHALL = {}
+
+    def __init__(self):
+        super().__init__()
+
+    def get_type(self):
+        return 'mathWidget'
+
+    def get_math_value(self):
+        return self._get_orref_value('math')
+
+    def get_math_ref(self):
+        return self._get_orref_ref('math')
+
+    def set_math_value(self, value):
+        self._set_orref_value('math', value)
+
+    def set_math_ref(self, ref):
+        self._set_orref_ref('math', ref)
+
+    def is_math_ref(self):
+        return self._is_orref_ref('math')
+
+    def is_set_math(self):
+        return 'math' in self._values
+
+    def unset_math(self):
+        self._values.pop('math', None); self._orref_is_ref.pop('math', None)
+
+    def get_label_value(self):
+        return self._get_orref_value('label')
+
+    def get_label_ref(self):
+        return self._get_orref_ref('label')
+
+    def set_label_value(self, value):
+        self._set_orref_value('label', value)
+
+    def set_label_ref(self, ref):
+        self._set_orref_ref('label', ref)
+
+    def is_label_ref(self):
+        return self._is_orref_ref('label')
+
+    def is_set_label(self):
+        return 'label' in self._values
+
+    def unset_label(self):
+        self._values.pop('label', None); self._orref_is_ref.pop('label', None)
+
+    def _children(self):
+        kids = []
+        return kids
+
+    def _get_id_collection(self, field_name):
+        return None
+
+    def _children_with_locations(self):
+        out = []
+        return out
+
+    def _id_collection_names(self):
+        return []
+
+    def _own_json_value(self):
+        d = {}
+        if self._name is not None: d['name'] = self._name
+        if self._description is not None: d['description'] = self._description
+        d['_type'] = self._values.get('_type', 'mathWidget')
+        if 'math' in self._values: d['math'] = self._values['math']
+        if 'label' in self._values: d['label'] = self._values['label']
+        for (pfx, key), value in self._ns_attrs.items():
+            d[f'{pfx}@{key}'] = value
+        return d
+
+    def to_json_value(self):
+        return self._own_json_value()
+
+
 class SimpleWidget(SedBase):
     """Generated from test-specsheets/tasks/SimpleWidget/."""
     _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
@@ -455,6 +545,231 @@ class SimpleWidget(SedBase):
         if 'value' in self._values: d['value'] = self._values['value']
         if 'label' in self._values: d['label'] = self._values['label']
         if 'acme@priority' in self._values: d['acme@priority'] = self._values['acme@priority']
+        for (pfx, key), value in self._ns_attrs.items():
+            d[f'{pfx}@{key}'] = value
+        return d
+
+    def to_json_value(self):
+        return self._own_json_value()
+
+
+class TypesWidget(SedBase):
+    """Generated from test-specsheets/tasks/TypesWidget/."""
+    _FIELDS = [FieldSpec('anyValue', 'any', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('enabled', 'BooleanOrRef', False, 'TypesWidget-0001', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('count', 'IntegerOrRef', False, 'TypesWidget-0003', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('items', 'ArrayOrRef', False, 'TypesWidget-0004', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('settings', 'DictOrRef', False, 'TypesWidget-0005', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('extras', 'any-dict', False, 'TypesWidget-0007', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('primaryNote', 'ref-class', False, 'TypesWidget-0006', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('report', 'ref-discriminator', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _REQUIRED_NAMES = {}
+    _TYPE_CONST = 'typesWidget'
+    _TYPE_RULE_ID = 'TypesWidget-0002'
+    _OWN_CATCHALL = 'TypesWidget-0000'
+    _NAME_RULE_ID = 'TestBase-0001'
+    _DESC_RULE_ID = None
+    _BASE_CATCHALL = 'TestBase-0000'
+    _NAMESPACE_FIELDS = {}
+    _NAMESPACE_CATCHALL = {}
+
+    def __init__(self):
+        super().__init__()
+        self._extras = IdKeyedCollection(None)
+        self._primary_note = None
+        self._report = None
+
+    def get_type(self):
+        return 'typesWidget'
+
+    def get_any_value(self):
+        if 'anyValue' not in self._values: raise ApiError('any_value is not set')
+        return self._values['anyValue']
+
+    def set_any_value(self, value):
+        self._values['anyValue'] = value
+
+    def is_set_any_value(self):
+        return 'anyValue' in self._values
+
+    def unset_any_value(self):
+        self._values.pop('anyValue', None)
+
+    def get_enabled_value(self):
+        return self._get_orref_value('enabled')
+
+    def get_enabled_ref(self):
+        return self._get_orref_ref('enabled')
+
+    def set_enabled_value(self, value):
+        self._set_orref_value('enabled', value)
+
+    def set_enabled_ref(self, ref):
+        self._set_orref_ref('enabled', ref)
+
+    def is_enabled_ref(self):
+        return self._is_orref_ref('enabled')
+
+    def is_set_enabled(self):
+        return 'enabled' in self._values
+
+    def unset_enabled(self):
+        self._values.pop('enabled', None); self._orref_is_ref.pop('enabled', None)
+
+    def get_count_value(self):
+        return self._get_orref_value('count')
+
+    def get_count_ref(self):
+        return self._get_orref_ref('count')
+
+    def set_count_value(self, value):
+        self._set_orref_value('count', value)
+
+    def set_count_ref(self, ref):
+        self._set_orref_ref('count', ref)
+
+    def is_count_ref(self):
+        return self._is_orref_ref('count')
+
+    def is_set_count(self):
+        return 'count' in self._values
+
+    def unset_count(self):
+        self._values.pop('count', None); self._orref_is_ref.pop('count', None)
+
+    def get_items_value(self):
+        return self._get_orref_value('items')
+
+    def get_items_ref(self):
+        return self._get_orref_ref('items')
+
+    def set_items_value(self, value):
+        self._set_orref_value('items', value)
+
+    def set_items_ref(self, ref):
+        self._set_orref_ref('items', ref)
+
+    def is_items_ref(self):
+        return self._is_orref_ref('items')
+
+    def is_set_items(self):
+        return 'items' in self._values
+
+    def unset_items(self):
+        self._values.pop('items', None); self._orref_is_ref.pop('items', None)
+
+    def get_settings_value(self):
+        return self._get_orref_value('settings')
+
+    def get_settings_ref(self):
+        return self._get_orref_ref('settings')
+
+    def set_settings_value(self, value):
+        self._set_orref_value('settings', value)
+
+    def set_settings_ref(self, ref):
+        self._set_orref_ref('settings', ref)
+
+    def is_settings_ref(self):
+        return self._is_orref_ref('settings')
+
+    def is_set_settings(self):
+        return 'settings' in self._values
+
+    def unset_settings(self):
+        self._values.pop('settings', None); self._orref_is_ref.pop('settings', None)
+
+    def get_label_value(self):
+        return self._get_orref_value('label')
+
+    def get_label_ref(self):
+        return self._get_orref_ref('label')
+
+    def set_label_value(self, value):
+        self._set_orref_value('label', value)
+
+    def set_label_ref(self, ref):
+        self._set_orref_ref('label', ref)
+
+    def is_label_ref(self):
+        return self._is_orref_ref('label')
+
+    def is_set_label(self):
+        return 'label' in self._values
+
+    def unset_label(self):
+        self._values.pop('label', None); self._orref_is_ref.pop('label', None)
+
+    def get_extras(self):
+        return self._extras.ids()
+
+    def get_extras_item(self, item_id):
+        return self._extras.get(item_id)
+
+    def add_extras(self, item_id, value):
+        self._extras.add(item_id, value)
+
+    def insert_extras(self, index, item_id, value):
+        self._extras.insert(index, item_id, value)
+
+    def remove_extras(self, item_id):
+        self._extras.remove(item_id)
+
+    def set_id_on_extras(self, old_id, new_id):
+        self._extras.set_id(old_id, new_id)
+
+    def get_primary_note(self):
+        if self._primary_note is None: raise ApiError('primary_note is not set')
+        return self._primary_note
+
+    def set_primary_note(self, obj):
+        self._primary_note = obj; obj._attach(self, self.get_document())
+
+    def is_set_primary_note(self):
+        return self._primary_note is not None
+
+    def unset_primary_note(self):
+        self._primary_note = None
+
+    def get_report(self):
+        if self._report is None: raise ApiError('report is not set')
+        return self._report
+
+    def set_report(self, obj):
+        self._report = obj; obj._attach(self, self.get_document())
+
+    def is_set_report(self):
+        return self._report is not None
+
+    def unset_report(self):
+        self._report = None
+
+    def _children(self):
+        kids = []
+        if self._primary_note is not None: kids.append(self._primary_note)
+        if self._report is not None: kids.append(self._report)
+        return kids
+
+    def _get_id_collection(self, field_name):
+        if field_name == 'extras': return self._extras
+        return None
+
+    def _children_with_locations(self):
+        out = []
+        if self._primary_note is not None: out.append((self._primary_note, '/primaryNote'))
+        if self._report is not None: out.append((self._report, '/report'))
+        return out
+
+    def _id_collection_names(self):
+        return ['extras']
+
+    def _own_json_value(self):
+        d = {}
+        if self._name is not None: d['name'] = self._name
+        if self._description is not None: d['description'] = self._description
+        d['_type'] = self._values.get('_type', 'typesWidget')
+        if 'anyValue' in self._values: d['anyValue'] = self._values['anyValue']
+        if 'enabled' in self._values: d['enabled'] = self._values['enabled']
+        if 'count' in self._values: d['count'] = self._values['count']
+        if 'items' in self._values: d['items'] = self._values['items']
+        if 'settings' in self._values: d['settings'] = self._values['settings']
+        if 'label' in self._values: d['label'] = self._values['label']
+        if len(self._extras): d['extras'] = {i: self._extras.get(i) for i in self._extras.ids()}
+        if self._primary_note is not None: d['primaryNote'] = self._primary_note.to_json_value()
+        if self._report is not None: d['report'] = self._report.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -860,7 +1175,9 @@ class AcmeWidget(SedBase):
 def _dispatch_AbstractWidget(type_value):
     branches = {
         'fancyWidget': FancyWidget,
+        'mathWidget': MathWidget,
         'simpleWidget': SimpleWidget,
+        'typesWidget': TypesWidget,
         'acme@acmeWidget': AcmeWidget,
     }
     return branches.get(type_value)
