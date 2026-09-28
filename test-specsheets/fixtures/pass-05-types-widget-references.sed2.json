@@ -1,0 +1,17 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "tw1": {
+      "_type": "typesWidget",
+      "anyValue": "#constants:c1",
+      "enabled": "#constants:flag",
+      "count": "#constants:n",
+      "items": "#constants:list1",
+      "settings": "#constants:dict1",
+      "extras": {
+        "x": "#constants:c1",
+        "y": 2.5
+      }
+    }
+  }
+}

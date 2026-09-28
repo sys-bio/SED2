@@ -33,6 +33,75 @@
           "$ref": "#/$defs/SIdRef"
         }
       ]
+    },
+    "IntegerOrRef": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "BooleanOrRef": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "ArrayOrRef": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "DictOrRef": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/SIdRef"
+        }
+      ]
+    },
+    "AnyValueOrRef": {
+      "description": "Any JSON value. Per the SED2 spec, an SIdRef string may substitute for any value.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AnyValueOrRef"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/AnyValueOrRef"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   }
 }

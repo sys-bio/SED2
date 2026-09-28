@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "mw1": {
+      "_type": "mathWidget",
+      "math": "frobnicate(1)"
+    }
+  }
+}

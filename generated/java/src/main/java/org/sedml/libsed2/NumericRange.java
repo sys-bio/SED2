@@ -22,11 +22,17 @@ public final class NumericRange extends SedBase {
         new FieldSpec("start", "NumberOrRef", false, "NumericRange-0001", null, "NumericRange-0000", null, null, null, null, null),
         new FieldSpec("end", "NumberOrRef", false, "NumericRange-0003", null, "NumericRange-0000", null, null, null, null, null),
         new FieldSpec("interval", "NumberOrRef", false, "NumericRange-0005", null, "NumericRange-0000", null, 0.0, null, null, null),
+        new FieldSpec("numberOfSteps", "IntegerOrRef", false, "NumericRange-0007", null, "NumericRange-0000", null, 0.0, null, null, null),
         new FieldSpec("scale", "StringOrRef", false, "NumericRange-0009", null, "NumericRange-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
+        new FieldSpec("values", "ArrayOrRef", false, "NumericRange-0011", null, "NumericRange-0000", null, null, null, null, null),
+        new FieldSpec("values", "ArrayOrRef", false, "Range-0001", null, "Range-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -62,6 +68,14 @@ public final class NumericRange extends SedBase {
     public boolean isSetInterval() { return values.containsKey("interval"); }
     public void unsetInterval() { values.remove("interval"); orRefIsRef.remove("interval"); }
 
+    public long getNumberOfStepsValue() { return getOrRefValueNode("numberOfSteps").asLong(); }
+    public String getNumberOfStepsRef() { return getOrRefRefNode("numberOfSteps").asText(); }
+    public void setNumberOfStepsValue(long value) { setOrRefValueNode("numberOfSteps", LongNode.valueOf(value)); }
+    public void setNumberOfStepsRef(String ref) { setOrRefRefNode("numberOfSteps", ref); }
+    public boolean isNumberOfStepsRef() { return isOrRefRef("numberOfSteps"); }
+    public boolean isSetNumberOfSteps() { return values.containsKey("numberOfSteps"); }
+    public void unsetNumberOfSteps() { values.remove("numberOfSteps"); orRefIsRef.remove("numberOfSteps"); }
+
     public String getScaleValue() { return getOrRefValueNode("scale").asText(); }
     public String getScaleRef() { return getOrRefRefNode("scale").asText(); }
     public void setScaleValue(String value) { setOrRefValueNode("scale", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
@@ -70,15 +84,34 @@ public final class NumericRange extends SedBase {
     public boolean isSetScale() { return values.containsKey("scale"); }
     public void unsetScale() { values.remove("scale"); orRefIsRef.remove("scale"); }
 
+    public JsonNode getValuesValue() { return getOrRefValueNode("values"); }
+    public String getValuesRef() { return getOrRefRefNode("values").asText(); }
+    public void setValuesValue(JsonNode value) { setOrRefValueNode("values", value); }
+    public void setValuesRef(String ref) { setOrRefRefNode("values", ref); }
+    public boolean isValuesRef() { return isOrRefRef("values"); }
+    public boolean isSetValues() { return values.containsKey("values"); }
+    public void unsetValues() { values.remove("values"); orRefIsRef.remove("values"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
     public void insertTaskParameters(int index, SedBase obj) { taskParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeTaskParameters(int index) { taskParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
         kids.addAll(taskParameters.items());
+        kids.addAll(annotations.items());
         return kids;
     }
 
@@ -86,6 +119,7 @@ public final class NumericRange extends SedBase {
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
 
@@ -93,6 +127,7 @@ public final class NumericRange extends SedBase {
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
             case "taskParameters": return taskParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
         }
     }
@@ -106,8 +141,12 @@ public final class NumericRange extends SedBase {
         if (values.containsKey("start")) d.set("start", values.get("start"));
         if (values.containsKey("end")) d.set("end", values.get("end"));
         if (values.containsKey("interval")) d.set("interval", values.get("interval"));
+        if (values.containsKey("numberOfSteps")) d.set("numberOfSteps", values.get("numberOfSteps"));
         if (values.containsKey("scale")) d.set("scale", values.get("scale"));
+        if (values.containsKey("values")) d.set("values", values.get("values"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

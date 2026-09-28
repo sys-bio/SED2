@@ -22,10 +22,18 @@ public final class CsvImport extends SedBase {
         new FieldSpec("location", "StringOrRef", true, "CsvImport-0002", "CsvImport-0001", "CsvImport-0000", null, null, null, null, null),
         new FieldSpec("organization", "StringOrRef", false, "CsvImport-0004", null, "CsvImport-0000", null, null, null, null, null),
         new FieldSpec("separator", "StringOrRef", false, "CsvImport-0006", null, "CsvImport-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
+        new FieldSpec("headers", "BooleanOrRef", false, "CsvImport-0008", null, "CsvImport-0000", null, null, null, null, null),
+        new FieldSpec("columnNames", "ArrayOrRef", false, "CsvImport-0010", null, "CsvImport-0000", null, null, null, null, null),
+        new FieldSpec("ncols", "IntegerOrRef", false, "CsvImport-0012", null, "CsvImport-0000", null, 0.0, null, null, null),
+        new FieldSpec("nrows", "IntegerOrRef", false, "CsvImport-0014", null, "CsvImport-0000", null, 0.0, null, null, null),
+        new FieldSpec("units", "ArrayOrRef", false, "CsvImport-0016", null, "CsvImport-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -61,15 +69,66 @@ public final class CsvImport extends SedBase {
     public boolean isSetSeparator() { return values.containsKey("separator"); }
     public void unsetSeparator() { values.remove("separator"); orRefIsRef.remove("separator"); }
 
+    public boolean getHeadersValue() { return getOrRefValueNode("headers").asBoolean(); }
+    public String getHeadersRef() { return getOrRefRefNode("headers").asText(); }
+    public void setHeadersValue(boolean value) { setOrRefValueNode("headers", BooleanNode.valueOf(value)); }
+    public void setHeadersRef(String ref) { setOrRefRefNode("headers", ref); }
+    public boolean isHeadersRef() { return isOrRefRef("headers"); }
+    public boolean isSetHeaders() { return values.containsKey("headers"); }
+    public void unsetHeaders() { values.remove("headers"); orRefIsRef.remove("headers"); }
+
+    public JsonNode getColumnNamesValue() { return getOrRefValueNode("columnNames"); }
+    public String getColumnNamesRef() { return getOrRefRefNode("columnNames").asText(); }
+    public void setColumnNamesValue(JsonNode value) { setOrRefValueNode("columnNames", value); }
+    public void setColumnNamesRef(String ref) { setOrRefRefNode("columnNames", ref); }
+    public boolean isColumnNamesRef() { return isOrRefRef("columnNames"); }
+    public boolean isSetColumnNames() { return values.containsKey("columnNames"); }
+    public void unsetColumnNames() { values.remove("columnNames"); orRefIsRef.remove("columnNames"); }
+
+    public long getNcolsValue() { return getOrRefValueNode("ncols").asLong(); }
+    public String getNcolsRef() { return getOrRefRefNode("ncols").asText(); }
+    public void setNcolsValue(long value) { setOrRefValueNode("ncols", LongNode.valueOf(value)); }
+    public void setNcolsRef(String ref) { setOrRefRefNode("ncols", ref); }
+    public boolean isNcolsRef() { return isOrRefRef("ncols"); }
+    public boolean isSetNcols() { return values.containsKey("ncols"); }
+    public void unsetNcols() { values.remove("ncols"); orRefIsRef.remove("ncols"); }
+
+    public long getNrowsValue() { return getOrRefValueNode("nrows").asLong(); }
+    public String getNrowsRef() { return getOrRefRefNode("nrows").asText(); }
+    public void setNrowsValue(long value) { setOrRefValueNode("nrows", LongNode.valueOf(value)); }
+    public void setNrowsRef(String ref) { setOrRefRefNode("nrows", ref); }
+    public boolean isNrowsRef() { return isOrRefRef("nrows"); }
+    public boolean isSetNrows() { return values.containsKey("nrows"); }
+    public void unsetNrows() { values.remove("nrows"); orRefIsRef.remove("nrows"); }
+
+    public JsonNode getUnitsValue() { return getOrRefValueNode("units"); }
+    public String getUnitsRef() { return getOrRefRefNode("units").asText(); }
+    public void setUnitsValue(JsonNode value) { setOrRefValueNode("units", value); }
+    public void setUnitsRef(String ref) { setOrRefRefNode("units", ref); }
+    public boolean isUnitsRef() { return isOrRefRef("units"); }
+    public boolean isSetUnits() { return values.containsKey("units"); }
+    public void unsetUnits() { values.remove("units"); orRefIsRef.remove("units"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
     public void insertTaskParameters(int index, SedBase obj) { taskParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeTaskParameters(int index) { taskParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
         kids.addAll(taskParameters.items());
+        kids.addAll(annotations.items());
         return kids;
     }
 
@@ -77,6 +136,7 @@ public final class CsvImport extends SedBase {
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
 
@@ -84,6 +144,7 @@ public final class CsvImport extends SedBase {
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
             case "taskParameters": return taskParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
         }
     }
@@ -97,7 +158,14 @@ public final class CsvImport extends SedBase {
         if (values.containsKey("location")) d.set("location", values.get("location"));
         if (values.containsKey("organization")) d.set("organization", values.get("organization"));
         if (values.containsKey("separator")) d.set("separator", values.get("separator"));
+        if (values.containsKey("headers")) d.set("headers", values.get("headers"));
+        if (values.containsKey("columnNames")) d.set("columnNames", values.get("columnNames"));
+        if (values.containsKey("ncols")) d.set("ncols", values.get("ncols"));
+        if (values.containsKey("nrows")) d.set("nrows", values.get("nrows"));
+        if (values.containsKey("units")) d.set("units", values.get("units"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

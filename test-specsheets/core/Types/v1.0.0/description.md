@@ -7,7 +7,7 @@
 
 ## What this covers
 
-A small, self-contained set of primitive/reference-helper types (`SId`, `SIdRef`, `StringOrRef`, `NumberOrRef`) reused across `test-specsheets/`, the same way `core/Types` is reused across `specsheets/`. This tree is a synthetic generator-test fixture - see Design.md's Specification Assembly section - so the type set is deliberately trimmed to whatever the fixture classes actually need, not a full mirror of `core/Types`.
+A small, self-contained set of primitive/reference-helper types (`SId`, `SIdRef`, `StringOrRef`, `NumberOrRef`, `IntegerOrRef`, `BooleanOrRef`, `ArrayOrRef`, `DictOrRef`, `AnyValueOrRef`) reused across `test-specsheets/`, the same way `core/Types` is reused across `specsheets/`. This tree is a synthetic generator-test fixture - see Design.md's Specification Assembly section - so the type set is deliberately trimmed to whatever the fixture classes actually need, not a full mirror of `core/Types`.
 
 ## Attributes
 

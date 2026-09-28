@@ -1,0 +1,49 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "tw1": {
+      "_type": "typesWidget",
+      "anyValue": {
+        "nested": [
+          1,
+          "two",
+          null,
+          true
+        ]
+      },
+      "enabled": true,
+      "count": 3,
+      "items": [
+        1,
+        "two",
+        {
+          "three": 3
+        }
+      ],
+      "settings": {
+        "alpha": 1,
+        "beta": [
+          true,
+          null
+        ]
+      },
+      "primaryNote": {
+        "text": "embedded note"
+      },
+      "report": {
+        "_type": "simpleReport",
+        "source": "#tasks:sim1"
+      },
+      "extras": {
+        "a": 1,
+        "b": "two",
+        "c": [
+          3
+        ],
+        "d": {
+          "e": null
+        }
+      }
+    }
+  }
+}

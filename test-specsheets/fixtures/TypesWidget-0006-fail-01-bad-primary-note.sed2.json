@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "tw1": {
+      "_type": "typesWidget",
+      "primaryNote": "not a note"
+    }
+  }
+}

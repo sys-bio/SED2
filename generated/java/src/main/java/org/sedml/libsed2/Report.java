@@ -20,10 +20,13 @@ import java.util.Set;
 public final class Report extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("data", "SIdRef", true, "Report-0002", "Report-0001", "Report-0000", null, null, null, null, null),
-        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null)
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("data");
     private final ListCollection<SedBase> outputParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -40,15 +43,26 @@ public final class Report extends SedBase {
     public boolean isSetData() { return values.containsKey("data"); }
     public void unsetData() { values.remove("data"); }
 
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
     public List<SedBase> getOutputParameters() { return outputParameters.items(); }
     public void addOutputParameters(SedBase obj) { outputParameters.add(obj); obj.attach(this, getDocument()); }
     public void insertOutputParameters(int index, SedBase obj) { outputParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeOutputParameters(int index) { outputParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
         kids.addAll(outputParameters.items());
+        kids.addAll(annotations.items());
         return kids;
     }
 
@@ -56,6 +70,7 @@ public final class Report extends SedBase {
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
         { int idx = 0; for (SedBase item : outputParameters.items()) { out.add(new ChildLoc(item, "/outputParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
 
@@ -63,6 +78,7 @@ public final class Report extends SedBase {
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
             case "outputParameters": return outputParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
         }
     }
@@ -74,7 +90,9 @@ public final class Report extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("report"));
         if (values.containsKey("data")) d.set("data", values.get("data"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (outputParameters.size() > 0) { ArrayNode arr = d.putArray("outputParameters"); for (SedBase item : outputParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

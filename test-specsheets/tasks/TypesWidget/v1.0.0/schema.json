@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/TypesWidget/v1.0.0/schema.json",
+  "title": "Test Fixture TypesWidget",
+  "$defs": {
+    "TypesWidget": {
+      "description": "Leaf AbstractWidget branch whose only job is to carry one optional attribute of each field type the generator classifies: any, BooleanOrRef, IntegerOrRef, ArrayOrRef, DictOrRef, ref-class, ref-discriminator, and any-dict.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractWidget/v1.0.0/common.schema.json#/$defs/AbstractWidgetCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "typesWidget",
+          "x-rule-id": "TypesWidget-0002"
+        },
+        "anyValue": {
+          "description": "kind: any. Any JSON value, or a reference.",
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+        },
+        "enabled": {
+          "description": "kind: BooleanOrRef.",
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
+          "x-rule-id": "TypesWidget-0001"
+        },
+        "count": {
+          "description": "kind: IntegerOrRef.",
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/IntegerOrRef",
+          "x-rule-id": "TypesWidget-0003"
+        },
+        "items": {
+          "description": "kind: ArrayOrRef. Untyped array elements.",
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/ArrayOrRef",
+          "x-rule-id": "TypesWidget-0004"
+        },
+        "settings": {
+          "description": "kind: DictOrRef. Untyped object members.",
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/DictOrRef",
+          "x-rule-id": "TypesWidget-0005"
+        },
+        "primaryNote": {
+          "description": "kind: ref-class. A single embedded Note (fixed class, no _type).",
+          "$ref": "../../../auxiliary/Note/v1.0.0/schema.json#/$defs/Note",
+          "x-rule-id": "TypesWidget-0006"
+        },
+        "report": {
+          "description": "kind: ref-discriminator. A single embedded AbstractReport branch, dispatched on _type.",
+          "$ref": "../../../outputs/AbstractReport/v1.0.0/schema.json#/$defs/AbstractReport"
+        },
+        "extras": {
+          "description": "kind: any-dict. SId-keyed map whose values are any JSON value or reference.",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SId"
+          },
+          "additionalProperties": {
+            "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/AnyValueOrRef"
+          },
+          "x-rule-id": "TypesWidget-0007"
+        }
+      },
+      "required": [
+        "_type"
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/TypesWidget"
+}

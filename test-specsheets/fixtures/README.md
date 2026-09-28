@@ -20,10 +20,10 @@ the exact comparison rules: key order, numeric tolerance, etc.) - and a
 fail fixture is checked against the specific rule ID(s) and count(s)
 its filename encodes.
 
-Every one of `test-specsheets/`'s 37 numbered rules has a fail fixture
-here, except six `_type`-discriminator-const rules (`Choice-0002`,
+Every one of `test-specsheets/`'s 53 numbered rules has a fail fixture
+here, except eight `_type`-discriminator-const rules (`Choice-0002`,
 `WeightedChoice-0002`, `SimpleWidget-0002`, `FancyWidget-0002`,
-`acme-AcmeWidget-0002`, `SimpleReport-0002`). Those six validate the
+`acme-AcmeWidget-0002`, `SimpleReport-0002`, `MathWidget-0003`, `TypesWidget-0002`). Those eight validate the
 class's own schema directly rather than embedded through its parent
 discriminator's dict field (`widgets`/`reports`/`choices`): once a
 `_type` value fails to match a branch's own `const`, it no longer
@@ -43,7 +43,11 @@ optional `notes` array and `tasks/FancyWidget` gained an optional
 `choices` dict specifically so every rule has at least one legitimate
 path to it from a real `TestDocument`.
 
-Three `pass-*` fixtures round out the set: a minimal valid document, a
+`tasks/MathWidget` is exercised by `pass-06-math-widget` (a literal expression, and two references, which the math rules skip) and by one fail fixture per rule, including the four shared `Types-000N` math-grammar rules (unparseable, unknown function, bad arity, bare identifier).
+
+`tasks/TypesWidget` (one optional attribute per remaining field type) is exercised by `pass-04-types-widget-literals` (every attribute as a literal) and `pass-05-types-widget-references` (the OrRef and any-typed attributes as references), plus one fail fixture per rule. `AbstractReport-0000-fail-01-bad-embedded-report-type` checks the `ref-discriminator` field: a bad `_type` in the embedded `report` falls to the discriminator's own catch-all.
+
+Three original `pass-*` fixtures round out the set: a minimal valid document, a
 fuller one exercising every composition pattern at once (both widget
 branches, both choice branches, namespace-free), and one with the
 `acme` namespace registered (its `new/` class and its `updated/`

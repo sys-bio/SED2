@@ -1,0 +1,12 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "x4": {
+      "_type": "fancyWidget",
+      "value": "x",
+      "notes": [
+        {}
+      ]
+    }
+  }
+}

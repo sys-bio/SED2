@@ -186,6 +186,46 @@ private:
             any.push_back(num);
             any.push_back(ref);
             n["anyOf"] = any;
+        } else if (kind == "IntegerOrRef") {
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "integer";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        } else if (kind == "BooleanOrRef") {
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "boolean";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        } else if (kind == "ArrayOrRef") {
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "array";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        } else if (kind == "DictOrRef") {
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "object";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
         } else {
             throw std::invalid_argument("unknown leaf kind: " + kind);
         }
@@ -204,6 +244,7 @@ inline bool is_reference(const std::string& value) {
 
 class IdKeyedCollection;
 class ListCollection;
+class AnyDictCollection;
 
 /// Universal base: every generated element (mirrors TestBaseFields'
 /// name/description) plus parent/document backpointers, generic namespace
@@ -342,6 +383,19 @@ public:
     virtual IdKeyedCollection& get_dict_collection(const std::string& field_name);
     virtual ListCollection& get_list_collection(const std::string& field_name);
 
+    /// Backing store for an "any-dict"-kind field (an ID-keyed collection of
+    /// raw JSON values, never SedBase instances - e.g. SEDDocument.
+    /// constants). Overridden per generated concrete class, mirroring
+    /// get_dict_collection above.
+    virtual AnyDictCollection& get_any_dict_collection(const std::string& field_name);
+
+    /// Sets a "ref-class"/"ref-discriminator"-kind field's single nested
+    /// child (taking ownership) - used only by load_fields() in
+    /// Dispatch.hpp, which constructs the child generically and needs a way
+    /// to store it back onto the right instance field without knowing the
+    /// concrete class. Overridden per generated concrete class.
+    virtual void set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child);
+
     // -- validate() engine --------------------------------------------------
     std::vector<ValidationProblem> validate(const std::string& severity_at_least = "warning");
 
@@ -430,8 +484,15 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
         problems.push_back(RuleCatalog::make_problem(rid, "/description", ph));
     }
 
+    // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
+    // JSON value) has no leaf_value_ok()-equivalent schema to check against
+    // - see generator/emit_python.py's own LEAF_KINDS set and its
+    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
+    // resolution dispatch this C++ port deliberately does not carry over -
+    // see Design.md's Testing section on Phase 2 scope).
     static const std::set<std::string> leaf_kinds = {
-        "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef"};
+        "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
+        "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"};
 
     std::vector<FieldSpec> all(field_specs().begin(), field_specs().end());
     for (const auto& kv : namespace_fields()) {
@@ -580,6 +641,76 @@ inline IdKeyedCollection& SedBase::get_dict_collection(const std::string& field_
 
 inline ListCollection& SedBase::get_list_collection(const std::string& field_name) {
     throw ApiError("no such list field: " + field_name);
+}
+
+/// Backing store for an "any-dict"-kind field - same ID-keyed-collection
+/// shape as IdKeyedCollection above, but holds plain jsoncons::json values
+/// directly (no ownership/unique_ptr involved, since a raw JSON value isn't
+/// a SedBase) - e.g. SEDDocument.constants. Mirrors
+/// generator/emit_python.py's _collection_accessors any-dict branch and
+/// emit_java.py's IdKeyedCollection<JsonNode> re-use, the reference
+/// implementations this ports (C++'s IdKeyedCollection is itself
+/// unique_ptr<SedBase>-owning, so - unlike Java, which merely relaxed a
+/// generic bound - it can't be reused as-is here; a separate small class is
+/// the natural equivalent).
+class AnyDictCollection {
+public:
+    std::vector<std::string> ids() const { return order_; }
+
+    jsoncons::json get(const std::string& item_id) const {
+        auto it = items_.find(item_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + item_id);
+        return it->second;
+    }
+
+    void add(const std::string& item_id, jsoncons::json value) {
+        if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
+        order_.push_back(item_id);
+        items_.emplace(item_id, std::move(value));
+    }
+
+    void insert(size_t index, const std::string& item_id, jsoncons::json value) {
+        if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
+        if (index > order_.size()) throw ApiError("index out of range");
+        order_.insert(order_.begin() + static_cast<long>(index), item_id);
+        items_.emplace(item_id, std::move(value));
+    }
+
+    void remove(const std::string& item_id) {
+        auto it = items_.find(item_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + item_id);
+        order_.erase(std::remove(order_.begin(), order_.end(), item_id), order_.end());
+        items_.erase(it);
+    }
+
+    void set_id(const std::string& old_id, const std::string& new_id) {
+        auto it = items_.find(old_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + old_id);
+        if (items_.count(new_id) && new_id != old_id) {
+            throw ApiError("an entry with id " + new_id + " already exists");
+        }
+        for (auto& id : order_) {
+            if (id == old_id) { id = new_id; break; }
+        }
+        auto node = items_.extract(it);
+        node.key() = new_id;
+        items_.insert(std::move(node));
+    }
+
+    size_t size() const { return order_.size(); }
+
+private:
+    std::vector<std::string> order_;
+    std::map<std::string, jsoncons::json> items_;
+};
+
+inline AnyDictCollection& SedBase::get_any_dict_collection(const std::string& field_name) {
+    throw ApiError("no such any-dict field: " + field_name);
+}
+
+inline void SedBase::set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child) {
+    (void)child;
+    throw ApiError("no such child field: " + field_name);
 }
 
 }  // namespace sed2test

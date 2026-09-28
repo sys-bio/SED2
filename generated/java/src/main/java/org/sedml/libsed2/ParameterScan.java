@@ -20,16 +20,22 @@ import java.util.Set;
 public final class ParameterScan extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null),
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
         new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null),
         new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask"),
         new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline")
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "parameterRanges");
     private final ListCollection<SedBase> parameterRanges = new ListCollection<>();
     private final IdKeyedCollection<SedBase> subTasks = new IdKeyedCollection<>();
     private final IdKeyedCollection<SedBase> aggregateOutputVariables = new IdKeyedCollection<>();
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
+    private SedBase range;
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -45,6 +51,19 @@ public final class ParameterScan extends SedBase {
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
     public boolean isSetModel() { return values.containsKey("model"); }
     public void unsetModel() { values.remove("model"); }
+
+    public JsonNode getOutputVariableMapValue() { return getOrRefValueNode("outputVariableMap"); }
+    public String getOutputVariableMapRef() { return getOrRefRefNode("outputVariableMap").asText(); }
+    public void setOutputVariableMapValue(JsonNode value) { setOrRefValueNode("outputVariableMap", value); }
+    public void setOutputVariableMapRef(String ref) { setOrRefRefNode("outputVariableMap", ref); }
+    public boolean isOutputVariableMapRef() { return isOrRefRef("outputVariableMap"); }
+    public boolean isSetOutputVariableMap() { return values.containsKey("outputVariableMap"); }
+    public void unsetOutputVariableMap() { values.remove("outputVariableMap"); orRefIsRef.remove("outputVariableMap"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
 
     public List<SedBase> getParameterRanges() { return parameterRanges.items(); }
     public void addParameterRanges(SedBase obj) { parameterRanges.add(obj); obj.attach(this, getDocument()); }
@@ -70,6 +89,16 @@ public final class ParameterScan extends SedBase {
     public void insertTaskParameters(int index, SedBase obj) { taskParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeTaskParameters(int index) { taskParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
+    public SedBase getRange() { if (range == null) throw new ApiError("range" + " is not set"); return range; }
+    public void setRange(SedBase obj) { range = obj; obj.attach(this, getDocument()); }
+    public boolean isSetRange() { return range != null; }
+    public void unsetRange() { range = null; }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
@@ -77,6 +106,8 @@ public final class ParameterScan extends SedBase {
         for (String i : aggregateOutputVariables.ids()) kids.add(aggregateOutputVariables.get(i));
         kids.addAll(parameterRanges.items());
         kids.addAll(taskParameters.items());
+        kids.addAll(annotations.items());
+        if (range != null) kids.add(range);
         return kids;
     }
 
@@ -87,6 +118,8 @@ public final class ParameterScan extends SedBase {
         for (String i : aggregateOutputVariables.ids()) out.add(new ChildLoc(aggregateOutputVariables.get(i), "/aggregateOutputVariables/" + i));
         { int idx = 0; for (SedBase item : parameterRanges.items()) { out.add(new ChildLoc(item, "/parameterRanges/" + idx)); idx++; } }
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
+        if (range != null) out.add(new ChildLoc(range, "/range"));
         return out;
     }
 
@@ -104,7 +137,16 @@ public final class ParameterScan extends SedBase {
         switch (fieldName) {
             case "parameterRanges": return parameterRanges;
             case "taskParameters": return taskParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
+        }
+    }
+
+    @Override
+    protected void setChildField(String fieldName, SedBase child) {
+        switch (fieldName) {
+            case "range": range = child; return;
+            default: super.setChildField(fieldName, child);
         }
     }
 
@@ -115,10 +157,14 @@ public final class ParameterScan extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("parameterScan"));
         if (values.containsKey("model")) d.set("model", values.get("model"));
+        if (values.containsKey("outputVariableMap")) d.set("outputVariableMap", values.get("outputVariableMap"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (subTasks.size() > 0) { ObjectNode sub = d.putObject("subTasks"); for (String i : subTasks.ids()) sub.set(i, subTasks.get(i).toJsonValue()); }
         if (aggregateOutputVariables.size() > 0) { ObjectNode sub = d.putObject("aggregateOutputVariables"); for (String i : aggregateOutputVariables.ids()) sub.set(i, aggregateOutputVariables.get(i).toJsonValue()); }
         if (parameterRanges.size() > 0) { ArrayNode arr = d.putArray("parameterRanges"); for (SedBase item : parameterRanges.items()) arr.add(item.toJsonValue()); }
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
+        if (range != null) d.set("range", range.toJsonValue());
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

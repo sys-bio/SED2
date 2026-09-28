@@ -28,10 +28,14 @@ public final class Curve extends SedBase {
         new FieldSpec("yFrom", "SIdRef", false, "Curve-0010", null, "Curve-0000", null, null, null, null, null),
         new FieldSpec("yTo", "SIdRef", false, "Curve-0011", null, "Curve-0000", null, null, null, null, null),
         new FieldSpec("x", "SIdRef", true, "AbstractCurve-0002", "AbstractCurve-0001", "AbstractCurve-0000", null, null, null, null, null),
+        new FieldSpec("order", "IntegerOrRef", false, "AbstractCurve-0003", null, "AbstractCurve-0000", 0.0, null, null, null, null),
         new FieldSpec("style", "SIdRef", false, "AbstractCurve-0005", null, "AbstractCurve-0000", null, null, null, null, null),
-        new FieldSpec("yAxis", "StringOrRef", false, "AbstractCurve-0006", null, "AbstractCurve-0000", null, null, null, null, null)
+        new FieldSpec("yAxis", "StringOrRef", false, "AbstractCurve-0006", null, "AbstractCurve-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("curveType", "y", "x");
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -91,6 +95,14 @@ public final class Curve extends SedBase {
     public boolean isSetX() { return values.containsKey("x"); }
     public void unsetX() { values.remove("x"); }
 
+    public long getOrderValue() { return getOrRefValueNode("order").asLong(); }
+    public String getOrderRef() { return getOrRefRefNode("order").asText(); }
+    public void setOrderValue(long value) { setOrRefValueNode("order", LongNode.valueOf(value)); }
+    public void setOrderRef(String ref) { setOrRefRefNode("order", ref); }
+    public boolean isOrderRef() { return isOrRefRef("order"); }
+    public boolean isSetOrder() { return values.containsKey("order"); }
+    public void unsetOrder() { values.remove("order"); orRefIsRef.remove("order"); }
+
     public String getStyle() { if (!values.containsKey("style")) throw new ApiError("style" + " is not set"); return values.get("style").asText(); }
     public void setStyle(String value) { values.put("style", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
     public boolean isSetStyle() { return values.containsKey("style"); }
@@ -103,6 +115,38 @@ public final class Curve extends SedBase {
     public boolean isYAxisRef() { return isOrRefRef("yAxis"); }
     public boolean isSetYAxis() { return values.containsKey("yAxis"); }
     public void unsetYAxis() { values.remove("yAxis"); orRefIsRef.remove("yAxis"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
+    @Override
+    public List<SedBase> children() {
+        List<SedBase> kids = new ArrayList<>();
+        kids.addAll(annotations.items());
+        return kids;
+    }
+
+    @Override
+    public List<ChildLoc> childrenWithLocations() {
+        List<ChildLoc> out = new ArrayList<>();
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
+        return out;
+    }
+
+    @Override
+    protected ListCollection<SedBase> getListCollection(String fieldName) {
+        switch (fieldName) {
+            case "annotations": return annotations;
+            default: return super.getListCollection(fieldName);
+        }
+    }
 
     @Override
     public ObjectNode ownJsonValue() {
@@ -119,8 +163,11 @@ public final class Curve extends SedBase {
         if (values.containsKey("yFrom")) d.set("yFrom", values.get("yFrom"));
         if (values.containsKey("yTo")) d.set("yTo", values.get("yTo"));
         if (values.containsKey("x")) d.set("x", values.get("x"));
+        if (values.containsKey("order")) d.set("order", values.get("order"));
         if (values.containsKey("style")) d.set("style", values.get("style"));
         if (values.containsKey("yAxis")) d.set("yAxis", values.get("yAxis"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

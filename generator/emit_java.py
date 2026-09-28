@@ -278,6 +278,50 @@ public final class LeafValidation {{
                 any.add(ref);
                 break;
             }}
+            case "IntegerOrRef": {{
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "integer");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }}
+            case "BooleanOrRef": {{
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "boolean");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }}
+            case "ArrayOrRef": {{
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "array");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }}
+            case "DictOrRef": {{
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "object");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }}
             default:
                 throw new IllegalArgumentException("unknown leaf kind: " + kind);
         }}
@@ -311,8 +355,14 @@ import java.util.Map;
 /** Backing store for an ID-keyed dict-of-discriminated-union field
  * (TestDocument.widgets/.reports, FancyWidget.choices) - insertion order
  * preserved, add-/remove-/insert-/rename (setId) per Design.md's Classes
- * section. GENERATED - do not hand-edit. */
-public final class IdKeyedCollection<T extends SedBase> {{
+ * section. Deliberately unbounded (not "T extends SedBase"): none of this
+ * class's own methods call any SedBase-specific behavior, and an
+ * "any-dict"-kind field (see generator/emit_java.py's emit_model_java_files)
+ * reuses this same collection to hold raw JsonNode values instead of
+ * SedBase instances - see generator/emit_python.py's _collection_accessors
+ * any-dict branch for the reference implementation this mirrors.
+ * GENERATED - do not hand-edit. */
+public final class IdKeyedCollection<T> {{
     private final List<String> order = new ArrayList<>();
     private final Map<String, T> items = new LinkedHashMap<>();
 
@@ -418,7 +468,14 @@ public abstract class SedBase {{
             Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)@([A-Za-z_][A-Za-z0-9_]*)$");
 
     protected static final Set<String> LEAF_KINDS = new HashSet<>(List.of(
-            "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef"));
+            "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
+            "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"));
+    // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
+    // JSON value) has no leaf_value_ok()-equivalent schema to check against
+    // - see generator/emit_python.py's own LEAF_KINDS set and its
+    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
+    // resolution dispatch this Java port deliberately does not carry over -
+    // see Design.md's Testing section on Phase 2 scope).
 
     // -- per-concrete-class metadata, overridden by generated subclasses --
     public List<FieldSpec> fieldSpecs() {{ return Collections.emptyList(); }}
@@ -557,6 +614,23 @@ public abstract class SedBase {{
 
     protected ListCollection<SedBase> getListCollection(String fieldName) {{
         throw new ApiError("no such list field: " + fieldName);
+    }}
+
+    /** Backing store for an "any-dict"-kind field (an ID-keyed collection of
+     * raw JSON values, never SedBase instances - e.g. SEDDocument.constants).
+     * Overridden per generated concrete class, mirroring getDictCollection
+     * above. */
+    protected IdKeyedCollection<JsonNode> getAnyDictCollection(String fieldName) {{
+        throw new ApiError("no such any-dict field: " + fieldName);
+    }}
+
+    /** Sets a "ref-class"/"ref-discriminator"-kind field's single nested
+     * child (see generator/emit_java.py's _child_accessors_java) - used only
+     * by Dispatch.loadFields, which constructs the child generically and
+     * needs a way to store it back onto the right instance field without
+     * knowing the concrete class. Overridden per generated concrete class. */
+    protected void setChildField(String fieldName, SedBase child) {{
+        throw new ApiError("no such child field: " + fieldName);
     }}
 
     // -- validate() engine --------------------------------------------------
@@ -740,6 +814,37 @@ def _field_spec_expr(f: Field) -> str:
     )
 
 
+# The full OrRef family (Design.md's Validation section / core/Types) -
+# StringOrRef/NumberOrRef were the only two the Phase-1 test-specsheets/
+# vocabulary exercised; the real spec (specsheets/) also uses the other
+# four. Every one of these gets the same six get-/set-/is-Ref-/isSet-/
+# unset- accessors, generic OrRef storage (getOrRefValueNode/
+# setOrRefValueNode/... in SedBase.java), differing only in the natural
+# Java type on the value side - ArrayOrRef/DictOrRef have no better native
+# Java collection representation than the raw JsonNode itself without a lot
+# more work outside this port's scope (Design.md's Phase 2 scope note),
+# so their "value" is the JsonNode as-is, same treatment as "any" below.
+_ORREF_KINDS_JAVA = ("StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef")
+
+# Every kind emit_model_java_files treats as a "leaf" field (own FIELD_SPECS
+# entry + a get-/set-/isSet-/unset()-shaped accessor stored directly in
+# `values`) - mirrors emit_python.py's emit_model_py leaf_fields
+# classification (_ORREF_KINDS + ("string", "integer", ... , "any")).
+_LEAF_KINDS_JAVA = _ORREF_KINDS_JAVA + ("string", "integer", "number", "boolean", "SId", "SIdRef", "any")
+
+# kind -> (java value type, get-conversion suffix ("" = no conversion, the
+# JsonNode itself), set-time wrap expression turning a `value` of that java
+# type into a JsonNode).
+_ORREF_JAVA_TYPES = {
+    "StringOrRef": ("String", ".asText()", "value == null ? NullNode.getInstance() : TextNode.valueOf(value)"),
+    "NumberOrRef": ("double", ".asDouble()", "DoubleNode.valueOf(value)"),
+    "IntegerOrRef": ("long", ".asLong()", "LongNode.valueOf(value)"),
+    "BooleanOrRef": ("boolean", ".asBoolean()", "BooleanNode.valueOf(value)"),
+    "ArrayOrRef": ("JsonNode", "", "value"),
+    "DictOrRef": ("JsonNode", "", "value"),
+}
+
+
 def _leaf_java_type(kind: str) -> str:
     return {"string": "String", "SId": "String", "SIdRef": "String",
             "integer": "long", "number": "double", "boolean": "boolean"}[kind]
@@ -751,18 +856,30 @@ def _leaf_accessors_java(f: Field) -> str:
     kind = f.type.kind
     name_lit = _java_lit(f.name)
     lines = []
-    if kind in ("StringOrRef", "NumberOrRef"):
-        if kind == "StringOrRef":
-            java_t, get_expr, set_wrap = "String", ".asText()", "value == null ? NullNode.getInstance() : TextNode.valueOf(value)"
-        else:
-            java_t, get_expr, set_wrap = "double", ".asDouble()", "DoubleNode.valueOf(value)"
-        lines.append(f"    public {java_t} get{cap}Value() {{ return getOrRefValueNode({name_lit}){get_expr}; }}")
+    if kind in _ORREF_KINDS_JAVA:
+        java_t, get_expr, set_wrap = _ORREF_JAVA_TYPES[kind]
+        get_body = f"getOrRefValueNode({name_lit}){get_expr}"
+        lines.append(f"    public {java_t} get{cap}Value() {{ return {get_body}; }}")
         lines.append(f"    public String get{cap}Ref() {{ return getOrRefRefNode({name_lit}).asText(); }}")
         lines.append(f"    public void set{cap}Value({java_t} value) {{ setOrRefValueNode({name_lit}, {set_wrap}); }}")
         lines.append(f"    public void set{cap}Ref(String ref) {{ setOrRefRefNode({name_lit}, ref); }}")
         lines.append(f"    public boolean is{cap}Ref() {{ return isOrRefRef({name_lit}); }}")
         lines.append(f"    public boolean isSet{cap}() {{ return values.containsKey({name_lit}); }}")
         lines.append(f"    public void unset{cap}() {{ values.remove({name_lit}); orRefIsRef.remove({name_lit}); }}")
+    elif kind == "any":
+        # AnyValueOrRef: no fixed shape, so no type conversion either way -
+        # the raw JsonNode is both the getter's return type and the
+        # setter's parameter type. Mirrors emit_python.py's plain (non-
+        # OrRef) accessor shape for this kind (see that module's
+        # emit_model_py leaf_fields classification, which folds "any" in
+        # alongside string/integer/... rather than treating it as its own
+        # thing) - "any" is deliberately absent from LEAF_KINDS above, so
+        # this accessor's stored value is never schema-checked in
+        # validateOwn(), only checked for required-ness.
+        lines.append(f"    public JsonNode get{cap}() {{ if (!values.containsKey({name_lit})) throw new ApiError({name_lit} + \" is not set\"); return values.get({name_lit}); }}")
+        lines.append(f"    public void set{cap}(JsonNode value) {{ values.put({name_lit}, value); }}")
+        lines.append(f"    public boolean isSet{cap}() {{ return values.containsKey({name_lit}); }}")
+        lines.append(f"    public void unset{cap}() {{ values.remove({name_lit}); }}")
     else:
         java_t = _leaf_java_type(kind)
         if java_t == "String":
@@ -780,10 +897,32 @@ def _leaf_accessors_java(f: Field) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _child_accessors_java(f: Field) -> str:
+    """A single nested SedBase-derived child, stored directly on the
+    instance (a private field), not in an IdKeyedCollection/ListCollection -
+    there is exactly zero or one of it, and it has no id of its own. Covers
+    both "ref-class" (a fixed target class) and "ref-discriminator" (a
+    _type-dispatched target) - the accessors don't care which; only
+    Dispatch.loadFields's own parsing needs to tell them apart (see
+    generator/emit_python.py's _child_accessors, the reference
+    implementation this mirrors)."""
+    ident = _java_ident(f.name)
+    cap = _cap(ident)
+    name_lit = _java_lit(f.name)
+    lines = []
+    lines.append(f"    public SedBase get{cap}() {{ if ({ident} == null) throw new ApiError({name_lit} + \" is not set\"); return {ident}; }}")
+    lines.append(f"    public void set{cap}(SedBase obj) {{ {ident} = obj; obj.attach(this, getDocument()); }}")
+    lines.append(f"    public boolean isSet{cap}() {{ return {ident} != null; }}")
+    lines.append(f"    public void unset{cap}() {{ {ident} = null; }}")
+    return "\n".join(lines) + "\n"
+
+
 def _collection_field_decl_java(f: Field) -> str:
     ident = _java_ident(f.name)
     if f.type.kind == "dict":
         return f"    private final IdKeyedCollection<SedBase> {ident} = new IdKeyedCollection<>();\n"
+    if f.type.kind == "any-dict":
+        return f"    private final IdKeyedCollection<JsonNode> {ident} = new IdKeyedCollection<>();\n"
     return f"    private final ListCollection<SedBase> {ident} = new ListCollection<>();\n"
 
 
@@ -796,6 +935,17 @@ def _collection_accessors_java(f: Field) -> str:
         lines.append(f"    public SedBase get{cap}Item(String itemId) {{ return {ident}.get(itemId); }}")
         lines.append(f"    public void add{cap}(String itemId, SedBase obj) {{ {ident}.add(itemId, obj); obj.attach(this, getDocument()); }}")
         lines.append(f"    public void insert{cap}(int index, String itemId, SedBase obj) {{ {ident}.insert(index, itemId, obj); obj.attach(this, getDocument()); }}")
+        lines.append(f"    public void remove{cap}(String itemId) {{ {ident}.remove(itemId); }}")
+        lines.append(f"    public void setIdOn{cap}(String oldId, String newId) {{ {ident}.setId(oldId, newId); }}")
+    elif f.type.kind == "any-dict":
+        # Same ID-keyed collection shape as "dict", but items are raw
+        # JsonNode values, never SedBase instances - so no .attach() call
+        # (SEDDocument.constants today; mirrors emit_python.py's
+        # _collection_accessors any-dict branch).
+        lines.append(f"    public List<String> get{cap}() {{ return {ident}.ids(); }}")
+        lines.append(f"    public JsonNode get{cap}Item(String itemId) {{ return {ident}.get(itemId); }}")
+        lines.append(f"    public void add{cap}(String itemId, JsonNode value) {{ {ident}.add(itemId, value); }}")
+        lines.append(f"    public void insert{cap}(int index, String itemId, JsonNode value) {{ {ident}.insert(index, itemId, value); }}")
         lines.append(f"    public void remove{cap}(String itemId) {{ {ident}.remove(itemId); }}")
         lines.append(f"    public void setIdOn{cap}(String oldId, String newId) {{ {ident}.setId(oldId, newId); }}")
     else:
@@ -844,26 +994,80 @@ def emit_model_java_files(model: SpecModel) -> dict:
 
     for name in model.generatable_classes():
         c = model.classes[name]
-        own_fields = [f for f in c.fields if f.origin_class != base]
-        collection_fields = [f for f in own_fields if f.type.kind in ("dict", "array")]
-        leaf_fields = [f for f in own_fields if f.type.kind in
-                       ("StringOrRef", "NumberOrRef", "string", "integer", "number", "boolean", "SId", "SIdRef")]
+        # Mirrors emit_python.py's own_fields filter exactly: excludes ONLY
+        # name/description when they originate from the base mixin (every
+        # concrete class handles those two via the dedicated nameNode/
+        # descriptionNode fields on SedBase itself, never a FieldSpec) -
+        # NOT every base-origin field. The base mixin (SEDBase/TestBase)
+        # also declares "notes"/"annotations" in the real spec (TestBase
+        # happens to declare only name/description, which is why this
+        # distinction was invisible under test-specsheets/ alone) and those
+        # must still get their own FieldSpec/accessor like any other field -
+        # the previous `f.origin_class != base` filter silently dropped
+        # them entirely, which is what caused this module's own investigation
+        # into Task #28 to trace two Annotation fixture failures back here:
+        # a SEDDocument.annotations value was rejected as an unrecognized
+        # extra property before ever reaching Annotation's own required-
+        # field check, since Java's FIELD_SPECS never even knew "annotations"
+        # was a legal key on every element in the first place.
+        own_fields = [f for f in c.fields
+                      if not (f.origin_class == base and f.name in ("name", "description"))]
+        collection_fields_all = [f for f in own_fields if f.type.kind in ("dict", "array", "any-dict")]
+        leaf_fields_all = [f for f in own_fields if f.type.kind in _LEAF_KINDS_JAVA]
+        child_fields_all = [f for f in own_fields if f.type.kind in ("ref-class", "ref-discriminator")]
+
+        # A field name can legitimately appear twice in own_fields (see the
+        # req_names comment below) - Python tolerates a same-named accessor
+        # being `def`-ed twice in a row (the second silently shadows the
+        # first; both bodies are identical anyway, since an accessor's code
+        # is generated from the field's name+kind only, never its rule-id -
+        # see _leaf_accessors_java/_child_accessors_java/
+        # _collection_field_decl_java), but Java cannot compile two members
+        # with the same name. Field DECLARATIONS and their ACCESSOR METHODS
+        # are deduplicated (last occurrence wins, matching Python's
+        # overwrite order); FIELD_SPECS below deliberately is NOT - it
+        # keeps every declaration, exactly like emit_python.py's own
+        # _FIELDS, since validate() iterating both is harmless (same
+        # field, checked twice) and this mirrors the reference
+        # implementation's behavior precisely rather than guessing at a
+        # "fix" the spec composition itself doesn't ask for.
+        def _dedup_last(fields):
+            by_name = {}
+            order = []
+            for f in fields:
+                if f.name not in by_name:
+                    order.append(f.name)
+                by_name[f.name] = f
+            return [by_name[n] for n in order]
+
+        collection_fields = _dedup_last(collection_fields_all)
+        leaf_fields = _dedup_last(leaf_fields_all)
+        child_fields = _dedup_last(child_fields_all)
         dict_fields = [f for f in collection_fields if f.type.kind == "dict"]
         array_fields = [f for f in collection_fields if f.type.kind == "array"]
+        any_dict_fields = [f for f in collection_fields if f.type.kind == "any-dict"]
 
         out = [_model_file_imports()]
         out.append(f"/** Generated from test-specsheets/{c.category}/{name}/. GENERATED - do not\n"
                     f" * hand-edit; regenerate via generator/generate.py. */\n")
         out.append(f"public final class {name} extends SedBase {{\n")
 
-        field_specs = leaf_fields + collection_fields
+        field_specs = leaf_fields_all + collection_fields_all + child_fields_all
         if field_specs:
             exprs = ",\n        ".join(_field_spec_expr(f) for f in field_specs)
             out.append(f"    private static final List<FieldSpec> FIELD_SPECS = List.of(\n        {exprs}\n    );\n")
         else:
             out.append("    private static final List<FieldSpec> FIELD_SPECS = List.of();\n")
 
-        req_names = [f.name for f in own_fields if f.required]
+        # dict.fromkeys(...) dedupes while preserving first-seen order -
+        # needed because a field name can legitimately appear twice in
+        # own_fields (a subclass re-declaring a field its own mixin already
+        # declares with a tighter constraint, e.g. NumericRange/
+        # ParameterRange's own "values" alongside Range's mixin "values" -
+        # both keep their own separate FieldSpec entry in field_specs below,
+        # matching emit_python.py's _FIELDS, but Set.of() throws at runtime
+        # on a literal duplicate, unlike Python's set literal).
+        req_names = list(dict.fromkeys(f.name for f in own_fields if f.required))
         if req_names:
             out.append(f"    private static final Set<String> REQUIRED_NAMES = Set.of({', '.join(_java_lit(n) for n in req_names)});\n")
         else:
@@ -884,6 +1088,9 @@ def emit_model_java_files(model: SpecModel) -> dict:
 
         for f in collection_fields:
             out.append(_collection_field_decl_java(f))
+        for f in child_fields:
+            ident = _java_ident(f.name)
+            out.append(f"    private SedBase {ident};\n")
 
         out.append("\n")
         out.append(f"    @Override public List<FieldSpec> fieldSpecs() {{ return FIELD_SPECS; }}\n")
@@ -906,11 +1113,13 @@ def emit_model_java_files(model: SpecModel) -> dict:
             out.append(_leaf_accessors_java(f) + "\n")
         for f in collection_fields:
             out.append(_collection_accessors_java(f) + "\n")
+        for f in child_fields:
+            out.append(_child_accessors_java(f) + "\n")
         for prefix, fs in c.namespace_updates.items():
             for f in fs:
                 out.append(_leaf_accessors_java(f) + "\n")
 
-        if collection_fields:
+        if collection_fields or child_fields:
             out.append("    @Override\n    public List<SedBase> children() {\n        List<SedBase> kids = new ArrayList<>();\n")
             for f in dict_fields:
                 ident = _java_ident(f.name)
@@ -918,6 +1127,9 @@ def emit_model_java_files(model: SpecModel) -> dict:
             for f in array_fields:
                 ident = _java_ident(f.name)
                 out.append(f"        kids.addAll({ident}.items());\n")
+            for f in child_fields:
+                ident = _java_ident(f.name)
+                out.append(f"        if ({ident} != null) kids.add({ident});\n")
             out.append("        return kids;\n    }\n\n")
 
             out.append("    @Override\n    public List<ChildLoc> childrenWithLocations() {\n        List<ChildLoc> out = new ArrayList<>();\n")
@@ -927,6 +1139,9 @@ def emit_model_java_files(model: SpecModel) -> dict:
             for f in array_fields:
                 ident = _java_ident(f.name)
                 out.append(f"        {{ int idx = 0; for (SedBase item : {ident}.items()) {{ out.add(new ChildLoc(item, \"/{f.name}/\" + idx)); idx++; }} }}\n")
+            for f in child_fields:
+                ident = _java_ident(f.name)
+                out.append(f"        if ({ident} != null) out.add(new ChildLoc({ident}, \"/{f.name}\"));\n")
             out.append("        return out;\n    }\n\n")
 
         if dict_fields:
@@ -941,6 +1156,18 @@ def emit_model_java_files(model: SpecModel) -> dict:
                 ident = _java_ident(f.name)
                 out.append(f"            case {_java_lit(f.name)}: return {ident};\n")
             out.append("            default: return super.getListCollection(fieldName);\n        }\n    }\n\n")
+        if any_dict_fields:
+            out.append("    @Override\n    protected IdKeyedCollection<JsonNode> getAnyDictCollection(String fieldName) {\n        switch (fieldName) {\n")
+            for f in any_dict_fields:
+                ident = _java_ident(f.name)
+                out.append(f"            case {_java_lit(f.name)}: return {ident};\n")
+            out.append("            default: return super.getAnyDictCollection(fieldName);\n        }\n    }\n\n")
+        if child_fields:
+            out.append("    @Override\n    protected void setChildField(String fieldName, SedBase child) {\n        switch (fieldName) {\n")
+            for f in child_fields:
+                ident = _java_ident(f.name)
+                out.append(f"            case {_java_lit(f.name)}: {ident} = child; return;\n")
+            out.append("            default: super.setChildField(fieldName, child);\n        }\n    }\n\n")
 
         out.append("    @Override\n    public ObjectNode ownJsonValue() {\n        ObjectNode d = JsonNodeFactory.instance.objectNode();\n")
         out.append("        if (nameNode != null) d.set(\"name\", nameNode);\n")
@@ -958,6 +1185,12 @@ def emit_model_java_files(model: SpecModel) -> dict:
         for f in array_fields:
             ident = _java_ident(f.name)
             out.append(f"        if ({ident}.size() > 0) {{ ArrayNode arr = d.putArray({_java_lit(f.name)}); for (SedBase item : {ident}.items()) arr.add(item.toJsonValue()); }}\n")
+        for f in any_dict_fields:
+            ident = _java_ident(f.name)
+            out.append(f"        if ({ident}.size() > 0) {{ ObjectNode sub = d.putObject({_java_lit(f.name)}); for (String i : {ident}.ids()) sub.set(i, {ident}.get(i)); }}\n")
+        for f in child_fields:
+            ident = _java_ident(f.name)
+            out.append(f"        if ({ident} != null) d.set({_java_lit(f.name)}, {ident}.toJsonValue());\n")
         out.append("        for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());\n")
         out.append("        return d;\n    }\n")
 
@@ -1045,6 +1278,14 @@ import java.util.regex.Matcher;
 public final class Dispatch {{
     private Dispatch() {{}}
 
+    // The full OrRef family whose value is loaded via the generic
+    // setOrRefValueNode/setOrRefRefNode pair rather than a plain
+    // obj.values.put() - see generator/emit_java.py's _ORREF_KINDS_JAVA
+    // (the same six kinds every generated model class's own accessors
+    // handle).
+    private static final Set<String> ORREF_KINDS = Set.of(
+            "StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef");
+
     public static final class Result {{
         public final SedBase value;
         public final ValidationProblem problem;
@@ -1100,8 +1341,15 @@ public final class Dispatch {{
     out.append("            default: throw new ApiError(\"unknown discriminator \" + discName);\n        }\n    }\n\n")
 
     out.append("    private static SedBase newItemInstance(String className) {\n        switch (className) {\n")
+    # Covers an "array"-kind field's own item_class, a "dict"-kind field's
+    # item_class when it has no _type dispatch of its own (SEDDocument.
+    # styles -> Style, Loop.loopVariables -> LoopVariable, ...), and a
+    # "ref-class"-kind field's item_class (the fixed target class a single
+    # nested child constructs directly) - same construction need in all
+    # three, just a different cardinality (Design.md's Classes section /
+    # this module's _child_accessors_java).
     item_classes = sorted({f.type.item_class for c in model.classes.values() for f in c.fields
-                            if f.type.kind == "array" and f.type.item_class})
+                            if f.type.item_class and f.type.kind in ("array", "dict", "ref-class")})
     for cls_name in item_classes:
         out.append(f"            case {_java_lit(cls_name)}: return new {cls_name}();\n")
     out.append("            default: throw new ApiError(\"unknown item class \" + className);\n        }\n    }\n\n")
@@ -1112,9 +1360,11 @@ public final class Dispatch {{
         if (raw.has("_type")) obj.values.put("_type", raw.get("_type"));
 
         for (FieldSpec spec : obj.fieldSpecs()) {
-            if (!raw.has(spec.name) || spec.kind.equals("dict") || spec.kind.equals("array")) continue;
+            if (!raw.has(spec.name) || spec.kind.equals("dict") || spec.kind.equals("array")
+                    || spec.kind.equals("any-dict") || spec.kind.equals("ref-class")
+                    || spec.kind.equals("ref-discriminator")) continue;
             JsonNode v = raw.get(spec.name);
-            if (spec.kind.equals("StringOrRef") || spec.kind.equals("NumberOrRef")) {
+            if (ORREF_KINDS.contains(spec.kind)) {
                 if (v.isTextual() && v.asText().startsWith("#")) {
                     obj.setOrRefRefNode(spec.name, v.asText());
                 } else {
@@ -1167,7 +1417,18 @@ public final class Dispatch {{
                     continue;
                 }
                 IdKeyedCollection<SedBase> coll = obj.getDictCollection(spec.name);
-                ParseFn dispatch = parserFor(spec.itemDiscriminator);
+                // A dict-kind field is either _type-dispatched
+                // (itemDiscriminator set, e.g. SEDDocument.tasks ->
+                // AbstractTask) or a plain fixed-class dict with no _type
+                // dispatch at all (itemClass set instead, e.g.
+                // SEDDocument.styles -> Style, Loop.loopVariables ->
+                // LoopVariable) - parserFor(null) would throw, so this
+                // mirrors the "array"-kind branch's own newItemInstance
+                // fallback just below, and generator/emit_python.py's
+                // _load_fields dict branch (`dispatch = ... if
+                // spec.item_discriminator else None`), the reference
+                // implementation this ports.
+                ParseFn dispatch = spec.itemDiscriminator != null ? parserFor(spec.itemDiscriminator) : null;
                 Iterator<String> ids = rawValue.fieldNames();
                 while (ids.hasNext()) {
                     String itemId = ids.next();
@@ -1181,9 +1442,16 @@ public final class Dispatch {{
                         ph.put("value", itemId);
                         obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     }
-                    Result r = dispatch.parse(itemRaw);
-                    if (r.problem != null) obj.loadProblems.add(r.problem);
-                    if (r.value != null) coll.add(itemId, r.value);
+                    SedBase child;
+                    if (dispatch != null) {
+                        Result r = dispatch.parse(itemRaw);
+                        if (r.problem != null) obj.loadProblems.add(r.problem);
+                        child = r.value;
+                    } else {
+                        child = newItemInstance(spec.itemClass);
+                        loadFields(child, itemRaw);
+                    }
+                    if (child != null) coll.add(itemId, child);
                 }
             } else if (spec.kind.equals("array") && raw.has(spec.name)) {
                 JsonNode rawValue = raw.get(spec.name);
@@ -1203,6 +1471,71 @@ public final class Dispatch {{
                     loadFields(child, itemRaw);
                     coll.add(child);
                 }
+            } else if (spec.kind.equals("any-dict") && raw.has(spec.name)) {
+                // Same ID-keyed-collection shape as "dict" just above, but
+                // every value is stored as-is - a plain JsonNode, never
+                // constructed as a class instance (see this module's
+                // _collection_accessors_java any-dict branch and
+                // generator/emit_python.py's _load_fields any-dict branch,
+                // the reference implementation this mirrors).
+                JsonNode rawValue = raw.get(spec.name);
+                if (!rawValue.isObject()) {
+                    String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                    Map<String, Object> ph = new HashMap<>();
+                    ph.put("attr", spec.name);
+                    ph.put("class", obj.getClass().getSimpleName());
+                    ph.put("id", obj.ownIdForMessage());
+                    ph.put("value", rawValue.toString());
+                    obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    continue;
+                }
+                IdKeyedCollection<JsonNode> coll = obj.getAnyDictCollection(spec.name);
+                Iterator<String> ids = rawValue.fieldNames();
+                while (ids.hasNext()) {
+                    String itemId = ids.next();
+                    JsonNode itemValue = rawValue.get(itemId);
+                    if (!itemId.matches(LeafValidation.SID_PATTERN)) {
+                        String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                        Map<String, Object> ph = new HashMap<>();
+                        ph.put("attr", spec.name);
+                        ph.put("class", obj.getClass().getSimpleName());
+                        ph.put("id", obj.ownIdForMessage());
+                        ph.put("value", itemId);
+                        obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    }
+                    coll.add(itemId, itemValue);
+                }
+            } else if ((spec.kind.equals("ref-class") || spec.kind.equals("ref-discriminator")) && raw.has(spec.name)) {
+                // A single nested SedBase-derived child (see this module's
+                // _child_accessors_java docstring) - "ref-class" constructs
+                // a fixed target class directly; "ref-discriminator"
+                // dispatches on the raw JSON's own _type via the matching
+                // parse* method, same as a dict-kind field's own
+                // discriminated items above. Mirrors
+                // generator/emit_python.py's _load_fields ref-class/
+                // ref-discriminator branch.
+                JsonNode rawValue = raw.get(spec.name);
+                if (!rawValue.isObject()) {
+                    String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                    Map<String, Object> ph = new HashMap<>();
+                    ph.put("attr", spec.name);
+                    ph.put("class", obj.getClass().getSimpleName());
+                    ph.put("id", obj.ownIdForMessage());
+                    ph.put("value", rawValue.toString());
+                    obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    continue;
+                }
+                SedBase child;
+                if (spec.kind.equals("ref-discriminator")) {
+                    ParseFn dispatch = parserFor(spec.itemDiscriminator);
+                    Result r = dispatch.parse(rawValue);
+                    if (r.problem != null) obj.loadProblems.add(r.problem);
+                    child = r.value;
+                } else {
+                    child = newItemInstance(spec.itemClass);
+                    loadFields(child, rawValue);
+                }
+                if (child != null) obj.setChildField(spec.name, child);
             }
         }
     }

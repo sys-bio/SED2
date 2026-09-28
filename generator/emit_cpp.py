@@ -260,6 +260,46 @@ private:
             any.push_back(num);
             any.push_back(ref);
             n["anyOf"] = any;
+        }} else if (kind == "IntegerOrRef") {{
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "integer";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        }} else if (kind == "BooleanOrRef") {{
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "boolean";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        }} else if (kind == "ArrayOrRef") {{
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "array";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
+        }} else if (kind == "DictOrRef") {{
+            jsoncons::json any = jsoncons::json::array();
+            jsoncons::json val = jsoncons::json::object();
+            val["type"] = "object";
+            jsoncons::json ref = jsoncons::json::object();
+            ref["type"] = "string";
+            ref["pattern"] = SIDREF_PATTERN;
+            any.push_back(val);
+            any.push_back(ref);
+            n["anyOf"] = any;
         }} else {{
             throw std::invalid_argument("unknown leaf kind: " + kind);
         }}
@@ -278,6 +318,7 @@ inline bool is_reference(const std::string& value) {{
 
 class IdKeyedCollection;
 class ListCollection;
+class AnyDictCollection;
 
 /// Universal base: every generated element (mirrors TestBaseFields'
 /// name/description) plus parent/document backpointers, generic namespace
@@ -416,6 +457,19 @@ public:
     virtual IdKeyedCollection& get_dict_collection(const std::string& field_name);
     virtual ListCollection& get_list_collection(const std::string& field_name);
 
+    /// Backing store for an "any-dict"-kind field (an ID-keyed collection of
+    /// raw JSON values, never SedBase instances - e.g. SEDDocument.
+    /// constants). Overridden per generated concrete class, mirroring
+    /// get_dict_collection above.
+    virtual AnyDictCollection& get_any_dict_collection(const std::string& field_name);
+
+    /// Sets a "ref-class"/"ref-discriminator"-kind field's single nested
+    /// child (taking ownership) - used only by load_fields() in
+    /// Dispatch.hpp, which constructs the child generically and needs a way
+    /// to store it back onto the right instance field without knowing the
+    /// concrete class. Overridden per generated concrete class.
+    virtual void set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child);
+
     // -- validate() engine --------------------------------------------------
     std::vector<ValidationProblem> validate(const std::string& severity_at_least = "warning");
 
@@ -504,8 +558,15 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {{
         problems.push_back(RuleCatalog::make_problem(rid, "/description", ph));
     }}
 
+    // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
+    // JSON value) has no leaf_value_ok()-equivalent schema to check against
+    // - see generator/emit_python.py's own LEAF_KINDS set and its
+    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
+    // resolution dispatch this C++ port deliberately does not carry over -
+    // see Design.md's Testing section on Phase 2 scope).
     static const std::set<std::string> leaf_kinds = {{
-        "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef"}};
+        "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
+        "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"}};
 
     std::vector<FieldSpec> all(field_specs().begin(), field_specs().end());
     for (const auto& kv : namespace_fields()) {{
@@ -656,6 +717,76 @@ inline ListCollection& SedBase::get_list_collection(const std::string& field_nam
     throw ApiError("no such list field: " + field_name);
 }}
 
+/// Backing store for an "any-dict"-kind field - same ID-keyed-collection
+/// shape as IdKeyedCollection above, but holds plain jsoncons::json values
+/// directly (no ownership/unique_ptr involved, since a raw JSON value isn't
+/// a SedBase) - e.g. SEDDocument.constants. Mirrors
+/// generator/emit_python.py's _collection_accessors any-dict branch and
+/// emit_java.py's IdKeyedCollection<JsonNode> re-use, the reference
+/// implementations this ports (C++'s IdKeyedCollection is itself
+/// unique_ptr<SedBase>-owning, so - unlike Java, which merely relaxed a
+/// generic bound - it can't be reused as-is here; a separate small class is
+/// the natural equivalent).
+class AnyDictCollection {{
+public:
+    std::vector<std::string> ids() const {{ return order_; }}
+
+    jsoncons::json get(const std::string& item_id) const {{
+        auto it = items_.find(item_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + item_id);
+        return it->second;
+    }}
+
+    void add(const std::string& item_id, jsoncons::json value) {{
+        if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
+        order_.push_back(item_id);
+        items_.emplace(item_id, std::move(value));
+    }}
+
+    void insert(size_t index, const std::string& item_id, jsoncons::json value) {{
+        if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
+        if (index > order_.size()) throw ApiError("index out of range");
+        order_.insert(order_.begin() + static_cast<long>(index), item_id);
+        items_.emplace(item_id, std::move(value));
+    }}
+
+    void remove(const std::string& item_id) {{
+        auto it = items_.find(item_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + item_id);
+        order_.erase(std::remove(order_.begin(), order_.end(), item_id), order_.end());
+        items_.erase(it);
+    }}
+
+    void set_id(const std::string& old_id, const std::string& new_id) {{
+        auto it = items_.find(old_id);
+        if (it == items_.end()) throw ApiError("no entry with id " + old_id);
+        if (items_.count(new_id) && new_id != old_id) {{
+            throw ApiError("an entry with id " + new_id + " already exists");
+        }}
+        for (auto& id : order_) {{
+            if (id == old_id) {{ id = new_id; break; }}
+        }}
+        auto node = items_.extract(it);
+        node.key() = new_id;
+        items_.insert(std::move(node));
+    }}
+
+    size_t size() const {{ return order_.size(); }}
+
+private:
+    std::vector<std::string> order_;
+    std::map<std::string, jsoncons::json> items_;
+}};
+
+inline AnyDictCollection& SedBase::get_any_dict_collection(const std::string& field_name) {{
+    throw ApiError("no such any-dict field: " + field_name);
+}}
+
+inline void SedBase::set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child) {{
+    (void)child;
+    throw ApiError("no such child field: " + field_name);
+}}
+
 }}  // namespace {NS}
 '''
 
@@ -679,6 +810,36 @@ def _field_spec_expr(f: Field) -> str:
     )
 
 
+# The full OrRef family - StringOrRef/NumberOrRef were the only two the
+# Phase-1 test-specsheets/ vocabulary exercised; the real spec (specsheets/)
+# also uses the other four. Every one of these gets the same six get-/set-/
+# is-Ref-/isSet-/unset- accessors, generic OrRef storage (get_or_ref_value_
+# node/set_or_ref_value_node/... on SedBase), differing only in the natural
+# C++ type on the value side - ArrayOrRef/DictOrRef have no better native
+# C++ collection representation than the raw jsoncons::json itself without
+# a lot more work outside this port's scope (Design.md's Phase 2 scope
+# note), so their "value" is the json as-is, same treatment as "any" below.
+_ORREF_KINDS_CPP = ("StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef")
+
+# kind -> (C++ value type, get-conversion suffix ("" = no conversion, the
+# jsoncons::json itself), param type for the setter, set-time wrap
+# expression turning `value` into a jsoncons::json).
+_ORREF_CPP_TYPES = {
+    "StringOrRef": ("std::string", ".as<std::string>()", "const std::string&", "jsoncons::json(value)"),
+    "NumberOrRef": ("double", ".as<double>()", "double", "jsoncons::json(value)"),
+    "IntegerOrRef": ("int64_t", ".as<int64_t>()", "int64_t", "jsoncons::json(value)"),
+    "BooleanOrRef": ("bool", ".as<bool>()", "bool", "jsoncons::json(value)"),
+    "ArrayOrRef": ("jsoncons::json", "", "const jsoncons::json&", "value"),
+    "DictOrRef": ("jsoncons::json", "", "const jsoncons::json&", "value"),
+}
+
+# Every kind emit_model_hpp treats as a "leaf" field (own FIELD_SPECS entry
+# + a get-/set-/isSet-/unset()-shaped accessor stored directly in values_) -
+# mirrors emit_python.py's emit_model_py leaf_fields classification
+# (_ORREF_KINDS + ("string", "integer", ... , "any")).
+_LEAF_KINDS_CPP = _ORREF_KINDS_CPP + ("string", "integer", "number", "boolean", "SId", "SIdRef", "any")
+
+
 def _cpp_leaf_type(kind: str) -> str:
     return {"string": "std::string", "SId": "std::string", "SIdRef": "std::string",
             "integer": "int64_t", "number": "double", "boolean": "bool"}[kind]
@@ -689,20 +850,29 @@ def _leaf_accessors_cpp(f: Field) -> str:
     kind = f.type.kind
     name_lit = _cpp_lit(f.name)
     lines = []
-    if kind in ("StringOrRef", "NumberOrRef"):
-        if kind == "StringOrRef":
-            java_t, get_expr, wrap = "std::string", '.as<std::string>()', "jsoncons::json(value)"
-            param_t = "const std::string&"
-        else:
-            java_t, get_expr, wrap = "double", ".as<double>()", "jsoncons::json(value)"
-            param_t = "double"
-        lines.append(f"    {java_t} get_{ident}_value() const {{ return get_or_ref_value_node({name_lit}){get_expr}; }}")
+    if kind in _ORREF_KINDS_CPP:
+        cpp_t, get_expr, param_t, wrap = _ORREF_CPP_TYPES[kind]
+        lines.append(f"    {cpp_t} get_{ident}_value() const {{ return get_or_ref_value_node({name_lit}){get_expr}; }}")
         lines.append(f"    std::string get_{ident}_ref() const {{ return get_or_ref_ref_node({name_lit}).as<std::string>(); }}")
         lines.append(f"    void set_{ident}_value({param_t} value) {{ set_or_ref_value_node({name_lit}, {wrap}); }}")
         lines.append(f"    void set_{ident}_ref(const std::string& ref) {{ set_or_ref_ref_node({name_lit}, ref); }}")
         lines.append(f"    bool is_{ident}_ref() const {{ return is_or_ref_ref({name_lit}); }}")
         lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
         lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); or_ref_is_ref_.erase({name_lit}); }}")
+    elif kind == "any":
+        # AnyValueOrRef: no fixed shape, so no type conversion either way -
+        # the raw jsoncons::json is both the getter's return type and the
+        # setter's parameter type. Mirrors emit_python.py's plain (non-
+        # OrRef) accessor shape for this kind - "any" is deliberately absent
+        # from validate_own()'s leaf_kinds set above, so this accessor's
+        # stored value is never schema-checked, only checked for
+        # required-ness.
+        lines.append(f"    jsoncons::json get_{ident}() const {{ auto it = values_.find({name_lit}); "
+                      f"if (it == values_.end()) throw ApiError(std::string({name_lit}) + \" is not set\"); "
+                      f"return it->second; }}")
+        lines.append(f"    void set_{ident}(const jsoncons::json& value) {{ values_[{name_lit}] = value; }}")
+        lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
+        lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); }}")
     else:
         cpp_t = _cpp_leaf_type(kind)
         param_t = "const std::string&" if cpp_t == "std::string" else cpp_t
@@ -713,6 +883,25 @@ def _leaf_accessors_cpp(f: Field) -> str:
         lines.append(f"    void set_{ident}({param_t} value) {{ values_[{name_lit}] = jsoncons::json(value); }}")
         lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
         lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); }}")
+    return "\n".join(lines) + "\n"
+
+
+def _child_accessors_cpp(f: Field) -> str:
+    """A single nested SedBase-derived child, owned directly by the
+    instance (a private std::unique_ptr<SedBase> field), not in an
+    IdKeyedCollection/ListCollection - there is exactly zero or one of it,
+    and it has no id of its own. Covers both "ref-class" (a fixed target
+    class) and "ref-discriminator" (a _type-dispatched target) - the
+    accessors don't care which; only load_fields()'s own parsing needs to
+    tell them apart (see generator/emit_python.py's _child_accessors, the
+    reference implementation this mirrors)."""
+    ident = _cpp_ident(f.name)
+    name_lit = _cpp_lit(f.name)
+    lines = []
+    lines.append(f"    SedBase* get_{ident}() const {{ if (!{ident}_) throw ApiError(std::string({name_lit}) + \" is not set\"); return {ident}_.get(); }}")
+    lines.append(f"    void set_{ident}(std::unique_ptr<SedBase> obj) {{ SedBase* raw = obj.get(); {ident}_ = std::move(obj); raw->attach(this, get_document()); }}")
+    lines.append(f"    bool is_set_{ident}() const {{ return {ident}_ != nullptr; }}")
+    lines.append(f"    void unset_{ident}() {{ {ident}_.reset(); }}")
     return "\n".join(lines) + "\n"
 
 
@@ -729,6 +918,18 @@ def _collection_accessors_cpp(f: Field) -> str:
                       f"SedBase* raw = obj.get(); {ident}_.insert(index, item_id, std::move(obj)); raw->attach(this, get_document()); }}")
         lines.append(f"    void remove_{ident}(const std::string& item_id) {{ {ident}_.remove(item_id); }}")
         lines.append(f"    void set_id_on_{ident}(const std::string& old_id, const std::string& new_id) {{ {ident}_.set_id(old_id, new_id); }}")
+    elif f.type.kind == "any-dict":
+        # Same ID-keyed collection shape as "dict", but items are raw
+        # jsoncons::json values, never SedBase instances - so no attach()
+        # call (SEDDocument.constants today; mirrors
+        # generator/emit_python.py's _collection_accessors any-dict
+        # branch).
+        lines.append(f"    std::vector<std::string> get_{ident}() const {{ return {ident}_.ids(); }}")
+        lines.append(f"    jsoncons::json get_{ident}_item(const std::string& item_id) const {{ return {ident}_.get(item_id); }}")
+        lines.append(f"    void add_{ident}(const std::string& item_id, const jsoncons::json& value) {{ {ident}_.add(item_id, value); }}")
+        lines.append(f"    void insert_{ident}(size_t index, const std::string& item_id, const jsoncons::json& value) {{ {ident}_.insert(index, item_id, value); }}")
+        lines.append(f"    void remove_{ident}(const std::string& item_id) {{ {ident}_.remove(item_id); }}")
+        lines.append(f"    void set_id_on_{ident}(const std::string& old_id, const std::string& new_id) {{ {ident}_.set_id(old_id, new_id); }}")
     else:
         lines.append(f"    std::vector<SedBase*> get_{ident}() const {{ return {ident}_.items(); }}")
         lines.append(f"    void add_{ident}(std::unique_ptr<SedBase> obj) {{ "
@@ -741,7 +942,12 @@ def _collection_accessors_cpp(f: Field) -> str:
 
 def _collection_field_decl_cpp(f: Field) -> str:
     ident = _cpp_ident(f.name)
-    cls = "IdKeyedCollection" if f.type.kind == "dict" else "ListCollection"
+    if f.type.kind == "dict":
+        cls = "IdKeyedCollection"
+    elif f.type.kind == "any-dict":
+        cls = "AnyDictCollection"
+    else:
+        cls = "ListCollection"
     return f"    {cls} {ident}_;\n"
 
 
@@ -768,18 +974,55 @@ namespace {NS} {{
 
     for name in model.generatable_classes():
         c = model.classes[name]
-        own_fields = [f for f in c.fields if f.origin_class != base]
-        collection_fields = [f for f in own_fields if f.type.kind in ("dict", "array")]
-        leaf_fields = [f for f in own_fields if f.type.kind in
-                       ("StringOrRef", "NumberOrRef", "string", "integer", "number", "boolean", "SId", "SIdRef")]
+        # Mirrors emit_python.py's own_fields filter exactly (and, since
+        # this fix, emit_java.py's): excludes ONLY name/description when
+        # they originate from the base mixin (every concrete class handles
+        # those two via the dedicated name_node_/description_node_ fields
+        # on SedBase itself, never a FieldSpec) - NOT every base-origin
+        # field. The base mixin (SEDBase/TestBase) also declares "notes"/
+        # "annotations" in the real spec (TestBase happens to declare only
+        # name/description, which is why this distinction was invisible
+        # under test-specsheets/ alone) and those must still get their own
+        # FieldSpec/accessor like any other field.
+        own_fields = [f for f in c.fields
+                      if not (f.origin_class == base and f.name in ("name", "description"))]
+        collection_fields_all = [f for f in own_fields if f.type.kind in ("dict", "array", "any-dict")]
+        leaf_fields_all = [f for f in own_fields if f.type.kind in _LEAF_KINDS_CPP]
+        child_fields_all = [f for f in own_fields if f.type.kind in ("ref-class", "ref-discriminator")]
+
+        # A field name can legitimately appear twice in own_fields (a
+        # subclass re-declaring a field its own mixin already declares with
+        # a tighter constraint, e.g. NumericRange/ParameterRange's own
+        # "values" alongside Range's mixin "values" - both keep their own
+        # separate FieldSpec entry in field_specs below, matching
+        # emit_python.py's _FIELDS, but C++ cannot declare the same member
+        # (a field or a method) twice in one class, unlike Python where a
+        # later `def`/assignment inside the class body silently shadows an
+        # earlier one with the same name). Field DECLARATIONS and their
+        # ACCESSOR METHODS are deduplicated (last occurrence wins, matching
+        # Python's overwrite order and mirroring emit_java.py's own
+        # _dedup_last); FIELD_SPECS below deliberately is NOT.
+        def _dedup_last(fields):
+            by_name = {}
+            order = []
+            for f in fields:
+                if f.name not in by_name:
+                    order.append(f.name)
+                by_name[f.name] = f
+            return [by_name[n] for n in order]
+
+        collection_fields = _dedup_last(collection_fields_all)
+        leaf_fields = _dedup_last(leaf_fields_all)
+        child_fields = _dedup_last(child_fields_all)
         dict_fields = [f for f in collection_fields if f.type.kind == "dict"]
         array_fields = [f for f in collection_fields if f.type.kind == "array"]
+        any_dict_fields = [f for f in collection_fields if f.type.kind == "any-dict"]
         has_ns = bool(c.namespace_updates)
 
         out.append(f"/// Generated from test-specsheets/{c.category}/{name}/.\n")
         out.append(f"class {name} : public SedBase {{\npublic:\n")
 
-        field_specs = leaf_fields + collection_fields
+        field_specs = leaf_fields_all + collection_fields_all + child_fields_all
         if field_specs:
             exprs = ",\n            ".join(_field_spec_expr(f) for f in field_specs)
             out.append(f"    const std::vector<FieldSpec>& field_specs() const override {{\n"
@@ -822,11 +1065,13 @@ namespace {NS} {{
             out.append(_leaf_accessors_cpp(f) + "\n")
         for f in collection_fields:
             out.append(_collection_accessors_cpp(f) + "\n")
+        for f in child_fields:
+            out.append(_child_accessors_cpp(f) + "\n")
         for prefix, fs in c.namespace_updates.items():
             for f in fs:
                 out.append(_leaf_accessors_cpp(f) + "\n")
 
-        if collection_fields:
+        if collection_fields or child_fields:
             out.append("    std::vector<SedBase*> children() override {\n        std::vector<SedBase*> kids;\n")
             for f in dict_fields:
                 ident = _cpp_ident(f.name)
@@ -834,6 +1079,9 @@ namespace {NS} {{
             for f in array_fields:
                 ident = _cpp_ident(f.name)
                 out.append(f"        for (auto* item : {ident}_.items()) kids.push_back(item);\n")
+            for f in child_fields:
+                ident = _cpp_ident(f.name)
+                out.append(f"        if ({ident}_) kids.push_back({ident}_.get());\n")
             out.append("        return kids;\n    }\n\n")
 
             out.append("    std::vector<ChildLoc> children_with_locations() override {\n        std::vector<ChildLoc> out;\n")
@@ -844,6 +1092,9 @@ namespace {NS} {{
                 ident = _cpp_ident(f.name)
                 out.append(f"        {{ size_t idx = 0; for (auto* item : {ident}_.items()) {{ "
                             f"out.push_back(ChildLoc{{item, \"/{f.name}/\" + std::to_string(idx)}}); idx++; }} }}\n")
+            for f in child_fields:
+                ident = _cpp_ident(f.name)
+                out.append(f"        if ({ident}_) out.push_back(ChildLoc{{{ident}_.get(), \"/{f.name}\"}});\n")
             out.append("        return out;\n    }\n\n")
 
         if dict_fields:
@@ -858,6 +1109,18 @@ namespace {NS} {{
                 ident = _cpp_ident(f.name)
                 out.append(f"        if (field_name == {_cpp_lit(f.name)}) return {ident}_;\n")
             out.append("        return SedBase::get_list_collection(field_name);\n    }\n\n")
+        if any_dict_fields:
+            out.append("    AnyDictCollection& get_any_dict_collection(const std::string& field_name) override {\n")
+            for f in any_dict_fields:
+                ident = _cpp_ident(f.name)
+                out.append(f"        if (field_name == {_cpp_lit(f.name)}) return {ident}_;\n")
+            out.append("        return SedBase::get_any_dict_collection(field_name);\n    }\n\n")
+        if child_fields:
+            out.append("    void set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child) override {\n")
+            for f in child_fields:
+                ident = _cpp_ident(f.name)
+                out.append(f"        if (field_name == {_cpp_lit(f.name)}) {{ {ident}_ = std::move(child); return; }}\n")
+            out.append("        SedBase::set_child_field(field_name, std::move(child));\n    }\n\n")
 
         out.append("    jsoncons::json own_json_value() const override {\n        jsoncons::json d = jsoncons::json::object();\n")
         out.append("        if (name_node_) d[\"name\"] = *name_node_;\n")
@@ -877,13 +1140,23 @@ namespace {NS} {{
             ident = _cpp_ident(f.name)
             out.append(f"        if ({ident}_.size() > 0) {{ jsoncons::json arr = jsoncons::json::array(); "
                         f"for (auto* item : {ident}_.items()) arr.push_back(item->to_json_value()); d[{_cpp_lit(f.name)}] = arr; }}\n")
+        for f in any_dict_fields:
+            ident = _cpp_ident(f.name)
+            out.append(f"        if ({ident}_.size() > 0) {{ jsoncons::json sub = jsoncons::json::object(); "
+                        f"for (const auto& i : {ident}_.ids()) sub[i] = {ident}_.get(i); d[{_cpp_lit(f.name)}] = sub; }}\n")
+        for f in child_fields:
+            ident = _cpp_ident(f.name)
+            out.append(f"        if ({ident}_) d[{_cpp_lit(f.name)}] = {ident}_->to_json_value();\n")
         out.append("        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;\n")
         out.append("        return d;\n    }\n")
 
-        if collection_fields:
+        if collection_fields or child_fields:
             out.append("\nprivate:\n")
             for f in collection_fields:
                 out.append(_collection_field_decl_cpp(f))
+            for f in child_fields:
+                ident = _cpp_ident(f.name)
+                out.append(f"    std::unique_ptr<SedBase> {ident}_;\n")
 
         out.append("};\n\n")
 
@@ -999,8 +1272,14 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
         out.append(f"    {kw} (disc_name == {_cpp_lit(disc_name)}) return parse_{disc_name}(raw);\n")
     out.append("    throw ApiError(\"unknown discriminator \" + disc_name);\n}\n\n")
 
+    # Covers an "array"-kind field's own item_class, a "dict"-kind field's
+    # item_class when it has no _type dispatch of its own (SEDDocument.
+    # styles -> Style, Loop.loopVariables -> LoopVariable, ...), and a
+    # "ref-class"-kind field's item_class (the fixed target class a single
+    # nested child constructs directly) - same construction need in all
+    # three, just a different cardinality.
     item_classes = sorted({f.type.item_class for c in model.classes.values() for f in c.fields
-                            if f.type.kind == "array" and f.type.item_class})
+                            if f.type.item_class and f.type.kind in ("array", "dict", "ref-class")})
     out.append("inline std::unique_ptr<SedBase> new_item_instance(const std::string& class_name) {\n")
     for i, cls_name in enumerate(item_classes):
         kw = "if" if i == 0 else "else if"
@@ -1012,10 +1291,20 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
     if (raw.contains("description") && !raw.at("description").is_null()) obj->description_node_ = raw.at("description");
     if (raw.contains("_type")) obj->values_["_type"] = raw.at("_type");
 
+    // The full OrRef family whose value is loaded via the generic
+    // set_or_ref_value_node/set_or_ref_ref_node pair rather than a plain
+    // obj->values_[...] assignment - see generator/emit_cpp.py's
+    // _ORREF_KINDS_CPP (the same six kinds every generated model class's
+    // own accessors handle).
+    static const std::set<std::string> orref_kinds = {
+        "StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"};
+
     for (const auto& spec : obj->field_specs()) {
-        if (!raw.contains(spec.name) || spec.kind == "dict" || spec.kind == "array") continue;
+        if (!raw.contains(spec.name) || spec.kind == "dict" || spec.kind == "array"
+                || spec.kind == "any-dict" || spec.kind == "ref-class"
+                || spec.kind == "ref-discriminator") continue;
         const jsoncons::json& v = raw.at(spec.name);
-        if (spec.kind == "StringOrRef" || spec.kind == "NumberOrRef") {
+        if (orref_kinds.count(spec.kind)) {
             if (v.is_string() && is_reference(v.as<std::string>())) {
                 obj->set_or_ref_ref_node(spec.name, v.as<std::string>());
             } else {
@@ -1068,6 +1357,17 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
                 continue;
             }
             IdKeyedCollection& coll = obj->get_dict_collection(spec.name);
+            // A dict-kind field is either _type-dispatched (item_discriminator
+            // set, e.g. SEDDocument.tasks -> AbstractTask) or a plain
+            // fixed-class dict with no _type dispatch at all (item_class set
+            // instead, e.g. SEDDocument.styles -> Style, Loop.loopVariables
+            // -> LoopVariable) - dereferencing spec.item_discriminator
+            // unconditionally would be undefined behavior when it's
+            // std::nullopt, so this mirrors the "array"-kind branch's own
+            // new_item_instance fallback just below, and
+            // generator/emit_python.py's _load_fields dict branch
+            // (`dispatch = ... if spec.item_discriminator else None`), the
+            // reference implementation this ports.
             for (const auto& item_kv : raw_value.object_range()) {
                 const std::string& item_id = item_kv.key();
                 const jsoncons::json& item_raw = item_kv.value();
@@ -1080,9 +1380,16 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
                     ph["value"] = item_id;
                     obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
                 }
-                DispatchResult r = dispatch_parse(*spec.item_discriminator, item_raw);
-                if (r.problem) obj->load_problems_.push_back(*r.problem);
-                if (r.value) coll.add(item_id, std::move(r.value));
+                std::unique_ptr<SedBase> child;
+                if (spec.item_discriminator) {
+                    DispatchResult r = dispatch_parse(*spec.item_discriminator, item_raw);
+                    if (r.problem) obj->load_problems_.push_back(*r.problem);
+                    child = std::move(r.value);
+                } else {
+                    child = new_item_instance(*spec.item_class);
+                    load_fields(child.get(), item_raw);
+                }
+                if (child) coll.add(item_id, std::move(child));
             }
         } else if (spec.kind == "array" && raw.contains(spec.name)) {
             const jsoncons::json& raw_value = raw.at(spec.name);
@@ -1102,6 +1409,67 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
                 load_fields(child.get(), item_raw);
                 coll.add(std::move(child));
             }
+        } else if (spec.kind == "any-dict" && raw.contains(spec.name)) {
+            // Same ID-keyed-collection shape as "dict" just above, but every
+            // value is stored as-is - a plain jsoncons::json, never
+            // constructed as a class instance (see this module's
+            // _collection_accessors_cpp any-dict branch and
+            // generator/emit_python.py's _load_fields any-dict branch, the
+            // reference implementation this mirrors).
+            const jsoncons::json& raw_value = raw.at(spec.name);
+            if (!raw_value.is_object()) {
+                std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
+                std::map<std::string, std::string> ph;
+                ph["attr"] = spec.name;
+                ph["class"] = obj->class_name();
+                ph["id"] = obj->own_id_for_message();
+                ph["value"] = raw_value.to_string();
+                obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
+                continue;
+            }
+            AnyDictCollection& coll = obj->get_any_dict_collection(spec.name);
+            for (const auto& item_kv : raw_value.object_range()) {
+                const std::string& item_id = item_kv.key();
+                if (!LeafValidation::is_sid(item_id)) {
+                    std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
+                    std::map<std::string, std::string> ph;
+                    ph["attr"] = spec.name;
+                    ph["class"] = obj->class_name();
+                    ph["id"] = obj->own_id_for_message();
+                    ph["value"] = item_id;
+                    obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
+                }
+                coll.add(item_id, item_kv.value());
+            }
+        } else if ((spec.kind == "ref-class" || spec.kind == "ref-discriminator") && raw.contains(spec.name)) {
+            // A single nested SedBase-derived child (see this module's
+            // _child_accessors_cpp docstring) - "ref-class" constructs a
+            // fixed target class directly; "ref-discriminator" dispatches
+            // on the raw JSON's own _type via the matching parse_*
+            // function, same as a dict-kind field's own discriminated
+            // items above. Mirrors generator/emit_python.py's _load_fields
+            // ref-class/ref-discriminator branch.
+            const jsoncons::json& raw_value = raw.at(spec.name);
+            if (!raw_value.is_object()) {
+                std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
+                std::map<std::string, std::string> ph;
+                ph["attr"] = spec.name;
+                ph["class"] = obj->class_name();
+                ph["id"] = obj->own_id_for_message();
+                ph["value"] = raw_value.to_string();
+                obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
+                continue;
+            }
+            std::unique_ptr<SedBase> child;
+            if (spec.kind == "ref-discriminator") {
+                DispatchResult r = dispatch_parse(*spec.item_discriminator, raw_value);
+                if (r.problem) obj->load_problems_.push_back(*r.problem);
+                child = std::move(r.value);
+            } else {
+                child = new_item_instance(*spec.item_class);
+                load_fields(child.get(), raw_value);
+            }
+            if (child) obj->set_child_field(spec.name, std::move(child));
         }
     }
 }

@@ -20,10 +20,14 @@ import java.util.Set;
 public final class RelabelData extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("input", "SIdRef", true, "RelabelData-0002", "RelabelData-0001", "RelabelData-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
+        new FieldSpec("labels", "ArrayOrRef", true, "RelabelData-0004", "RelabelData-0003", "RelabelData-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("input", "labels");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -40,15 +44,34 @@ public final class RelabelData extends SedBase {
     public boolean isSetInput() { return values.containsKey("input"); }
     public void unsetInput() { values.remove("input"); }
 
+    public JsonNode getLabelsValue() { return getOrRefValueNode("labels"); }
+    public String getLabelsRef() { return getOrRefRefNode("labels").asText(); }
+    public void setLabelsValue(JsonNode value) { setOrRefValueNode("labels", value); }
+    public void setLabelsRef(String ref) { setOrRefRefNode("labels", ref); }
+    public boolean isLabelsRef() { return isOrRefRef("labels"); }
+    public boolean isSetLabels() { return values.containsKey("labels"); }
+    public void unsetLabels() { values.remove("labels"); orRefIsRef.remove("labels"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
     public void insertTaskParameters(int index, SedBase obj) { taskParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeTaskParameters(int index) { taskParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
         kids.addAll(taskParameters.items());
+        kids.addAll(annotations.items());
         return kids;
     }
 
@@ -56,6 +79,7 @@ public final class RelabelData extends SedBase {
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
 
@@ -63,6 +87,7 @@ public final class RelabelData extends SedBase {
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
             case "taskParameters": return taskParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
         }
     }
@@ -74,7 +99,10 @@ public final class RelabelData extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("relabelData"));
         if (values.containsKey("input")) d.set("input", values.get("input"));
+        if (values.containsKey("labels")) d.set("labels", values.get("labels"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

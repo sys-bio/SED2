@@ -10,6 +10,8 @@ A small, self-contained fixture tree - not part of the canonical spec (`specshee
 | `x-generated-oneOf` discriminator + Common mixin (never itself instantiated) | `tasks/AbstractWidget`, `outputs/AbstractReport` | `tasks/AbstractTask`, `outputs/AbstractOutput` |
 | Standalone schema-only mixin, no `oneOf` of its own | `tasks/WidgetOptions` | `tasks/AbstractSimulation` |
 | Plain leaf branch(es) of a discriminator | `tasks/SimpleWidget`, `tasks/FancyWidget`, `outputs/SimpleReport` | `tasks/ExplicitODESimulation`, etc. |
+| One optional attribute of each remaining field type: `any`, `BooleanOrRef`, `IntegerOrRef`, `ArrayOrRef`, `DictOrRef`, `ref-class`, `ref-discriminator`, `any-dict` | `tasks/TypesWidget` | (various: `LoopVariable.initialValue`, `Repeat.range`, `SEDDocument.constants`, ...) |
+| Field carrying an infix math expression (`StringOrRef` + `x-math`, checked by the shared `Types-0001` to `-0004` math-grammar rules) | `tasks/MathWidget` | `tasks/Calculation` |
 | Simple embedded helper, no `_type`, not a branch of anything | `auxiliary/Note` | `auxiliary/TaskParameter`, `WorkingAlgorithm` |
 | Directly-instantiable class that is also the root of further subclasses (Common mixin split + generated `inline` union) | `auxiliary/Choice` (+ `WeightedChoice` subtype) | `tasks/Range` (+ `NumericRange`, `ParameterRange`) |
 | Namespace `new/` class (wholly new type) | `namespaces/acme/new/tasks/AcmeWidget` | (none registered yet) |

@@ -18,8 +18,13 @@ import java.util.Set;
 /** Generated from test-specsheets/auxiliary/TaskParameter/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class TaskParameter extends SedBase {
-    private static final List<FieldSpec> FIELD_SPECS = List.of();
+    private static final List<FieldSpec> FIELD_SPECS = List.of(
+        new FieldSpec("value", "any", true, null, "TaskParameter-0001", "TaskParameter-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
+    );
     private static final Set<String> REQUIRED_NAMES = Set.of("value");
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -30,11 +35,51 @@ public final class TaskParameter extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
 
+    public JsonNode getValue() { if (!values.containsKey("value")) throw new ApiError("value" + " is not set"); return values.get("value"); }
+    public void setValue(JsonNode value) { values.put("value", value); }
+    public boolean isSetValue() { return values.containsKey("value"); }
+    public void unsetValue() { values.remove("value"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
+    @Override
+    public List<SedBase> children() {
+        List<SedBase> kids = new ArrayList<>();
+        kids.addAll(annotations.items());
+        return kids;
+    }
+
+    @Override
+    public List<ChildLoc> childrenWithLocations() {
+        List<ChildLoc> out = new ArrayList<>();
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
+        return out;
+    }
+
+    @Override
+    protected ListCollection<SedBase> getListCollection(String fieldName) {
+        switch (fieldName) {
+            case "annotations": return annotations;
+            default: return super.getListCollection(fieldName);
+        }
+    }
+
     @Override
     public ObjectNode ownJsonValue() {
         ObjectNode d = JsonNodeFactory.instance.objectNode();
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
+        if (values.containsKey("value")) d.set("value", values.get("value"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

@@ -1,0 +1,17 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "m1": {
+      "_type": "mathWidget",
+      "math": "2 * pi + sin(0.5) ^ 2"
+    },
+    "m2": {
+      "_type": "mathWidget",
+      "math": "#widgets:m1 + 1"
+    },
+    "m3": {
+      "_type": "mathWidget",
+      "math": "#constants:expr"
+    }
+  }
+}

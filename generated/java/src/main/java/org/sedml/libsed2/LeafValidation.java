@@ -66,6 +66,50 @@ public final class LeafValidation {
                 any.add(ref);
                 break;
             }
+            case "IntegerOrRef": {
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "integer");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }
+            case "BooleanOrRef": {
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "boolean");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }
+            case "ArrayOrRef": {
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "array");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }
+            case "DictOrRef": {
+                ArrayNode any = n.putArray("anyOf");
+                ObjectNode val = JsonNodeFactory.instance.objectNode();
+                val.put("type", "object");
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(val);
+                any.add(ref);
+                break;
+            }
             default:
                 throw new IllegalArgumentException("unknown leaf kind: " + kind);
         }

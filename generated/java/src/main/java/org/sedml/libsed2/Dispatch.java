@@ -21,6 +21,14 @@ import java.util.regex.Matcher;
 public final class Dispatch {
     private Dispatch() {}
 
+    // The full OrRef family whose value is loaded via the generic
+    // setOrRefValueNode/setOrRefRefNode pair rather than a plain
+    // obj.values.put() - see generator/emit_java.py's _ORREF_KINDS_JAVA
+    // (the same six kinds every generated model class's own accessors
+    // handle).
+    private static final Set<String> ORREF_KINDS = Set.of(
+            "StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef");
+
     public static final class Result {
         public final SedBase value;
         public final ValidationProblem problem;
@@ -170,9 +178,16 @@ public final class Dispatch {
 
     private static SedBase newItemInstance(String className) {
         switch (className) {
+            case "AggregationCalculation": return new AggregationCalculation();
             case "Annotation": return new Annotation();
+            case "Axis": return new Axis();
+            case "LoopVariable": return new LoopVariable();
+            case "NumericRange": return new NumericRange();
             case "OutputParameter": return new OutputParameter();
             case "ParameterRange": return new ParameterRange();
+            case "Span": return new Span();
+            case "Style": return new Style();
+            case "Surface": return new Surface();
             case "TaskParameter": return new TaskParameter();
             case "WorkingAlgorithm": return new WorkingAlgorithm();
             default: throw new ApiError("unknown item class " + className);
@@ -185,9 +200,11 @@ public final class Dispatch {
         if (raw.has("_type")) obj.values.put("_type", raw.get("_type"));
 
         for (FieldSpec spec : obj.fieldSpecs()) {
-            if (!raw.has(spec.name) || spec.kind.equals("dict") || spec.kind.equals("array")) continue;
+            if (!raw.has(spec.name) || spec.kind.equals("dict") || spec.kind.equals("array")
+                    || spec.kind.equals("any-dict") || spec.kind.equals("ref-class")
+                    || spec.kind.equals("ref-discriminator")) continue;
             JsonNode v = raw.get(spec.name);
-            if (spec.kind.equals("StringOrRef") || spec.kind.equals("NumberOrRef")) {
+            if (ORREF_KINDS.contains(spec.kind)) {
                 if (v.isTextual() && v.asText().startsWith("#")) {
                     obj.setOrRefRefNode(spec.name, v.asText());
                 } else {
@@ -240,7 +257,18 @@ public final class Dispatch {
                     continue;
                 }
                 IdKeyedCollection<SedBase> coll = obj.getDictCollection(spec.name);
-                ParseFn dispatch = parserFor(spec.itemDiscriminator);
+                // A dict-kind field is either _type-dispatched
+                // (itemDiscriminator set, e.g. SEDDocument.tasks ->
+                // AbstractTask) or a plain fixed-class dict with no _type
+                // dispatch at all (itemClass set instead, e.g.
+                // SEDDocument.styles -> Style, Loop.loopVariables ->
+                // LoopVariable) - parserFor(null) would throw, so this
+                // mirrors the "array"-kind branch's own newItemInstance
+                // fallback just below, and generator/emit_python.py's
+                // _load_fields dict branch (`dispatch = ... if
+                // spec.item_discriminator else None`), the reference
+                // implementation this ports.
+                ParseFn dispatch = spec.itemDiscriminator != null ? parserFor(spec.itemDiscriminator) : null;
                 Iterator<String> ids = rawValue.fieldNames();
                 while (ids.hasNext()) {
                     String itemId = ids.next();
@@ -254,9 +282,16 @@ public final class Dispatch {
                         ph.put("value", itemId);
                         obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     }
-                    Result r = dispatch.parse(itemRaw);
-                    if (r.problem != null) obj.loadProblems.add(r.problem);
-                    if (r.value != null) coll.add(itemId, r.value);
+                    SedBase child;
+                    if (dispatch != null) {
+                        Result r = dispatch.parse(itemRaw);
+                        if (r.problem != null) obj.loadProblems.add(r.problem);
+                        child = r.value;
+                    } else {
+                        child = newItemInstance(spec.itemClass);
+                        loadFields(child, itemRaw);
+                    }
+                    if (child != null) coll.add(itemId, child);
                 }
             } else if (spec.kind.equals("array") && raw.has(spec.name)) {
                 JsonNode rawValue = raw.get(spec.name);
@@ -276,6 +311,71 @@ public final class Dispatch {
                     loadFields(child, itemRaw);
                     coll.add(child);
                 }
+            } else if (spec.kind.equals("any-dict") && raw.has(spec.name)) {
+                // Same ID-keyed-collection shape as "dict" just above, but
+                // every value is stored as-is - a plain JsonNode, never
+                // constructed as a class instance (see this module's
+                // _collection_accessors_java any-dict branch and
+                // generator/emit_python.py's _load_fields any-dict branch,
+                // the reference implementation this mirrors).
+                JsonNode rawValue = raw.get(spec.name);
+                if (!rawValue.isObject()) {
+                    String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                    Map<String, Object> ph = new HashMap<>();
+                    ph.put("attr", spec.name);
+                    ph.put("class", obj.getClass().getSimpleName());
+                    ph.put("id", obj.ownIdForMessage());
+                    ph.put("value", rawValue.toString());
+                    obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    continue;
+                }
+                IdKeyedCollection<JsonNode> coll = obj.getAnyDictCollection(spec.name);
+                Iterator<String> ids = rawValue.fieldNames();
+                while (ids.hasNext()) {
+                    String itemId = ids.next();
+                    JsonNode itemValue = rawValue.get(itemId);
+                    if (!itemId.matches(LeafValidation.SID_PATTERN)) {
+                        String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                        Map<String, Object> ph = new HashMap<>();
+                        ph.put("attr", spec.name);
+                        ph.put("class", obj.getClass().getSimpleName());
+                        ph.put("id", obj.ownIdForMessage());
+                        ph.put("value", itemId);
+                        obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    }
+                    coll.add(itemId, itemValue);
+                }
+            } else if ((spec.kind.equals("ref-class") || spec.kind.equals("ref-discriminator")) && raw.has(spec.name)) {
+                // A single nested SedBase-derived child (see this module's
+                // _child_accessors_java docstring) - "ref-class" constructs
+                // a fixed target class directly; "ref-discriminator"
+                // dispatches on the raw JSON's own _type via the matching
+                // parse* method, same as a dict-kind field's own
+                // discriminated items above. Mirrors
+                // generator/emit_python.py's _load_fields ref-class/
+                // ref-discriminator branch.
+                JsonNode rawValue = raw.get(spec.name);
+                if (!rawValue.isObject()) {
+                    String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
+                    Map<String, Object> ph = new HashMap<>();
+                    ph.put("attr", spec.name);
+                    ph.put("class", obj.getClass().getSimpleName());
+                    ph.put("id", obj.ownIdForMessage());
+                    ph.put("value", rawValue.toString());
+                    obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                    continue;
+                }
+                SedBase child;
+                if (spec.kind.equals("ref-discriminator")) {
+                    ParseFn dispatch = parserFor(spec.itemDiscriminator);
+                    Result r = dispatch.parse(rawValue);
+                    if (r.problem != null) obj.loadProblems.add(r.problem);
+                    child = r.value;
+                } else {
+                    child = newItemInstance(spec.itemClass);
+                    loadFields(child, rawValue);
+                }
+                if (child != null) obj.setChildField(spec.name, child);
             }
         }
     }

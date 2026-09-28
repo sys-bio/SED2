@@ -1,0 +1,14 @@
+{
+  "version": "v1.0.0",
+  "widgets": {
+    "x6": {
+      "_type": "fancyWidget",
+      "value": "x",
+      "choices": {
+        "x5": {
+          "_type": "weightedChoice"
+        }
+      }
+    }
+  }
+}

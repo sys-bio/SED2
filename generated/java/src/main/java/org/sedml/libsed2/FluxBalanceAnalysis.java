@@ -20,10 +20,15 @@ import java.util.Set;
 public final class FluxBalanceAnalysis extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("model", "SIdRef", true, "FluxBalanceAnalysis-0002", "FluxBalanceAnalysis-0001", "FluxBalanceAnalysis-0000", null, null, null, null, null),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null)
+        new FieldSpec("outputVariables", "ArrayOrRef", true, "FluxBalanceAnalysis-0004", "FluxBalanceAnalysis-0003", "FluxBalanceAnalysis-0000", null, null, null, null, null),
+        new FieldSpec("outputModel", "BooleanOrRef", false, "FluxBalanceAnalysis-0006", null, "FluxBalanceAnalysis-0000", null, null, null, null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "outputVariables");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
+    private final ListCollection<SedBase> annotations = new ListCollection<>();
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -40,15 +45,42 @@ public final class FluxBalanceAnalysis extends SedBase {
     public boolean isSetModel() { return values.containsKey("model"); }
     public void unsetModel() { values.remove("model"); }
 
+    public JsonNode getOutputVariablesValue() { return getOrRefValueNode("outputVariables"); }
+    public String getOutputVariablesRef() { return getOrRefRefNode("outputVariables").asText(); }
+    public void setOutputVariablesValue(JsonNode value) { setOrRefValueNode("outputVariables", value); }
+    public void setOutputVariablesRef(String ref) { setOrRefRefNode("outputVariables", ref); }
+    public boolean isOutputVariablesRef() { return isOrRefRef("outputVariables"); }
+    public boolean isSetOutputVariables() { return values.containsKey("outputVariables"); }
+    public void unsetOutputVariables() { values.remove("outputVariables"); orRefIsRef.remove("outputVariables"); }
+
+    public boolean getOutputModelValue() { return getOrRefValueNode("outputModel").asBoolean(); }
+    public String getOutputModelRef() { return getOrRefRefNode("outputModel").asText(); }
+    public void setOutputModelValue(boolean value) { setOrRefValueNode("outputModel", BooleanNode.valueOf(value)); }
+    public void setOutputModelRef(String ref) { setOrRefRefNode("outputModel", ref); }
+    public boolean isOutputModelRef() { return isOrRefRef("outputModel"); }
+    public boolean isSetOutputModel() { return values.containsKey("outputModel"); }
+    public void unsetOutputModel() { values.remove("outputModel"); orRefIsRef.remove("outputModel"); }
+
+    public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
+    public void setNotes(JsonNode value) { values.put("notes", value); }
+    public boolean isSetNotes() { return values.containsKey("notes"); }
+    public void unsetNotes() { values.remove("notes"); }
+
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
     public void insertTaskParameters(int index, SedBase obj) { taskParameters.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeTaskParameters(int index) { taskParameters.remove(index); }
 
+    public List<SedBase> getAnnotations() { return annotations.items(); }
+    public void addAnnotations(SedBase obj) { annotations.add(obj); obj.attach(this, getDocument()); }
+    public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeAnnotations(int index) { annotations.remove(index); }
+
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
         kids.addAll(taskParameters.items());
+        kids.addAll(annotations.items());
         return kids;
     }
 
@@ -56,6 +88,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
+        { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
 
@@ -63,6 +96,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
             case "taskParameters": return taskParameters;
+            case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
         }
     }
@@ -74,7 +108,11 @@ public final class FluxBalanceAnalysis extends SedBase {
         if (descriptionNode != null) d.set("description", descriptionNode);
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("fluxBalanceAnalysis"));
         if (values.containsKey("model")) d.set("model", values.get("model"));
+        if (values.containsKey("outputVariables")) d.set("outputVariables", values.get("outputVariables"));
+        if (values.containsKey("outputModel")) d.set("outputModel", values.get("outputModel"));
+        if (values.containsKey("notes")) d.set("notes", values.get("notes"));
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
+        if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

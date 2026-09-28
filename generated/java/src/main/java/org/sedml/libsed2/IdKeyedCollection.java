@@ -8,8 +8,14 @@ import java.util.Map;
 /** Backing store for an ID-keyed dict-of-discriminated-union field
  * (TestDocument.widgets/.reports, FancyWidget.choices) - insertion order
  * preserved, add-/remove-/insert-/rename (setId) per Design.md's Classes
- * section. GENERATED - do not hand-edit. */
-public final class IdKeyedCollection<T extends SedBase> {
+ * section. Deliberately unbounded (not "T extends SedBase"): none of this
+ * class's own methods call any SedBase-specific behavior, and an
+ * "any-dict"-kind field (see generator/emit_java.py's emit_model_java_files)
+ * reuses this same collection to hold raw JsonNode values instead of
+ * SedBase instances - see generator/emit_python.py's _collection_accessors
+ * any-dict branch for the reference implementation this mirrors.
+ * GENERATED - do not hand-edit. */
+public final class IdKeyedCollection<T> {
     private final List<String> order = new ArrayList<>();
     private final Map<String, T> items = new LinkedHashMap<>();
 

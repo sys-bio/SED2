@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sed-ml.org/test-schemas/tasks/MathWidget/v1.0.0/schema.json",
+  "title": "Test Fixture MathWidget",
+  "$defs": {
+    "MathWidget": {
+      "description": "Leaf AbstractWidget branch with a single required infix-math attribute. Trimmed analog of specsheets/tasks/Calculation.",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "../../../core/TestBase/v1.0.0/schema.json#/$defs/TestBaseFields"
+        },
+        {
+          "$ref": "../../../tasks/AbstractWidget/v1.0.0/common.schema.json#/$defs/AbstractWidgetCommon"
+        }
+      ],
+      "properties": {
+        "_type": {
+          "const": "mathWidget",
+          "x-rule-id": "MathWidget-0003"
+        },
+        "math": {
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",
+          "x-math": true,
+          "x-rule-id": "MathWidget-0002"
+        }
+      },
+      "required": [
+        "_type",
+        "math"
+      ],
+      "x-required-rule-ids": {
+        "math": "MathWidget-0001"
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "$ref": "#/$defs/MathWidget"
+}

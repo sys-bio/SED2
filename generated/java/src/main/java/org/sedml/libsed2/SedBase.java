@@ -28,7 +28,14 @@ public abstract class SedBase {
             Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)@([A-Za-z_][A-Za-z0-9_]*)$");
 
     protected static final Set<String> LEAF_KINDS = new HashSet<>(List.of(
-            "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef"));
+            "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
+            "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"));
+    // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
+    // JSON value) has no leaf_value_ok()-equivalent schema to check against
+    // - see generator/emit_python.py's own LEAF_KINDS set and its
+    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
+    // resolution dispatch this Java port deliberately does not carry over -
+    // see Design.md's Testing section on Phase 2 scope).
 
     // -- per-concrete-class metadata, overridden by generated subclasses --
     public List<FieldSpec> fieldSpecs() { return Collections.emptyList(); }
@@ -167,6 +174,23 @@ public abstract class SedBase {
 
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         throw new ApiError("no such list field: " + fieldName);
+    }
+
+    /** Backing store for an "any-dict"-kind field (an ID-keyed collection of
+     * raw JSON values, never SedBase instances - e.g. SEDDocument.constants).
+     * Overridden per generated concrete class, mirroring getDictCollection
+     * above. */
+    protected IdKeyedCollection<JsonNode> getAnyDictCollection(String fieldName) {
+        throw new ApiError("no such any-dict field: " + fieldName);
+    }
+
+    /** Sets a "ref-class"/"ref-discriminator"-kind field's single nested
+     * child (see generator/emit_java.py's _child_accessors_java) - used only
+     * by Dispatch.loadFields, which constructs the child generically and
+     * needs a way to store it back onto the right instance field without
+     * knowing the concrete class. Overridden per generated concrete class. */
+    protected void setChildField(String fieldName, SedBase child) {
+        throw new ApiError("no such child field: " + fieldName);
     }
 
     // -- validate() engine --------------------------------------------------
