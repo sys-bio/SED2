@@ -5,7 +5,7 @@
   <artifactId>libsed2j</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
-  <description>Generated SED2 library (Java target).</description>
+  <description>Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py.</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
