@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "libsed2"
+version = "0.1.0"
+description = "Generated SED2 library (Python target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py."
+requires-python = ">=3.10"
+dependencies = ["jsonschema>=4.18", "antlr4-python3-runtime==4.13.2"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+libsed2 = ["_antlr/*.py"]
