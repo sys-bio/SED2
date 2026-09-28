@@ -95,6 +95,11 @@ class Field:
     required_rule_id: Optional[str]  # x-required-rule-ids[name], if required
     origin_class: str               # Data Sheet folder that declared this field
     from_namespace: Optional[str] = None  # set for a namespace's updated/ addition
+    is_math: bool = False            # x-math, if this field carries a SED2 infix math
+    # string (Design.md's Math section / Types-0001..0004 - see Types-0001.md's own
+    # note: "the schema type every math-bearing attribute uses" is StringOrRef, but
+    # not every StringOrRef field is math-bearing, so this needs its own marker
+    # rather than being inferred from the field's declared type)
 
 
 @dataclass
@@ -143,6 +148,13 @@ class SpecModel:
     document_class: Optional[str] = None
     base_mixin: Optional[str] = None   # e.g. "TestBase" / "SEDBase"
     spec_root: str = ""
+    # The document class's own resolved version directory name (e.g.
+    # "v1.0.0") - the newest version this generate run's specsheets/ tree
+    # actually has for it. SEDDocument-0009 through -0011 (Design.md's
+    # Namespaces/Versioning sections) compare an instance's own declared
+    # `version` against this to warn when a document claims to be newer
+    # than anything this library was generated to understand.
+    document_version: Optional[str] = None
 
     def generatable_classes(self) -> list:
         """Names of classes that should get a standalone generated type:
@@ -325,19 +337,41 @@ class _Composer:
                         disc.common_frag = common_frag  # type: ignore[attr-defined]
                         self.discriminators[def_name] = disc
 
-    def _composes(self, class_schema_doc: dict, class_schema_path: str,
-                   target_path: str, target_frag: str) -> bool:
-        """Does this class's top-level $defs entry allOf (directly) the given
-        target Common schema (identified by resolved file path + fragment)?"""
-        top = self._top_defs_entry(class_schema_doc)
-        for ref_obj in top.get("allOf", []):
+    def _transitive_allof_refs(self, def_body: dict, doc_path: str, _seen=None) -> set:
+        """Every (resolved_path, frag) this $defs entry's own allOf list
+        references, directly or transitively through intermediate mixins'
+        own allOf chains - so a class several allOf-mixin levels removed
+        from a discriminator's Common schema (Loop -> Repeat ->
+        AbstractTaskCommon; BoundedODESimulation -> AbstractODESimulation ->
+        AbstractSimulation -> AbstractTaskCommon) is still found as
+        composing it, not just a class that allOf's the Common schema
+        directly (Calculation, DrawFromDistribution, ...)."""
+        if _seen is None:
+            _seen = set()
+        result = set()
+        for ref_obj in def_body.get("allOf", []):
             ref = ref_obj.get("$ref")
             if not ref:
                 continue
-            rpath, rfrag = _resolve_ref_file(ref, class_schema_path, self.spec_root)
-            if os.path.normpath(rpath) == os.path.normpath(target_path) and rfrag == target_frag:
-                return True
-        return False
+            rpath, rfrag = _resolve_ref_file(ref, doc_path, self.spec_root)
+            key = (os.path.normpath(rpath), rfrag)
+            if key in _seen:
+                continue
+            _seen.add(key)
+            result.add(key)
+            mixin_doc = self._load_doc(rpath)
+            mixin_body = _defs_lookup(mixin_doc, rfrag)
+            result |= self._transitive_allof_refs(mixin_body, rpath, _seen)
+        return result
+
+    def _composes(self, class_schema_doc: dict, class_schema_path: str,
+                   target_path: str, target_frag: str) -> bool:
+        """Does this class's top-level $defs entry allOf the given target
+        Common schema (identified by resolved file path + fragment),
+        directly or transitively through intermediate mixins?"""
+        top = self._top_defs_entry(class_schema_doc)
+        target_key = (os.path.normpath(target_path), target_frag)
+        return target_key in self._transitive_allof_refs(top, class_schema_path)
 
     def _top_defs_entry(self, doc: dict) -> dict:
         top_ref = doc.get("$ref", "")
@@ -376,7 +410,83 @@ class _Composer:
                         disc.branches[type_const] = Branch(type_const, class_name, rule_id, namespace=prefix)
 
     # ---- field flattening --------------------------------------------------
+    def _is_sidref_alt(self, alt: dict, from_file: str) -> bool:
+        """True if this anyOf branch IS the reference side of an OrRef shape
+        (a bare $ref to SIdRef, directly or one level of $ref indirection)."""
+        aref = alt.get("$ref")
+        if not aref:
+            return False
+        _rpath, rfrag = _resolve_ref_file(aref, from_file, self.spec_root)
+        return rfrag.rsplit("/", 1)[-1] == "SIdRef"
+
+    def _orref_value_kind(self, alt: dict) -> Optional[str]:
+        """Maps the non-reference side of an OrRef anyOf to one of the OrRef
+        FieldType kinds emit_python.py knows how to generate accessors for.
+        Best-effort: a value shape this doesn't recognize (a further $ref,
+        an exotic combinator) returns None and the caller falls back."""
+        t = alt.get("type")
+        return {
+            "string": "StringOrRef", "number": "NumberOrRef", "integer": "IntegerOrRef",
+            "boolean": "BooleanOrRef", "array": "ArrayOrRef", "object": "DictOrRef",
+        }.get(t)
+
+    def _orref_shape(self, alts: list, from_file: str) -> Optional[FieldType]:
+        """Recognizes Design.md's Classes-section OrRef pattern generically:
+        anyOf of [some literal/restricted-value shape, a reference to
+        SIdRef] - in EITHER order - covering not just the two named
+        core/Types defs (StringOrRef, NumberOrRef) but the whole family
+        (IntegerOrRef, PositiveIntegerOrRef, BooleanOrRef, URIOrRef, ...)
+        and inline ad-hoc ones the real spec also uses (AbstractCurve.order/
+        .yAxis, Repeat.outputVariableMap) - none of which were in
+        test-specsheets/, so Phase 1 never had to generalize this. Numeric
+        bounds/pattern on the value side are carried through; an enum or a
+        nested $ref on the value side is accepted structurally (right JSON
+        type) but its own finer constraint isn't re-derived here."""
+        if len(alts) != 2:
+            return None
+        for i in (0, 1):
+            value_alt, ref_alt = alts[i], alts[1 - i]
+            if not self._is_sidref_alt(ref_alt, from_file):
+                continue
+            kind = self._orref_value_kind(value_alt)
+            if kind is None:
+                continue
+            return FieldType(
+                kind=kind,
+                minimum=value_alt.get("minimum"),
+                exclusive_minimum=value_alt.get("exclusiveMinimum"),
+                pattern=value_alt.get("pattern") if kind == "StringOrRef" else None,
+            )
+        return None
+
+    def _resolve_inline_alias(self, target_top: dict, rpath: str) -> Optional[str]:
+        """An 'XInline' wrapper schema (Design.md's Classes section - e.g.
+        tasks/Span/v1.0.0/inline.schema.json's SpanInline) is a bare oneOf of
+        exactly one $ref to the real class: not a discriminator (that's the
+        separate x-generated-oneOf marker, e.g. RangeInline), just a way to
+        embed a single concrete class as a named child field without an
+        array or a dict wrapper. Unwrap it transparently to the referenced
+        class's own name (recursing in case of a chained alias) rather than
+        treating "SpanInline" itself as a class - it has no class_dirs entry
+        and was never meant to be dispatched to one."""
+        one = target_top.get("oneOf")
+        if not one or len(one) != 1:
+            return None
+        ref = one[0].get("$ref")
+        if not ref:
+            return None
+        rpath2, rfrag2 = _resolve_ref_file(ref, rpath, self.spec_root)
+        leaf = rfrag2.rsplit("/", 1)[-1]
+        nested_doc = self._load_doc(rpath2)
+        nested_top = _defs_lookup(nested_doc, rfrag2)
+        nested_alias = self._resolve_inline_alias(nested_top, rpath2)
+        return nested_alias if nested_alias is not None else leaf
+
     def _classify_type(self, prop_schema: dict, from_file: str) -> FieldType:
+        if "anyOf" in prop_schema and "$ref" not in prop_schema:
+            ft = self._orref_shape(prop_schema["anyOf"], from_file)
+            if ft is not None:
+                return ft
         ref = prop_schema.get("$ref")
         if ref:
             rpath, rfrag = _resolve_ref_file(ref, from_file, self.spec_root)
@@ -388,6 +498,15 @@ class _Composer:
             target_top = _defs_lookup(target_doc, rfrag)
             if "x-generated-oneOf" in target_top:
                 return FieldType(kind="ref-discriminator", item_discriminator=leaf)
+            alias = self._resolve_inline_alias(target_top, rpath)
+            if alias is not None:
+                return FieldType(kind="ref-class", item_class=alias)
+            if "anyOf" in target_top:
+                ft = self._orref_shape(target_top["anyOf"], rpath)
+                if ft is not None:
+                    return ft
+            if "core/Types/" in rpath.replace(os.sep, "/"):
+                return FieldType(kind="any")
             return FieldType(kind="ref-class", item_class=leaf)
         t = prop_schema.get("type")
         if t == "array":
@@ -400,7 +519,8 @@ class _Composer:
                 leaf = rfrag.rsplit("/", 1)[-1]
                 if "x-generated-oneOf" in target_top:
                     return FieldType(kind="array", item_discriminator2=leaf)
-                return FieldType(kind="array", item_class=leaf)
+                alias = self._resolve_inline_alias(target_top, rpath)
+                return FieldType(kind="array", item_class=alias if alias is not None else leaf)
             return FieldType(kind="array")
         if t == "object" and "additionalProperties" in prop_schema:
             add = prop_schema["additionalProperties"]
@@ -408,7 +528,36 @@ class _Composer:
             if add_ref:
                 rpath, rfrag = _resolve_ref_file(add_ref, from_file, self.spec_root)
                 leaf = rfrag.rsplit("/", 1)[-1]
-                return FieldType(kind="dict", item_discriminator=leaf)
+                # Mirror the array-items case just above: only an actual
+                # x-generated-oneOf holder (AbstractTask, AbstractOutput, ...)
+                # is a discriminator. Anything else is either a plain
+                # embedded class (a dict of id -> single fixed type, like
+                # Loop.loopVariables -> LoopVariable) or a shared core/Types
+                # helper definition that was never meant to be a class at
+                # all (Design.md's Classes section: core/Types "should be
+                # treated as a source of shared type definitions ... not as
+                # a class to generate get-/set-/isSet-/unset- accessors
+                # for") - e.g. SEDDocument.constants -> AnyValueOrRef, which
+                # is "any JSON value", stored and round-tripped as a plain
+                # value rather than dispatched to a generated class.
+                target_doc = self._load_doc(rpath)
+                target_top = _defs_lookup(target_doc, rfrag)
+                if "x-generated-oneOf" in target_top:
+                    return FieldType(kind="dict", item_discriminator=leaf)
+                if leaf in ("StringOrRef", "NumberOrRef", "SIdRef", "SId"):
+                    return FieldType(kind=leaf)
+                if "core/Types/" in rpath.replace(os.sep, "/"):
+                    # A dict whose values are a bare core/Types leaf (today,
+                    # only SEDDocument.constants -> AnyValueOrRef) is still a
+                    # dict - each entry just isn't dispatched to a generated
+                    # class. "any-dict" (not "any") keeps that dict-ness so
+                    # the generator still emits get/add/insert/remove/setId
+                    # collection accessors, just storing each raw JSON value
+                    # as-is instead of a SedBase instance (see emit_python.py's
+                    # _collection_accessors/_load_fields any-dict branches).
+                    return FieldType(kind="any-dict")
+                alias = self._resolve_inline_alias(target_top, rpath)
+                return FieldType(kind="dict", item_class=alias if alias is not None else leaf)
             return FieldType(kind="dict")
         if t == "integer":
             ft = FieldType(kind="integer")
@@ -445,6 +594,7 @@ class _Composer:
                 rule_id=pschema.get("x-rule-id"),
                 required_rule_id=required_rule_ids.get(pname),
                 origin_class=origin_class,
+                is_math=bool(pschema.get("x-math", False)),
             ))
         return fields
 
@@ -571,12 +721,16 @@ def load_spec(spec_root: str, document_class_hint: Optional[str] = None) -> Spec
     composer.find_discriminators()
     composer.find_branches()
     composer.build_classes()
+    doc_class = document_class_hint or composer.document_class_guess()
+    doc_entry = loader.class_dirs.get(doc_class)
+    doc_version = os.path.basename(doc_entry["dir"]) if doc_entry else None
     model = SpecModel(
         classes=composer.classes,
         discriminators=composer.discriminators,
         rules=loader.rules,
         registered_namespaces=loader.registered_namespaces,
-        document_class=document_class_hint or composer.document_class_guess(),
+        document_class=doc_class,
         spec_root=loader.spec_root,
+        document_version=doc_version,
     )
     return model

@@ -1,0 +1,19 @@
+# Normalize line endings so a file edited/regenerated on Linux (LF) and one
+# checked out or regenerated on Windows (CRLF) never show up as "changed"
+# for line-ending reasons alone. Git stores everything in the repository as
+# LF; each platform's checkout can still use its native ending locally
+# (governed by that machine's own core.autocrlf), but `git diff`/`git
+# status` compare the normalized form, so a CRLF-vs-LF-only difference
+# never appears as a real change.
+* text=auto eol=lf
+
+# Binary files: never text-normalize these, or line-ending conversion could
+# corrupt them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.jar binary
+*.class binary

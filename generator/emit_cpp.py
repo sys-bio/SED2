@@ -1,4 +1,6 @@
-"""Emit the generated C++ target library (libsed2test) from a SpecModel.
+"""Emit the generated C++ target library from a SpecModel. Namespace/CMake
+project+target name is caller-supplied (see emit_cpp_package()) - "sed2test"
+below is just the Phase-1 test-tree default.
 
 Mirrors generator/emit_python.py and generator/emit_java.py's architecture
 and rule-mapping decisions exactly (see emit_python.py's docstring and
@@ -66,8 +68,12 @@ def _cpp_opt_double(v) -> str:
 # emit_java.py's runtime_files()).
 # ---------------------------------------------------------------------------
 
-RUNTIME_HPP = f'''// Shared runtime for the generated libsed2test package. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+def _runtime_hpp(NS: str) -> str:
+    # NS shadows the module-level default of the same name on purpose, so
+    # every {NS} interpolation below picks up the caller's namespace - see
+    # emit_cpp_package(), the only caller.
+    return f'''// Shared runtime. GENERATED - do not
+// hand-edit; regenerate via generator/generate.py.
 #pragma once
 
 #include <algorithm>
@@ -654,8 +660,8 @@ inline ListCollection& SedBase::get_list_collection(const std::string& field_nam
 '''
 
 
-def runtime_files() -> dict:
-    return {"Runtime.hpp": RUNTIME_HPP}
+def runtime_files(ns: str) -> dict:
+    return {"Runtime.hpp": _runtime_hpp(ns)}
 
 
 # ---------------------------------------------------------------------------
@@ -746,7 +752,7 @@ def emit_model_hpp(model: SpecModel) -> str:
     base_desc_rule_id = next((f.rule_id for f in base_fields if f.name == "description"), None)
     base_catchall = model.classes[base].own_catchall if base in model.classes else ""
 
-    out = [f'''// Generated concrete SED2 classes for libsed2test. GENERATED - do not
+    out = [f'''// Generated concrete SED2 classes. GENERATED - do not
 // hand-edit; regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 
@@ -1106,7 +1112,7 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
 
 
 def emit_rules_data_hpp(model: SpecModel) -> str:
-    out = [f'''// Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+    out = [f'''// Generated rule catalogue. GENERATED - do not hand-edit;
 // regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 
@@ -1129,7 +1135,7 @@ inline void register_rules() {{
 
 def emit_io_hpp(model: SpecModel) -> str:
     doc_name = model.document_class
-    return f'''// Top-level read/write entry points for libsed2test. GENERATED - do not
+    return f'''// Top-level read/write entry points. GENERATED - do not
 // hand-edit; regenerate from test-specsheets/ via generator/generate.py.
 #pragma once
 
@@ -1177,8 +1183,10 @@ inline void write_to_file(const {doc_name}& doc, const std::string& path) {{
 '''
 
 
-_CMAKE_LISTS = f'''cmake_minimum_required(VERSION 3.16)
-project(libsed2test CXX)
+def _cmake_lists(name: str) -> str:
+    build_tests_opt = f"{name.upper()}_BUILD_TESTS"
+    return f'''cmake_minimum_required(VERSION 3.16)
+project({name} CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -1193,15 +1201,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(jsoncons)
 
-# libsed2test is header-only (see generator/emit_cpp.py's module docstring),
+# {name} is header-only (see generator/emit_cpp.py's module docstring),
 # so it is exposed as an INTERFACE library: nothing to compile here, only
 # include paths and its jsoncons dependency to propagate to consumers.
-add_library(sed2test INTERFACE)
-target_include_directories(sed2test INTERFACE ${{CMAKE_CURRENT_SOURCE_DIR}}/include)
-target_link_libraries(sed2test INTERFACE jsoncons)
+add_library({name} INTERFACE)
+target_include_directories({name} INTERFACE ${{CMAKE_CURRENT_SOURCE_DIR}}/include)
+target_link_libraries({name} INTERFACE jsoncons)
 
-option(SED2TEST_BUILD_TESTS "Build the fixture test suite" ON)
-if(SED2TEST_BUILD_TESTS)
+option({build_tests_opt} "Build the fixture test suite" ON)
+if({build_tests_opt})
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_Declare(
@@ -1213,18 +1221,21 @@ if(SED2TEST_BUILD_TESTS)
 
   enable_testing()
   add_executable(fixture_tests tests/FixtureTest.cpp)
-  target_link_libraries(fixture_tests PRIVATE sed2test GTest::gtest_main)
+  target_link_libraries(fixture_tests PRIVATE {name} GTest::gtest_main)
   include(GoogleTest)
   gtest_discover_tests(fixture_tests)
 endif()
 '''
 
 
-def emit_cpp_package(model: SpecModel, out_dir: str) -> None:
+def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2test") -> None:
+    global NS
+    NS = cpp_namespace
+
     inc_dir = os.path.join(out_dir, "include", NS)
     os.makedirs(inc_dir, exist_ok=True)
 
-    for fname, content in runtime_files().items():
+    for fname, content in runtime_files(NS).items():
         with open(os.path.join(inc_dir, fname), "w") as f:
             f.write(content)
     with open(os.path.join(inc_dir, "GeneratedModel.hpp"), "w") as f:
@@ -1237,4 +1248,4 @@ def emit_cpp_package(model: SpecModel, out_dir: str) -> None:
         f.write(emit_io_hpp(model))
 
     with open(os.path.join(out_dir, "CMakeLists.txt"), "w") as f:
-        f.write(_CMAKE_LISTS)
+        f.write(_cmake_lists(NS))

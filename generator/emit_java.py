@@ -1,4 +1,6 @@
-"""Emit the generated Java target library (libsed2test) from a SpecModel.
+"""Emit the generated Java target library from a SpecModel. Package name,
+Maven groupId/artifactId are caller-supplied (see emit_java_package()) -
+"org.sed2test"/"libsed2test" below are just the Phase-1 test-tree defaults.
 
 Mirrors generator/emit_python.py's architecture and rule-mapping decisions
 exactly (see that module's docstring and Design.md's Schema-Pass Errors /
@@ -22,7 +24,10 @@ from __future__ import annotations
 import os
 from .spec import SpecModel, Field, FlatClass
 
-PKG = "org.sed2test"
+PKG = "org.sed2test"  # default; emit_java_package() overrides this module-level
+                      # value per invocation (see that function) so every
+                      # helper below that reads PKG as a free variable picks
+                      # up the caller's chosen package for that run.
 
 
 def _java_ident(name: str) -> str:
@@ -1189,7 +1194,7 @@ public final class Dispatch {{
 def emit_rules_data_java(model: SpecModel) -> str:
     out = [f'''package {PKG};
 
-/** Generated rule catalogue for libsed2test. GENERATED - do not hand-edit;
+/** Generated rule catalogue. GENERATED - do not hand-edit;
  * regenerate via generator/generate.py. */
 public final class RulesData {{
     private RulesData() {{}}
@@ -1215,7 +1220,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Top-level read/write entry points for libsed2test. GENERATED - do not
+/** Top-level read/write entry points. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class Io {{
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -1254,16 +1259,15 @@ public final class Io {{
 '''
 
 
-_POM_XML = '''<?xml version="1.0" encoding="UTF-8"?>
+def _pom_xml(group_id: str, artifact_id: str, description: str) -> str:
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.sed2test</groupId>
-  <artifactId>libsed2test</artifactId>
+  <groupId>{group_id}</groupId>
+  <artifactId>{artifact_id}</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
-  <description>Generated SED2 test-fixture library (Java target) - exercises
-    the SED2 generator against test-specsheets/, see Design.md's Testing
-    section.</description>
+  <description>{description}</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -1302,7 +1306,23 @@ _POM_XML = '''<?xml version="1.0" encoding="UTF-8"?>
 '''
 
 
-def emit_java_package(model: SpecModel, out_dir: str) -> None:
+def emit_java_package(
+    model: SpecModel,
+    out_dir: str,
+    java_package: str = "org.sed2test",
+    maven_group_id: str | None = None,
+    maven_artifact_id: str = "libsed2test",
+    description: str | None = None,
+) -> None:
+    global PKG
+    PKG = java_package
+    maven_group_id = maven_group_id or java_package
+    description = description or (
+        "Generated SED2 test-fixture library (Java target) - exercises "
+        "the SED2 generator against test-specsheets/, see Design.md's Testing "
+        "section."
+    )
+
     pkg_dir = os.path.join(out_dir, "src", "main", "java", *PKG.split("."))
     os.makedirs(pkg_dir, exist_ok=True)
 
@@ -1323,4 +1343,4 @@ def emit_java_package(model: SpecModel, out_dir: str) -> None:
         f.write(emit_io_java(model))
 
     with open(os.path.join(out_dir, "pom.xml"), "w") as f:
-        f.write(_POM_XML)
+        f.write(_pom_xml(maven_group_id, maven_artifact_id, description))
