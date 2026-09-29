@@ -465,6 +465,15 @@ def _check_task_order(referrer, resolved, document, parsed, *, class_name, id_va
 # class (Loop/ParameterScan/Scatter in the real spec) without hardcoding
 # any of their names here.
 
+def _element_parent(resolved):
+    """The parent of a resolved reference target, or None when the target is
+    not a document element at all - a reference into `constants` resolves to a
+    bare JSON value (number, string, list, dict) that has no parent and must
+    simply count as "not one of my own children", never crash validate()."""
+    getter = getattr(resolved, "get_parent", None)
+    return getter() if callable(getter) else None
+
+
 def _check_repeat_own_children(self) -> list:
     try:
         from ._rules import repeat_0008, repeat_0009, repeat_0010
@@ -477,7 +486,7 @@ def _check_repeat_own_children(self) -> list:
     def _resolves_to_own_child(ref_value):
         parsed = _parse_reference(ref_value)
         resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
-        return resolved is not None and resolved.get_parent() is self
+        return resolved is not None and _element_parent(resolved) is self
 
     problems = []
     ovm = self._values.get("outputVariableMap")
@@ -530,7 +539,7 @@ def _check_loop_variable_scope(self) -> list:
     document = self.get_document()
     parsed = _parse_reference(value)
     resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
-    ok = resolved is not None and resolved.get_parent() is enclosing
+    ok = resolved is not None and _element_parent(resolved) is enclosing
     if ok:
         return []
     return loopvariable_0004.check(

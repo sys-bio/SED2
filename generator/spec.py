@@ -107,6 +107,10 @@ class Field:
     # note: "the schema type every math-bearing attribute uses" is StringOrRef, but
     # not every StringOrRef field is math-bearing, so this needs its own marker
     # rather than being inferred from the field's declared type)
+    ref_target: Optional[str] = None
+    # x-ref-target, if this SIdRef field must resolve to something specific:
+    # "model" (SEDBase-0016) or "annotatedData" (SEDBase-0017). Generator-only
+    # metadata, inert to JSON Schema validators, like x-rule-id and x-math.
     ref_type_rule_id: Optional[str] = None
     # core-spec.md Section 8's "x-rule-id is a single rule-ID string, or an
     # array of them when more than one rule governs the same property (most
@@ -667,6 +671,7 @@ class _Composer:
                 required_rule_id=required_rule_ids.get(pname),
                 origin_class=origin_class,
                 is_math=bool(pschema.get("x-math", False)),
+                ref_target=pschema.get("x-ref-target"),
                 ref_type_rule_id=ref_type_rule_id,
             ))
         return fields

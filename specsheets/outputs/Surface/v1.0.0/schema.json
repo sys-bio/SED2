@@ -28,14 +28,17 @@
         },
         "x": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "annotatedData",
           "x-rule-id": "Surface-0005"
         },
         "y": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "annotatedData",
           "x-rule-id": "Surface-0007"
         },
         "z": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "annotatedData",
           "x-rule-id": "Surface-0009"
         },
         "style": {

@@ -17,7 +17,8 @@
           "x-rule-id": "SteadyState-0003"
         },
         "model": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef"
+          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "model"
         },
         "independentVariable": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/StringOrRef",

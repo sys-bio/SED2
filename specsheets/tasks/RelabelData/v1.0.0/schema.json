@@ -18,6 +18,7 @@
         },
         "input": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "annotatedData",
           "x-rule-id": "RelabelData-0002"
         },
         "labels": {

@@ -2807,6 +2807,22 @@
     "status": "active",
     "check": "handwritten"
   },
+  "SEDBase-0016": {
+    "class": "SEDBase",
+    "rule": "A reference required to resolve to a model must resolve to a model.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to {resolved-value}, not a model.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
+  "SEDBase-0017": {
+    "class": "SEDBase",
+    "rule": "A reference required to resolve to AnnotatedData must resolve to AnnotatedData.",
+    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to {resolved-value}, not AnnotatedData.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
   "SEDDocument-0000": {
     "class": "SEDDocument",
     "rule": "The element fails a JSON Schema constraint attributable to SEDDocument that does not match any other numbered rule.",
