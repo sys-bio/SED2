@@ -33,7 +33,7 @@
       "language": "urn:sedml:language:sbml"
     },
     "x1": {
-      "_type": "numericRange",
+      "_type": "range",
       "values": "#constants:myNumberArray"
     }
   }

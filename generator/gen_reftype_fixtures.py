@@ -442,6 +442,16 @@ def generate_reftype_fixtures(model: SpecModel) -> dict:
     return rules
 
 
+def _same_field_ref_type(pkg, rid: str, other: str) -> bool:
+    """True if `other` is a ref-type rule about the same attribute as `rid`
+    (rule text 'When the value of <attr> of a <Class> is a reference ...')."""
+    import re as _re
+    cat = pkg._runtime.RULE_CATALOG if hasattr(pkg, "_runtime") else {}
+    pat = _re.compile(r"^When the value of (\w+) of an? \w+ is a reference")
+    a, b = pat.match(cat.get(rid, ("",))[0]), pat.match(cat.get(other, ("",))[0])
+    return bool(a and b and a.group(1) == b.group(1))
+
+
 def verify_and_write(rules: dict, out_dir: str, python_pkg_root: str, package_name: str) -> dict:
     """Runs candidates through the generated Python library. For each rule
     picks the first host whose pass twin(s) validate clean (a host that does
@@ -535,6 +545,21 @@ def verify_and_write(rules: dict, out_dir: str, python_pkg_root: str, package_na
                     problems[fname] = f"kept: validate() raised {type(e).__name__}: {e}"
                     continue
                 extra = {k: v for k, v in counts.items() if k != frid}
+                if extra and counts.get(frid, 0) <= 1 and all(
+                        _same_field_ref_type(pkg, frid, k) for k in extra):
+                    # A subclass that re-declares an inherited field (NumericRange.values
+                    # over Range.values) is legitimately subject to BOTH classes'
+                    # ref-type rules for it, so a bad reference fires both. Name the
+                    # inherited rule(s) in the file name (the harness's chain syntax:
+                    # <rule>-fail-01-<name>-<other rule>-<count>).
+                    # The harness's file-name regex cannot tell a hyphenated test name
+                    # from the start of the chain, so underscores stand in for hyphens
+                    # in the test name of these files.
+                    chain = "".join(f"-{k}-{v:02d}" for k, v in sorted(extra.items()))
+                    head, sep, tail = fname[:-len(".sed2.json")].partition("-fail-")
+                    count, _, testname = tail.partition("-")
+                    fname = head + sep + count + "-" + testname.replace("-", "_") + chain + ".sed2.json"
+                    extra = {}
                 if extra:
                     problems[fname] = f"dropped: also fires {extra}"
                     continue

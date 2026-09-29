@@ -218,11 +218,15 @@ Status (run against the current generated Python library):
   plus 131 for the new SEDBase-0016/-0017 (one group per model or AnnotatedData
   field, 21 fields);
 - 199 pass twins, all clean;
-- 219 fail fixtures already fire their rule;
-- 199 fail fixtures fire nothing yet (the implementation to write): every
-  model-reference case, all array and object fields (ArrayOrRef/DictOrRef checks
-  are not implemented), the bounded-type range checks, and all of
-  SEDBase-0016/-0017;
+- 360 fail fixtures fire their rule in the Python library (the array, dict,
+  bounded-range and model-reference checks are now implemented there);
+- 58 fail fixtures fire nothing yet: all of them SEDBase-0016/-0017 (the rule
+  logic is not written in any language);
+- two NumericRange-0012 fixtures also fire Range-0002, because NumericRange
+  re-declares Range's `values` and both classes' rules apply; they are named
+  with the chain syntax (`...-scalar_constant-Range-0002-01`; underscores in the
+  test name because the harness's file-name regex cannot tell a hyphenated name
+  from the start of a chain);
 - 0 crashes. (Earlier runs had 3 Repeat-0003 fixtures crash `validate()`; that was
   a real bug - a reference into `constants` from a Loop called `.get_parent()` on a
   bare value - now fixed in emit_python.py and pinned by four regression fixtures in
@@ -299,9 +303,13 @@ for those ports - per Claude.md, no phase merges with only Python implemented.
   number is unsettled (Types says NaN/inf strings are valid numbers among
   numbers; you consider `"nan"` just a string). Revisit with a test that
   *produces* a NaN at run time rather than writing one in JSON.
-- Implement the missing ref-type checks (arrays, dicts, model targets, bounds)
-  in Python, Java and C++ - the 138 silent fail fixtures are the acceptance
-  tests.
+- Python now has the array/dict/bounded/model-target ref-type checks. Java and
+  C++ still have no validation dispatch at all, so the same checks (and the
+  rest of validate()) are owed there before the next merge (Claude.md).
+- Ref-type checks still deliberately loose: a DictOrRef fed a data output is
+  not flagged (only a model is); a string-array field fed an annotatedData
+  output is not flagged (labels may be strings); a number-array field fed a
+  stringList output is.
 - Implement SEDBase-0016/-0017 (rules and fixtures exist; handwritten rule
   files under templates/<lang>/rules/ are still to write, then add them to
   emit_python.py's _IMPLEMENTED_HANDWRITTEN_RULE_IDS).
