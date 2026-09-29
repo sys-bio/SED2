@@ -218,10 +218,9 @@ Status (run against the current generated Python library):
   plus 131 for the new SEDBase-0016/-0017 (one group per model or AnnotatedData
   field, 21 fields);
 - 199 pass twins, all clean;
-- 360 fail fixtures fire their rule in the Python library (the array, dict,
-  bounded-range and model-reference checks are now implemented there);
-- 58 fail fixtures fire nothing yet: all of them SEDBase-0016/-0017 (the rule
-  logic is not written in any language);
+- 418 fail fixtures fire their rule in the Python library (array, dict,
+  bounded-range, model-reference checks and SEDBase-0016/-0017 are all
+  implemented there); none are silent, so all 617 pass;
 - two NumericRange-0012 fixtures also fire Range-0002, because NumericRange
   re-declares Range's `values` and both classes' rules apply; they are named
   with the chain syntax (`...-scalar_constant-Range-0002-01`; underscores in the
@@ -310,7 +309,7 @@ for those ports - per Claude.md, no phase merges with only Python implemented.
   not flagged (only a model is); a string-array field fed an annotatedData
   output is not flagged (labels may be strings); a number-array field fed a
   stringList output is.
-- Implement SEDBase-0016/-0017 (rules and fixtures exist; handwritten rule
-  files under templates/<lang>/rules/ are still to write, then add them to
-  emit_python.py's _IMPLEMENTED_HANDWRITTEN_RULE_IDS).
+- SEDBase-0016/-0017 are implemented in Python (templates/python/rules/, listed in
+  emit_python.py's _IMPLEMENTED_HANDWRITTEN_RULE_IDS). Java and C++ still owe
+  them, along with all other validation.
 - Style-target rules once `Style` is specified.

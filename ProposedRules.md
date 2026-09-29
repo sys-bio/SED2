@@ -4,8 +4,9 @@ Status: ADOPTED (the shared pair, at your request). `SEDBase-0016` and
 `SEDBase-0017` are now in `specsheets/core/SEDBase/v1.0.0/validation/`, the
 `x-ref-target` marker is on the 21 fields, `generator/spec.py` reads it, and
 `generator/gen_reftype_fixtures.py` generates fixtures for both (131 files).
-The rule logic itself is not implemented in any language yet, so those
-fixtures fail until it is. The text below is kept as the design record; the
+The rule logic is implemented in Python
+(`templates/python/rules/SEDBase-0016.py` and `-0017.py`) and all 131 fixtures
+pass; Java and C++ have no validation dispatch yet. The text below is kept as the design record; the
 per-field alternative was not taken.
 
 ## The gap
