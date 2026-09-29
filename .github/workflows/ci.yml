@@ -7,11 +7,17 @@
 # generated/ directory, regenerates it fresh from source, and either
 # (a) the regenerated output matches what's already committed - nothing to
 #     do, proceed straight to testing it, or
-# (b) it doesn't - on a direct push/workflow_dispatch, commit the fresh
-#     output right back (self-healing: the tree in git can never drift from
-#     what generator/ actually produces); on a pull_request, fail the job
-#     instead of pushing to someone else's branch, with a diff explaining
-#     what to regenerate locally.
+# (b) it doesn't - on a direct push/workflow_dispatch, or on a pull_request
+#     whose branch lives in this same repo, commit the fresh output right
+#     back to that branch (self-healing: the tree in git can never drift
+#     from what generator/ actually produces); on a pull_request from a
+#     fork, fail the job instead (the token can't push to a fork), with a
+#     diff explaining what to regenerate locally. Note for same-repo PRs:
+#     the bot commit is made with GITHUB_TOKEN and so doesn't start a new
+#     run; this run's downstream jobs test the regenerated output, but if
+#     branch protection requires status checks, the new head commit will
+#     have none - re-run CI or push again in that case. Pull the bot
+#     commit before pushing more work to the branch.
 #
 # Determinism note: this scheme only stays a one-shot self-heal, never a
 # commit-on-every-run loop, if the generator's output is byte-identical
@@ -85,7 +91,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # On pull_request, github.ref_name is "<PR#>/merge" (not a branch), so use the PR's head branch there.
+          # On pull_request, github.ref_name is "<PR#>/merge" (not a branch),
+          # so use the PR's head branch (and its repo, for fork PRs) there.
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-python@v5
         with:
@@ -157,7 +165,7 @@ jobs:
       # -- Commit both trees together, one push --
 
       - name: Commit regenerated output if it changed
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if git diff --cached --quiet; then
@@ -166,11 +174,11 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Regenerate generated directories from spec"
-            git push origin "HEAD:${{ github.ref_name }}"
+            git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
           fi
 
-      - name: Fail if this PR's committed output is stale
-        if: github.event_name == 'pull_request'
+      - name: Fail if this fork PR's committed output is stale
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if ! git diff --cached --quiet; then

@@ -180,7 +180,7 @@ def get_sed_reference(document, parsed: ParsedReference):
 
 def _check_reference_field(value, *, document, class_name, id_value, attr, location,
                             referrer=None, field_kind=None, ref_type_rule_id=None,
-                            expected_enum=None) -> list:
+                            expected_enum=None, constraints=None) -> list:
     """Shared per-type dispatcher for every reference-resolution rule
     (SEDBase-0005 through -0015, plus the formulaic ref-type rules that
     piggyback on -0015's scalar-reduction check - Design.md's Validation
@@ -243,7 +243,8 @@ def _check_reference_field(value, *, document, class_name, id_value, attr, locat
             attr=attr, location=location, value=value)
     problems = problems + _check_output_shape_and_ref_type(
         parsed, resolved, document, class_name=class_name, id_value=id_value, attr=attr, location=location,
-        value=value, field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+        value=value, field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum,
+        constraints=constraints)
     return problems
 
 
@@ -406,6 +407,15 @@ def _check_task_order(referrer, resolved, document, parsed, *, class_name, id_va
 # class (Loop/ParameterScan/Scatter in the real spec) without hardcoding
 # any of their names here.
 
+def _element_parent(resolved):
+    """The parent of a resolved reference target, or None when the target is
+    not a document element at all - a reference into `constants` resolves to a
+    bare JSON value (number, string, list, dict) that has no parent and must
+    simply count as "not one of my own children", never crash validate()."""
+    getter = getattr(resolved, "get_parent", None)
+    return getter() if callable(getter) else None
+
+
 def _check_repeat_own_children(self) -> list:
     try:
         from ._rules import repeat_0008, repeat_0009, repeat_0010
@@ -418,7 +428,7 @@ def _check_repeat_own_children(self) -> list:
     def _resolves_to_own_child(ref_value):
         parsed = _parse_reference(ref_value)
         resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
-        return resolved is not None and resolved.get_parent() is self
+        return resolved is not None and _element_parent(resolved) is self
 
     problems = []
     ovm = self._values.get("outputVariableMap")
@@ -471,7 +481,7 @@ def _check_loop_variable_scope(self) -> list:
     document = self.get_document()
     parsed = _parse_reference(value)
     resolved, _ = get_sed_reference(document, parsed) if document is not None else (None, None)
-    ok = resolved is not None and resolved.get_parent() is enclosing
+    ok = resolved is not None and _element_parent(resolved) is enclosing
     if ok:
         return []
     return loopvariable_0004.check(
@@ -489,12 +499,17 @@ _SCALAR_ORREF_EXPECTED = {
     "NumberOrRef": "number", "StringOrRef": "string",
     "IntegerOrRef": "integer", "BooleanOrRef": "boolean",
 }
-# ArrayOrRef/DictOrRef deliberately excluded - SEDBase-0015.md's own text
-# only ever discusses a reference "required to resolve to a scalar value";
-# it has nothing to say about a reference that's SUPPOSED to stay shaped,
-# so there's no well-specified ref-type check to derive for those two kinds
-# here. (A handful of real fields use them - see Design.md's Validation
-# section note on this gap - left for future work rather than guessed at.)
+# Every kind the formulaic ref-type rules check: the four scalar kinds above
+# plus the two container kinds. "If a reference, must resolve to an array /
+# dictionary" (ArrayOrRef / DictOrRef) is checked structurally against a
+# constant's literal value (a list / a dict, with element/value kinds from
+# the schema's items / additionalProperties - FieldSpec.item_kind), and a
+# reference to a model is never acceptable for any of them: a model is a
+# type of its own (ProposedRules.md).
+_REF_TYPE_KINDS = set(_SCALAR_ORREF_EXPECTED) | {"ArrayOrRef", "DictOrRef"}
+# TODO: a task output is never a dictionary, so a DictOrRef field that
+# references a data output is wrong too, but it is only flagged for a model
+# target for now (no fixture pins the data-output case down).
 
 
 def _fmt_literal(value) -> str:
@@ -504,17 +519,34 @@ def _fmt_literal(value) -> str:
         return str(value)
 
 
-def _literal_matches_kind(value, field_kind, expected_enum):
+def _is_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _literal_matches_kind(value, field_kind, expected_enum, constraints=None):
     """Only called once a constant's own literal value has already been
     fully indexed down (index_into_literal) - a REAL value, not a
-    derived/declared type name, so enum membership can be checked exactly
-    here (unlike _ref_type_matches_declared below, for a task-output
-    target)."""
-    if field_kind == "NumberOrRef":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
-    if field_kind == "IntegerOrRef":
-        return (isinstance(value, int) and not isinstance(value, bool)) or \
-               (isinstance(value, float) and value.is_integer())
+    derived/declared type name, so enum membership, numeric bounds, and
+    array/dict element kinds can be checked exactly here (unlike
+    _ref_type_matches_declared below, for a task-output target).
+    `constraints` is FieldSpec's (minimum, exclusive_minimum, item_kind).
+    A bare JSON boolean never counts as a number. Inside an array/dict a
+    reference-valued element is accepted (it may resolve to the right kind;
+    that is not decidable here)."""
+    minimum, exclusive_minimum, item_kind = constraints if constraints else (None, None, None)
+    if field_kind in ("NumberOrRef", "IntegerOrRef"):
+        if field_kind == "NumberOrRef":
+            ok = _is_number(value)
+        else:
+            ok = (isinstance(value, int) and not isinstance(value, bool)) or \
+                 (isinstance(value, float) and value.is_integer())
+        if not ok:
+            return False
+        if minimum is not None and value < minimum:
+            return False
+        if exclusive_minimum is not None and value <= exclusive_minimum:
+            return False
+        return True
     if field_kind == "BooleanOrRef":
         return isinstance(value, bool)
     if field_kind == "StringOrRef":
@@ -523,29 +555,56 @@ def _literal_matches_kind(value, field_kind, expected_enum):
         if expected_enum is not None:
             return value in expected_enum
         return True
+    if field_kind == "ArrayOrRef":
+        if not isinstance(value, list):
+            return False
+        return all(_element_matches(v, item_kind) for v in value)
+    if field_kind == "DictOrRef":
+        if not isinstance(value, dict):
+            return False
+        return all(_element_matches(v, item_kind) for v in value.values())
     return None
+
+
+def _element_matches(element, item_kind) -> bool:
+    """One array element / dict value against the schema's declared kind
+    ("string" | "number" | "ref" | "any"). A reference-valued element always
+    passes for string/number (it stands in for a value of that kind)."""
+    if item_kind == "string":
+        return isinstance(element, str)
+    if item_kind == "number":
+        return _is_number(element) or (isinstance(element, str) and is_reference(element))
+    if item_kind == "ref":
+        return isinstance(element, str) and is_reference(element)
+    return True
 
 
 def _ref_type_matches_declared(expected, actual_declared_type):
     """A task-output target has no actual VALUE to type-check (nothing has
     been simulated) - only outputs.json's own declared "type" for the
-    suffix entry (annotatedData/stringList; "model" never reaches here,
-    since it carries no "dimensions" and so never reduces to a scalar via
-    SEDBase-0015). Coarse by necessity: an annotatedData cell is always
-    treated as number-shaped, a stringList entry as string-shaped: enum
-    membership can never be verified this way (there is no literal value to
-    check it against), so an enum-constrained StringOrRef field referencing
-    a task output can only be checked at this coarse "string family" level,
-    never rejected on enum grounds."""
+    suffix entry (annotatedData/stringList/model). A model never matches a
+    scalar/array/dict expectation (handled by the caller). Coarse by
+    necessity: an annotatedData cell is always treated as number-shaped, a
+    stringList entry as string-shaped: enum membership can never be verified
+    this way (there is no literal value to check it against), so an
+    enum-constrained StringOrRef field referencing a task output can only be
+    checked at this coarse "string family" level, never rejected on enum
+    grounds."""
     mapped = {"annotatedData": "number", "stringList": "string"}.get(actual_declared_type)
     if mapped is None:
         return None
     return mapped == expected
 
 
+def _ref_type_problem(ref_type_rule_id, location, attr, value, class_name, id_value, resolved_desc):
+    return make_problem(
+        ref_type_rule_id, location, attr=attr, value=value,
+        **{"class": class_name, "id": id_value, "resolved-value": resolved_desc})
+
+
 def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0012, *,
                               class_name, id_value, attr, location, value,
-                              field_kind, ref_type_rule_id, expected_enum) -> list:
+                              field_kind, ref_type_rule_id, expected_enum, constraints=None) -> list:
     kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
                   make_problem=make_problem, value=value)
     dot_name = next((v for k, v in parsed.accessors if k == "dot"), None)
@@ -568,17 +627,17 @@ def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0
     except _oshape.NotIndexable as e:
         bad = e.args[0] if e.args else ""
         return list(sedbase_0012.check(False, bad, _fmt_literal(const_value), **kwargs))
-    if ref_type_rule_id is None or field_kind not in _SCALAR_ORREF_EXPECTED:
+    if ref_type_rule_id is None or field_kind not in _REF_TYPE_KINDS:
         return []
-    if _literal_matches_kind(final_value, field_kind, expected_enum) is False:
-        return [make_problem(
-            ref_type_rule_id, location, attr=attr, value=value,
-            **{"class": class_name, "id": id_value, "resolved-value": _fmt_literal(final_value)})]
+    if _literal_matches_kind(final_value, field_kind, expected_enum, constraints) is False:
+        return [_ref_type_problem(ref_type_rule_id, location, attr, value, class_name, id_value,
+                                  _fmt_literal(final_value))]
     return []
 
 
 def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, id_value, attr, location,
-                                      value, field_kind, ref_type_rule_id, expected_enum) -> list:
+                                      value, field_kind, ref_type_rule_id, expected_enum,
+                                      constraints=None) -> list:
     try:
         from ._rules import sedbase_0008, sedbase_0009, sedbase_0010, sedbase_0011, sedbase_0012, sedbase_0014, sedbase_0015
     except ImportError:
@@ -592,7 +651,8 @@ def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, 
         return _check_constant_accessor(
             parsed, resolved, document, sedbase_0008, sedbase_0012,
             class_name=class_name, id_value=id_value, attr=attr, location=location, value=value,
-            field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum)
+            field_kind=field_kind, ref_type_rule_id=ref_type_rule_id, expected_enum=expected_enum,
+            constraints=constraints)
 
     kwargs = dict(class_name=class_name, id_value=id_value, attr=attr, location=location,
                   make_problem=make_problem, value=value)
@@ -640,16 +700,30 @@ def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, 
     problems += sedbase_0011.check(dims_before, index_accessors, **kwargs)
     problems += sedbase_0014.check(dims_before, index_accessors, **kwargs)
 
-    if ref_type_rule_id is not None and field_kind in _SCALAR_ORREF_EXPECTED:
-        expected = _SCALAR_ORREF_EXPECTED[field_kind]
-        problems += sedbase_0015.check(dims_after, expected, **kwargs)
-        if dims_after is not None and len(dims_after) == 0:
-            actual_declared = entry.get("type") if entry else None
-            if _ref_type_matches_declared(expected, actual_declared) is False:
-                problems.append(make_problem(
-                    ref_type_rule_id, location, attr=attr, value=value,
-                    **{"class": class_name, "id": id_value,
-                       "resolved-value": f"a {actual_declared} value"}))
+    if ref_type_rule_id is not None and field_kind in _REF_TYPE_KINDS:
+        actual_declared = entry.get("type") if entry else None
+        if actual_declared == "model":
+            # A model is a type of its own: never a number, string, boolean,
+            # array, or dictionary (ProposedRules.md).
+            problems.append(_ref_type_problem(
+                ref_type_rule_id, location, attr, value, class_name, id_value, "a model"))
+        elif field_kind in _SCALAR_ORREF_EXPECTED:
+            expected = _SCALAR_ORREF_EXPECTED[field_kind]
+            problems += sedbase_0015.check(dims_after, expected, **kwargs)
+            if dims_after is not None and len(dims_after) == 0:
+                if _ref_type_matches_declared(expected, actual_declared) is False:
+                    problems.append(_ref_type_problem(
+                        ref_type_rule_id, location, attr, value, class_name, id_value,
+                        f"a {actual_declared} value"))
+        elif field_kind == "ArrayOrRef":
+            # Only the unambiguous mismatch: an array of numbers fed a
+            # stringList output. (annotatedData may carry labels, so an
+            # array of strings from annotatedData is not flagged.)
+            item_kind = constraints[2] if constraints else None
+            if item_kind == "number" and actual_declared == "stringList":
+                problems.append(_ref_type_problem(
+                    ref_type_rule_id, location, attr, value, class_name, id_value,
+                    "a stringList value"))
     return problems
 
 
@@ -862,12 +936,13 @@ class FieldSpec:
     __slots__ = ("name", "kind", "required", "rule_id", "required_rule_id",
                  "origin_catchall", "minimum", "exclusive_minimum", "pattern",
                  "item_class", "item_discriminator", "is_math", "min_length",
-                 "enum", "ref_type_rule_id")
+                 "enum", "ref_type_rule_id", "item_kind")
 
     def __init__(self, name, kind, required, rule_id, required_rule_id,
                  origin_catchall, minimum=None, exclusive_minimum=None,
                  pattern=None, item_class=None, item_discriminator=None,
-                 is_math=False, min_length=None, enum=None, ref_type_rule_id=None):
+                 is_math=False, min_length=None, enum=None, ref_type_rule_id=None,
+                 item_kind=None):
         self.name = name
         self.kind = kind
         self.required = required
@@ -883,6 +958,7 @@ class FieldSpec:
         self.min_length = min_length
         self.enum = enum
         self.ref_type_rule_id = ref_type_rule_id
+        self.item_kind = item_kind
 
 
 LEAF_KINDS = {"string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
@@ -1144,7 +1220,8 @@ class SedBase:
                         value, document=self.get_document(), class_name=self.__class__.__name__,
                         id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
                         referrer=self, field_kind=spec.kind, ref_type_rule_id=spec.ref_type_rule_id,
-                        expected_enum=spec.enum))
+                        expected_enum=spec.enum,
+                        constraints=(spec.minimum, spec.exclusive_minimum, spec.item_kind)))
                 elif spec.kind == "DictOrRef" and isinstance(value, dict):
                     # The dict-literal branch of a DictOrRef field (e.g.
                     # Repeat.outputVariableMap: an SId-keyed map of column
@@ -1160,8 +1237,8 @@ class SedBase:
                     # not what each entry's own target must be; no per-entry
                     # expected type is declared for a DictOrRef's dict-form
                     # (Design.md's Validation section note on this scope
-                    # limitation - see _SCALAR_ORREF_EXPECTED's own
-                    # docstring in this module).
+                    # limitation - see _REF_TYPE_KINDS's own comment in
+                    # this module).
                     for key, entry_value in value.items():
                         if is_reference(entry_value):
                             problems.extend(_check_reference_field(
