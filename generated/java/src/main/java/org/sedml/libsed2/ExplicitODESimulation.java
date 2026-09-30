@@ -19,33 +19,33 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ExplicitODESimulation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("relativeTolerance", "NumberOrRef", false, "AbstractODESimulation-0001", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("absoluteTolerance", "NumberOrRef", false, "AbstractODESimulation-0003", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("absoluteToleranceVector", "ArrayOrRef", false, "AbstractODESimulation-0005", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("absoluteToleranceAdjustmentFactor", "NumberOrRef", false, "AbstractODESimulation-0007", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("toleranceForRootFinder", "NumberOrRef", false, "AbstractODESimulation-0009", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("initialStepSize", "NumberOrRef", false, "AbstractODESimulation-0011", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxNumberOfSteps", "NumberOrRef", false, "AbstractODESimulation-0013", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxInternalSteps", "IntegerOrRef", false, "AbstractODESimulation-0015", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxInternalStepSize", "NumberOrRef", false, "AbstractODESimulation-0017", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("minInternalStepSize", "NumberOrRef", false, "AbstractODESimulation-0019", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("forcePhysicalCorrectness", "BooleanOrRef", false, "AbstractODESimulation-0021", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("integrateReducedModel", "BooleanOrRef", false, "AbstractODESimulation-0023", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("useReducedModel", "BooleanOrRef", false, "AbstractODESimulation-0025", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("useStiffSolver", "BooleanOrRef", false, "AbstractODESimulation-0027", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxBDForder", "IntegerOrRef", false, "AbstractODESimulation-0029", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("maxAdamsOrder", "IntegerOrRef", false, "AbstractODESimulation-0031", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractODESimulation-0033", null, "AbstractODESimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractODESimulation-0035", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
-        new FieldSpec("independentVariableRange", "ref-class", true, "ExplicitODESimulation-0005", "ExplicitODESimulation-0004", "ExplicitODESimulation-0000", null, null, null, "NumericRange", null, false)
+        new FieldSpec("relativeTolerance", "NumberOrRef", false, "AbstractODESimulation-0001", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0002", null, null),
+        new FieldSpec("absoluteTolerance", "NumberOrRef", false, "AbstractODESimulation-0003", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0004", null, null),
+        new FieldSpec("absoluteToleranceVector", "ArrayOrRef", false, "AbstractODESimulation-0005", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0006", "number", null),
+        new FieldSpec("absoluteToleranceAdjustmentFactor", "NumberOrRef", false, "AbstractODESimulation-0007", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0008", null, null),
+        new FieldSpec("toleranceForRootFinder", "NumberOrRef", false, "AbstractODESimulation-0009", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0010", null, null),
+        new FieldSpec("initialStepSize", "NumberOrRef", false, "AbstractODESimulation-0011", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0012", null, null),
+        new FieldSpec("maxNumberOfSteps", "NumberOrRef", false, "AbstractODESimulation-0013", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0014", null, null),
+        new FieldSpec("maxInternalSteps", "IntegerOrRef", false, "AbstractODESimulation-0015", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0016", null, null),
+        new FieldSpec("maxInternalStepSize", "NumberOrRef", false, "AbstractODESimulation-0017", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0018", null, null),
+        new FieldSpec("minInternalStepSize", "NumberOrRef", false, "AbstractODESimulation-0019", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0020", null, null),
+        new FieldSpec("forcePhysicalCorrectness", "BooleanOrRef", false, "AbstractODESimulation-0021", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0022", null, null),
+        new FieldSpec("integrateReducedModel", "BooleanOrRef", false, "AbstractODESimulation-0023", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0024", null, null),
+        new FieldSpec("useReducedModel", "BooleanOrRef", false, "AbstractODESimulation-0025", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0026", null, null),
+        new FieldSpec("useStiffSolver", "BooleanOrRef", false, "AbstractODESimulation-0027", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0028", null, null),
+        new FieldSpec("maxBDForder", "IntegerOrRef", false, "AbstractODESimulation-0029", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false, null, null, "AbstractODESimulation-0030", null, null),
+        new FieldSpec("maxAdamsOrder", "IntegerOrRef", false, "AbstractODESimulation-0031", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false, null, null, "AbstractODESimulation-0032", null, null),
+        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractODESimulation-0033", null, "AbstractODESimulation-0000", null, null, null, null, null, false, null, null, "AbstractODESimulation-0034", null, null),
+        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractODESimulation-0035", null, "AbstractODESimulation-0000", null, 0.0, null, null, null, false, null, null, "AbstractODESimulation-0036", null, null),
+        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0003", null, null),
+        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0005", null, null),
+        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0007", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
+        new FieldSpec("independentVariableRange", "ref-class", true, "ExplicitODESimulation-0005", "ExplicitODESimulation-0004", "ExplicitODESimulation-0000", null, null, null, "NumericRange", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("independentVariableRange");
     private final ListCollection<SedBase> workingAlgorithms = new ListCollection<>();
@@ -62,6 +62,8 @@ public final class ExplicitODESimulation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "explicitODESimulation"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(independentVariableRange)\"}, \"labels\": null}, {\"size\": {\"source\": \"static\", \"expr\": \"1 + len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"[independentVariable] + outputVariables\"}}]}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getRelativeToleranceValue() { return getOrRefValueNode("relativeTolerance").asDouble(); }
     public String getRelativeToleranceRef() { return getOrRefRefNode("relativeTolerance").asText(); }

@@ -15,11 +15,18 @@ import java.util.Map;
  * SedBase instances - see generator/emit_python.py's _collection_accessors
  * any-dict branch for the reference implementation this mirrors.
  * GENERATED - do not hand-edit. */
-public final class IdKeyedCollection<T> {
+public final class IdKeyedCollection<T> implements IdCollection {
     private final List<String> order = new ArrayList<>();
     private final Map<String, T> items = new LinkedHashMap<>();
 
+    @Override
     public List<String> ids() { return new ArrayList<>(order); }
+
+    @Override
+    public boolean has(String itemId) { return items.containsKey(itemId); }
+
+    @Override
+    public Object getObject(String itemId) { return items.get(itemId); }
 
     public T get(String itemId) {
         if (!items.containsKey(itemId)) throw new ApiError("no entry with id " + itemId);

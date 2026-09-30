@@ -24,6 +24,9 @@ public final class UnknownRangeInline extends SedBase {
     public String getType() { return typeValue; }
 
     @Override
+    public String typeValue() { return typeValue; }
+
+    @Override
     public ObjectNode ownJsonValue() {
         ObjectNode d = raw.deepCopy();
         if (nameNode != null) d.set("name", nameNode);

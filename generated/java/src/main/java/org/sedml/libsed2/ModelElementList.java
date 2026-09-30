@@ -19,14 +19,14 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ModelElementList extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, "ModelElementList-0002", "ModelElementList-0001", "ModelElementList-0000", null, null, null, null, null, false),
-        new FieldSpec("includeElements", "ArrayOrRef", false, "ModelElementList-0003", null, "ModelElementList-0000", null, null, null, null, null, false),
-        new FieldSpec("includeTypes", "ArrayOrRef", false, "ModelElementList-0005", null, "ModelElementList-0000", null, null, null, null, null, false),
-        new FieldSpec("excludeElements", "ArrayOrRef", false, "ModelElementList-0007", null, "ModelElementList-0000", null, null, null, null, null, false),
-        new FieldSpec("excludeTypes", "ArrayOrRef", false, "ModelElementList-0009", null, "ModelElementList-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("model", "SIdRef", true, "ModelElementList-0002", "ModelElementList-0001", "ModelElementList-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("includeElements", "ArrayOrRef", false, "ModelElementList-0003", null, "ModelElementList-0000", null, null, null, null, null, false, null, null, "ModelElementList-0004", "string", null),
+        new FieldSpec("includeTypes", "ArrayOrRef", false, "ModelElementList-0005", null, "ModelElementList-0000", null, null, null, null, null, false, null, null, "ModelElementList-0006", "string", null),
+        new FieldSpec("excludeElements", "ArrayOrRef", false, "ModelElementList-0007", null, "ModelElementList-0000", null, null, null, null, null, false, null, null, "ModelElementList-0008", "string", null),
+        new FieldSpec("excludeTypes", "ArrayOrRef", false, "ModelElementList-0009", null, "ModelElementList-0000", null, null, null, null, null, false, null, null, "ModelElementList-0010", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -41,6 +41,8 @@ public final class ModelElementList extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "modelElementList"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": false}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": true, \"type\": \"stringList\", \"dimensions\": [{\"size\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"the matched element ids themselves\"}}]}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }

@@ -19,14 +19,14 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Loop extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("loopVariables", "dict", true, "Loop-0003", "Loop-0002", "Loop-0000", null, null, null, "LoopVariable", null, false),
-        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false)
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false, null, null, "Repeat-0003", "ref", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("loopVariables", "dict", true, "Loop-0003", "Loop-0002", "Loop-0000", null, null, null, "LoopVariable", null, false, null, null, null, null, null),
+        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false, null, null, null, null, null),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("loopVariables");
     private final IdKeyedCollection<SedBase> loopVariables = new IdKeyedCollection<>();
@@ -45,6 +45,8 @@ public final class Loop extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "loop"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"2D or more: first dimension = one row per iteration (iteration count is not knowable ahead of the loop actually running - Loop's exact termination condition is an open design question, see core-spec.md Section 10); remaining dimension(s) = one column per entry of outputVariableMap\"}}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}, \"[id].aggregates\": {\"valid\": \"provided(aggregateOutputVariables)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(aggregateOutputVariables)\"}, \"labels\": null, \"note\": \"each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry\"}]}, \"[id].range\": {\"valid\": \"provided(range)\", \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"the current value of range, within the loop\"}, \"[id].index\": {\"valid\": \"provided(range)\", \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"the current index into range, within the loop\"}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getOutputVariableMapValue() { return getOrRefValueNode("outputVariableMap"); }
     public String getOutputVariableMapRef() { return getOrRefRefNode("outputVariableMap").asText(); }
@@ -118,6 +120,19 @@ public final class Loop extends SedBase {
         if (range != null) out.add(new ChildLoc(range, "/range"));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "loopVariables": return loopVariables;
+            case "subTasks": return subTasks;
+            case "aggregateOutputVariables": return aggregateOutputVariables;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("loopVariables", "subTasks", "aggregateOutputVariables"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

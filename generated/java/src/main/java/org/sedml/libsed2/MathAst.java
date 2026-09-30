@@ -256,6 +256,27 @@ public final class MathAst {
         public Node visitParenAtom(mathParser.ParenAtomContext ctx) { return visit(ctx.expr()); }
     }
 
+    /** The Java ANTLR runtime's DefaultErrorStrategy.recoverInline() reports a
+     * failed match() against the state sync() last deferred at (its
+     * nextTokensContext bookkeeping), so a trailing-junk error reads "expecting
+     * {'&&', '||', ...}"; the Python runtime does not track that and reports
+     * the set at the state that actually failed ("expecting <EOF>"). Python is
+     * the reference implementation, so this strategy is recoverInline() minus
+     * the deferred-state bookkeeping, keeping the parse-message text of
+     * Types-0001 identical across targets. */
+    private static final class SimpleErrorStrategy extends DefaultErrorStrategy {
+        @Override
+        public Token recoverInline(Parser recognizer) throws RecognitionException {
+            Token matchedSymbol = singleTokenDeletion(recognizer);
+            if (matchedSymbol != null) {
+                recognizer.consume();
+                return matchedSymbol;
+            }
+            if (singleTokenInsertion(recognizer)) return getMissingSymbol(recognizer);
+            throw new InputMismatchException(recognizer);
+        }
+    }
+
     private static final class CollectingErrorListener extends BaseErrorListener {
         final List<String> errors = new ArrayList<>();
 
@@ -276,6 +297,7 @@ public final class MathAst {
         lexer.addErrorListener(listener);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         mathParser parser = new mathParser(tokens);
+        parser.setErrorHandler(new SimpleErrorStrategy());
         parser.removeErrorListeners();
         parser.addErrorListener(listener);
         mathParser.StartContext tree = parser.start();

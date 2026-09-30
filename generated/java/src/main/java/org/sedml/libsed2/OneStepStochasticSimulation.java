@@ -19,23 +19,23 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class OneStepStochasticSimulation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("independentStep", "NumberOrRef", false, "OneStepStochasticSimulation-0004", null, "OneStepStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("seed", "NumberOrRef", false, "AbstractStochasticSimulation-0001", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("timeDependentRelativeTolerance", "NumberOrRef", false, "AbstractStochasticSimulation-0003", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractStochasticSimulation-0005", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("minimumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0007", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maximumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0009", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("nonNegative", "BooleanOrRef", false, "AbstractStochasticSimulation-0011", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractStochasticSimulation-0013", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("maxNumSteps", "IntegerOrRef", false, "AbstractStochasticSimulation-0015", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("independentStep", "NumberOrRef", false, "OneStepStochasticSimulation-0004", null, "OneStepStochasticSimulation-0000", null, null, null, null, null, false, null, null, "OneStepStochasticSimulation-0005", null, null),
+        new FieldSpec("seed", "NumberOrRef", false, "AbstractStochasticSimulation-0001", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0002", null, null),
+        new FieldSpec("timeDependentRelativeTolerance", "NumberOrRef", false, "AbstractStochasticSimulation-0003", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0004", null, null),
+        new FieldSpec("variableStepSize", "BooleanOrRef", false, "AbstractStochasticSimulation-0005", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0006", null, null),
+        new FieldSpec("minimumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0007", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0008", null, null),
+        new FieldSpec("maximumTimeStep", "NumberOrRef", false, "AbstractStochasticSimulation-0009", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0010", null, null),
+        new FieldSpec("nonNegative", "BooleanOrRef", false, "AbstractStochasticSimulation-0011", null, "AbstractStochasticSimulation-0000", null, null, null, null, null, false, null, null, "AbstractStochasticSimulation-0012", null, null),
+        new FieldSpec("maxOutputRows", "IntegerOrRef", false, "AbstractStochasticSimulation-0013", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false, null, null, "AbstractStochasticSimulation-0014", null, null),
+        new FieldSpec("maxNumSteps", "IntegerOrRef", false, "AbstractStochasticSimulation-0015", null, "AbstractStochasticSimulation-0000", null, 0.0, null, null, null, false, null, null, "AbstractStochasticSimulation-0016", null, null),
+        new FieldSpec("model", "SIdRef", false, "AbstractSimulation-0001", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("independentVariable", "StringOrRef", false, "AbstractSimulation-0002", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0003", null, null),
+        new FieldSpec("independentVariableInit", "NumberOrRef", false, "AbstractSimulation-0004", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0005", null, null),
+        new FieldSpec("outputVariables", "ArrayOrRef", false, "AbstractSimulation-0006", null, "AbstractSimulation-0000", null, null, null, null, null, false, null, null, "AbstractSimulation-0007", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("workingAlgorithms", "array", false, "AbstractSimulation-0008", null, "AbstractSimulation-0000", null, null, null, "WorkingAlgorithm", null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final ListCollection<SedBase> workingAlgorithms = new ListCollection<>();
@@ -51,6 +51,8 @@ public final class OneStepStochasticSimulation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "oneStepStochastic"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}, \"note\": \"a single point, not a series\"}]}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}, \"[id].independentStep\": {\"valid\": \"!provided(independentStep)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"1\"}, \"labels\": null}], \"note\": \"the actual elapsed step; present only when independentStep was NOT given as input\"}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getIndependentStepValue() { return getOrRefValueNode("independentStep").asDouble(); }
     public String getIndependentStepRef() { return getOrRefRefNode("independentStep").asText(); }

@@ -19,8 +19,8 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class WeightedChoice extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("weight", "NumberOrRef", true, null, "WeightedChoice-0001", "WeightedChoice-0000", null, null, null, null, null, false),
-        new FieldSpec("label", "StringOrRef", false, "Choice-0003", null, "Choice-0000", null, null, null, null, null, false)
+        new FieldSpec("weight", "NumberOrRef", true, null, "WeightedChoice-0001", "WeightedChoice-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("label", "StringOrRef", false, "Choice-0003", null, "Choice-0000", null, null, null, null, null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("weight");
 

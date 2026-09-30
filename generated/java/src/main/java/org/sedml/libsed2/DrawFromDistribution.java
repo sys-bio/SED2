@@ -19,12 +19,12 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class DrawFromDistribution extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("distribution", "StringOrRef", true, "DrawFromDistribution-0008", "DrawFromDistribution-0007", "DrawFromDistribution-0000", null, null, null, null, null, false),
-        new FieldSpec("outputPersistent", "BooleanOrRef", false, "DrawFromDistribution-0004", null, "DrawFromDistribution-0000", null, null, null, null, null, false),
-        new FieldSpec("arguments", "ArrayOrRef", true, "DrawFromDistribution-0002", "DrawFromDistribution-0001", "DrawFromDistribution-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("distribution", "StringOrRef", true, "DrawFromDistribution-0008", "DrawFromDistribution-0007", "DrawFromDistribution-0000", null, null, null, null, null, false, null, List.of("http://www.sbml.org/sbml/symbols/distrib/normal", "http://www.sbml.org/sbml/symbols/distrib/uniform", "http://www.sbml.org/sbml/symbols/distrib/bernoulli", "http://www.sbml.org/sbml/symbols/distrib/binomial", "http://www.sbml.org/sbml/symbols/distrib/cauchy", "http://www.sbml.org/sbml/symbols/distrib/chisquare", "http://www.sbml.org/sbml/symbols/distrib/exponential", "http://www.sbml.org/sbml/symbols/distrib/gamma", "http://www.sbml.org/sbml/symbols/distrib/laplace", "http://www.sbml.org/sbml/symbols/distrib/lognormal", "http://www.sbml.org/sbml/symbols/distrib/poisson", "http://www.sbml.org/sbml/symbols/distrib/rayleigh"), "DrawFromDistribution-0009", null, null),
+        new FieldSpec("outputPersistent", "BooleanOrRef", false, "DrawFromDistribution-0004", null, "DrawFromDistribution-0000", null, null, null, null, null, false, null, null, "DrawFromDistribution-0005", null, null),
+        new FieldSpec("arguments", "ArrayOrRef", true, "DrawFromDistribution-0002", "DrawFromDistribution-0001", "DrawFromDistribution-0000", null, null, null, null, null, false, null, null, "DrawFromDistribution-0003", "any", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("distribution", "arguments");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -39,6 +39,8 @@ public final class DrawFromDistribution extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "drawFromDistribution"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)\"}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getDistributionValue() { return getOrRefValueNode("distribution").asText(); }
     public String getDistributionRef() { return getOrRefRefNode("distribution").asText(); }

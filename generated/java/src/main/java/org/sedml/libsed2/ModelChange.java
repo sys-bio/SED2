@@ -19,14 +19,14 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ModelChange extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("inputModel", "SIdRef", true, "ModelChange-0002", "ModelChange-0001", "ModelChange-0000", null, null, null, null, null, false),
-        new FieldSpec("setValues", "DictOrRef", false, "ModelChange-0003", null, "ModelChange-0000", null, null, null, null, null, false),
-        new FieldSpec("removeElements", "ArrayOrRef", false, "ModelChange-0005", null, "ModelChange-0000", null, null, null, null, null, false),
-        new FieldSpec("addElements", "ArrayOrRef", false, "ModelChange-0007", null, "ModelChange-0000", null, null, null, null, null, false),
-        new FieldSpec("replaceElements", "DictOrRef", false, "ModelChange-0009", null, "ModelChange-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("inputModel", "SIdRef", true, "ModelChange-0002", "ModelChange-0001", "ModelChange-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("setValues", "DictOrRef", false, "ModelChange-0003", null, "ModelChange-0000", null, null, null, null, null, false, null, null, "ModelChange-0004", "any", null),
+        new FieldSpec("removeElements", "ArrayOrRef", false, "ModelChange-0005", null, "ModelChange-0000", null, null, null, null, null, false, null, null, "ModelChange-0006", "string", null),
+        new FieldSpec("addElements", "ArrayOrRef", false, "ModelChange-0007", null, "ModelChange-0000", null, null, null, null, null, false, null, null, "ModelChange-0008", "string", null),
+        new FieldSpec("replaceElements", "DictOrRef", false, "ModelChange-0009", null, "ModelChange-0000", null, null, null, null, null, false, null, null, "ModelChange-0010", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("inputModel");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -41,6 +41,8 @@ public final class ModelChange extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "modelChange"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": false}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getInputModel() { if (!values.containsKey("inputModel")) throw new ApiError("inputModel" + " is not set"); return values.get("inputModel").asText(); }
     public void setInputModel(String value) { values.put("inputModel", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }

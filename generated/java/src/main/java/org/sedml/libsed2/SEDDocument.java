@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SEDDocument extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("version", "string", true, "SEDDocument-0002", "SEDDocument-0001", "SEDDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("constants", "any-dict", false, "SEDDocument-0005", null, "SEDDocument-0000", null, null, null, null, null, false),
-        new FieldSpec("tasks", "dict", false, "SEDDocument-0006", null, "SEDDocument-0000", null, null, null, null, "AbstractTask", false),
-        new FieldSpec("outputs", "dict", false, "SEDDocument-0007", null, "SEDDocument-0000", null, null, null, null, "AbstractOutput", false),
-        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, "Style", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("version", "string", true, "SEDDocument-0002", "SEDDocument-0001", "SEDDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false, null, null, "SEDDocument-0003", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("constants", "any-dict", false, "SEDDocument-0005", null, "SEDDocument-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("tasks", "dict", false, "SEDDocument-0006", null, "SEDDocument-0000", null, null, null, null, "AbstractTask", false, null, null, null, null, null),
+        new FieldSpec("outputs", "dict", false, "SEDDocument-0007", null, "SEDDocument-0000", null, null, null, null, "AbstractOutput", false, null, null, null, null, null),
+        new FieldSpec("styles", "dict", false, "SEDDocument-0008", null, "SEDDocument-0000", null, null, null, "Style", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("version");
     private final IdKeyedCollection<JsonNode> constants = new IdKeyedCollection<>();
@@ -42,6 +42,9 @@ public final class SEDDocument extends SedBase {
     @Override public String nameRuleId() { return "SEDBase-0001"; }
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
+    public SEDDocument() { attach(null, this); }
+    @Override public boolean isDocumentClass() { return true; }
+    @Override public String maxKnownDocumentVersion() { return "v1.0.0"; }
 
     public String getVersion() { if (!values.containsKey("version")) throw new ApiError("version" + " is not set"); return values.get("version").asText(); }
     public void setVersion(String value) { values.put("version", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
@@ -105,6 +108,20 @@ public final class SEDDocument extends SedBase {
         { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "constants": return constants;
+            case "tasks": return tasks;
+            case "outputs": return outputs;
+            case "styles": return styles;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("constants", "tasks", "outputs", "styles"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

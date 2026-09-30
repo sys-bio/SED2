@@ -1,6 +1,7 @@
 package org.sedml.libsed2;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Rule catalogue + ValidationProblem factory. GENERATED (this file) - do
@@ -40,9 +41,19 @@ public final class RuleCatalog {
         String out = get(ruleId).messageTemplate;
         out = out.replace("{location}", String.valueOf(location));
         for (Map.Entry<String, Object> e : placeholders.entrySet()) {
-            out = out.replace("{" + e.getKey() + "}", String.valueOf(e.getValue()));
+            out = out.replace("{" + e.getKey() + "}", PyFmt.str(e.getValue()));
         }
         return out;
+    }
+
+    /** makeProblem() with the placeholders given as alternating key, value
+     * arguments - kept in argument order (so substitution order matches the
+     * Python target's make_problem(**kwargs)); a value renders the way
+     * Python's str() would (see PyFmt). */
+    public static ValidationProblem problem(String ruleId, String location, Object... keyValues) {
+        Map<String, Object> ph = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < keyValues.length; i += 2) ph.put((String) keyValues[i], keyValues[i + 1]);
+        return makeProblem(ruleId, location, ph);
     }
 
     public static ValidationProblem makeProblem(String ruleId, String location, Map<String, Object> placeholders) {
