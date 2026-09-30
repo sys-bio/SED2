@@ -39,6 +39,14 @@
 # commit it's testing), and proceed straight to tests with nothing more to
 # commit.
 #
+# SPECIFICATION.md (the single-file assembly of core-spec.md + specsheets/,
+# built by tools/build_specification.py) is treated exactly like the
+# generated/ trees: deleted first, regenerated fresh, and committed in the
+# same single push only if it differs from what's already committed. The
+# script's output is deterministic (no date or other run-dependent
+# content), so this only ever commits when core-spec.md or specsheets/
+# actually changed.
+#
 # Two regenerate targets, one job: test-specsheets/ -> test-specsheets/
 # generated/ (Phase 1) and specsheets/ -> generated/ (Phase 2, all three
 # targets). Both live in the *same* job, committed with a single
@@ -70,6 +78,7 @@ env:
   TEST_GEN_OUT: test-specsheets/generated
   MAIN_SPEC_ROOT: specsheets
   MAIN_GEN_OUT: generated
+  SPEC_FILE: SPECIFICATION.md
 
 jobs:
   # ---------------------------------------------------------------------
@@ -145,27 +154,37 @@ jobs:
             --java-description "Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
             --cpp-namespace libsed2
 
-      # -- Commit both trees together, one push --
+      # -- core-spec.md + specsheets/ -> SPECIFICATION.md --
+      # Stdlib-only script, so no extra pip install. A failure here fails
+      # the job, like the generator steps above.
+
+      - name: Delete existing SPECIFICATION.md, if any
+        run: rm -f "$SPEC_FILE"
+
+      - name: Generate single-file SPECIFICATION.md
+        run: python3 tools/build_specification.py --repo-root .
+
+      # -- Commit all regenerated output together, one push --
 
       - name: Commit regenerated output if it changed
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
+          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if git diff --cached --quiet; then
             echo "No changes - generated output already matches the generator."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Regenerate generated directories from spec"
+            git commit -m "Regenerate generated directories and SPECIFICATION.md from spec"
             git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
           fi
 
       - name: Fail if this fork PR's committed output is stale
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
+          git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if ! git diff --cached --quiet; then
-            echo "::error::A generated/ directory doesn't match what generator/ currently produces. Run the generator locally and commit the result." >&2
+            echo "::error::A generated/ directory or SPECIFICATION.md doesn't match what generator/ and tools/build_specification.py currently produce. Run them locally and commit the result." >&2
             git diff --cached --stat
             exit 1
           fi
