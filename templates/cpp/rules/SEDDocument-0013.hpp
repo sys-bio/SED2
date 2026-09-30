@@ -31,7 +31,15 @@ inline std::vector<ValidationProblem> check(const std::vector<std::pair<std::str
         std::string text = value.as<std::string>();
         if (text.empty() || text[0] != '#') continue;
         ParsedReference parsed = parse_reference(text);
-        if (!parsed.collection || *parsed.collection != "constants" || parsed.path.empty()) continue;
+        if (!parsed.collection) continue;
+        if (*parsed.collection != "constants") {
+            // A reference into any other collection (for example a task) is
+            // by definition not an earlier constant.
+            problems.push_back(RuleCatalog::make_problem("SEDDocument-0013", "/constants/" + constants[i].first,
+                {{"attr", constants[i].first}, {"value", text}}));
+            continue;
+        }
+        if (parsed.path.empty()) continue;
         const std::string& target = parsed.path[0];
         bool earlier = false;
         for (size_t k = 0; k < i; k++) if (constants[k].first == target) earlier = true;

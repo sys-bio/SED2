@@ -33,7 +33,15 @@ def check(*, document, make_problem, is_reference, parse_reference):
         if not is_reference(value):
             continue
         parsed = parse_reference(value)
-        if parsed.collection != "constants" or not parsed.path:
+        if parsed.collection is None:
+            continue
+        if parsed.collection != "constants":
+            # A reference into any other collection (for example a task) is
+            # by definition not an earlier constant.
+            problems.append(make_problem(
+                "SEDDocument-0013", f"/constants/{cid}", attr=cid, value=value))
+            continue
+        if not parsed.path:
             continue
         target = parsed.path[0]
         if target not in ids[:i]:

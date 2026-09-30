@@ -1,0 +1,25 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_num": 1.5,
+    "k_str": "hello",
+    "k_bool": true,
+    "k_array": [
+      10,
+      20,
+      30
+    ],
+    "k_obj": {
+      "a": 1,
+      "b": 2
+    },
+    "alias": "#constants:k_array"
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    }
+  }
+}

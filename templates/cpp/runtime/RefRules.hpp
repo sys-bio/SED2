@@ -666,4 +666,17 @@ inline std::vector<ValidationProblem> RefRules::check_constants_ordering(SedBase
     return problems;
 }
 
+/// SEDBase-0005 applied to a REFERENCE token embedded in a math string.
+inline std::vector<ValidationProblem> RefRules::check_math_reference_root(
+        const std::string& reference_text, const std::string& class_name, const std::string& id_value,
+        const std::string& attr, const std::string& location) {
+#ifdef SED2_REFRULES_BASIC
+    RuleCtx ctx{class_name, id_value, attr, location, reference_text};
+    return rules::sedbase_0005::check(parse_reference(reference_text), ctx);
+#else
+    (void)reference_text; (void)class_name; (void)id_value; (void)attr; (void)location;
+    return {};
+#endif
+}
+
 }  // namespace sed2test

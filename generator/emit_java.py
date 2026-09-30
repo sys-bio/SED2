@@ -933,6 +933,22 @@ public abstract class SedBase {{
                                     References.FieldInfo.bare(spec.kind)));
                         }}
                     }}
+                }} else if (spec.kind.equals("ArrayOrRef") && value.isArray()) {{
+                    // The array-literal branch of an ArrayOrRef field: each
+                    // element that is itself a reference gets its own
+                    // reference-resolution dispatch (SEDBase-0005.md: the rule
+                    // applies to "an element of an array or object value"),
+                    // with no per-element expected type - same scope as the
+                    // DictOrRef dict-literal branch above.
+                    for (int idx = 0; idx < value.size(); idx++) {{
+                        JsonNode el = value.get(idx);
+                        if (References.isReference(el)) {{
+                            problems.addAll(References.checkReferenceField(
+                                    el.textValue(), getDocument(), className, ownId, spec.name,
+                                    "/" + spec.name + "/" + idx, this,
+                                    References.FieldInfo.bare(spec.kind)));
+                        }}
+                    }}
                 }} else if (spec.isMath && value.isTextual()) {{
                     // Types-0001..0004 (Design.md's Math section) - only for
                     // a literal string value that already passed its own
@@ -1380,6 +1396,16 @@ public final class MathRules {{
             problems.add(RuleCatalog.makeProblem("Types-0001", location, ph));
             return problems;
         }}
+        if (Handwritten.HAS_REFERENCE_RULES) {{
+            // SEDBase-0005.md: the root-collection rule also applies to a
+            // REFERENCE token embedded in a math string.
+            for (MathAst.Node node : ast.walk()) {{
+                if (node.isReference()) {{
+                    problems.addAll(Handwritten.sedBase0005(
+                            References.parse(node.text), className, idValue, attr, location));
+                }}
+            }}
+        }}
         for (MathAst.Node node : ast.walk()) {{
             if (node.isFunctionCall() && !PredefinedFunctions.FUNCTIONS.containsKey(node.name)) {{
                 Map<String, Object> ph = new HashMap<>();
@@ -1704,6 +1730,10 @@ public final class OutputsShape {
 
     private static boolean isNumber(Object o) {
         return o instanceof Long || o instanceof BigInteger || o instanceof Double;
+    }
+
+    private static boolean isRefValue(Object o) {
+        return o instanceof String && ((String) o).startsWith("#");
     }
 
     private static boolean isInt(Object o) { return o instanceof Long || o instanceof BigInteger; }
@@ -2130,7 +2160,10 @@ public final class OutputsShape {
                 return applyDimMinus(left, right);
             }
             Object right = eval(b.right(), scope, shapeOf);
-            if (b.op().equals("==")) return pyEq(left, right);
+            if (b.op().equals("==")) {
+                if (isRefValue(left) || isRefValue(right)) throw new NotStatic("== operand is a reference");
+                return pyEq(left, right);
+            }
             if (b.op().equals("+")) {
                 if (left instanceof List && right instanceof List) {
                     List<Object> out = new ArrayList<>((List<?>) left);

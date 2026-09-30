@@ -881,6 +881,18 @@ def _check_math_field(value, *, class_name, id_value, attr, location) -> list:
     if problems:
         return problems  # unparseable - nothing left to walk for 0002-0004
     ast = _math_ast.parse(value)
+    # SEDBase-0005.md: the root-collection rule also applies to a REFERENCE
+    # token embedded in a math string.
+    try:
+        from ._rules import sedbase_0005
+    except ImportError:
+        sedbase_0005 = None
+    if sedbase_0005 is not None:
+        for node in ast.walk():
+            if node.is_reference():
+                problems = problems + sedbase_0005.check(
+                    _parse_reference(node.text), class_name=class_name, id_value=id_value,
+                    attr=attr, location=location, make_problem=make_problem)
     problems = problems + types_0002.check(
         ast, class_name=class_name, id_value=id_value, attr=attr, location=location,
         make_problem=make_problem, functions=FUNCTIONS)
@@ -1361,6 +1373,22 @@ class SedBase:
                                 class_name=self.__class__.__name__,
                                 id_value=self._own_id_for_message(), attr=spec.name,
                                 location=f"/{spec.name}/{key}",
+                                referrer=self, field_kind=spec.kind,
+                                ref_type_rule_id=None, expected_enum=None))
+                elif spec.kind == "ArrayOrRef" and isinstance(value, list):
+                    # The array-literal branch of an ArrayOrRef field: each
+                    # element that is itself a reference gets its own
+                    # reference-resolution dispatch (SEDBase-0005.md: the rule
+                    # applies to "an element of an array or object value"),
+                    # with no per-element expected type - same scope as the
+                    # DictOrRef dict-literal branch above.
+                    for idx, entry_value in enumerate(value):
+                        if is_reference(entry_value):
+                            problems.extend(_check_reference_field(
+                                entry_value, document=self.get_document(),
+                                class_name=self.__class__.__name__,
+                                id_value=self._own_id_for_message(), attr=spec.name,
+                                location=f"/{spec.name}/{idx}",
                                 referrer=self, field_kind=spec.kind,
                                 ref_type_rule_id=None, expected_enum=None))
                 elif spec.is_math and isinstance(value, str):
@@ -2113,6 +2141,10 @@ class RepeatScope:
 
 # ---- evaluation -----------------------------------------------------------
 
+def _is_ref_value(value):
+    return isinstance(value, str) and value.startswith("#")
+
+
 def _resolve_path(node, scope):
     if node.names[0] == "outermost":
         if len(node.names) != 1:
@@ -2229,6 +2261,11 @@ def eval_expr(node, scope, shape_of):
             return _apply_dim_minus(left, right)
         right = eval_expr(node.right, scope, shape_of)
         if node.op == "==":
+            # A reference-valued operand (for example outputModel given as
+            # "#constants:flag") has no statically known value, so the
+            # comparison is not statically evaluable.
+            if _is_ref_value(left) or _is_ref_value(right):
+                raise NotStatic("== operand is a reference")
             return left == right
         if node.op == "+":
             if isinstance(left, list) and isinstance(right, list):

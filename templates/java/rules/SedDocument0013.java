@@ -43,7 +43,14 @@ public final class SedDocument0013 {
             if (!(v instanceof JsonNode) || !References.isReference((JsonNode) v)) continue;
             String value = ((JsonNode) v).textValue();
             ParsedReference parsed = References.parse(value);
-            if (!"constants".equals(parsed.collection) || parsed.path.isEmpty()) continue;
+            if (parsed.collection == null) continue;
+            if (!"constants".equals(parsed.collection)) {
+                // A reference into any other collection (for example a task) is
+                // by definition not an earlier constant.
+                out.add(RuleCatalog.problem("SEDDocument-0013", "/constants/" + cid, "attr", cid, "value", value));
+                continue;
+            }
+            if (parsed.path.isEmpty()) continue;
             String target = parsed.path.get(0);
             if (!ids.subList(0, i).contains(target)) {
                 out.add(RuleCatalog.problem("SEDDocument-0013", "/constants/" + cid, "attr", cid, "value", value));
