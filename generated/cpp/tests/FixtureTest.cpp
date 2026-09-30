@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -100,6 +101,34 @@ std::vector<std::string> fixture_files() {
     }
     std::sort(files.begin(), files.end());
     return files;
+}
+
+/// Structural JSON equality for the round-trip check: object key ORDER is not
+/// significant (the generated writer emits fields in declaration order, not
+/// document order - same as Python's dict ==), and numbers compare by value
+/// within Design.md's shared tolerance (|a - b| <= max(RTOL*max(|a|,|b|), ATOL),
+/// RTOL = 1e-6, ATOL = 1e-12) rather than by literal form.
+bool json_equal(const Json& a, const Json& b) {
+    if (a.is_number() && b.is_number()) {
+        double x = a.as<double>(), y = b.as<double>();
+        double tol = std::max(1e-6 * std::max(std::fabs(x), std::fabs(y)), 1e-12);
+        return std::fabs(x - y) <= tol;
+    }
+    if (a.is_object() && b.is_object()) {
+        if (a.size() != b.size()) return false;
+        for (const auto& kv : a.object_range()) {
+            if (!b.contains(kv.key()) || !json_equal(kv.value(), b.at(kv.key()))) return false;
+        }
+        return true;
+    }
+    if (a.is_array() && b.is_array()) {
+        if (a.size() != b.size()) return false;
+        for (size_t i = 0; i < a.size(); i++) {
+            if (!json_equal(a[i], b[i])) return false;
+        }
+        return true;
+    }
+    return a == b;
 }
 
 std::string basename_of(const std::string& path) {
@@ -184,7 +213,7 @@ TEST_P(FixtureTest, RunsFixture) {
     std::string base = basename_of(path);
     Expected expected = expected_from_filename(base);
     std::string raw_text = read_file(path);
-    jsoncons::json instance = jsoncons::json::parse(raw_text);
+    Json instance = Json::parse(raw_text);
 
     register_rules();
 
@@ -201,8 +230,8 @@ TEST_P(FixtureTest, RunsFixture) {
         auto doc = read_from_string(raw_text);
         problems = doc->validate();
         if (expected.kind == "pass") {
-            jsoncons::json rt = jsoncons::json::parse(write_to_string(*doc));
-            EXPECT_EQ(rt, instance) << "round-trip mismatch for " << path;
+            Json rt = Json::parse(write_to_string(*doc));
+            EXPECT_TRUE(json_equal(rt, instance)) << "round-trip mismatch for " << path;
         }
     }
 

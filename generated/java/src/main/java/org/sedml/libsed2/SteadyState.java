@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SteadyState extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, null, "SteadyState-0001", "SteadyState-0000", null, null, null, null, null, false),
-        new FieldSpec("independentVariable", "StringOrRef", false, "SteadyState-0004", null, "SteadyState-0000", null, null, null, null, null, false),
-        new FieldSpec("outputVariables", "ArrayOrRef", true, null, "SteadyState-0002", "SteadyState-0000", null, null, null, null, null, false),
-        new FieldSpec("outputModel", "BooleanOrRef", false, "SteadyState-0005", null, "SteadyState-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("model", "SIdRef", true, null, "SteadyState-0001", "SteadyState-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("independentVariable", "StringOrRef", false, "SteadyState-0004", null, "SteadyState-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("outputVariables", "ArrayOrRef", true, null, "SteadyState-0002", "SteadyState-0000", null, null, null, null, null, false, null, null, null, "string", null),
+        new FieldSpec("outputModel", "BooleanOrRef", false, "SteadyState-0005", null, "SteadyState-0000", null, null, null, null, null, false, null, null, "SteadyState-0006", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "outputVariables");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -40,6 +40,8 @@ public final class SteadyState extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "steadyState"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}}]}, \"[id].model\": {\"valid\": \"outputModel == true\", \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }

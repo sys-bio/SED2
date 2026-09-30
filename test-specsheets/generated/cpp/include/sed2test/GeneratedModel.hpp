@@ -10,6 +10,10 @@
 // pulls in its actual `inline` definition so the symbol is always
 // available wherever validate_own() might be called.
 #include "MathRules.hpp"
+// Same pattern for the reference-driven rules: SedBase::validate_own() only
+// declares class RefRules (Runtime.hpp); RefRules.hpp supplies the bodies
+// (and, via Rules.hpp, the handwritten per-rule check() functions).
+#include "RefRules.hpp"
 
 #include <memory>
 #include <string>
@@ -22,9 +26,9 @@ class TestDocument : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"version", "string", true, std::nullopt, std::string("TestDocument-0001"), "TestDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt, false},
-            FieldSpec{"widgets", "dict", false, std::string("TestDocument-0002"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractWidget"), false},
-            FieldSpec{"reports", "dict", false, std::string("TestDocument-0003"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false}
+            FieldSpec{"version", "string", true, std::nullopt, std::string("TestDocument-0001"), "TestDocument-0000", std::nullopt, std::nullopt, std::string("^v\\d+\\.\\d+\\.\\d+$"), std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"widgets", "dict", false, std::string("TestDocument-0002"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractWidget"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"reports", "dict", false, std::string("TestDocument-0003"), std::nullopt, "TestDocument-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -39,9 +43,17 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "TestDocument"; }
+    const IdKeyedCollection* find_dict_collection(const std::string& field_name) const override {
+        if (field_name == "widgets") return &widgets_;
+        if (field_name == "reports") return &reports_;
+        return nullptr;
+    }
+    std::vector<std::string> id_collection_names() const override { return {"widgets", "reports"}; }
+    bool is_document_class() const override { return true; }
+    std::optional<std::string> max_known_document_version() const override { return std::string("v1.0.0"); }
 
     std::string get_version() const { auto it = values_.find("version"); if (it == values_.end()) throw ApiError(std::string("version") + " is not set"); return it->second.as<std::string>(); }
-    void set_version(const std::string& value) { values_["version"] = jsoncons::json(value); }
+    void set_version(const std::string& value) { values_["version"] = Json(value); }
     bool is_set_version() const { return values_.count("version") > 0; }
     void unset_version() { values_.erase("version"); }
 
@@ -79,13 +91,13 @@ public:
         return SedBase::get_dict_collection(field_name);
     }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         if (values_.count("version")) d["version"] = values_.at("version");
-        if (widgets_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : widgets_.ids()) sub[i] = widgets_.get(i)->to_json_value(); d["widgets"] = sub; }
-        if (reports_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : reports_.ids()) sub[i] = reports_.get(i)->to_json_value(); d["reports"] = sub; }
+        if (widgets_.size() > 0) { Json sub = Json::object(); for (const auto& i : widgets_.ids()) sub[i] = widgets_.get(i)->to_json_value(); d["widgets"] = sub; }
+        if (reports_.size() > 0) { Json sub = Json::object(); for (const auto& i : reports_.ids()) sub[i] = reports_.get(i)->to_json_value(); d["reports"] = sub; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
     }
@@ -100,12 +112,12 @@ class FancyWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("FancyWidget-0001"), "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"retries", "integer", false, std::string("WidgetOptions-0001"), std::nullopt, "WidgetOptions-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"timeoutSeconds", "number", false, std::string("WidgetOptions-0002"), std::nullopt, "WidgetOptions-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"choices", "dict", false, std::nullopt, std::nullopt, "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("ChoiceInline"), false},
-            FieldSpec{"notes", "array", false, std::nullopt, std::nullopt, "WidgetOptions-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false}
+            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("FancyWidget-0001"), "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"retries", "integer", false, std::string("WidgetOptions-0001"), std::nullopt, "WidgetOptions-0000", 0.0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"timeoutSeconds", "number", false, std::string("WidgetOptions-0002"), std::nullopt, "WidgetOptions-0000", std::nullopt, 0.0, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"choices", "dict", false, std::nullopt, std::nullopt, "FancyWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("ChoiceInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"notes", "array", false, std::nullopt, std::nullopt, "WidgetOptions-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -120,11 +132,17 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "FancyWidget"; }
+    const IdKeyedCollection* find_dict_collection(const std::string& field_name) const override {
+        if (field_name == "choices") return &choices_;
+        return nullptr;
+    }
+    std::vector<std::string> id_collection_names() const override { return {"choices"}; }
+    std::optional<std::string> get_type_value() const override { return std::string("fancyWidget"); }
     std::string get_type() const { return "fancyWidget"; }
 
     std::string get_value_value() const { return get_or_ref_value_node("value").as<std::string>(); }
     std::string get_value_ref() const { return get_or_ref_ref_node("value").as<std::string>(); }
-    void set_value_value(const std::string& value) { set_or_ref_value_node("value", jsoncons::json(value)); }
+    void set_value_value(const std::string& value) { set_or_ref_value_node("value", Json(value)); }
     void set_value_ref(const std::string& ref) { set_or_ref_ref_node("value", ref); }
     bool is_value_ref() const { return is_or_ref_ref("value"); }
     bool is_set_value() const { return values_.count("value") > 0; }
@@ -132,19 +150,19 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
     int64_t get_retries() const { auto it = values_.find("retries"); if (it == values_.end()) throw ApiError(std::string("retries") + " is not set"); return it->second.as<int64_t>(); }
-    void set_retries(int64_t value) { values_["retries"] = jsoncons::json(value); }
+    void set_retries(int64_t value) { values_["retries"] = Json(value); }
     bool is_set_retries() const { return values_.count("retries") > 0; }
     void unset_retries() { values_.erase("retries"); }
 
     double get_timeoutSeconds() const { auto it = values_.find("timeoutSeconds"); if (it == values_.end()) throw ApiError(std::string("timeoutSeconds") + " is not set"); return it->second.as<double>(); }
-    void set_timeoutSeconds(double value) { values_["timeoutSeconds"] = jsoncons::json(value); }
+    void set_timeoutSeconds(double value) { values_["timeoutSeconds"] = Json(value); }
     bool is_set_timeoutSeconds() const { return values_.count("timeoutSeconds") > 0; }
     void unset_timeoutSeconds() { values_.erase("timeoutSeconds"); }
 
@@ -184,17 +202,17 @@ public:
         return SedBase::get_list_collection(field_name);
     }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("fancyWidget");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("fancyWidget");
         if (values_.count("value")) d["value"] = values_.at("value");
         if (values_.count("label")) d["label"] = values_.at("label");
         if (values_.count("retries")) d["retries"] = values_.at("retries");
         if (values_.count("timeoutSeconds")) d["timeoutSeconds"] = values_.at("timeoutSeconds");
-        if (choices_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : choices_.ids()) sub[i] = choices_.get(i)->to_json_value(); d["choices"] = sub; }
-        if (notes_.size() > 0) { jsoncons::json arr = jsoncons::json::array(); for (auto* item : notes_.items()) arr.push_back(item->to_json_value()); d["notes"] = arr; }
+        if (choices_.size() > 0) { Json sub = Json::object(); for (const auto& i : choices_.ids()) sub[i] = choices_.get(i)->to_json_value(); d["choices"] = sub; }
+        if (notes_.size() > 0) { Json arr = Json::array(); for (auto* item : notes_.items()) arr.push_back(item->to_json_value()); d["notes"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
     }
@@ -209,8 +227,8 @@ class MathWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"math", "StringOrRef", true, std::string("MathWidget-0002"), std::string("MathWidget-0001"), "MathWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"math", "StringOrRef", true, std::string("MathWidget-0002"), std::string("MathWidget-0001"), "MathWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -225,11 +243,12 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "MathWidget"; }
+    std::optional<std::string> get_type_value() const override { return std::string("mathWidget"); }
     std::string get_type() const { return "mathWidget"; }
 
     std::string get_math_value() const { return get_or_ref_value_node("math").as<std::string>(); }
     std::string get_math_ref() const { return get_or_ref_ref_node("math").as<std::string>(); }
-    void set_math_value(const std::string& value) { set_or_ref_value_node("math", jsoncons::json(value)); }
+    void set_math_value(const std::string& value) { set_or_ref_value_node("math", Json(value)); }
     void set_math_ref(const std::string& ref) { set_or_ref_ref_node("math", ref); }
     bool is_math_ref() const { return is_or_ref_ref("math"); }
     bool is_set_math() const { return values_.count("math") > 0; }
@@ -237,17 +256,17 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("mathWidget");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("mathWidget");
         if (values_.count("math")) d["math"] = values_.at("math");
         if (values_.count("label")) d["label"] = values_.at("label");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -260,8 +279,8 @@ class SimpleWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("SimpleWidget-0001"), "SimpleWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"value", "StringOrRef", true, std::nullopt, std::string("SimpleWidget-0001"), "SimpleWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -276,9 +295,10 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "SimpleWidget"; }
+    std::optional<std::string> get_type_value() const override { return std::string("simpleWidget"); }
     const std::map<std::string, std::vector<FieldSpec>>& namespace_fields() const override {
         static const std::map<std::string, std::vector<FieldSpec>> m = {
-            {"acme", {FieldSpec{"acme@priority", "NumberOrRef", false, std::string("SimpleWidget-acme-0001"), std::nullopt, "SimpleWidget-acme-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}}}
+            {"acme", {FieldSpec{"acme@priority", "NumberOrRef", false, std::string("SimpleWidget-acme-0001"), std::nullopt, "SimpleWidget-acme-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}}}
         };
         return m;
     }
@@ -294,7 +314,7 @@ public:
 
     std::string get_value_value() const { return get_or_ref_value_node("value").as<std::string>(); }
     std::string get_value_ref() const { return get_or_ref_ref_node("value").as<std::string>(); }
-    void set_value_value(const std::string& value) { set_or_ref_value_node("value", jsoncons::json(value)); }
+    void set_value_value(const std::string& value) { set_or_ref_value_node("value", Json(value)); }
     void set_value_ref(const std::string& ref) { set_or_ref_ref_node("value", ref); }
     bool is_value_ref() const { return is_or_ref_ref("value"); }
     bool is_set_value() const { return values_.count("value") > 0; }
@@ -302,7 +322,7 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
@@ -310,17 +330,17 @@ public:
 
     double get_acme_priority_value() const { return get_or_ref_value_node("acme@priority").as<double>(); }
     std::string get_acme_priority_ref() const { return get_or_ref_ref_node("acme@priority").as<std::string>(); }
-    void set_acme_priority_value(double value) { set_or_ref_value_node("acme@priority", jsoncons::json(value)); }
+    void set_acme_priority_value(double value) { set_or_ref_value_node("acme@priority", Json(value)); }
     void set_acme_priority_ref(const std::string& ref) { set_or_ref_ref_node("acme@priority", ref); }
     bool is_acme_priority_ref() const { return is_or_ref_ref("acme@priority"); }
     bool is_set_acme_priority() const { return values_.count("acme@priority") > 0; }
     void unset_acme_priority() { values_.erase("acme@priority"); or_ref_is_ref_.erase("acme@priority"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("simpleWidget");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("simpleWidget");
         if (values_.count("value")) d["value"] = values_.at("value");
         if (values_.count("label")) d["label"] = values_.at("label");
         if (values_.count("acme@priority")) d["acme@priority"] = values_.at("acme@priority");
@@ -334,15 +354,15 @@ class TypesWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"anyValue", "any", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"enabled", "BooleanOrRef", false, std::string("TypesWidget-0001"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"count", "IntegerOrRef", false, std::string("TypesWidget-0003"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"items", "ArrayOrRef", false, std::string("TypesWidget-0004"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"settings", "DictOrRef", false, std::string("TypesWidget-0005"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"extras", "any-dict", false, std::string("TypesWidget-0007"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"primaryNote", "ref-class", false, std::string("TypesWidget-0006"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false},
-            FieldSpec{"report", "ref-discriminator", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false}
+            FieldSpec{"anyValue", "any", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"enabled", "BooleanOrRef", false, std::string("TypesWidget-0001"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"count", "IntegerOrRef", false, std::string("TypesWidget-0003"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"items", "ArrayOrRef", false, std::string("TypesWidget-0004"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::string("any"), std::nullopt},
+            FieldSpec{"settings", "DictOrRef", false, std::string("TypesWidget-0005"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::string("any"), std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"extras", "any-dict", false, std::string("TypesWidget-0007"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"primaryNote", "ref-class", false, std::string("TypesWidget-0006"), std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Note"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"report", "ref-discriminator", false, std::nullopt, std::nullopt, "TypesWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractReport"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -353,16 +373,22 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "TypesWidget"; }
+    const AnyDictCollection* find_any_dict_collection(const std::string& field_name) const override {
+        if (field_name == "extras") return &extras_;
+        return nullptr;
+    }
+    std::vector<std::string> id_collection_names() const override { return {"extras"}; }
+    std::optional<std::string> get_type_value() const override { return std::string("typesWidget"); }
     std::string get_type() const { return "typesWidget"; }
 
-    jsoncons::json get_anyValue() const { auto it = values_.find("anyValue"); if (it == values_.end()) throw ApiError(std::string("anyValue") + " is not set"); return it->second; }
-    void set_anyValue(const jsoncons::json& value) { values_["anyValue"] = value; }
+    Json get_anyValue() const { auto it = values_.find("anyValue"); if (it == values_.end()) throw ApiError(std::string("anyValue") + " is not set"); return it->second; }
+    void set_anyValue(const Json& value) { values_["anyValue"] = value; }
     bool is_set_anyValue() const { return values_.count("anyValue") > 0; }
     void unset_anyValue() { values_.erase("anyValue"); }
 
     bool get_enabled_value() const { return get_or_ref_value_node("enabled").as<bool>(); }
     std::string get_enabled_ref() const { return get_or_ref_ref_node("enabled").as<std::string>(); }
-    void set_enabled_value(bool value) { set_or_ref_value_node("enabled", jsoncons::json(value)); }
+    void set_enabled_value(bool value) { set_or_ref_value_node("enabled", Json(value)); }
     void set_enabled_ref(const std::string& ref) { set_or_ref_ref_node("enabled", ref); }
     bool is_enabled_ref() const { return is_or_ref_ref("enabled"); }
     bool is_set_enabled() const { return values_.count("enabled") > 0; }
@@ -370,23 +396,23 @@ public:
 
     int64_t get_count_value() const { return get_or_ref_value_node("count").as<int64_t>(); }
     std::string get_count_ref() const { return get_or_ref_ref_node("count").as<std::string>(); }
-    void set_count_value(int64_t value) { set_or_ref_value_node("count", jsoncons::json(value)); }
+    void set_count_value(int64_t value) { set_or_ref_value_node("count", Json(value)); }
     void set_count_ref(const std::string& ref) { set_or_ref_ref_node("count", ref); }
     bool is_count_ref() const { return is_or_ref_ref("count"); }
     bool is_set_count() const { return values_.count("count") > 0; }
     void unset_count() { values_.erase("count"); or_ref_is_ref_.erase("count"); }
 
-    jsoncons::json get_items_value() const { return get_or_ref_value_node("items"); }
+    Json get_items_value() const { return get_or_ref_value_node("items"); }
     std::string get_items_ref() const { return get_or_ref_ref_node("items").as<std::string>(); }
-    void set_items_value(const jsoncons::json& value) { set_or_ref_value_node("items", value); }
+    void set_items_value(const Json& value) { set_or_ref_value_node("items", value); }
     void set_items_ref(const std::string& ref) { set_or_ref_ref_node("items", ref); }
     bool is_items_ref() const { return is_or_ref_ref("items"); }
     bool is_set_items() const { return values_.count("items") > 0; }
     void unset_items() { values_.erase("items"); or_ref_is_ref_.erase("items"); }
 
-    jsoncons::json get_settings_value() const { return get_or_ref_value_node("settings"); }
+    Json get_settings_value() const { return get_or_ref_value_node("settings"); }
     std::string get_settings_ref() const { return get_or_ref_ref_node("settings").as<std::string>(); }
-    void set_settings_value(const jsoncons::json& value) { set_or_ref_value_node("settings", value); }
+    void set_settings_value(const Json& value) { set_or_ref_value_node("settings", value); }
     void set_settings_ref(const std::string& ref) { set_or_ref_ref_node("settings", ref); }
     bool is_settings_ref() const { return is_or_ref_ref("settings"); }
     bool is_set_settings() const { return values_.count("settings") > 0; }
@@ -394,16 +420,16 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
     std::vector<std::string> get_extras() const { return extras_.ids(); }
-    jsoncons::json get_extras_item(const std::string& item_id) const { return extras_.get(item_id); }
-    void add_extras(const std::string& item_id, const jsoncons::json& value) { extras_.add(item_id, value); }
-    void insert_extras(size_t index, const std::string& item_id, const jsoncons::json& value) { extras_.insert(index, item_id, value); }
+    Json get_extras_item(const std::string& item_id) const { return extras_.get(item_id); }
+    void add_extras(const std::string& item_id, const Json& value) { extras_.add(item_id, value); }
+    void insert_extras(size_t index, const std::string& item_id, const Json& value) { extras_.insert(index, item_id, value); }
     void remove_extras(const std::string& item_id) { extras_.remove(item_id); }
     void set_id_on_extras(const std::string& old_id, const std::string& new_id) { extras_.set_id(old_id, new_id); }
 
@@ -442,18 +468,18 @@ public:
         SedBase::set_child_field(field_name, std::move(child));
     }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("typesWidget");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("typesWidget");
         if (values_.count("anyValue")) d["anyValue"] = values_.at("anyValue");
         if (values_.count("enabled")) d["enabled"] = values_.at("enabled");
         if (values_.count("count")) d["count"] = values_.at("count");
         if (values_.count("items")) d["items"] = values_.at("items");
         if (values_.count("settings")) d["settings"] = values_.at("settings");
         if (values_.count("label")) d["label"] = values_.at("label");
-        if (extras_.size() > 0) { jsoncons::json sub = jsoncons::json::object(); for (const auto& i : extras_.ids()) sub[i] = extras_.get(i); d["extras"] = sub; }
+        if (extras_.size() > 0) { Json sub = Json::object(); for (const auto& i : extras_.ids()) sub[i] = extras_.get(i); d["extras"] = sub; }
         if (primaryNote_) d["primaryNote"] = primaryNote_->to_json_value();
         if (report_) d["report"] = report_->to_json_value();
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -471,8 +497,8 @@ class SimpleReport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"source", "SIdRef", true, std::nullopt, std::string("SimpleReport-0001"), "SimpleReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"format", "StringOrRef", false, std::string("AbstractReport-0001"), std::nullopt, "AbstractReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"source", "SIdRef", true, std::nullopt, std::string("SimpleReport-0001"), "SimpleReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"format", "StringOrRef", false, std::string("AbstractReport-0001"), std::nullopt, "AbstractReport-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -487,26 +513,27 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "SimpleReport"; }
+    std::optional<std::string> get_type_value() const override { return std::string("simpleReport"); }
     std::string get_type() const { return "simpleReport"; }
 
     std::string get_source() const { auto it = values_.find("source"); if (it == values_.end()) throw ApiError(std::string("source") + " is not set"); return it->second.as<std::string>(); }
-    void set_source(const std::string& value) { values_["source"] = jsoncons::json(value); }
+    void set_source(const std::string& value) { values_["source"] = Json(value); }
     bool is_set_source() const { return values_.count("source") > 0; }
     void unset_source() { values_.erase("source"); }
 
     std::string get_format_value() const { return get_or_ref_value_node("format").as<std::string>(); }
     std::string get_format_ref() const { return get_or_ref_ref_node("format").as<std::string>(); }
-    void set_format_value(const std::string& value) { set_or_ref_value_node("format", jsoncons::json(value)); }
+    void set_format_value(const std::string& value) { set_or_ref_value_node("format", Json(value)); }
     void set_format_ref(const std::string& ref) { set_or_ref_ref_node("format", ref); }
     bool is_format_ref() const { return is_or_ref_ref("format"); }
     bool is_set_format() const { return values_.count("format") > 0; }
     void unset_format() { values_.erase("format"); or_ref_is_ref_.erase("format"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("simpleReport");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("simpleReport");
         if (values_.count("source")) d["source"] = values_.at("source");
         if (values_.count("format")) d["format"] = values_.at("format");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -519,7 +546,7 @@ class Choice : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -530,21 +557,22 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "Choice"; }
+    std::optional<std::string> get_type_value() const override { return std::string("choice"); }
     std::string get_type() const { return "choice"; }
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("choice");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("choice");
         if (values_.count("label")) d["label"] = values_.at("label");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
@@ -556,7 +584,7 @@ class Note : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"text", "StringOrRef", true, std::nullopt, std::string("Note-0001"), "Note-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"text", "StringOrRef", true, std::nullopt, std::string("Note-0001"), "Note-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -574,14 +602,14 @@ public:
 
     std::string get_text_value() const { return get_or_ref_value_node("text").as<std::string>(); }
     std::string get_text_ref() const { return get_or_ref_ref_node("text").as<std::string>(); }
-    void set_text_value(const std::string& value) { set_or_ref_value_node("text", jsoncons::json(value)); }
+    void set_text_value(const std::string& value) { set_or_ref_value_node("text", Json(value)); }
     void set_text_ref(const std::string& ref) { set_or_ref_ref_node("text", ref); }
     bool is_text_ref() const { return is_or_ref_ref("text"); }
     bool is_set_text() const { return values_.count("text") > 0; }
     void unset_text() { values_.erase("text"); or_ref_is_ref_.erase("text"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         if (values_.count("text")) d["text"] = values_.at("text");
@@ -595,8 +623,8 @@ class WeightedChoice : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"weight", "NumberOrRef", true, std::nullopt, std::string("WeightedChoice-0001"), "WeightedChoice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"weight", "NumberOrRef", true, std::nullopt, std::string("WeightedChoice-0001"), "WeightedChoice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("Choice-0003"), std::nullopt, "Choice-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -611,11 +639,12 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "WeightedChoice"; }
+    std::optional<std::string> get_type_value() const override { return std::string("weightedChoice"); }
     std::string get_type() const { return "weightedChoice"; }
 
     double get_weight_value() const { return get_or_ref_value_node("weight").as<double>(); }
     std::string get_weight_ref() const { return get_or_ref_ref_node("weight").as<std::string>(); }
-    void set_weight_value(double value) { set_or_ref_value_node("weight", jsoncons::json(value)); }
+    void set_weight_value(double value) { set_or_ref_value_node("weight", Json(value)); }
     void set_weight_ref(const std::string& ref) { set_or_ref_ref_node("weight", ref); }
     bool is_weight_ref() const { return is_or_ref_ref("weight"); }
     bool is_set_weight() const { return values_.count("weight") > 0; }
@@ -623,17 +652,17 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("weightedChoice");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("weightedChoice");
         if (values_.count("weight")) d["weight"] = values_.at("weight");
         if (values_.count("label")) d["label"] = values_.at("label");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -646,8 +675,8 @@ class AcmeWidget : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"acme@acmeLevel", "NumberOrRef", true, std::nullopt, std::string("acme-AcmeWidget-0001"), "AcmeWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false},
-            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false}
+            FieldSpec{"acme@acmeLevel", "NumberOrRef", true, std::nullopt, std::string("acme-AcmeWidget-0001"), "AcmeWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"label", "StringOrRef", false, std::string("AbstractWidget-0001"), std::nullopt, "AbstractWidget-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -662,11 +691,12 @@ public:
     std::optional<std::string> desc_rule_id() const override { return std::nullopt; }
     std::string base_catchall() const override { return "TestBase-0000"; }
     std::string class_name() const override { return "AcmeWidget"; }
+    std::optional<std::string> get_type_value() const override { return std::string("acme@acmeWidget"); }
     std::string get_type() const { return "acme@acmeWidget"; }
 
     double get_acme_acmeLevel_value() const { return get_or_ref_value_node("acme@acmeLevel").as<double>(); }
     std::string get_acme_acmeLevel_ref() const { return get_or_ref_ref_node("acme@acmeLevel").as<std::string>(); }
-    void set_acme_acmeLevel_value(double value) { set_or_ref_value_node("acme@acmeLevel", jsoncons::json(value)); }
+    void set_acme_acmeLevel_value(double value) { set_or_ref_value_node("acme@acmeLevel", Json(value)); }
     void set_acme_acmeLevel_ref(const std::string& ref) { set_or_ref_ref_node("acme@acmeLevel", ref); }
     bool is_acme_acmeLevel_ref() const { return is_or_ref_ref("acme@acmeLevel"); }
     bool is_set_acme_acmeLevel() const { return values_.count("acme@acmeLevel") > 0; }
@@ -674,17 +704,17 @@ public:
 
     std::string get_label_value() const { return get_or_ref_value_node("label").as<std::string>(); }
     std::string get_label_ref() const { return get_or_ref_ref_node("label").as<std::string>(); }
-    void set_label_value(const std::string& value) { set_or_ref_value_node("label", jsoncons::json(value)); }
+    void set_label_value(const std::string& value) { set_or_ref_value_node("label", Json(value)); }
     void set_label_ref(const std::string& ref) { set_or_ref_ref_node("label", ref); }
     bool is_label_ref() const { return is_or_ref_ref("label"); }
     bool is_set_label() const { return values_.count("label") > 0; }
     void unset_label() { values_.erase("label"); or_ref_is_ref_.erase("label"); }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = jsoncons::json::object();
+    Json own_json_value() const override {
+        Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : jsoncons::json("acme@acmeWidget");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("acme@acmeWidget");
         if (values_.count("acme@acmeLevel")) d["acme@acmeLevel"] = values_.at("acme@acmeLevel");
         if (values_.count("label")) d["label"] = values_.at("label");
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -697,14 +727,18 @@ public:
 /// round-trips unchanged, never itself a validation error.
 class UnknownAbstractWidget : public SedBase {
 public:
-    UnknownAbstractWidget(std::string type_value, jsoncons::json raw)
+    UnknownAbstractWidget(std::string type_value, Json raw)
         : type_value_(std::move(type_value)), raw_(std::move(raw)) {}
 
     std::string get_type() const { return type_value_; }
+    std::optional<std::string> get_type_value() const override {
+        if (!raw_.contains("_type") || !raw_.at("_type").is_string()) return std::nullopt;
+        return type_value_;
+    }
     std::string class_name() const override { return "UnknownAbstractWidget"; }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = raw_;
+    Json own_json_value() const override {
+        Json d = raw_;
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         return d;
@@ -721,7 +755,7 @@ protected:
 
 private:
     std::string type_value_;
-    jsoncons::json raw_;
+    Json raw_;
 };
 
 /// Opaque holder for a AbstractReport instance whose _type names an
@@ -729,14 +763,18 @@ private:
 /// round-trips unchanged, never itself a validation error.
 class UnknownAbstractReport : public SedBase {
 public:
-    UnknownAbstractReport(std::string type_value, jsoncons::json raw)
+    UnknownAbstractReport(std::string type_value, Json raw)
         : type_value_(std::move(type_value)), raw_(std::move(raw)) {}
 
     std::string get_type() const { return type_value_; }
+    std::optional<std::string> get_type_value() const override {
+        if (!raw_.contains("_type") || !raw_.at("_type").is_string()) return std::nullopt;
+        return type_value_;
+    }
     std::string class_name() const override { return "UnknownAbstractReport"; }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = raw_;
+    Json own_json_value() const override {
+        Json d = raw_;
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         return d;
@@ -753,7 +791,7 @@ protected:
 
 private:
     std::string type_value_;
-    jsoncons::json raw_;
+    Json raw_;
 };
 
 /// Opaque holder for a ChoiceInline instance whose _type names an
@@ -761,14 +799,18 @@ private:
 /// round-trips unchanged, never itself a validation error.
 class UnknownChoiceInline : public SedBase {
 public:
-    UnknownChoiceInline(std::string type_value, jsoncons::json raw)
+    UnknownChoiceInline(std::string type_value, Json raw)
         : type_value_(std::move(type_value)), raw_(std::move(raw)) {}
 
     std::string get_type() const { return type_value_; }
+    std::optional<std::string> get_type_value() const override {
+        if (!raw_.contains("_type") || !raw_.at("_type").is_string()) return std::nullopt;
+        return type_value_;
+    }
     std::string class_name() const override { return "UnknownChoiceInline"; }
 
-    jsoncons::json own_json_value() const override {
-        jsoncons::json d = raw_;
+    Json own_json_value() const override {
+        Json d = raw_;
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         return d;
@@ -785,7 +827,7 @@ protected:
 
 private:
     std::string type_value_;
-    jsoncons::json raw_;
+    Json raw_;
 };
 
 }  // namespace sed2test

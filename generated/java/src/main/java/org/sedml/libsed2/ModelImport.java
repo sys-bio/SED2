@@ -19,11 +19,11 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ModelImport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("location", "StringOrRef", true, "ModelImport-0002", "ModelImport-0001", "ModelImport-0000", null, null, null, null, null, false),
-        new FieldSpec("language", "StringOrRef", true, "ModelImport-0005", "ModelImport-0004", "ModelImport-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("location", "StringOrRef", true, "ModelImport-0002", "ModelImport-0001", "ModelImport-0000", null, null, null, null, null, false, 1, null, "ModelImport-0003", null, null),
+        new FieldSpec("language", "StringOrRef", true, "ModelImport-0005", "ModelImport-0004", "ModelImport-0000", null, null, null, null, null, false, 1, null, "ModelImport-0006", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location", "language");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -38,6 +38,8 @@ public final class ModelImport extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "modelImport"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": false}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getLocationValue() { return getOrRefValueNode("location").asText(); }
     public String getLocationRef() { return getOrRefRefNode("location").asText(); }

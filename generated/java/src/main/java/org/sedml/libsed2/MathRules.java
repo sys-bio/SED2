@@ -15,9 +15,9 @@ public final class MathRules {
     /** value is the field's own raw string - never a reference: SedBase's
      * validateOwn() only calls here for a literal string value (Types-
      * 0001.md: "When the math attribute is itself a reference, ... apply
-     * only if the reference resolves statically to a string constant",
-     * out of scope until reference resolution exists for Java - see this
-     * module's docstring). Returns [] if value parses and every function
+     * only if the reference resolves statically to a string constant" -
+     * not implemented by either target: a reference-form value goes to the
+     * reference rules instead). Returns [] if value parses and every function
      * call / bare identifier it contains checks out; otherwise one
      * ValidationProblem per violation (Types-0001 short-circuits the rest,
      * same as emit_python.py's _check_math_field - an unparseable

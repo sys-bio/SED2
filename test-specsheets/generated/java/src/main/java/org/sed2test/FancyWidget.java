@@ -19,12 +19,12 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class FancyWidget extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("value", "StringOrRef", true, null, "FancyWidget-0001", "FancyWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("retries", "integer", false, "WidgetOptions-0001", null, "WidgetOptions-0000", 0.0, null, null, null, null, false),
-        new FieldSpec("timeoutSeconds", "number", false, "WidgetOptions-0002", null, "WidgetOptions-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("choices", "dict", false, null, null, "FancyWidget-0000", null, null, null, null, "ChoiceInline", false),
-        new FieldSpec("notes", "array", false, null, null, "WidgetOptions-0000", null, null, null, "Note", null, false)
+        new FieldSpec("value", "StringOrRef", true, null, "FancyWidget-0001", "FancyWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("retries", "integer", false, "WidgetOptions-0001", null, "WidgetOptions-0000", 0.0, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("timeoutSeconds", "number", false, "WidgetOptions-0002", null, "WidgetOptions-0000", null, 0.0, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("choices", "dict", false, null, null, "FancyWidget-0000", null, null, null, null, "ChoiceInline", false, null, null, null, null, null),
+        new FieldSpec("notes", "array", false, null, null, "WidgetOptions-0000", null, null, null, "Note", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("value");
     private final IdKeyedCollection<SedBase> choices = new IdKeyedCollection<>();
@@ -93,6 +93,17 @@ public final class FancyWidget extends SedBase {
         { int idx = 0; for (SedBase item : notes.items()) { out.add(new ChildLoc(item, "/notes/" + idx)); idx++; } }
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "choices": return choices;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("choices"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

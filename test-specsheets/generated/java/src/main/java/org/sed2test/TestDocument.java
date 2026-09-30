@@ -19,9 +19,9 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class TestDocument extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("version", "string", true, null, "TestDocument-0001", "TestDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false),
-        new FieldSpec("widgets", "dict", false, "TestDocument-0002", null, "TestDocument-0000", null, null, null, null, "AbstractWidget", false),
-        new FieldSpec("reports", "dict", false, "TestDocument-0003", null, "TestDocument-0000", null, null, null, null, "AbstractReport", false)
+        new FieldSpec("version", "string", true, null, "TestDocument-0001", "TestDocument-0000", null, null, "^v\\d+\\.\\d+\\.\\d+$", null, null, false, null, null, null, null, null),
+        new FieldSpec("widgets", "dict", false, "TestDocument-0002", null, "TestDocument-0000", null, null, null, null, "AbstractWidget", false, null, null, null, null, null),
+        new FieldSpec("reports", "dict", false, "TestDocument-0003", null, "TestDocument-0000", null, null, null, null, "AbstractReport", false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("version");
     private final IdKeyedCollection<SedBase> widgets = new IdKeyedCollection<>();
@@ -35,6 +35,9 @@ public final class TestDocument extends SedBase {
     @Override public String nameRuleId() { return "TestBase-0001"; }
     @Override public String descRuleId() { return null; }
     @Override public String baseCatchall() { return "TestBase-0000"; }
+    public TestDocument() { attach(null, this); }
+    @Override public boolean isDocumentClass() { return true; }
+    @Override public String maxKnownDocumentVersion() { return "v1.0.0"; }
 
     public String getVersion() { if (!values.containsKey("version")) throw new ApiError("version" + " is not set"); return values.get("version").asText(); }
     public void setVersion(String value) { values.put("version", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
@@ -70,6 +73,18 @@ public final class TestDocument extends SedBase {
         for (String i : reports.ids()) out.add(new ChildLoc(reports.get(i), "/reports/" + i));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "widgets": return widgets;
+            case "reports": return reports;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("widgets", "reports"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

@@ -16,7 +16,7 @@ namespace sed2test {
 
 inline std::unique_ptr<TestDocument> read_from_string(const std::string& text) {
     register_rules();
-    jsoncons::json raw = jsoncons::json::parse(text);
+    Json raw = Json::parse(text);
     auto obj = std::make_unique<TestDocument>();
     load_fields(obj.get(), raw);
     obj->attach(nullptr, obj.get());
@@ -31,7 +31,7 @@ inline std::unique_ptr<TestDocument> read_from_file(const std::string& path) {
 }
 
 inline std::string write_to_string(const TestDocument& doc) {
-    jsoncons::json v = doc.to_json_value();
+    Json v = doc.to_json_value();
     std::string out;
     v.dump(out, jsoncons::indenting::indent);
     return out;

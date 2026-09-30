@@ -1180,6 +1180,8 @@ def _dispatch_AbstractWidget(type_value):
         'typesWidget': TypesWidget,
         'acme@acmeWidget': AcmeWidget,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1189,6 +1191,8 @@ def parse_AbstractWidget(raw: dict):
     _type still returns an UnknownAbstractWidget holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractWidget-0002', '')
     tv = raw['_type']
@@ -1209,6 +1213,8 @@ def _dispatch_AbstractReport(type_value):
     branches = {
         'simpleReport': SimpleReport,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1218,6 +1224,8 @@ def parse_AbstractReport(raw: dict):
     _type still returns an UnknownAbstractReport holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractReport-0002', '')
     tv = raw['_type']
@@ -1239,6 +1247,8 @@ def _dispatch_ChoiceInline(type_value):
         'choice': Choice,
         'weightedChoice': WeightedChoice,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1248,6 +1258,8 @@ def parse_ChoiceInline(raw: dict):
     _type still returns an UnknownChoiceInline holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('ChoiceInline-0000', '', **{'schema-message': 'missing _type'})
     tv = raw['_type']
@@ -1265,6 +1277,8 @@ def parse_ChoiceInline(raw: dict):
 
 
 def _load_fields(obj, raw: dict):
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if 'name' in raw: obj.set_name(raw['name'])
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']

@@ -2,7 +2,7 @@ package org.sed2test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -66,8 +66,8 @@ public final class Dispatch {
         if (m.matches() && !known.contains(m.group(1))) {
             return new Result(new UnknownAbstractWidget(tv, raw), null);
         }
-        Map<String, Object> ph = new HashMap<>();
-        ph.put("schema-message", "unrecognized _type '" + tv + "'");
+        Map<String, Object> ph = new LinkedHashMap<>();
+        ph.put("schema-message", "unrecognized _type " + PyFmt.repr(raw.get("_type")));
         return new Result(new UnknownAbstractWidget(tv, raw), RuleCatalog.makeProblem("AbstractWidget-0000", "", ph));
     }
 
@@ -89,14 +89,14 @@ public final class Dispatch {
         if (m.matches() && !known.contains(m.group(1))) {
             return new Result(new UnknownAbstractReport(tv, raw), null);
         }
-        Map<String, Object> ph = new HashMap<>();
-        ph.put("schema-message", "unrecognized _type '" + tv + "'");
+        Map<String, Object> ph = new LinkedHashMap<>();
+        ph.put("schema-message", "unrecognized _type " + PyFmt.repr(raw.get("_type")));
         return new Result(new UnknownAbstractReport(tv, raw), RuleCatalog.makeProblem("AbstractReport-0000", "", ph));
     }
 
     public static Result parseChoiceInline(JsonNode raw) {
         if (!raw.has("_type")) {
-            Map<String, Object> ph0 = new HashMap<>();
+            Map<String, Object> ph0 = new LinkedHashMap<>();
             ph0.put("schema-message", "missing _type");
             return new Result(null, RuleCatalog.makeProblem("ChoiceInline-0000", "", ph0));
         }
@@ -115,8 +115,8 @@ public final class Dispatch {
         if (m.matches() && !known.contains(m.group(1))) {
             return new Result(new UnknownChoiceInline(tv, raw), null);
         }
-        Map<String, Object> ph = new HashMap<>();
-        ph.put("schema-message", "unrecognized _type '" + tv + "'");
+        Map<String, Object> ph = new LinkedHashMap<>();
+        ph.put("schema-message", "unrecognized _type " + PyFmt.repr(raw.get("_type")));
         return new Result(new UnknownChoiceInline(tv, raw), RuleCatalog.makeProblem("ChoiceInline-0000", "", ph));
     }
 
@@ -174,13 +174,13 @@ public final class Dispatch {
                 obj.setNamespaceAttribute(prefix, nsKey, raw.get(key));
                 if (obj.knownNamespacePrefixes().contains(prefix)) {
                     String catchall = obj.namespaceCatchall().getOrDefault(prefix, obj.ownCatchall());
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("schema-message", "Additional property '" + key + "' is not allowed.");
                     obj.loadProblems.add(RuleCatalog.makeProblem(catchall, "", ph));
                 }
                 continue;
             }
-            Map<String, Object> ph = new HashMap<>();
+            Map<String, Object> ph = new LinkedHashMap<>();
             ph.put("schema-message", "Additional property '" + key + "' is not allowed.");
             obj.loadProblems.add(RuleCatalog.makeProblem(obj.ownCatchall(), "", ph));
         }
@@ -190,11 +190,11 @@ public final class Dispatch {
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -217,7 +217,7 @@ public final class Dispatch {
                     JsonNode itemRaw = rawValue.get(itemId);
                     if (!itemId.matches(LeafValidation.SID_PATTERN)) {
                         String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                        Map<String, Object> ph = new HashMap<>();
+                        Map<String, Object> ph = new LinkedHashMap<>();
                         ph.put("attr", spec.name);
                         ph.put("class", obj.getClass().getSimpleName());
                         ph.put("id", obj.ownIdForMessage());
@@ -239,11 +239,11 @@ public final class Dispatch {
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isArray()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -263,11 +263,11 @@ public final class Dispatch {
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -278,7 +278,7 @@ public final class Dispatch {
                     JsonNode itemValue = rawValue.get(itemId);
                     if (!itemId.matches(LeafValidation.SID_PATTERN)) {
                         String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                        Map<String, Object> ph = new HashMap<>();
+                        Map<String, Object> ph = new LinkedHashMap<>();
                         ph.put("attr", spec.name);
                         ph.put("class", obj.getClass().getSimpleName());
                         ph.put("id", obj.ownIdForMessage());
@@ -299,11 +299,11 @@ public final class Dispatch {
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
