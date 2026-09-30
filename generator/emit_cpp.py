@@ -15,7 +15,7 @@ load_fields() - the only point that still has the raw JSON before an
 unrecognized key is dropped.
 
 The library is emitted header-only (all methods defined inline) since
-every type here is either a thin wrapper over jsoncons::json or a small
+every type here is either a thin wrapper over Json or a small
 value/aggregate type - this sidesteps needing a compiled static library
 target while still giving CMake a clean INTERFACE library to link tests
 against. jsoncons itself is header-only for the same reason.
@@ -31,6 +31,28 @@ FetchContent - no equivalent of Java's one-line Maven dependency, since
 ANTLR publishes no prebuilt C++ runtime package). MathAst.hpp/
 PredefinedFunctions.hpp/MathRules.hpp themselves stay header-only, same as
 everything else here.
+
+Reference resolution and every handwritten rule (Design.md's Validation
+section) follow the reference implementation's structure too, split the way
+the Python target splits them: the spec-independent machinery is a set of
+hand-written headers under templates/cpp/runtime/ (PyFormat.hpp - Json alias
++ Python-compatible str()/repr()/json.dumps() so messages match across
+targets; Reference.hpp - reference syntax; OutputsShape.hpp - the outputs.json
+expr/valid interpreter, the analog of emit_python.py's OUTPUTS_SHAPE_PY;
+RefRules.hpp - get_sed_reference and the per-field / per-element / whole-
+document dispatchers), and each numbered handwritten rule is one small file
+under templates/cpp/rules/<RuleID>.hpp with a fixed check() function in
+namespace rules::<id>. Both directories are copied verbatim into the include
+tree (only the literal namespace name "sed2test" is rewritten to
+--cpp-namespace) - the rules only for rule IDs the spec defines and that are in
+_IMPLEMENTED_HANDWRITTEN_RULE_IDS_CPP, and a generated Rules.hpp includes them
+and defines the SED2_REFRULES_* group macros RefRules.hpp compiles against
+(so a spec tree without these rules - the synthetic test-specsheets/ - just
+gets no-ops). Each concrete tasks/ class embeds its own outputs.json (the
+`outputs_json()` override, parsed lazily once). All JSON is jsoncons::ojson
+(alias `Json`): document key order is significant (tasks are ordered).
+SedBase::validate_own() only *declares* MathRules and RefRules (Runtime.hpp);
+their inline bodies come with GeneratedModel.hpp's includes.
 
 Ownership: children (dict/array collection items) are owned via
 std::unique_ptr<SedBase>; parent/document backpointers are non-owning raw
@@ -103,6 +125,9 @@ def _runtime_hpp(NS: str) -> str:
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
+#include "PyFormat.hpp"
+#include "Reference.hpp"
+
 namespace {NS} {{
 
 /// Raised for any misuse of the generated API itself (wrong-kind OrRef
@@ -147,6 +172,11 @@ struct FieldSpec {{
     std::optional<std::string> item_class;
     std::optional<std::string> item_discriminator;
     bool is_math = false;  // x-math (Design.md's Math section / Types-0001..0004)
+    std::optional<int64_t> min_length;                 // "minLength" (string-shaped leaves)
+    std::optional<std::vector<std::string>> enum_values;  // "enum" (string-shaped leaves)
+    std::optional<std::string> ref_type_rule_id;       // the formulaic "if a reference, must resolve to type X" rule
+    std::optional<std::string> item_kind;              // ArrayOrRef element / DictOrRef value kind
+    std::optional<std::string> ref_target;             // x-ref-target: "model" | "annotatedData"
 }};
 
 /// Rule catalogue + ValidationProblem factory. Populated by
@@ -219,12 +249,34 @@ public:
             const std::string& attr, const std::string& location);
 }};
 
+class SedBase;
+
+/// Forward-declared (full declaration, no body) for the same header-cycle
+/// reason as MathRules above: SedBase::validate_own() dispatches every
+/// reference-driven rule (SEDBase-0005 .. -0017, AbstractTask-0003,
+/// Repeat-0008 .. -0010, LoopVariable-0004, SEDDocument-0009 .. -0011 and
+/// -0013) through these entry points, whose `inline` bodies live in
+/// RefRules.hpp (pulled in by GeneratedModel.hpp). Each one is a no-op for a
+/// spec tree that did not define the corresponding rules.
+class RefRules {{
+public:
+    static std::vector<ValidationProblem> check_reference_field(
+            const std::string& value, SedBase* document, const RuleCtx& base_ctx, SedBase* referrer,
+            const RefFieldInfo& info);
+    static std::vector<ValidationProblem> check_repeat_own_children(SedBase* self);
+    static std::vector<ValidationProblem> check_loop_variable_scope(SedBase* self);
+    static std::vector<ValidationProblem> check_namespace_usage_and_version(SedBase* document);
+    static std::vector<ValidationProblem> check_constants_ordering(SedBase* document);
+}};
+
 /// Per-field leaf validation, via the real JSON Schema validator
 /// (jsoncons's bundled jsonschema extension, per Design.md's Toolchain
 /// mandate) - a tiny schema fragment is built from one already-resolved
 /// field's own type, never a whole-document schema, since every combinator
 /// has already been resolved away by the generator at compose time (see
-/// generator/spec.py).
+/// generator/spec.py). Mirrors emit_python.py's leaf_schema_for()/
+/// leaf_value_ok() exactly; compiled fragments are cached by their
+/// parameters, since the same handful recur for every element validated.
 class LeafValidation {{
 public:
     static constexpr const char* SID_PATTERN = "^[A-Za-z_][A-Za-z0-9_]*$";
@@ -235,101 +287,117 @@ public:
         return std::regex_match(s, re);
     }}
 
-    static bool leaf_value_ok(const std::string& kind, const jsoncons::json& value,
+    static bool leaf_value_ok(const std::string& kind, const Json& value,
                                std::optional<double> minimum = std::nullopt,
                                std::optional<double> exclusive_minimum = std::nullopt,
-                               std::optional<std::string> pattern = std::nullopt) {{
-        jsoncons::json schema = base_schema(kind);
-        if (minimum) schema["minimum"] = *minimum;
-        if (exclusive_minimum) schema["exclusiveMinimum"] = *exclusive_minimum;
-        if (pattern && kind == "string") schema["pattern"] = *pattern;
-        auto compiled = jsoncons::jsonschema::make_json_schema(schema);
+                               std::optional<std::string> pattern = std::nullopt,
+                               std::optional<int64_t> min_length = std::nullopt,
+                               const std::optional<std::vector<std::string>>& enum_values = std::nullopt) {{
+        using schema_t = jsoncons::jsonschema::json_schema<Json>;
+        static std::map<std::string, std::unique_ptr<schema_t>> cache;
+        std::string key = kind;
+        key += '\\x1f';
+        if (minimum) key += "m" + std::to_string(*minimum);
+        key += '\\x1f';
+        if (exclusive_minimum) key += "x" + std::to_string(*exclusive_minimum);
+        key += '\\x1f';
+        if (pattern) key += "p" + *pattern;
+        key += '\\x1f';
+        if (min_length) key += "l" + std::to_string(*min_length);
+        key += '\\x1f';
+        if (enum_values) {{
+            key += "e";
+            for (const auto& e : *enum_values) key += e + '\\x1e';
+        }}
+        auto it = cache.find(key);
+        if (it == cache.end()) {{
+            Json schema = leaf_schema_for(kind, minimum, exclusive_minimum, pattern, min_length, enum_values);
+            it = cache.emplace(key, std::make_unique<schema_t>(jsoncons::jsonschema::make_json_schema(schema))).first;
+        }}
         bool ok = true;
         auto reporter = [&](const jsoncons::jsonschema::validation_message&) -> jsoncons::jsonschema::walk_result {{
             ok = false;
             return jsoncons::jsonschema::walk_result::advance;
         }};
-        compiled.validate(value, reporter);
+        it->second->validate(value, reporter);
         return ok;
     }}
 
 private:
-    static jsoncons::json base_schema(const std::string& kind) {{
-        jsoncons::json n = jsoncons::json::object();
-        if (kind == "string") {{
-            n["type"] = "string";
-        }} else if (kind == "integer") {{
-            n["type"] = "integer";
-        }} else if (kind == "number") {{
-            n["type"] = "number";
-        }} else if (kind == "boolean") {{
-            n["type"] = "boolean";
-        }} else if (kind == "SId") {{
-            n["type"] = "string";
-            n["pattern"] = SID_PATTERN;
-        }} else if (kind == "SIdRef") {{
-            n["type"] = "string";
-            n["pattern"] = SIDREF_PATTERN;
-        }} else if (kind == "StringOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json s = jsoncons::json::object();
-            s["type"] = "string";
-            any.push_back(s);
-            n["anyOf"] = any;
-        }} else if (kind == "NumberOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json num = jsoncons::json::object();
-            num["type"] = "number";
-            jsoncons::json ref = jsoncons::json::object();
-            ref["type"] = "string";
-            ref["pattern"] = SIDREF_PATTERN;
-            any.push_back(num);
-            any.push_back(ref);
-            n["anyOf"] = any;
-        }} else if (kind == "IntegerOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json val = jsoncons::json::object();
-            val["type"] = "integer";
-            jsoncons::json ref = jsoncons::json::object();
-            ref["type"] = "string";
-            ref["pattern"] = SIDREF_PATTERN;
-            any.push_back(val);
-            any.push_back(ref);
-            n["anyOf"] = any;
-        }} else if (kind == "BooleanOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json val = jsoncons::json::object();
-            val["type"] = "boolean";
-            jsoncons::json ref = jsoncons::json::object();
-            ref["type"] = "string";
-            ref["pattern"] = SIDREF_PATTERN;
-            any.push_back(val);
-            any.push_back(ref);
-            n["anyOf"] = any;
-        }} else if (kind == "ArrayOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json val = jsoncons::json::object();
-            val["type"] = "array";
-            jsoncons::json ref = jsoncons::json::object();
-            ref["type"] = "string";
-            ref["pattern"] = SIDREF_PATTERN;
-            any.push_back(val);
-            any.push_back(ref);
-            n["anyOf"] = any;
-        }} else if (kind == "DictOrRef") {{
-            jsoncons::json any = jsoncons::json::array();
-            jsoncons::json val = jsoncons::json::object();
-            val["type"] = "object";
-            jsoncons::json ref = jsoncons::json::object();
-            ref["type"] = "string";
-            ref["pattern"] = SIDREF_PATTERN;
-            any.push_back(val);
-            any.push_back(ref);
-            n["anyOf"] = any;
-        }} else {{
-            throw std::invalid_argument("unknown leaf kind: " + kind);
-        }}
+    static Json type_schema(const char* type) {{
+        Json n = Json::object();
+        n["type"] = type;
         return n;
+    }}
+    static Json ref_schema() {{
+        Json ref = Json::object();
+        ref["type"] = "string";
+        ref["pattern"] = SIDREF_PATTERN;
+        return ref;
+    }}
+    static Json any_of(const Json& a, const Json& b) {{
+        Json any = Json::array();
+        any.push_back(a);
+        any.push_back(b);
+        Json n = Json::object();
+        n["anyOf"] = any;
+        return n;
+    }}
+
+    static Json base_schema(const std::string& kind) {{
+        if (kind == "string") return type_schema("string");
+        if (kind == "integer") return type_schema("integer");
+        if (kind == "number") return type_schema("number");
+        if (kind == "boolean") return type_schema("boolean");
+        if (kind == "SId" || kind == "SIdRef") {{
+            Json n = type_schema("string");
+            n["pattern"] = kind == "SId" ? SID_PATTERN : SIDREF_PATTERN;
+            return n;
+        }}
+        if (kind == "StringOrRef") {{
+            Json any = Json::array();
+            any.push_back(type_schema("string"));
+            Json n = Json::object();
+            n["anyOf"] = any;
+            return n;
+        }}
+        if (kind == "NumberOrRef") return any_of(type_schema("number"), ref_schema());
+        if (kind == "IntegerOrRef") return any_of(type_schema("integer"), ref_schema());
+        if (kind == "BooleanOrRef") return any_of(type_schema("boolean"), ref_schema());
+        if (kind == "ArrayOrRef") return any_of(type_schema("array"), ref_schema());
+        if (kind == "DictOrRef") return any_of(type_schema("object"), ref_schema());
+        throw std::invalid_argument("unknown leaf kind: " + kind);
+    }}
+
+    static Json leaf_schema_for(const std::string& kind, std::optional<double> minimum,
+                                 std::optional<double> exclusive_minimum, const std::optional<std::string>& pattern,
+                                 std::optional<int64_t> min_length,
+                                 const std::optional<std::vector<std::string>>& enum_values) {{
+        Json base = base_schema(kind);
+        // minimum/exclusiveMinimum are numeric-only keywords - a no-op against
+        // a non-numeric instance (a reference string, for an *OrRef kind).
+        if (minimum) base["minimum"] = *minimum;
+        if (exclusive_minimum) base["exclusiveMinimum"] = *exclusive_minimum;
+        if (pattern || min_length || enum_values) {{
+            Json sc = Json::object();
+            if (pattern) sc["pattern"] = *pattern;
+            if (min_length) sc["minLength"] = *min_length;
+            if (enum_values) {{
+                Json arr = Json::array();
+                for (const auto& e : *enum_values) arr.push_back(e);
+                sc["enum"] = arr;
+            }}
+            if (kind == "StringOrRef") {{
+                // A StringOrRef's reference form is also a plain string, so
+                // pattern/minLength/enum are split onto the literal branch only.
+                Json lit = type_schema("string");
+                for (const auto& kv : sc.object_range()) lit[kv.key()] = kv.value();
+                base = any_of(lit, ref_schema());
+            }} else {{
+                for (const auto& kv : sc.object_range()) base[kv.key()] = kv.value();
+            }}
+        }}
+        return base;
     }}
 }};
 
@@ -391,6 +459,33 @@ public:
     virtual std::string base_catchall() const {{ return ""; }}
     virtual std::string class_name() const = 0;
 
+    // -- reference-resolution metadata (Design.md's Cross-references / -
+    // Validation sections), overridden per generated concrete class; see
+    // RefRules.hpp. Mirrors the reference implementation's
+    // _get_id_collection / _id_collection_names / _OUTPUTS_JSON /
+    // _IS_DOCUMENT_CLASS / _MAX_KNOWN_DOCUMENT_VERSION / get_type().
+    /// The ID-keyed dict-kind collection stored under `field_name`, or null.
+    virtual const IdKeyedCollection* find_dict_collection(const std::string& field_name) const {{
+        (void)field_name;
+        return nullptr;
+    }}
+    /// The any-dict-kind collection (raw JSON values, e.g. constants), or null.
+    virtual const AnyDictCollection* find_any_dict_collection(const std::string& field_name) const {{
+        (void)field_name;
+        return nullptr;
+    }}
+    /// Every ID-keyed collection field name THIS class declares (dict-kind and
+    /// any-dict-kind), for own_id_for_message().
+    virtual std::vector<std::string> id_collection_names() const {{ return {{}}; }}
+    /// core-spec.md Section 8's per-class outputs.json envelope; null for every
+    /// class except a concrete tasks/ one.
+    virtual const Json* outputs_json() const {{ return nullptr; }}
+    virtual bool is_document_class() const {{ return false; }}
+    virtual std::optional<std::string> max_known_document_version() const {{ return std::nullopt; }}
+    /// The class's own _type value (a generated class's const, or an Unknown
+    /// holder's raw type), when it has one.
+    virtual std::optional<std::string> get_type_value() const {{ return std::nullopt; }}
+
     // -- backpointers --
     SedBase* get_parent() const {{ return parent_; }}
     SedBase* get_document() const {{ return document_; }}
@@ -406,7 +501,7 @@ public:
     virtual std::vector<SedBase*> children() {{ return {{}}; }}
 
     // -- universal name/description (TestBaseFields) --
-    // Stored as the raw jsoncons::json (not a coerced std::string) so a
+    // Stored as the raw Json (not a coerced std::string) so a
     // wrong-typed incoming value (e.g. a JSON number for `name`) is
     // preserved for the leaf-type check in validate_own() instead of
     // being silently stringified away.
@@ -415,7 +510,7 @@ public:
         return name_node_->as<std::string>();
     }}
     bool is_set_name() const {{ return name_node_.has_value(); }}
-    void set_name(const std::string& value) {{ name_node_ = jsoncons::json(value); }}
+    void set_name(const std::string& value) {{ name_node_ = Json(value); }}
     void unset_name() {{ name_node_.reset(); }}
 
     std::string get_description() const {{
@@ -423,17 +518,17 @@ public:
         return description_node_->as<std::string>();
     }}
     bool is_set_description() const {{ return description_node_.has_value(); }}
-    void set_description(const std::string& value) {{ description_node_ = jsoncons::json(value); }}
+    void set_description(const std::string& value) {{ description_node_ = Json(value); }}
     void unset_description() {{ description_node_.reset(); }}
 
     // -- generic namespace attribute store (Design.md's Namespaces section) --
-    jsoncons::json get_namespace_attribute(const std::string& prefix, const std::string& key) const {{
+    Json get_namespace_attribute(const std::string& prefix, const std::string& key) const {{
         std::string k = prefix + "@" + key;
         auto it = ns_attrs_.find(k);
         if (it == ns_attrs_.end()) throw ApiError("namespace attribute " + k + " is not set");
         return it->second;
     }}
-    void set_namespace_attribute(const std::string& prefix, const std::string& key, const jsoncons::json& value) {{
+    void set_namespace_attribute(const std::string& prefix, const std::string& key, const Json& value) {{
         ns_attrs_[prefix + "@" + key] = value;
     }}
     bool is_set_namespace_attribute(const std::string& prefix, const std::string& key) const {{
@@ -444,7 +539,7 @@ public:
     }}
 
     // -- generic OrRef-shaped storage helpers, used by generated accessors --
-    jsoncons::json get_or_ref_value_node(const std::string& name) const {{
+    Json get_or_ref_value_node(const std::string& name) const {{
         auto it = values_.find(name);
         if (it == values_.end()) throw ApiError(name + " is not set");
         auto rit = or_ref_is_ref_.find(name);
@@ -453,7 +548,7 @@ public:
         }}
         return it->second;
     }}
-    jsoncons::json get_or_ref_ref_node(const std::string& name) const {{
+    Json get_or_ref_ref_node(const std::string& name) const {{
         auto it = values_.find(name);
         if (it == values_.end()) throw ApiError(name + " is not set");
         auto rit = or_ref_is_ref_.find(name);
@@ -462,13 +557,13 @@ public:
         }}
         return it->second;
     }}
-    void set_or_ref_value_node(const std::string& name, const jsoncons::json& value) {{
+    void set_or_ref_value_node(const std::string& name, const Json& value) {{
         values_[name] = value;
         or_ref_is_ref_[name] = false;
     }}
     void set_or_ref_ref_node(const std::string& name, const std::string& ref) {{
         if (!is_reference(ref)) throw ApiError("'" + ref + "' is not a valid reference (must start with '#')");
-        values_[name] = jsoncons::json(ref);
+        values_[name] = Json(ref);
         or_ref_is_ref_[name] = true;
     }}
     bool is_or_ref_ref(const std::string& name) const {{
@@ -508,8 +603,13 @@ public:
     /// Default: none.
     virtual std::vector<ChildLoc> children_with_locations() {{ return {{}}; }}
 
-    virtual std::string own_id_for_message() const {{ return "?"; }}
-    virtual jsoncons::json own_json_value() const = 0;
+    /// This element's own SId, for a validation message's {{id}} placeholder:
+    /// id is implicit (the key under which an element is stored in its owning
+    /// collection), so this searches the parent's ID-keyed collections for
+    /// self; "?" for anything genuinely id-less (the document root, an
+    /// array-item class, an unattached instance).
+    virtual std::string own_id_for_message() const;
+    virtual Json own_json_value() const = 0;
 
     virtual std::set<std::string> allowed_keys() const {{
         std::set<std::string> keys;
@@ -520,14 +620,14 @@ public:
         return keys;
     }}
 
-    jsoncons::json to_json_value() const {{ return own_json_value(); }}
+    Json to_json_value() const {{ return own_json_value(); }}
 
     // -- internal storage (see class comment) --
-    std::optional<jsoncons::json> name_node_;
-    std::optional<jsoncons::json> description_node_;
-    std::map<std::string, jsoncons::json> values_;
+    std::optional<Json> name_node_;
+    std::optional<Json> description_node_;
+    std::map<std::string, Json> values_;
     std::map<std::string, bool> or_ref_is_ref_;
-    std::map<std::string, jsoncons::json> ns_attrs_;
+    std::map<std::string, Json> ns_attrs_;
     std::vector<ValidationProblem> load_problems_;
 
 protected:
@@ -546,17 +646,19 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {{
     // the only reliable point to see genuinely-unrecognized raw JSON keys,
     // since they are never stored anywhere in the object itself.
     std::vector<ValidationProblem> problems = load_problems_;
-    jsoncons::json instance = own_json_value();
+    Json instance = own_json_value();
+    const std::string cls = class_name();
+    const std::string self_id = own_id_for_message();
 
     if (type_const() && type_rule_id()) {{
-        bool has_type = instance.contains("_type") && !instance["_type"].is_null();
-        std::string actual = has_type ? instance["_type"].as<std::string>() : "";
-        if (!has_type || actual != *type_const()) {{
+        bool ok = instance.contains("_type") && instance["_type"].is_string() &&
+                  instance["_type"].as<std::string>() == *type_const();
+        if (!ok) {{
             std::map<std::string, std::string> ph;
             ph["attr"] = "_type";
-            ph["class"] = class_name();
-            ph["id"] = own_id_for_message();
-            ph["value"] = has_type ? actual : "null";
+            ph["class"] = cls;
+            ph["id"] = self_id;
+            ph["value"] = instance.contains("_type") ? pyfmt::str(instance["_type"]) : "None";
             ph["allowed"] = *type_const();
             problems.push_back(RuleCatalog::make_problem(*type_rule_id(), "/_type", ph));
         }}
@@ -569,71 +671,136 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {{
         std::string rid = name_rule_id() ? *name_rule_id() : base_catchall();
         std::map<std::string, std::string> ph;
         ph["attr"] = "name";
-        ph["class"] = class_name();
-        ph["id"] = own_id_for_message();
-        ph["value"] = name_node_->is_string() ? name_node_->as<std::string>() : name_node_->to_string();
+        ph["class"] = cls;
+        ph["id"] = self_id;
+        ph["value"] = pyfmt::str(*name_node_);
         problems.push_back(RuleCatalog::make_problem(rid, "/name", ph));
     }}
     if (description_node_ && !LeafValidation::leaf_value_ok("string", *description_node_)) {{
         std::string rid = desc_rule_id() ? *desc_rule_id() : base_catchall();
         std::map<std::string, std::string> ph;
         ph["attr"] = "description";
-        ph["class"] = class_name();
-        ph["id"] = own_id_for_message();
-        ph["value"] = description_node_->is_string() ? description_node_->as<std::string>() : description_node_->to_string();
+        ph["class"] = cls;
+        ph["id"] = self_id;
+        ph["value"] = pyfmt::str(*description_node_);
         problems.push_back(RuleCatalog::make_problem(rid, "/description", ph));
     }}
 
     // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
-    // JSON value) has no leaf_value_ok()-equivalent schema to check against
-    // - see generator/emit_python.py's own LEAF_KINDS set and its
-    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
-    // resolution dispatch this C++ port deliberately does not carry over -
-    // see Design.md's Testing section on Phase 2 scope).
+    // JSON value) has no leaf_value_ok()-equivalent schema to check against,
+    // but an SIdRef string may still substitute for it, so it gets the same
+    // reference-resolution dispatch as every *OrRef kind (see below).
     static const std::set<std::string> leaf_kinds = {{
         "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
         "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"}};
+    // Every leaf kind whose value can structurally BE a reference - SIdRef is
+    // always one, and every *OrRef kind's own anyOf includes one.
+    static const std::set<std::string> reference_capable = {{
+        "SIdRef", "StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"}};
 
-    std::vector<FieldSpec> all(field_specs().begin(), field_specs().end());
-    for (const auto& kv : namespace_fields()) {{
-        for (const auto& f : kv.second) all.push_back(f);
-    }}
+    auto is_ref_value = [](const Json& v) {{
+        return v.is_string() && !v.as<std::string>().empty() && v.as<std::string>()[0] == '#';
+    }};
 
-    for (const auto& spec : all) {{
+    auto check_spec = [&](const FieldSpec& spec) {{
         bool present = instance.contains(spec.name);
         if (spec.required && !present) {{
             std::string rid = spec.required_rule_id ? *spec.required_rule_id : spec.origin_catchall;
             std::map<std::string, std::string> ph;
             ph["attr"] = spec.name;
-            ph["class"] = class_name();
-            ph["id"] = own_id_for_message();
+            ph["class"] = cls;
+            ph["id"] = self_id;
             problems.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
-            continue;
+            return;
         }}
-        if (!present) continue;
-        const jsoncons::json& value = instance[spec.name];
+        if (!present) return;
+        const Json& value = instance[spec.name];
+        const std::string loc = "/" + spec.name;
         if (leaf_kinds.count(spec.kind)) {{
-            if (!LeafValidation::leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern)) {{
+            if (!LeafValidation::leaf_value_ok(spec.kind, value, spec.minimum, spec.exclusive_minimum, spec.pattern,
+                                                spec.min_length, spec.enum_values)) {{
                 std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                 std::map<std::string, std::string> ph;
                 ph["attr"] = spec.name;
-                ph["class"] = class_name();
-                ph["id"] = own_id_for_message();
-                ph["value"] = value.is_string() ? value.as<std::string>() : value.to_string();
-                problems.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
+                ph["class"] = cls;
+                ph["id"] = self_id;
+                ph["value"] = pyfmt::str(value);
+                if (spec.enum_values) {{
+                    // A rule fired from an enum-constrained leaf's own message
+                    // template may reference {{allowed}} - harmless to always
+                    // include, since only placeholders the template names are
+                    // substituted.
+                    std::string allowed;
+                    for (size_t i = 0; i < spec.enum_values->size(); i++) {{
+                        if (i) allowed += ", ";
+                        allowed += pyfmt::str_repr((*spec.enum_values)[i]);
+                    }}
+                    ph["allowed"] = allowed;
+                }}
+                problems.push_back(RuleCatalog::make_problem(rid, loc, ph));
+            }} else if (reference_capable.count(spec.kind) && is_ref_value(value)) {{
+                RefFieldInfo info;
+                info.field_kind = spec.kind;
+                info.ref_type_rule_id = spec.ref_type_rule_id;
+                info.expected_enum = spec.enum_values ? &*spec.enum_values : nullptr;
+                info.minimum = spec.minimum;
+                info.exclusive_minimum = spec.exclusive_minimum;
+                info.item_kind = spec.item_kind;
+                info.ref_target = spec.ref_target;
+                RuleCtx ctx{{cls, self_id, spec.name, loc, ""}};
+                auto more = RefRules::check_reference_field(value.as<std::string>(), get_document(), ctx, this, info);
+                problems.insert(problems.end(), more.begin(), more.end());
+            }} else if (spec.kind == "DictOrRef" && value.is_object()) {{
+                // The dict-literal branch of a DictOrRef field (e.g.
+                // Repeat.outputVariableMap: an SId-keyed map of column name ->
+                // SIdRef): each entry gets its OWN reference-resolution
+                // dispatch (SEDBase-0005 .. -0015) rather than the field as a
+                // single unit. No ref-type rule is passed - the field's own
+                // ref_type_rule_id describes what the WHOLE FIELD must resolve
+                // to when IT is a reference, not what each entry's target must be.
+                for (const auto& kv : value.object_range()) {{
+                    if (!is_ref_value(kv.value())) continue;
+                    RefFieldInfo info;
+                    info.field_kind = spec.kind;
+                    RuleCtx ctx{{cls, self_id, spec.name, loc + "/" + std::string(kv.key()), ""}};
+                    auto more = RefRules::check_reference_field(kv.value().as<std::string>(), get_document(), ctx,
+                                                                this, info);
+                    problems.insert(problems.end(), more.begin(), more.end());
+                }}
             }} else if (spec.is_math && value.is_string()) {{
                 // Types-0001..0004 (Design.md's Math section) - only for a
-                // literal string value that already passed its own leaf
-                // schema check above; a $-reference form of an OrRef math
-                // field is out of scope (see MathRules.hpp / emit_java.py's
-                // identical comment on the Java port).
-                auto math_problems = MathRules::check_math_field(
-                        value.as<std::string>(), class_name(), own_id_for_message(),
-                        spec.name, "/" + spec.name);
+                // literal string value that already passed its own leaf schema
+                // check above; a reference form of a math field is skipped.
+                auto math_problems = MathRules::check_math_field(value.as<std::string>(), cls, self_id, spec.name, loc);
                 problems.insert(problems.end(), math_problems.begin(), math_problems.end());
             }}
+        }} else if (spec.kind == "any" && is_ref_value(value)) {{
+            RefFieldInfo info;
+            info.field_kind = "any";
+            RuleCtx ctx{{cls, self_id, spec.name, loc, ""}};
+            auto more = RefRules::check_reference_field(value.as<std::string>(), get_document(), ctx, this, info);
+            problems.insert(problems.end(), more.begin(), more.end());
         }}
+    }};
+
+    for (const auto& spec : field_specs()) check_spec(spec);
+    for (const auto& kv : namespace_fields()) {{
+        for (const auto& spec : kv.second) check_spec(spec);
     }}
+
+    if (is_document_class()) {{
+        auto ns = RefRules::check_namespace_usage_and_version(this);
+        problems.insert(problems.end(), ns.begin(), ns.end());
+        auto co = RefRules::check_constants_ordering(this);
+        problems.insert(problems.end(), co.begin(), co.end());
+    }}
+    // Repeat-0008/-0009/-0010 and LoopVariable-0004 each internally no-op for
+    // every class they don't apply to (a cheap class-shape check, not a
+    // class-name check).
+    auto rep = RefRules::check_repeat_own_children(this);
+    problems.insert(problems.end(), rep.begin(), rep.end());
+    auto lv = RefRules::check_loop_variable_scope(this);
+    problems.insert(problems.end(), lv.begin(), lv.end());
     return problems;
 }}
 
@@ -672,6 +839,12 @@ public:
         auto it = items_.find(item_id);
         if (it == items_.end()) throw ApiError("no entry with id " + item_id);
         return it->second.get();
+    }}
+
+    /// Like get(), but null (never throws) for an unknown id.
+    SedBase* find(const std::string& item_id) const {{
+        auto it = items_.find(item_id);
+        return it == items_.end() ? nullptr : it->second.get();
     }}
 
     void add(const std::string& item_id, std::unique_ptr<SedBase> obj) {{
@@ -745,6 +918,19 @@ private:
     std::vector<std::unique_ptr<SedBase>> items_;
 }};
 
+inline std::string SedBase::own_id_for_message() const {{
+    SedBase* parent = get_parent();
+    if (parent == nullptr) return "?";
+    for (const auto& name : parent->id_collection_names()) {{
+        const IdKeyedCollection* coll = parent->find_dict_collection(name);
+        if (coll == nullptr) continue;
+        for (const auto& iid : coll->ids()) {{
+            if (coll->find(iid) == this) return iid;
+        }}
+    }}
+    return "?";
+}}
+
 inline IdKeyedCollection& SedBase::get_dict_collection(const std::string& field_name) {{
     throw ApiError("no such dict field: " + field_name);
 }}
@@ -754,7 +940,7 @@ inline ListCollection& SedBase::get_list_collection(const std::string& field_nam
 }}
 
 /// Backing store for an "any-dict"-kind field - same ID-keyed-collection
-/// shape as IdKeyedCollection above, but holds plain jsoncons::json values
+/// shape as IdKeyedCollection above, but holds plain Json values
 /// directly (no ownership/unique_ptr involved, since a raw JSON value isn't
 /// a SedBase) - e.g. SEDDocument.constants. Mirrors
 /// generator/emit_python.py's _collection_accessors any-dict branch and
@@ -767,19 +953,25 @@ class AnyDictCollection {{
 public:
     std::vector<std::string> ids() const {{ return order_; }}
 
-    jsoncons::json get(const std::string& item_id) const {{
+    Json get(const std::string& item_id) const {{
         auto it = items_.find(item_id);
         if (it == items_.end()) throw ApiError("no entry with id " + item_id);
         return it->second;
     }}
 
-    void add(const std::string& item_id, jsoncons::json value) {{
+    /// Like get(), but a pointer to the stored value (null for an unknown id).
+    const Json* find(const std::string& item_id) const {{
+        auto it = items_.find(item_id);
+        return it == items_.end() ? nullptr : &it->second;
+    }}
+
+    void add(const std::string& item_id, Json value) {{
         if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
         order_.push_back(item_id);
         items_.emplace(item_id, std::move(value));
     }}
 
-    void insert(size_t index, const std::string& item_id, jsoncons::json value) {{
+    void insert(size_t index, const std::string& item_id, Json value) {{
         if (items_.count(item_id)) throw ApiError("an entry with id " + item_id + " already exists");
         if (index > order_.size()) throw ApiError("index out of range");
         order_.insert(order_.begin() + static_cast<long>(index), item_id);
@@ -811,7 +1003,7 @@ public:
 
 private:
     std::vector<std::string> order_;
-    std::map<std::string, jsoncons::json> items_;
+    std::map<std::string, Json> items_;
 }};
 
 inline AnyDictCollection& SedBase::get_any_dict_collection(const std::string& field_name) {{
@@ -1285,9 +1477,11 @@ def _math_rules_hpp(ns: str) -> str:
     section), combined into one dispatcher (check_math_field) the way
     emit_python.py's _check_math_field and emit_java.py's MathRules.java
     wire together the same four checks - see either one's docstring for
-    why these live directly here rather than a per-rule-ID file (C++ has
-    no more of an equivalent to Python's templates/<lang>/rules/
-    convention than Java does).
+    why these live directly here rather than a per-rule-ID file (these four
+    predate the per-rule-file convention on this target; every OTHER
+    handwritten rule - SEDBase-0005 .. -0017, AbstractTask-0003, Repeat-0008
+    .. -0010, LoopVariable-0004, SEDDocument-0009 .. -0011/-0013 - is one small
+    file under templates/cpp/rules/, see _copy_handwritten_rules_cpp).
 
     class MathRules itself is only *forward*-declared here, in
     Runtime.hpp (full declaration, no body) - SedBase::validate_own()
@@ -1321,8 +1515,9 @@ namespace {ns} {{
 /// value is the field's own raw string - never a reference: validate_own()
 /// only calls here for a literal string value (Types-0001.md: "When the
 /// math attribute is itself a reference, ... apply only if the reference
-/// resolves statically to a string constant", out of scope until reference
-/// resolution exists for C++ - see this module's docstring). Returns {{}}
+/// resolves statically to a string constant", which no target implements
+/// yet - the reference implementation skips a referenced math field too).
+/// Returns {{}}
 /// if value parses and every function call / bare identifier it contains
 /// checks out; otherwise one ValidationProblem per violation (Types-0001
 /// short-circuits the rest, same as the Python/Java targets - an
@@ -1401,13 +1596,62 @@ def runtime_files(ns: str) -> dict:
 # Io.hpp.
 # ---------------------------------------------------------------------------
 
+def _outputs_json_text(outputs_json) -> str:
+    """The class's outputs.json as compact JSON text for embedding: every
+    prose "note" key is dropped (documentation only - the interpreter never
+    reads it), which keeps the generated headers small."""
+    def strip(v):
+        if isinstance(v, dict):
+            return {k: strip(x) for k, x in v.items() if k != "note"}
+        if isinstance(v, list):
+            return [strip(x) for x in v]
+        return v
+    return _json.dumps(strip(outputs_json), separators=(",", ":"))
+
+
+def _cpp_chunked_lit(text: str, width: int = 1500) -> str:
+    """text as adjacent C++ string literals (portable past compilers' single-
+    literal length limits). text is ASCII and json.dumps-escaped already;
+    splitting happens only between whole characters/escape sequences, never
+    inside one."""
+    chunks = []
+    cur = ""
+    i = 0
+    while i < len(text):
+        if text[i] == "\\":
+            n = 6 if text[i + 1] == "u" else 2
+        else:
+            n = 1
+        cur += text[i:i + n]
+        i += n
+        if len(cur) >= width:
+            chunks.append(cur)
+            cur = ""
+    if cur or not chunks:
+        chunks.append(cur)
+    return "\n".join("            " + _cpp_lit(c) for c in chunks)
+
+
+def _cpp_opt_int(v) -> str:
+    return "std::nullopt" if v is None else f"int64_t({int(v)})"
+
+
+def _cpp_opt_str_list(vals) -> str:
+    if vals is None:
+        return "std::nullopt"
+    items = ", ".join(_cpp_lit(v) for v in vals)
+    return f"std::vector<std::string>{{{items}}}"
+
+
 def _field_spec_expr(f: Field) -> str:
     t = f.type
     return (
         f"FieldSpec{{{_cpp_lit(f.name)}, {_cpp_lit(t.kind)}, {str(f.required).lower()}, "
         f"{_cpp_opt_str(f.rule_id)}, {_cpp_opt_str(f.required_rule_id)}, {_cpp_lit(f.origin_class + '-0000')}, "
         f"{_cpp_opt_double(t.minimum)}, {_cpp_opt_double(t.exclusive_minimum)}, {_cpp_opt_str(t.pattern)}, "
-        f"{_cpp_opt_str(t.item_class)}, {_cpp_opt_str(t.item_discriminator)}, {str(f.is_math).lower()}}}"
+        f"{_cpp_opt_str(t.item_class)}, {_cpp_opt_str(t.item_discriminator)}, {str(f.is_math).lower()}, "
+        f"{_cpp_opt_int(t.min_length)}, {_cpp_opt_str_list(t.enum)}, {_cpp_opt_str(f.ref_type_rule_id)}, "
+        f"{_cpp_opt_str(t.item_kind)}, {_cpp_opt_str(f.ref_target)}}}"
     )
 
 
@@ -1417,21 +1661,21 @@ def _field_spec_expr(f: Field) -> str:
 # is-Ref-/isSet-/unset- accessors, generic OrRef storage (get_or_ref_value_
 # node/set_or_ref_value_node/... on SedBase), differing only in the natural
 # C++ type on the value side - ArrayOrRef/DictOrRef have no better native
-# C++ collection representation than the raw jsoncons::json itself without
+# C++ collection representation than the raw Json itself without
 # a lot more work outside this port's scope (Design.md's Phase 2 scope
 # note), so their "value" is the json as-is, same treatment as "any" below.
 _ORREF_KINDS_CPP = ("StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef")
 
 # kind -> (C++ value type, get-conversion suffix ("" = no conversion, the
-# jsoncons::json itself), param type for the setter, set-time wrap
-# expression turning `value` into a jsoncons::json).
+# Json itself), param type for the setter, set-time wrap
+# expression turning `value` into a Json).
 _ORREF_CPP_TYPES = {
-    "StringOrRef": ("std::string", ".as<std::string>()", "const std::string&", "jsoncons::json(value)"),
-    "NumberOrRef": ("double", ".as<double>()", "double", "jsoncons::json(value)"),
-    "IntegerOrRef": ("int64_t", ".as<int64_t>()", "int64_t", "jsoncons::json(value)"),
-    "BooleanOrRef": ("bool", ".as<bool>()", "bool", "jsoncons::json(value)"),
-    "ArrayOrRef": ("jsoncons::json", "", "const jsoncons::json&", "value"),
-    "DictOrRef": ("jsoncons::json", "", "const jsoncons::json&", "value"),
+    "StringOrRef": ("std::string", ".as<std::string>()", "const std::string&", "Json(value)"),
+    "NumberOrRef": ("double", ".as<double>()", "double", "Json(value)"),
+    "IntegerOrRef": ("int64_t", ".as<int64_t>()", "int64_t", "Json(value)"),
+    "BooleanOrRef": ("bool", ".as<bool>()", "bool", "Json(value)"),
+    "ArrayOrRef": ("Json", "", "const Json&", "value"),
+    "DictOrRef": ("Json", "", "const Json&", "value"),
 }
 
 # Every kind emit_model_hpp treats as a "leaf" field (own FIELD_SPECS entry
@@ -1462,16 +1706,17 @@ def _leaf_accessors_cpp(f: Field) -> str:
         lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); or_ref_is_ref_.erase({name_lit}); }}")
     elif kind == "any":
         # AnyValueOrRef: no fixed shape, so no type conversion either way -
-        # the raw jsoncons::json is both the getter's return type and the
+        # the raw Json is both the getter's return type and the
         # setter's parameter type. Mirrors emit_python.py's plain (non-
         # OrRef) accessor shape for this kind - "any" is deliberately absent
-        # from validate_own()'s leaf_kinds set above, so this accessor's
-        # stored value is never schema-checked, only checked for
-        # required-ness.
-        lines.append(f"    jsoncons::json get_{ident}() const {{ auto it = values_.find({name_lit}); "
+        # from validate_own()'s leaf_kinds set (there is no leaf schema for
+        # "any JSON value"), so the stored value is never schema-checked;
+        # only a reference-valued one gets reference resolution, and a
+        # missing one required-ness.
+        lines.append(f"    Json get_{ident}() const {{ auto it = values_.find({name_lit}); "
                       f"if (it == values_.end()) throw ApiError(std::string({name_lit}) + \" is not set\"); "
                       f"return it->second; }}")
-        lines.append(f"    void set_{ident}(const jsoncons::json& value) {{ values_[{name_lit}] = value; }}")
+        lines.append(f"    void set_{ident}(const Json& value) {{ values_[{name_lit}] = value; }}")
         lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
         lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); }}")
     else:
@@ -1481,7 +1726,7 @@ def _leaf_accessors_cpp(f: Field) -> str:
         lines.append(f"    {cpp_t} get_{ident}() const {{ auto it = values_.find({name_lit}); "
                       f"if (it == values_.end()) throw ApiError(std::string({name_lit}) + \" is not set\"); "
                       f"return it->second{get_expr}; }}")
-        lines.append(f"    void set_{ident}({param_t} value) {{ values_[{name_lit}] = jsoncons::json(value); }}")
+        lines.append(f"    void set_{ident}({param_t} value) {{ values_[{name_lit}] = Json(value); }}")
         lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
         lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); }}")
     return "\n".join(lines) + "\n"
@@ -1521,14 +1766,14 @@ def _collection_accessors_cpp(f: Field) -> str:
         lines.append(f"    void set_id_on_{ident}(const std::string& old_id, const std::string& new_id) {{ {ident}_.set_id(old_id, new_id); }}")
     elif f.type.kind == "any-dict":
         # Same ID-keyed collection shape as "dict", but items are raw
-        # jsoncons::json values, never SedBase instances - so no attach()
+        # Json values, never SedBase instances - so no attach()
         # call (SEDDocument.constants today; mirrors
         # generator/emit_python.py's _collection_accessors any-dict
         # branch).
         lines.append(f"    std::vector<std::string> get_{ident}() const {{ return {ident}_.ids(); }}")
-        lines.append(f"    jsoncons::json get_{ident}_item(const std::string& item_id) const {{ return {ident}_.get(item_id); }}")
-        lines.append(f"    void add_{ident}(const std::string& item_id, const jsoncons::json& value) {{ {ident}_.add(item_id, value); }}")
-        lines.append(f"    void insert_{ident}(size_t index, const std::string& item_id, const jsoncons::json& value) {{ {ident}_.insert(index, item_id, value); }}")
+        lines.append(f"    Json get_{ident}_item(const std::string& item_id) const {{ return {ident}_.get(item_id); }}")
+        lines.append(f"    void add_{ident}(const std::string& item_id, const Json& value) {{ {ident}_.add(item_id, value); }}")
+        lines.append(f"    void insert_{ident}(size_t index, const std::string& item_id, const Json& value) {{ {ident}_.insert(index, item_id, value); }}")
         lines.append(f"    void remove_{ident}(const std::string& item_id) {{ {ident}_.remove(item_id); }}")
         lines.append(f"    void set_id_on_{ident}(const std::string& old_id, const std::string& new_id) {{ {ident}_.set_id(old_id, new_id); }}")
     else:
@@ -1571,6 +1816,10 @@ def emit_model_hpp(model: SpecModel) -> str:
 // pulls in its actual `inline` definition so the symbol is always
 // available wherever validate_own() might be called.
 #include "MathRules.hpp"
+// Same pattern for the reference-driven rules: SedBase::validate_own() only
+// declares class RefRules (Runtime.hpp); RefRules.hpp supplies the bodies
+// (and, via Rules.hpp, the handwritten per-rule check() functions).
+#include "RefRules.hpp"
 
 #include <memory>
 #include <string>
@@ -1649,6 +1898,33 @@ namespace {NS} {{
         out.append(f"    std::optional<std::string> desc_rule_id() const override {{ return {_cpp_opt_str(base_desc_rule_id)}; }}\n")
         out.append(f"    std::string base_catchall() const override {{ return {_cpp_lit(base_catchall)}; }}\n")
         out.append(f"    std::string class_name() const override {{ return {_cpp_lit(name)}; }}\n")
+        # -- reference-resolution metadata (see SedBase's virtuals in Runtime.hpp;
+        # mirrors emit_python.py's _get_id_collection/_id_collection_names/
+        # _OUTPUTS_JSON/_IS_DOCUMENT_CLASS emission) --
+        if dict_fields:
+            out.append("    const IdKeyedCollection* find_dict_collection(const std::string& field_name) const override {\n")
+            for f in dict_fields:
+                out.append(f"        if (field_name == {_cpp_lit(f.name)}) return &{_cpp_ident(f.name)}_;\n")
+            out.append("        return nullptr;\n    }\n")
+        if any_dict_fields:
+            out.append("    const AnyDictCollection* find_any_dict_collection(const std::string& field_name) const override {\n")
+            for f in any_dict_fields:
+                out.append(f"        if (field_name == {_cpp_lit(f.name)}) return &{_cpp_ident(f.name)}_;\n")
+            out.append("        return nullptr;\n    }\n")
+        id_coll_fields = [f for f in collection_fields if f.type.kind in ("dict", "any-dict")]
+        if id_coll_fields:
+            names_lit = ", ".join(_cpp_lit(f.name) for f in id_coll_fields)
+            out.append(f"    std::vector<std::string> id_collection_names() const override {{ return {{{names_lit}}}; }}\n")
+        if c.outputs_json is not None:
+            out.append("    const Json* outputs_json() const override {\n"
+                        "        static const Json j = Json::parse(\n"
+                        + _cpp_chunked_lit(_outputs_json_text(c.outputs_json)) + ");\n"
+                        "        return &j;\n    }\n")
+        if c.is_document:
+            out.append("    bool is_document_class() const override { return true; }\n")
+            out.append(f"    std::optional<std::string> max_known_document_version() const override {{ return {_cpp_opt_str(model.document_version)}; }}\n")
+        if c.type_const is not None:
+            out.append(f"    std::optional<std::string> get_type_value() const override {{ return std::string({_cpp_lit(c.type_const)}); }}\n")
         if has_ns:
             ns_field_entries = []
             for prefix, fs in c.namespace_updates.items():
@@ -1730,11 +2006,11 @@ namespace {NS} {{
                 out.append(f"        if (field_name == {_cpp_lit(f.name)}) {{ {ident}_ = std::move(child); return; }}\n")
             out.append("        SedBase::set_child_field(field_name, std::move(child));\n    }\n\n")
 
-        out.append("    jsoncons::json own_json_value() const override {\n        jsoncons::json d = jsoncons::json::object();\n")
+        out.append("    Json own_json_value() const override {\n        Json d = Json::object();\n")
         out.append("        if (name_node_) d[\"name\"] = *name_node_;\n")
         out.append("        if (description_node_) d[\"description\"] = *description_node_;\n")
         if c.type_const is not None:
-            out.append(f"        d[\"_type\"] = values_.count(\"_type\") ? values_.at(\"_type\") : jsoncons::json({_cpp_lit(c.type_const)});\n")
+            out.append(f"        d[\"_type\"] = values_.count(\"_type\") ? values_.at(\"_type\") : Json({_cpp_lit(c.type_const)});\n")
         for f in leaf_fields:
             out.append(f"        if (values_.count({_cpp_lit(f.name)})) d[{_cpp_lit(f.name)}] = values_.at({_cpp_lit(f.name)});\n")
         for prefix, fs in c.namespace_updates.items():
@@ -1742,15 +2018,15 @@ namespace {NS} {{
                 out.append(f"        if (values_.count({_cpp_lit(f.name)})) d[{_cpp_lit(f.name)}] = values_.at({_cpp_lit(f.name)});\n")
         for f in dict_fields:
             ident = _cpp_ident(f.name)
-            out.append(f"        if ({ident}_.size() > 0) {{ jsoncons::json sub = jsoncons::json::object(); "
+            out.append(f"        if ({ident}_.size() > 0) {{ Json sub = Json::object(); "
                         f"for (const auto& i : {ident}_.ids()) sub[i] = {ident}_.get(i)->to_json_value(); d[{_cpp_lit(f.name)}] = sub; }}\n")
         for f in array_fields:
             ident = _cpp_ident(f.name)
-            out.append(f"        if ({ident}_.size() > 0) {{ jsoncons::json arr = jsoncons::json::array(); "
+            out.append(f"        if ({ident}_.size() > 0) {{ Json arr = Json::array(); "
                         f"for (auto* item : {ident}_.items()) arr.push_back(item->to_json_value()); d[{_cpp_lit(f.name)}] = arr; }}\n")
         for f in any_dict_fields:
             ident = _cpp_ident(f.name)
-            out.append(f"        if ({ident}_.size() > 0) {{ jsoncons::json sub = jsoncons::json::object(); "
+            out.append(f"        if ({ident}_.size() > 0) {{ Json sub = Json::object(); "
                         f"for (const auto& i : {ident}_.ids()) sub[i] = {ident}_.get(i); d[{_cpp_lit(f.name)}] = sub; }}\n")
         for f in child_fields:
             ident = _cpp_ident(f.name)
@@ -1775,14 +2051,18 @@ namespace {NS} {{
 /// round-trips unchanged, never itself a validation error.
 class {uname} : public SedBase {{
 public:
-    {uname}(std::string type_value, jsoncons::json raw)
+    {uname}(std::string type_value, Json raw)
         : type_value_(std::move(type_value)), raw_(std::move(raw)) {{}}
 
     std::string get_type() const {{ return type_value_; }}
+    std::optional<std::string> get_type_value() const override {{
+        if (!raw_.contains("_type") || !raw_.at("_type").is_string()) return std::nullopt;
+        return type_value_;
+    }}
     std::string class_name() const override {{ return {_cpp_lit(uname)}; }}
 
-    jsoncons::json own_json_value() const override {{
-        jsoncons::json d = raw_;
+    Json own_json_value() const override {{
+        Json d = raw_;
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         return d;
@@ -1799,7 +2079,7 @@ protected:
 
 private:
     std::string type_value_;
-    jsoncons::json raw_;
+    Json raw_;
 }};
 
 ''')
@@ -1837,13 +2117,13 @@ struct DispatchResult {{
     std::optional<ValidationProblem> problem;
 }};
 
-inline void load_fields(SedBase* obj, const jsoncons::json& raw);
+inline void load_fields(SedBase* obj, const Json& raw);
 
 ''']
 
     for disc_name, disc in model.discriminators.items():
         uname = disc.unknown_class_name
-        out.append(f"inline DispatchResult parse_{disc_name}(const jsoncons::json& raw) {{\n")
+        out.append(f"inline DispatchResult parse_{disc_name}(const Json& raw) {{\n")
         out.append("    if (!raw.contains(\"_type\")) {\n")
         if disc.missing_type_rule_id:
             out.append(f"        return DispatchResult{{nullptr, RuleCatalog::make_problem({_cpp_lit(disc.missing_type_rule_id)}, \"\")}};\n")
@@ -1852,29 +2132,31 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
             out.append("        ph0[\"schema-message\"] = \"missing _type\";\n")
             out.append(f"        return DispatchResult{{nullptr, RuleCatalog::make_problem({_cpp_lit(disc_name + '-0000')}, \"\", ph0)}};\n")
         out.append("    }\n")
-        out.append("    std::string tv = raw.at(\"_type\").as<std::string>();\n")
+        out.append("    const Json& tvj = raw.at(\"_type\");\n")
+        out.append("    const bool tv_is_str = tvj.is_string();\n")
+        out.append("    std::string tv = tv_is_str ? tvj.as<std::string>() : pyfmt::str(tvj);\n")
         out.append("    std::unique_ptr<SedBase> obj;\n")
         for i, (tc, br) in enumerate(disc.branches.items()):
             kw = "if" if i == 0 else "else if"
-            out.append(f"    {kw} (tv == {_cpp_lit(tc)}) obj = std::make_unique<{br.class_name}>();\n")
+            out.append(f"    {kw} (tv_is_str && tv == {_cpp_lit(tc)}) obj = std::make_unique<{br.class_name}>();\n")
         out.append("    if (obj) {\n")
         out.append("        load_fields(obj.get(), raw);\n")
         out.append("        return DispatchResult{std::move(obj), std::nullopt};\n")
         out.append("    }\n")
         out.append("    std::smatch m;\n")
-        out.append("    bool ns_match = std::regex_match(tv, m, namespace_key_pattern());\n")
+        out.append("    bool ns_match = tv_is_str && std::regex_match(tv, m, namespace_key_pattern());\n")
         known = ", ".join(_cpp_lit(b.namespace) for b in disc.branches.values() if b.namespace)
         out.append(f"    static const std::set<std::string> known = {{{known}}};\n")
         out.append("    if (ns_match && !known.count(m[1].str())) {\n")
         out.append(f"        return DispatchResult{{std::make_unique<{uname}>(tv, raw), std::nullopt}};\n")
         out.append("    }\n")
         out.append("    std::map<std::string, std::string> ph;\n")
-        out.append("    ph[\"schema-message\"] = \"unrecognized _type '\" + tv + \"'\";\n")
+        out.append("    ph[\"schema-message\"] = \"unrecognized _type \" + pyfmt::repr(tvj);\n")
         out.append(f"    return DispatchResult{{std::make_unique<{uname}>(tv, raw), "
                     f"RuleCatalog::make_problem({_cpp_lit(disc_name + '-0000')}, \"\", ph)}};\n")
         out.append("}\n\n")
 
-    out.append("inline DispatchResult dispatch_parse(const std::string& disc_name, const jsoncons::json& raw) {\n")
+    out.append("inline DispatchResult dispatch_parse(const std::string& disc_name, const Json& raw) {\n")
     for i, disc_name in enumerate(model.discriminators):
         kw = "if" if i == 0 else "else if"
         out.append(f"    {kw} (disc_name == {_cpp_lit(disc_name)}) return parse_{disc_name}(raw);\n")
@@ -1894,7 +2176,8 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
         out.append(f"    {kw} (class_name == {_cpp_lit(cls_name)}) return std::make_unique<{cls_name}>();\n")
     out.append("    throw ApiError(\"unknown item class \" + class_name);\n}\n\n")
 
-    out.append('''inline void load_fields(SedBase* obj, const jsoncons::json& raw) {
+    out.append('''inline void load_fields(SedBase* obj, const Json& raw) {
+    if (!raw.is_object()) return;   // never throw for a malformed document
     if (raw.contains("name") && !raw.at("name").is_null()) obj->name_node_ = raw.at("name");
     if (raw.contains("description") && !raw.at("description").is_null()) obj->description_node_ = raw.at("description");
     if (raw.contains("_type")) obj->values_["_type"] = raw.at("_type");
@@ -1911,7 +2194,7 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
         if (!raw.contains(spec.name) || spec.kind == "dict" || spec.kind == "array"
                 || spec.kind == "any-dict" || spec.kind == "ref-class"
                 || spec.kind == "ref-discriminator") continue;
-        const jsoncons::json& v = raw.at(spec.name);
+        const Json& v = raw.at(spec.name);
         if (orref_kinds.count(spec.kind)) {
             if (v.is_string() && is_reference(v.as<std::string>())) {
                 obj->set_or_ref_ref_node(spec.name, v.as<std::string>());
@@ -1953,14 +2236,14 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
 
     for (const auto& spec : obj->field_specs()) {
         if (spec.kind == "dict" && raw.contains(spec.name)) {
-            const jsoncons::json& raw_value = raw.at(spec.name);
+            const Json& raw_value = raw.at(spec.name);
             if (!raw_value.is_object()) {
                 std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                 std::map<std::string, std::string> ph;
                 ph["attr"] = spec.name;
                 ph["class"] = obj->class_name();
                 ph["id"] = obj->own_id_for_message();
-                ph["value"] = raw_value.to_string();
+                ph["value"] = pyfmt::str(raw_value);
                 obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
                 continue;
             }
@@ -1978,7 +2261,7 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
             // reference implementation this ports.
             for (const auto& item_kv : raw_value.object_range()) {
                 const std::string& item_id = item_kv.key();
-                const jsoncons::json& item_raw = item_kv.value();
+                const Json& item_raw = item_kv.value();
                 if (!LeafValidation::is_sid(item_id)) {
                     std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                     std::map<std::string, std::string> ph;
@@ -2000,14 +2283,14 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
                 if (child) coll.add(item_id, std::move(child));
             }
         } else if (spec.kind == "array" && raw.contains(spec.name)) {
-            const jsoncons::json& raw_value = raw.at(spec.name);
+            const Json& raw_value = raw.at(spec.name);
             if (!raw_value.is_array()) {
                 std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                 std::map<std::string, std::string> ph;
                 ph["attr"] = spec.name;
                 ph["class"] = obj->class_name();
                 ph["id"] = obj->own_id_for_message();
-                ph["value"] = raw_value.to_string();
+                ph["value"] = pyfmt::str(raw_value);
                 obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
                 continue;
             }
@@ -2019,19 +2302,19 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
             }
         } else if (spec.kind == "any-dict" && raw.contains(spec.name)) {
             // Same ID-keyed-collection shape as "dict" just above, but every
-            // value is stored as-is - a plain jsoncons::json, never
+            // value is stored as-is - a plain Json, never
             // constructed as a class instance (see this module's
             // _collection_accessors_cpp any-dict branch and
             // generator/emit_python.py's _load_fields any-dict branch, the
             // reference implementation this mirrors).
-            const jsoncons::json& raw_value = raw.at(spec.name);
+            const Json& raw_value = raw.at(spec.name);
             if (!raw_value.is_object()) {
                 std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                 std::map<std::string, std::string> ph;
                 ph["attr"] = spec.name;
                 ph["class"] = obj->class_name();
                 ph["id"] = obj->own_id_for_message();
-                ph["value"] = raw_value.to_string();
+                ph["value"] = pyfmt::str(raw_value);
                 obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
                 continue;
             }
@@ -2057,14 +2340,14 @@ inline void load_fields(SedBase* obj, const jsoncons::json& raw);
             // function, same as a dict-kind field's own discriminated
             // items above. Mirrors generator/emit_python.py's _load_fields
             // ref-class/ref-discriminator branch.
-            const jsoncons::json& raw_value = raw.at(spec.name);
+            const Json& raw_value = raw.at(spec.name);
             if (!raw_value.is_object()) {
                 std::string rid = spec.rule_id ? *spec.rule_id : spec.origin_catchall;
                 std::map<std::string, std::string> ph;
                 ph["attr"] = spec.name;
                 ph["class"] = obj->class_name();
                 ph["id"] = obj->own_id_for_message();
-                ph["value"] = raw_value.to_string();
+                ph["value"] = pyfmt::str(raw_value);
                 obj->load_problems_.push_back(RuleCatalog::make_problem(rid, "/" + spec.name, ph));
                 continue;
             }
@@ -2174,7 +2457,7 @@ namespace {NS} {{
 
 inline std::unique_ptr<{doc_name}> read_from_string(const std::string& text) {{
     register_rules();
-    jsoncons::json raw = jsoncons::json::parse(text);
+    Json raw = Json::parse(text);
     auto obj = std::make_unique<{doc_name}>();
     load_fields(obj.get(), raw);
     obj->attach(nullptr, obj.get());
@@ -2189,7 +2472,7 @@ inline std::unique_ptr<{doc_name}> read_from_file(const std::string& path) {{
 }}
 
 inline std::string write_to_string(const {doc_name}& doc) {{
-    jsoncons::json v = doc.to_json_value();
+    Json v = doc.to_json_value();
     std::string out;
     v.dump(out, jsoncons::indenting::indent);
     return out;
@@ -2335,6 +2618,107 @@ endif()
 '''
 
 
+# Handwritten rule IDs that have a templates/cpp/rules/<RuleID>.hpp (see
+# Design.md's Validation section: "the generator fails its run if a
+# handwritten rule is missing its file"). Types-0001..0004 are deliberately
+# absent: the math-grammar rules predate the per-rule-file convention on this
+# target and live in the generated MathRules.hpp. SEDDocument-0012 (duplicate
+# JSON keys) is deliberately NOT implemented by any target - see its own
+# validation file.
+_IMPLEMENTED_HANDWRITTEN_RULE_IDS_CPP = (
+    "SEDBase-0005", "SEDBase-0006", "SEDBase-0007",
+    "SEDBase-0008", "SEDBase-0009", "SEDBase-0010", "SEDBase-0011", "SEDBase-0012",
+    "SEDBase-0013", "SEDBase-0014", "SEDBase-0015", "SEDBase-0016", "SEDBase-0017",
+    "SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011", "SEDDocument-0013",
+    "AbstractTask-0003", "Repeat-0008", "Repeat-0009", "Repeat-0010", "LoopVariable-0004",
+)
+
+# Rule groups whose dispatch code in RefRules.hpp is compiled in only when
+# EVERY member's file is present in the spec tree (the C++ analog of the
+# reference implementation's `from ._rules import a, b, c` ImportError guards,
+# which fail as a whole if any one file is missing).
+_RULE_GROUP_MACROS = {
+    "SED2_REFRULES_BASIC": ("SEDBase-0005", "SEDBase-0006", "SEDBase-0007"),
+    "SED2_REFRULES_SCOPE": ("SEDBase-0013",),
+    "SED2_REFRULES_TASKORDER": ("AbstractTask-0003",),
+    "SED2_REFRULES_SHAPE": ("SEDBase-0008", "SEDBase-0009", "SEDBase-0010", "SEDBase-0011", "SEDBase-0012",
+                             "SEDBase-0014", "SEDBase-0015"),
+    "SED2_REFRULES_TARGET": ("SEDBase-0016", "SEDBase-0017"),
+    "SED2_REFRULES_REPEAT": ("Repeat-0008", "Repeat-0009", "Repeat-0010"),
+    "SED2_REFRULES_LOOPVAR": ("LoopVariable-0004",),
+    "SED2_REFRULES_NS": ("SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011"),
+    "SED2_REFRULES_CONSTORDER": ("SEDDocument-0013",),
+}
+
+# Spec-independent hand-written runtime headers (templates/cpp/runtime/),
+# copied into the include tree with the literal namespace "sed2test" rewritten
+# to the caller's --cpp-namespace.
+_RUNTIME_TEMPLATES = ("PyFormat.hpp", "Reference.hpp", "OutputsShape.hpp", "RefRules.hpp")
+
+
+def _copy_runtime_templates_cpp(inc_dir: str, ns: str) -> None:
+    src_dir = os.path.join(_repo_root(), "templates", "cpp", "runtime")
+    for fname in _RUNTIME_TEMPLATES:
+        with open(os.path.join(src_dir, fname)) as f:
+            content = f.read()
+        with open(os.path.join(inc_dir, fname), "w") as f:
+            f.write(content.replace("sed2test", ns))
+
+
+def _copy_handwritten_rules_cpp(inc_dir: str, model: SpecModel, ns: str) -> None:
+    """Copies templates/cpp/rules/<RuleID>.hpp -> <inc>/rules/<RuleID>.hpp for
+    every rule ID in _IMPLEMENTED_HANDWRITTEN_RULE_IDS_CPP that this MODEL
+    actually defines (namespace name rewritten, see _copy_runtime_templates_cpp),
+    and writes Rules.hpp: an include of each copied rule plus one
+    SED2_REFRULES_* macro per fully-present rule group (see
+    _RULE_GROUP_MACROS). A rule ID the model does not define (a different spec
+    tree, such as the synthetic test-specsheets/, whose own convention is not
+    the tasks/constants/outputs/styles vocabulary these rules check) is skipped
+    silently - RefRules.hpp then degrades to a no-op for it. A rule the model
+    DOES define but whose template file is missing fails the whole generator run
+    (Design.md's Validation section)."""
+    templates_dir = os.path.join(_repo_root(), "templates", "cpp", "rules")
+    rules_dir = os.path.join(inc_dir, "rules")
+    os.makedirs(rules_dir, exist_ok=True)
+    present = []
+    missing = []
+    for rid in _IMPLEMENTED_HANDWRITTEN_RULE_IDS_CPP:
+        if rid not in model.rules:
+            continue
+        src = os.path.join(templates_dir, f"{rid}.hpp")
+        if not os.path.isfile(src):
+            missing.append(src)
+            continue
+        with open(src) as f:
+            content = f.read()
+        with open(os.path.join(rules_dir, f"{rid}.hpp"), "w") as f:
+            f.write(content.replace("sed2test", ns))
+        present.append(rid)
+    if missing:
+        raise RuntimeError(
+            "Missing hand-written rule file(s) required by the generator "
+            "(Design.md's Validation section - \"the generator fails its run if a "
+            "handwritten rule is missing its file\"): " + ", ".join(missing)
+        )
+    lines = [
+        "// Generated: includes every handwritten rule (templates/cpp/rules/) this spec tree",
+        "// defines, plus one SED2_REFRULES_* macro per rule group whose files are ALL",
+        "// present - RefRules.hpp compiles a group's dispatch code only under its macro.",
+        "// GENERATED - do not hand-edit; regenerate via generator/generate.py.",
+        "#pragma once",
+        "",
+    ]
+    for rid in present:
+        lines.append(f'#include "rules/{rid}.hpp"')
+    lines.append("")
+    for macro, members in _RULE_GROUP_MACROS.items():
+        if all(m in present for m in members):
+            lines.append(f"#define {macro} 1")
+    lines.append("")
+    with open(os.path.join(inc_dir, "Rules.hpp"), "w") as f:
+        f.write("\n".join(lines))
+
+
 def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2test",
                       build_math: bool = True, antlr_cache_dir: str | None = None) -> None:
     global NS
@@ -2346,6 +2730,8 @@ def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2t
     for fname, content in runtime_files(NS).items():
         with open(os.path.join(inc_dir, fname), "w") as f:
             f.write(content)
+    _copy_runtime_templates_cpp(inc_dir, NS)
+    _copy_handwritten_rules_cpp(inc_dir, model, NS)
     with open(os.path.join(inc_dir, "GeneratedModel.hpp"), "w") as f:
         f.write(emit_model_hpp(model))
     with open(os.path.join(inc_dir, "Dispatch.hpp"), "w") as f:

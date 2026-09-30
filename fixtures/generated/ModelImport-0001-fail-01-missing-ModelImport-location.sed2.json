@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x29": {
+      "_type": "modelImport",
+      "language": "x"
+    }
+  }
+}

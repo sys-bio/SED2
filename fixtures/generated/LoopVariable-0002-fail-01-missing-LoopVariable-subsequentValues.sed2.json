@@ -1,0 +1,13 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x94": {
+      "_type": "loop",
+      "loopVariables": {
+        "x93": {
+          "initialValue": {}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x16": {
+      "_type": "explicitStochasticSimulation",
+      "independentVariableRange": {
+        "_type": "numericRange"
+      },
+      "model": ""
+    }
+  }
+}

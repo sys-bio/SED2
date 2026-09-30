@@ -8633,6 +8633,8 @@ def _dispatch_AbstractTask(type_value):
         'steadyState': SteadyState,
         'stringFormation': StringFormation,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -8642,6 +8644,8 @@ def parse_AbstractTask(raw: dict):
     _type still returns an UnknownAbstractTask holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractTask-0002', '')
     tv = raw['_type']
@@ -8664,6 +8668,8 @@ def _dispatch_RangeInline(type_value):
         'parameterRange': ParameterRange,
         'range': Range,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -8673,6 +8679,8 @@ def parse_RangeInline(raw: dict):
     _type still returns an UnknownRangeInline holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('Range-0004', '')
     tv = raw['_type']
@@ -8695,6 +8703,8 @@ def _dispatch_AbstractOutput(type_value):
         'plot3D': Plot3D,
         'report': Report,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -8704,6 +8714,8 @@ def parse_AbstractOutput(raw: dict):
     _type still returns an UnknownAbstractOutput holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractOutput-0002', '')
     tv = raw['_type']
@@ -8724,6 +8736,8 @@ def _dispatch_AbstractCurve(type_value):
     branches = {
         'curve': Curve,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -8733,6 +8747,8 @@ def parse_AbstractCurve(raw: dict):
     _type still returns an UnknownAbstractCurve holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractCurve-0008', '')
     tv = raw['_type']
@@ -8750,6 +8766,8 @@ def parse_AbstractCurve(raw: dict):
 
 
 def _load_fields(obj, raw: dict):
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if 'name' in raw: obj.set_name(raw['name'])
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']

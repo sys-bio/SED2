@@ -274,9 +274,9 @@ independent of individual field definitions), then I. Design.md defers
 hand-authored semantic fixtures until the spec settles; the generated tier
 regenerates with the spec, so it carries no such risk.
 
-Java and C++ have no `templates/<lang>/rules/` files yet (Python has 24). These
-fixtures are language-independent, so they also serve as the acceptance suite
-for those ports - per Claude.md, no phase merges with only Python implemented.
+All three targets now implement the handwritten rules (`templates/<lang>/rules/`;
+Types-0001..0004 live in each language's generated math-rules file instead).
+These fixtures are language-independent and run against every target.
 
 ## 9. Decisions made
 
@@ -302,14 +302,22 @@ for those ports - per Claude.md, no phase merges with only Python implemented.
   number is unsettled (Types says NaN/inf strings are valid numbers among
   numbers; you consider `"nan"` just a string). Revisit with a test that
   *produces* a NaN at run time rather than writing one in JSON.
-- Python now has the array/dict/bounded/model-target ref-type checks. Java and
-  C++ still have no validation dispatch at all, so the same checks (and the
-  rest of validate()) are owed there before the next merge (Claude.md).
+- Python, Java and C++ all have the array/dict/bounded/model-target ref-type
+  checks and the full reference/handwritten-rule validation; the CI jobs for
+  Java and C++ against the real spec are now hard gates. A 17,253-document
+  parity corpus (every fixture plus reference mutations, namespace, version,
+  constants-order and math cases) gave identical rule, location, severity and
+  message output in all three languages when this landed. The corpus lives
+  outside the repo (it was built in scratch); rebuilding it is a script over
+  the fixtures (see the parity note in section 11).
 - Ref-type checks still deliberately loose: a DictOrRef fed a data output is
   not flagged (only a model is); a string-array field fed an annotatedData
   output is not flagged (labels may be strings); a number-array field fed a
   stringList output is.
-- SEDBase-0016/-0017 are implemented in Python (templates/python/rules/, listed in
-  emit_python.py's _IMPLEMENTED_HANDWRITTEN_RULE_IDS). Java and C++ still owe
-  them, along with all other validation.
+- SEDBase-0016/-0017 are implemented in all three languages.
+- Parity harness: turn the scratch differential-testing scripts (corpus builder,
+  per-language dump programs, diff) into a checked-in tool, so regressions between
+  languages are caught in CI rather than only by fixtures.
+- test-specsheets/fixtures/constants.sed2.json is a junk file that fails in all
+  three languages; remove or fix it.
 - Style-target rules once `Style` is specified.

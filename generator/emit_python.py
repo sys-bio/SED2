@@ -2835,6 +2835,10 @@ def emit_model_py(model: SpecModel) -> str:
         for tc, br in disc.branches.items():
             out.append(f"        {tc!r}: {br.class_name},\n")
         out.append("    }\n")
+        # A non-string _type (a list/dict is unhashable; a number/bool/null
+        # can never name a class) simply matches no branch - it must not
+        # raise, since reading a document never throws.
+        out.append("    if not isinstance(type_value, str):\n        return None\n")
         out.append("    return branches.get(type_value)\n\n\n")
 
         out.append(f"def parse_{disc_name}(raw: dict):\n")
@@ -2843,6 +2847,7 @@ def emit_model_py(model: SpecModel) -> str:
                     f"    _type still returns an {uname} holder plus a violation - an\n"
                     f"    unregistered-namespace _type returns one with no violation at all.\n"
                     f"    See Design.md's Namespaces / Schema-Pass Errors sections.\"\"\"\n")
+        out.append("    if not isinstance(raw, dict):\n        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)\n")
         out.append("    if '_type' not in raw:\n")
         if disc.missing_type_rule_id:
             out.append(f"        return None, make_problem({disc.missing_type_rule_id!r}, '')\n")
@@ -2869,6 +2874,7 @@ def emit_model_py(model: SpecModel) -> str:
     # before unrecognized keys are dropped, so it's the only reliable place
     # to detect them (see Design.md's Schema-Pass Errors section).
     out.append("def _load_fields(obj, raw: dict):\n")
+    out.append("    if not isinstance(raw, dict):\n        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)\n")
     out.append("    if 'name' in raw: obj.set_name(raw['name'])\n")
     out.append("    if 'description' in raw: obj.set_description(raw['description'])\n")
     out.append("    if '_type' in raw: obj._values['_type'] = raw['_type']\n")

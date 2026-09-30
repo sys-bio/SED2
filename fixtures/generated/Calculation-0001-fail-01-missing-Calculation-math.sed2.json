@@ -1,0 +1,8 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x6": {
+      "_type": "calculation"
+    }
+  }
+}
