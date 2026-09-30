@@ -454,6 +454,11 @@ inline Val eval_expr(const Node& node, const Scope& scope, const ShapeOf& shape_
             }
             Val right = eval_expr(*node.kids[1], scope, shape_of);
             if (op == "==") {
+                auto is_ref = [](const Val& v) {
+                    return v.kind == Val::JSON && v.j.is_string() && !v.j.template as<std::string>().empty()
+                        && v.j.template as<std::string>()[0] == '#';
+                };
+                if (is_ref(left) || is_ref(right)) throw NotStatic("== operand is a reference");
                 if (left.kind == Val::JSON && right.kind == Val::JSON) return Val::of(Json(pyfmt::equal(left.j, right.j)));
                 return Val::of(Json(left.kind == Val::OUTERMOST && right.kind == Val::OUTERMOST));
             }

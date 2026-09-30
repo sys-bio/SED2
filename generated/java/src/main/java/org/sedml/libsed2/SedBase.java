@@ -385,6 +385,22 @@ public abstract class SedBase {
                                     References.FieldInfo.bare(spec.kind)));
                         }
                     }
+                } else if (spec.kind.equals("ArrayOrRef") && value.isArray()) {
+                    // The array-literal branch of an ArrayOrRef field: each
+                    // element that is itself a reference gets its own
+                    // reference-resolution dispatch (SEDBase-0005.md: the rule
+                    // applies to "an element of an array or object value"),
+                    // with no per-element expected type - same scope as the
+                    // DictOrRef dict-literal branch above.
+                    for (int idx = 0; idx < value.size(); idx++) {
+                        JsonNode el = value.get(idx);
+                        if (References.isReference(el)) {
+                            problems.addAll(References.checkReferenceField(
+                                    el.textValue(), getDocument(), className, ownId, spec.name,
+                                    "/" + spec.name + "/" + idx, this,
+                                    References.FieldInfo.bare(spec.kind)));
+                        }
+                    }
                 } else if (spec.isMath && value.isTextual()) {
                     // Types-0001..0004 (Design.md's Math section) - only for
                     // a literal string value that already passed its own

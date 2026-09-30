@@ -159,6 +159,11 @@ public:
     static std::vector<ValidationProblem> check_loop_variable_scope(SedBase* self);
     static std::vector<ValidationProblem> check_namespace_usage_and_version(SedBase* document);
     static std::vector<ValidationProblem> check_constants_ordering(SedBase* document);
+    /// SEDBase-0005 applied to a REFERENCE token embedded in a math string
+    /// (SEDBase-0005.md); a no-op when the tree has no reference rules.
+    static std::vector<ValidationProblem> check_math_reference_root(
+            const std::string& reference_text, const std::string& class_name, const std::string& id_value,
+            const std::string& attr, const std::string& location);
 };
 
 /// Per-field leaf validation, via the real JSON Schema validator
@@ -658,6 +663,25 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
                     auto more = RefRules::check_reference_field(kv.value().as<std::string>(), get_document(), ctx,
                                                                 this, info);
                     problems.insert(problems.end(), more.begin(), more.end());
+                }
+            } else if (spec.kind == "ArrayOrRef" && value.is_array()) {
+                // The array-literal branch of an ArrayOrRef field: each
+                // element that is itself a reference gets its own
+                // reference-resolution dispatch (SEDBase-0005.md: the rule
+                // applies to "an element of an array or object value"), with
+                // no per-element expected type - same scope as the DictOrRef
+                // dict-literal branch above.
+                size_t idx = 0;
+                for (const auto& el : value.array_range()) {
+                    if (is_ref_value(el)) {
+                        RefFieldInfo info;
+                        info.field_kind = spec.kind;
+                        RuleCtx ctx{cls, self_id, spec.name, loc + "/" + std::to_string(idx), ""};
+                        auto more = RefRules::check_reference_field(el.as<std::string>(), get_document(), ctx,
+                                                                    this, info);
+                        problems.insert(problems.end(), more.begin(), more.end());
+                    }
+                    idx++;
                 }
             } else if (spec.is_math && value.is_string()) {
                 // Types-0001..0004 (Design.md's Math section) - only for a

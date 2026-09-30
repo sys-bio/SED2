@@ -38,6 +38,16 @@ public final class MathRules {
             problems.add(RuleCatalog.makeProblem("Types-0001", location, ph));
             return problems;
         }
+        if (Handwritten.HAS_REFERENCE_RULES) {
+            // SEDBase-0005.md: the root-collection rule also applies to a
+            // REFERENCE token embedded in a math string.
+            for (MathAst.Node node : ast.walk()) {
+                if (node.isReference()) {
+                    problems.addAll(Handwritten.sedBase0005(
+                            References.parse(node.text), className, idValue, attr, location));
+                }
+            }
+        }
         for (MathAst.Node node : ast.walk()) {
             if (node.isFunctionCall() && !PredefinedFunctions.FUNCTIONS.containsKey(node.name)) {
                 Map<String, Object> ph = new HashMap<>();

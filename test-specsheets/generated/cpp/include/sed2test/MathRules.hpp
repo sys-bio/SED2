@@ -44,6 +44,12 @@ inline std::vector<ValidationProblem> MathRules::check_math_field(
             return problems;
         }
         for (const MathNode* node : ast->walk()) {
+            if (node->is_reference()) {
+                auto more = RefRules::check_math_reference_root(node->text, class_name, id_value, attr, location);
+                problems.insert(problems.end(), more.begin(), more.end());
+            }
+        }
+        for (const MathNode* node : ast->walk()) {
             if (node->is_function_call() && !PredefinedFunctions::functions().count(node->name)) {
                 std::map<std::string, std::string> ph;
                 ph["attr"] = attr;

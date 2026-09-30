@@ -94,6 +94,10 @@ public final class OutputsShape {
         return o instanceof Long || o instanceof BigInteger || o instanceof Double;
     }
 
+    private static boolean isRefValue(Object o) {
+        return o instanceof String && ((String) o).startsWith("#");
+    }
+
     private static boolean isInt(Object o) { return o instanceof Long || o instanceof BigInteger; }
 
     private static double dbl(Object o) {
@@ -518,7 +522,10 @@ public final class OutputsShape {
                 return applyDimMinus(left, right);
             }
             Object right = eval(b.right(), scope, shapeOf);
-            if (b.op().equals("==")) return pyEq(left, right);
+            if (b.op().equals("==")) {
+                if (isRefValue(left) || isRefValue(right)) throw new NotStatic("== operand is a reference");
+                return pyEq(left, right);
+            }
             if (b.op().equals("+")) {
                 if (left instanceof List && right instanceof List) {
                     List<Object> out = new ArrayList<>((List<?>) left);
