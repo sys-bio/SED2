@@ -1,0 +1,14 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x96": {
+      "_type": "loop",
+      "loopVariables": {
+        "x95": {
+          "initialValue": {},
+          "subsequentValues": ""
+        }
+      }
+    }
+  }
+}

@@ -19,10 +19,10 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class StringFormation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("concatenate", "ArrayOrRef", true, "StringFormation-0002", "StringFormation-0001", "StringFormation-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("concatenate", "ArrayOrRef", true, "StringFormation-0002", "StringFormation-0001", "StringFormation-0000", null, null, null, null, null, false, null, null, "StringFormation-0003", "any", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("concatenate");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -37,6 +37,8 @@ public final class StringFormation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "stringFormation"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"scalar when no element of concatenate is itself a list; otherwise N-D matching the shape of the list element(s) within concatenate (1D for one list element, higher-D when several list elements are combined pairwise, all sharing the same length/shape per dimension) - not derivable without evaluating concatenate's actual element values\"}}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": true, \"type\": \"stringList\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"same as [id]'s dimensions above; not derivable without evaluating concatenate\"}}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getConcatenateValue() { return getOrRefValueNode("concatenate"); }
     public String getConcatenateRef() { return getOrRefRefNode("concatenate").asText(); }

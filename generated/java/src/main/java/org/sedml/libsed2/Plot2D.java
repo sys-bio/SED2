@@ -19,16 +19,16 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Plot2D extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("legend", "BooleanOrRef", false, "Plot-0001", null, "Plot-0000", null, null, null, null, null, false),
-        new FieldSpec("height", "NumberOrRef", false, "Plot-0003", null, "Plot-0000", null, null, null, null, null, false),
-        new FieldSpec("width", "NumberOrRef", false, "Plot-0005", null, "Plot-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("curves", "dict", true, "Plot2D-0002", "Plot2D-0001", "Plot2D-0000", null, null, null, null, "AbstractCurve", false),
-        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
-        new FieldSpec("rightYAxis", "ref-class", false, "Plot2D-0003", null, "Plot2D-0000", null, null, null, "Axis", null, false),
-        new FieldSpec("xAxis", "ref-class", false, "Plot-0007", null, "Plot-0000", null, null, null, "Axis", null, false),
-        new FieldSpec("yAxis", "ref-class", false, "Plot-0008", null, "Plot-0000", null, null, null, "Axis", null, false)
+        new FieldSpec("legend", "BooleanOrRef", false, "Plot-0001", null, "Plot-0000", null, null, null, null, null, false, null, null, "Plot-0002", null, null),
+        new FieldSpec("height", "NumberOrRef", false, "Plot-0003", null, "Plot-0000", null, null, null, null, null, false, null, null, "Plot-0004", null, null),
+        new FieldSpec("width", "NumberOrRef", false, "Plot-0005", null, "Plot-0000", null, null, null, null, null, false, null, null, "Plot-0006", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("curves", "dict", true, "Plot2D-0002", "Plot2D-0001", "Plot2D-0000", null, null, null, null, "AbstractCurve", false, null, null, null, null, null),
+        new FieldSpec("outputParameters", "array", false, "AbstractOutput-0001", null, "AbstractOutput-0000", null, null, null, "OutputParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
+        new FieldSpec("rightYAxis", "ref-class", false, "Plot2D-0003", null, "Plot2D-0000", null, null, null, "Axis", null, false, null, null, null, null, null),
+        new FieldSpec("xAxis", "ref-class", false, "Plot-0007", null, "Plot-0000", null, null, null, "Axis", null, false, null, null, null, null, null),
+        new FieldSpec("yAxis", "ref-class", false, "Plot-0008", null, "Plot-0000", null, null, null, "Axis", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("curves");
     private final IdKeyedCollection<SedBase> curves = new IdKeyedCollection<>();
@@ -132,6 +132,17 @@ public final class Plot2D extends SedBase {
         if (yAxis != null) out.add(new ChildLoc(yAxis, "/yAxis"));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "curves": return curves;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("curves"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

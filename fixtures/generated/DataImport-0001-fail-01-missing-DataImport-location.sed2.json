@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x9": {
+      "_type": "dataImport",
+      "format": "x"
+    }
+  }
+}

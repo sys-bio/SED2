@@ -19,10 +19,10 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class JacobianFull extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, "JacobianFull-0002", "JacobianFull-0001", "JacobianFull-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("model", "SIdRef", true, "JacobianFull-0002", "JacobianFull-0001", "JacobianFull-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -37,6 +37,8 @@ public final class JacobianFull extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "jacobianFull"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"floatingSpeciesIds\", \"note\": \"row count = number of species in the referenced model\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"floatingSpeciesIds\", \"note\": \"row labels = the model's ordered species list\"}}, {\"size\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"floatingSpeciesIds\", \"note\": \"column count = number of species in the referenced model\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"floatingSpeciesIds\", \"note\": \"column labels = the model's ordered species list\"}}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }

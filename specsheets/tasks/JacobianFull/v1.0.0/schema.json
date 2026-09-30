@@ -18,6 +18,7 @@
         },
         "model": {
           "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/SIdRef",
+          "x-ref-target": "model",
           "x-rule-id": "JacobianFull-0002"
         }
       },

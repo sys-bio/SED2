@@ -19,11 +19,11 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class DataImport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("location", "StringOrRef", true, "DataImport-0002", "DataImport-0001", "DataImport-0000", null, null, null, null, null, false),
-        new FieldSpec("format", "StringOrRef", true, "DataImport-0005", "DataImport-0004", "DataImport-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("location", "StringOrRef", true, "DataImport-0002", "DataImport-0001", "DataImport-0000", null, null, null, null, null, false, 1, null, "DataImport-0003", null, null),
+        new FieldSpec("format", "StringOrRef", true, "DataImport-0005", "DataImport-0004", "DataImport-0000", null, null, null, null, null, false, 1, null, "DataImport-0006", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location", "format");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -38,6 +38,8 @@ public final class DataImport extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "dataImport"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"shape\", \"note\": \"shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)\"}}, \"[id].model\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getLocationValue() { return getOrRefValueNode("location").asText(); }
     public String getLocationRef() { return getOrRefRefNode("location").asText(); }

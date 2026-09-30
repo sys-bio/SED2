@@ -92,7 +92,7 @@ class UnknownChoiceInline(SedBase):
 
 class TestDocument(SedBase):
     """Generated from test-specsheets/core/TestDocument/."""
-    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('version', 'string', True, None, 'TestDocument-0001', 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern='^v\\d+\\.\\d+\\.\\d+$', item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('widgets', 'dict', False, 'TestDocument-0002', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractWidget', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('reports', 'dict', False, 'TestDocument-0003', None, 'TestDocument-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'version'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -199,7 +199,7 @@ class TestDocument(SedBase):
 
 class FancyWidget(SedBase):
     """Generated from test-specsheets/tasks/FancyWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'FancyWidget-0001', 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('retries', 'integer', False, 'WidgetOptions-0001', None, 'WidgetOptions-0000', minimum=0, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('timeoutSeconds', 'number', False, 'WidgetOptions-0002', None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=0, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('choices', 'dict', False, None, None, 'FancyWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='ChoiceInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('notes', 'array', False, None, None, 'WidgetOptions-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'fancyWidget'
     _TYPE_RULE_ID = 'FancyWidget-0002'
@@ -358,7 +358,7 @@ class FancyWidget(SedBase):
 
 class MathWidget(SedBase):
     """Generated from test-specsheets/tasks/MathWidget/."""
-    _FIELDS = [FieldSpec('math', 'StringOrRef', True, 'MathWidget-0002', 'MathWidget-0001', 'MathWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('math', 'StringOrRef', True, 'MathWidget-0002', 'MathWidget-0001', 'MathWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=True, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'math'}
     _TYPE_CONST = 'mathWidget'
     _TYPE_RULE_ID = 'MathWidget-0003'
@@ -448,7 +448,7 @@ class MathWidget(SedBase):
 
 class SimpleWidget(SedBase):
     """Generated from test-specsheets/tasks/SimpleWidget/."""
-    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('value', 'StringOrRef', True, None, 'SimpleWidget-0001', 'SimpleWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'value'}
     _TYPE_CONST = 'simpleWidget'
     _TYPE_RULE_ID = 'SimpleWidget-0002'
@@ -456,7 +456,7 @@ class SimpleWidget(SedBase):
     _NAME_RULE_ID = 'TestBase-0001'
     _DESC_RULE_ID = None
     _BASE_CATCHALL = 'TestBase-0000'
-    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]}
+    _NAMESPACE_FIELDS = {'acme': [FieldSpec('acme@priority', 'NumberOrRef', False, 'SimpleWidget-acme-0001', None, 'SimpleWidget-acme-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]}
     _NAMESPACE_CATCHALL = {'acme': 'SimpleWidget-acme-0000'}
     _KNOWN_NAMESPACE_PREFIXES = {'acme'}
 
@@ -555,7 +555,7 @@ class SimpleWidget(SedBase):
 
 class TypesWidget(SedBase):
     """Generated from test-specsheets/tasks/TypesWidget/."""
-    _FIELDS = [FieldSpec('anyValue', 'any', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('enabled', 'BooleanOrRef', False, 'TypesWidget-0001', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('count', 'IntegerOrRef', False, 'TypesWidget-0003', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('items', 'ArrayOrRef', False, 'TypesWidget-0004', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('settings', 'DictOrRef', False, 'TypesWidget-0005', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('extras', 'any-dict', False, 'TypesWidget-0007', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('primaryNote', 'ref-class', False, 'TypesWidget-0006', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('report', 'ref-discriminator', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('anyValue', 'any', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('enabled', 'BooleanOrRef', False, 'TypesWidget-0001', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('count', 'IntegerOrRef', False, 'TypesWidget-0003', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('items', 'ArrayOrRef', False, 'TypesWidget-0004', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind='any', ref_target=None), FieldSpec('settings', 'DictOrRef', False, 'TypesWidget-0005', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind='any', ref_target=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('extras', 'any-dict', False, 'TypesWidget-0007', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('primaryNote', 'ref-class', False, 'TypesWidget-0006', None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Note', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('report', 'ref-discriminator', False, None, None, 'TypesWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractReport', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'typesWidget'
     _TYPE_RULE_ID = 'TypesWidget-0002'
@@ -780,7 +780,7 @@ class TypesWidget(SedBase):
 
 class SimpleReport(SedBase):
     """Generated from test-specsheets/outputs/SimpleReport/."""
-    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('source', 'SIdRef', True, None, 'SimpleReport-0001', 'SimpleReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('format', 'StringOrRef', False, 'AbstractReport-0001', None, 'AbstractReport-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'source'}
     _TYPE_CONST = 'simpleReport'
     _TYPE_RULE_ID = 'SimpleReport-0002'
@@ -862,7 +862,7 @@ class SimpleReport(SedBase):
 
 class Choice(SedBase):
     """Generated from test-specsheets/auxiliary/Choice/."""
-    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {}
     _TYPE_CONST = 'choice'
     _TYPE_RULE_ID = 'Choice-0002'
@@ -930,7 +930,7 @@ class Choice(SedBase):
 
 class Note(SedBase):
     """Generated from test-specsheets/auxiliary/Note/."""
-    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('text', 'StringOrRef', True, None, 'Note-0001', 'Note-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'text'}
     _TYPE_CONST = None
     _TYPE_RULE_ID = None
@@ -994,7 +994,7 @@ class Note(SedBase):
 
 class WeightedChoice(SedBase):
     """Generated from test-specsheets/auxiliary/WeightedChoice/."""
-    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('weight', 'NumberOrRef', True, None, 'WeightedChoice-0001', 'WeightedChoice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('label', 'StringOrRef', False, 'Choice-0003', None, 'Choice-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'weight'}
     _TYPE_CONST = 'weightedChoice'
     _TYPE_RULE_ID = 'WeightedChoice-0002'
@@ -1084,7 +1084,7 @@ class WeightedChoice(SedBase):
 
 class AcmeWidget(SedBase):
     """Generated from test-specsheets/tasks/AcmeWidget/."""
-    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None)]
+    _FIELDS = [FieldSpec('acme@acmeLevel', 'NumberOrRef', True, None, 'acme-AcmeWidget-0001', 'AcmeWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('label', 'StringOrRef', False, 'AbstractWidget-0001', None, 'AbstractWidget-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'acme@acmeLevel'}
     _TYPE_CONST = 'acme@acmeWidget'
     _TYPE_RULE_ID = 'acme-AcmeWidget-0002'
@@ -1180,6 +1180,8 @@ def _dispatch_AbstractWidget(type_value):
         'typesWidget': TypesWidget,
         'acme@acmeWidget': AcmeWidget,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1189,6 +1191,8 @@ def parse_AbstractWidget(raw: dict):
     _type still returns an UnknownAbstractWidget holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractWidget-0002', '')
     tv = raw['_type']
@@ -1209,6 +1213,8 @@ def _dispatch_AbstractReport(type_value):
     branches = {
         'simpleReport': SimpleReport,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1218,6 +1224,8 @@ def parse_AbstractReport(raw: dict):
     _type still returns an UnknownAbstractReport holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('AbstractReport-0002', '')
     tv = raw['_type']
@@ -1239,6 +1247,8 @@ def _dispatch_ChoiceInline(type_value):
         'choice': Choice,
         'weightedChoice': WeightedChoice,
     }
+    if not isinstance(type_value, str):
+        return None
     return branches.get(type_value)
 
 
@@ -1248,6 +1258,8 @@ def parse_ChoiceInline(raw: dict):
     _type still returns an UnknownChoiceInline holder plus a violation - an
     unregistered-namespace _type returns one with no violation at all.
     See Design.md's Namespaces / Schema-Pass Errors sections."""
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if '_type' not in raw:
         return None, make_problem('ChoiceInline-0000', '', **{'schema-message': 'missing _type'})
     tv = raw['_type']
@@ -1265,6 +1277,8 @@ def parse_ChoiceInline(raw: dict):
 
 
 def _load_fields(obj, raw: dict):
+    if not isinstance(raw, dict):
+        raw = {}  # a non-object is treated as an empty object (Java/C++ do the same)
     if 'name' in raw: obj.set_name(raw['name'])
     if 'description' in raw: obj.set_description(raw['description'])
     if '_type' in raw: obj._values['_type'] = raw['_type']

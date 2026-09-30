@@ -19,8 +19,8 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class SimpleReport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("source", "SIdRef", true, null, "SimpleReport-0001", "SimpleReport-0000", null, null, null, null, null, false),
-        new FieldSpec("format", "StringOrRef", false, "AbstractReport-0001", null, "AbstractReport-0000", null, null, null, null, null, false)
+        new FieldSpec("source", "SIdRef", true, null, "SimpleReport-0001", "SimpleReport-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("format", "StringOrRef", false, "AbstractReport-0001", null, "AbstractReport-0000", null, null, null, null, null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("source");
 

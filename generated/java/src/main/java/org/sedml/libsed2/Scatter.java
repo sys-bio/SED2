@@ -19,13 +19,13 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Scatter extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false)
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false, null, null, "Repeat-0003", "ref", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false, null, null, null, null, null),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final IdKeyedCollection<SedBase> subTasks = new IdKeyedCollection<>();
@@ -43,6 +43,8 @@ public final class Scatter extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "scatter"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(range)\"}, \"labels\": null, \"note\": \"one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type\"}, {\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariableMap)\"}, \"labels\": null, \"note\": \"one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here\"}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}, \"[id].aggregates\": {\"valid\": \"provided(aggregateOutputVariables)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(aggregateOutputVariables)\"}, \"labels\": null, \"note\": \"each entry collapses the range dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Scatter's own range), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry\"}]}, \"[id].range\": {\"valid\": \"provided(range)\", \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"the current value of range, within each iteration\"}, \"[id].index\": {\"valid\": \"provided(range)\", \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"the current index into range, within each iteration\"}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getOutputVariableMapValue() { return getOrRefValueNode("outputVariableMap"); }
     public String getOutputVariableMapRef() { return getOrRefRefNode("outputVariableMap").asText(); }
@@ -107,6 +109,18 @@ public final class Scatter extends SedBase {
         if (range != null) out.add(new ChildLoc(range, "/range"));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "subTasks": return subTasks;
+            case "aggregateOutputVariables": return aggregateOutputVariables;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("subTasks", "aggregateOutputVariables"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

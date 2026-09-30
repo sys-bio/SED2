@@ -19,15 +19,15 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class TypesWidget extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("anyValue", "any", false, null, null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("enabled", "BooleanOrRef", false, "TypesWidget-0001", null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("count", "IntegerOrRef", false, "TypesWidget-0003", null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("items", "ArrayOrRef", false, "TypesWidget-0004", null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("settings", "DictOrRef", false, "TypesWidget-0005", null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("extras", "any-dict", false, "TypesWidget-0007", null, "TypesWidget-0000", null, null, null, null, null, false),
-        new FieldSpec("primaryNote", "ref-class", false, "TypesWidget-0006", null, "TypesWidget-0000", null, null, null, "Note", null, false),
-        new FieldSpec("report", "ref-discriminator", false, null, null, "TypesWidget-0000", null, null, null, null, "AbstractReport", false)
+        new FieldSpec("anyValue", "any", false, null, null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("enabled", "BooleanOrRef", false, "TypesWidget-0001", null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("count", "IntegerOrRef", false, "TypesWidget-0003", null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("items", "ArrayOrRef", false, "TypesWidget-0004", null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, "any", null),
+        new FieldSpec("settings", "DictOrRef", false, "TypesWidget-0005", null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, "any", null),
+        new FieldSpec("label", "StringOrRef", false, "AbstractWidget-0001", null, "AbstractWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("extras", "any-dict", false, "TypesWidget-0007", null, "TypesWidget-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("primaryNote", "ref-class", false, "TypesWidget-0006", null, "TypesWidget-0000", null, null, null, "Note", null, false, null, null, null, null, null),
+        new FieldSpec("report", "ref-discriminator", false, null, null, "TypesWidget-0000", null, null, null, null, "AbstractReport", false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of();
     private final IdKeyedCollection<JsonNode> extras = new IdKeyedCollection<>();
@@ -121,6 +121,17 @@ public final class TypesWidget extends SedBase {
         if (report != null) out.add(new ChildLoc(report, "/report"));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "extras": return extras;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("extras"); }
 
     @Override
     protected IdKeyedCollection<JsonNode> getAnyDictCollection(String fieldName) {

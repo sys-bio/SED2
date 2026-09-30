@@ -1,0 +1,31 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "a": "#constants:a"
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "c1": {
+      "_type": "calculation",
+      "math": "pi * 2 + sin(1)"
+    }
+  }
+}

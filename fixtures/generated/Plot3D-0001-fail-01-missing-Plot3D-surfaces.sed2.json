@@ -1,0 +1,8 @@
+{
+  "version": "v1.0.0",
+  "outputs": {
+    "x47": {
+      "_type": "plot3D"
+    }
+  }
+}

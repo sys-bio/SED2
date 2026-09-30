@@ -19,8 +19,9 @@ namespace libsed2 {
 /// value is the field's own raw string - never a reference: validate_own()
 /// only calls here for a literal string value (Types-0001.md: "When the
 /// math attribute is itself a reference, ... apply only if the reference
-/// resolves statically to a string constant", out of scope until reference
-/// resolution exists for C++ - see this module's docstring). Returns {}
+/// resolves statically to a string constant", which no target implements
+/// yet - the reference implementation skips a referenced math field too).
+/// Returns {}
 /// if value parses and every function call / bare identifier it contains
 /// checks out; otherwise one ValidationProblem per violation (Types-0001
 /// short-circuits the rest, same as the Python/Java targets - an
@@ -41,6 +42,12 @@ inline std::vector<ValidationProblem> MathRules::check_math_field(
             ph["parse-message"] = e.what();
             problems.push_back(RuleCatalog::make_problem("Types-0001", location, ph));
             return problems;
+        }
+        for (const MathNode* node : ast->walk()) {
+            if (node->is_reference()) {
+                auto more = RefRules::check_math_reference_root(node->text, class_name, id_value, attr, location);
+                problems.insert(problems.end(), more.begin(), more.end());
+            }
         }
         for (const MathNode* node : ast->walk()) {
             if (node->is_function_call() && !PredefinedFunctions::functions().count(node->name)) {

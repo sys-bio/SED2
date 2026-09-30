@@ -1,0 +1,66 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_num": 1.5,
+    "k_strings": [
+      "a",
+      "b"
+    ],
+    "k_array": [
+      10,
+      20,
+      30
+    ],
+    "k_obj": {
+      "a": 1,
+      "b": 2
+    },
+    "k_str": "hello"
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "loop1": {
+      "_type": "loop",
+      "loopVariables": {
+        "lv1": {
+          "initialValue": 0,
+          "subsequentValues": "#tasks:loop1:subTasks:s1.model"
+        }
+      },
+      "subTasks": {
+        "s1": {
+          "_type": "modelImport",
+          "location": "model.xml",
+          "language": "urn:sedml:language:sbml"
+        }
+      }
+    },
+    "r1": {
+      "_type": "relabelData",
+      "input": "#tasks:loop1:loopVariables:zz",
+      "labels": "#constants:k_strings"
+    }
+  }
+}

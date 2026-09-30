@@ -19,15 +19,15 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class ParameterScan extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null, false),
-        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null, false),
-        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false),
-        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false)
+        new FieldSpec("model", "SIdRef", true, "ParameterScan-0002", "ParameterScan-0001", "ParameterScan-0000", null, null, null, null, null, false, null, null, null, null, "model"),
+        new FieldSpec("outputVariableMap", "DictOrRef", false, "Repeat-0002", null, "Repeat-0000", null, null, null, null, null, false, null, null, "Repeat-0003", "ref", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("parameterRanges", "array", true, "ParameterScan-0004", "ParameterScan-0003", "ParameterScan-0000", null, null, null, "ParameterRange", null, false, null, null, null, null, null),
+        new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false, null, null, null, null, null),
+        new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
+        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "parameterRanges");
     private final ListCollection<SedBase> parameterRanges = new ListCollection<>();
@@ -46,6 +46,8 @@ public final class ParameterScan extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "parameterScan"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"repeat\": {\"over\": \"parameterRanges\", \"size\": {\"source\": \"static\", \"expr\": \"len(self)\"}, \"labels\": null, \"note\": \"one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8\"}}, {\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariableMap)\"}, \"labels\": null}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}, \"[id].aggregates\": {\"valid\": \"provided(aggregateOutputVariables)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(aggregateOutputVariables)\"}, \"labels\": null}]}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
     public void setModel(String value) { values.put("model", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
@@ -122,6 +124,18 @@ public final class ParameterScan extends SedBase {
         if (range != null) out.add(new ChildLoc(range, "/range"));
         return out;
     }
+
+    @Override
+    public IdCollection getIdCollection(String fieldName) {
+        switch (fieldName) {
+            case "subTasks": return subTasks;
+            case "aggregateOutputVariables": return aggregateOutputVariables;
+            default: return null;
+        }
+    }
+
+    @Override
+    public List<String> idCollectionNames() { return List.of("subTasks", "aggregateOutputVariables"); }
 
     @Override
     protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {

@@ -1,0 +1,12 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x98": {
+      "_type": "aggregationCalculation",
+      "input": {},
+      "taskParameters": [
+        {}
+      ]
+    }
+  }
+}

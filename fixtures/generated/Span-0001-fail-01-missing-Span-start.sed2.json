@@ -1,0 +1,12 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x41": {
+      "_type": "boundedODESimulation",
+      "independentVariableSpan": {
+        "_type": "span",
+        "end": 1.0
+      }
+    }
+  }
+}

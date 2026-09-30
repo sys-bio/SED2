@@ -19,17 +19,17 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class CsvImport extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("location", "StringOrRef", true, "CsvImport-0002", "CsvImport-0001", "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("organization", "StringOrRef", false, "CsvImport-0004", null, "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("separator", "StringOrRef", false, "CsvImport-0006", null, "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("headers", "BooleanOrRef", false, "CsvImport-0008", null, "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("columnNames", "ArrayOrRef", false, "CsvImport-0010", null, "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("ncols", "IntegerOrRef", false, "CsvImport-0012", null, "CsvImport-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("nrows", "IntegerOrRef", false, "CsvImport-0014", null, "CsvImport-0000", null, 0.0, null, null, null, false),
-        new FieldSpec("units", "ArrayOrRef", false, "CsvImport-0016", null, "CsvImport-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("location", "StringOrRef", true, "CsvImport-0002", "CsvImport-0001", "CsvImport-0000", null, null, null, null, null, false, 1, null, "CsvImport-0003", null, null),
+        new FieldSpec("organization", "StringOrRef", false, "CsvImport-0004", null, "CsvImport-0000", null, null, null, null, null, false, null, null, "CsvImport-0005", null, null),
+        new FieldSpec("separator", "StringOrRef", false, "CsvImport-0006", null, "CsvImport-0000", null, null, null, null, null, false, null, null, "CsvImport-0007", null, null),
+        new FieldSpec("headers", "BooleanOrRef", false, "CsvImport-0008", null, "CsvImport-0000", null, null, null, null, null, false, null, null, "CsvImport-0009", null, null),
+        new FieldSpec("columnNames", "ArrayOrRef", false, "CsvImport-0010", null, "CsvImport-0000", null, null, null, null, null, false, null, null, "CsvImport-0011", "string", null),
+        new FieldSpec("ncols", "IntegerOrRef", false, "CsvImport-0012", null, "CsvImport-0000", null, 0.0, null, null, null, false, null, null, "CsvImport-0013", null, null),
+        new FieldSpec("nrows", "IntegerOrRef", false, "CsvImport-0014", null, "CsvImport-0000", null, 0.0, null, null, null, false, null, null, "CsvImport-0015", null, null),
+        new FieldSpec("units", "ArrayOrRef", false, "CsvImport-0016", null, "CsvImport-0000", null, null, null, null, null, false, null, null, "CsvImport-0017", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("location");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -44,6 +44,8 @@ public final class CsvImport extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "csvImport"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"rowCount\", \"note\": \"row count, read from the CSV file at location\"}, \"labels\": null}, {\"size\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"columnCount\", \"note\": \"column count, read from the CSV file at location together with organization/headers/ncols\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"columnHeaders\", \"note\": \"column labels, read from the CSV header row when headers is true, else from columnNames\"}}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getLocationValue() { return getOrRefValueNode("location").asText(); }
     public String getLocationRef() { return getOrRefRefNode("location").asText(); }

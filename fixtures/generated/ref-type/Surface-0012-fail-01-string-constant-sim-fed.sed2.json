@@ -1,0 +1,59 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "mybool": true,
+    "mynumber": 1.3,
+    "myint": 5,
+    "myzero": 0,
+    "mynegint": -1,
+    "mystring": "hello",
+    "myNumberArray": [
+      1.2,
+      2,
+      6.6
+    ],
+    "myStringArray": [
+      "how",
+      "are",
+      "you?"
+    ],
+    "myobject": {
+      "a": 1,
+      "b": 2
+    },
+    "myStringObject": {
+      "a": "x",
+      "b": "y"
+    }
+  },
+  "tasks": {
+    "model1": {
+      "_type": "modelImport",
+      "location": "filename.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "independentVariableRange": {
+        "_type": "numericRange"
+      },
+      "model": "#tasks:model1.model",
+      "independentVariable": "x",
+      "outputVariables": []
+    }
+  },
+  "outputs": {
+    "x2": {
+      "_type": "plot3D",
+      "surfaces": {
+        "x1": {
+          "surfaceType": "parametricCurve",
+          "x": "#tasks:sim1",
+          "y": "#tasks:sim1",
+          "z": "#tasks:sim1",
+          "order": "#constants:mystring"
+        }
+      }
+    }
+  }
+}

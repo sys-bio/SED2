@@ -19,11 +19,11 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class AggregationCalculation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("input", "any", true, null, "AggregationCalculation-0001", "AggregationCalculation-0000", null, null, null, null, null, false),
-        new FieldSpec("appliedDimensions", "ArrayOrRef", false, "AggregationCalculation-0002", null, "AggregationCalculation-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("input", "any", true, null, "AggregationCalculation-0001", "AggregationCalculation-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("appliedDimensions", "ArrayOrRef", false, "AggregationCalculation-0002", null, "AggregationCalculation-0000", null, null, null, null, null, false, null, null, "AggregationCalculation-0003", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("input");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -38,6 +38,8 @@ public final class AggregationCalculation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "aggregationCalculation"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input) - dim(appliedDimensions or outermost)\", \"note\": \"shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is\"}}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getInput() { if (!values.containsKey("input")) throw new ApiError("input" + " is not set"); return values.get("input"); }
     public void setInput(JsonNode value) { values.put("input", value); }

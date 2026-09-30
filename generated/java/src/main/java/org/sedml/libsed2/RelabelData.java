@@ -19,11 +19,11 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class RelabelData extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("input", "SIdRef", true, "RelabelData-0002", "RelabelData-0001", "RelabelData-0000", null, null, null, null, null, false),
-        new FieldSpec("labels", "ArrayOrRef", true, "RelabelData-0004", "RelabelData-0003", "RelabelData-0000", null, null, null, null, null, false),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("input", "SIdRef", true, "RelabelData-0002", "RelabelData-0001", "RelabelData-0000", null, null, null, null, null, false, null, null, null, null, "annotatedData"),
+        new FieldSpec("labels", "ArrayOrRef", true, "RelabelData-0004", "RelabelData-0003", "RelabelData-0000", null, null, null, null, null, false, null, null, "RelabelData-0005", "string", null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("input", "labels");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -38,6 +38,8 @@ public final class RelabelData extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "relabelData"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input)\", \"note\": \"same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape\"}}, \"[id].model\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getInput() { if (!values.containsKey("input")) throw new ApiError("input" + " is not set"); return values.get("input").asText(); }
     public void setInput(String value) { values.put("input", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }

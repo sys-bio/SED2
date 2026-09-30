@@ -1,0 +1,48 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "mybool": true,
+    "mynumber": 1.3,
+    "myint": 5,
+    "myzero": 0,
+    "mynegint": -1,
+    "mystring": "hello",
+    "myNumberArray": [
+      1.2,
+      2,
+      6.6
+    ],
+    "myStringArray": [
+      "how",
+      "are",
+      "you?"
+    ],
+    "myobject": {
+      "a": 1,
+      "b": 2
+    },
+    "myStringObject": {
+      "a": "x",
+      "b": "y"
+    }
+  },
+  "tasks": {
+    "model1": {
+      "_type": "modelImport",
+      "location": "filename.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "x1": {
+      "_type": "boundedODESimulation",
+      "independentVariableSpan": {
+        "_type": "span",
+        "start": 1.0,
+        "end": 1.0
+      },
+      "model": "#tasks:model1.model",
+      "independentVariable": "x",
+      "outputVariables": [],
+      "integrateReducedModel": "#constants:mybool"
+    }
+  }
+}

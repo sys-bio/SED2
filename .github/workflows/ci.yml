@@ -7,11 +7,17 @@
 # generated/ directory, regenerates it fresh from source, and either
 # (a) the regenerated output matches what's already committed - nothing to
 #     do, proceed straight to testing it, or
-# (b) it doesn't - on a direct push/workflow_dispatch, commit the fresh
-#     output right back (self-healing: the tree in git can never drift from
-#     what generator/ actually produces); on a pull_request, fail the job
-#     instead of pushing to someone else's branch, with a diff explaining
-#     what to regenerate locally.
+# (b) it doesn't - on a direct push/workflow_dispatch, or on a pull_request
+#     whose branch lives in this same repo, commit the fresh output right
+#     back to that branch (self-healing: the tree in git can never drift
+#     from what generator/ actually produces); on a pull_request from a
+#     fork, fail the job instead (the token can't push to a fork), with a
+#     diff explaining what to regenerate locally. Note for same-repo PRs:
+#     the bot commit is made with GITHUB_TOKEN and so doesn't start a new
+#     run; this run's downstream jobs test the regenerated output, but if
+#     branch protection requires status checks, the new head commit will
+#     have none - re-run CI or push again in that case. Pull the bot
+#     commit before pushing more work to the branch.
 #
 # Determinism note: this scheme only stays a one-shot self-heal, never a
 # commit-on-every-run loop, if the generator's output is byte-identical
@@ -34,21 +40,14 @@
 # commit.
 #
 # Two regenerate targets, one job: test-specsheets/ -> test-specsheets/
-# generated/ (Phase 1, working) and specsheets/ -> generated/ (Phase 2:
-# Python target working, Java/C++ still stubs - see the regenerate job
-# below). Both live in the *same* job, committed with a single
+# generated/ (Phase 1) and specsheets/ -> generated/ (Phase 2, all three
+# targets). Both live in the *same* job, committed with a single
 # `git add`/commit/push covering both trees, specifically so there's only
 # ever one push per run - two independent jobs each pushing their own
 # regeneration raced on the same ref and got a non-fast-forward rejection
-# the first time this ran. A real failure regenerating test-specsheets/ still
-# fails the job for real (that pipeline is proven and a break there is a
-# real bug); a failure regenerating the real spec is caught with
-# continue-on-error and only turned into a warning annotation, specifically
-# so it never blocks the commit or the downstream test-python/test-java/
-# test-cpp jobs, which only depend on the test-specsheets/ half.
-# test-python-main *does* depend on the real-spec half succeeding, and
-# degrades gracefully (skips, doesn't fail) when it doesn't - see that
-# job's own `if:`.
+# the first time this ran. A failure regenerating either tree fails the job,
+# and with it every downstream test job. Every test job, for both trees and
+# all three languages, is a real gate.
 
 name: CI
 
@@ -85,7 +84,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          # On pull_request, github.ref_name is "<PR#>/merge" (not a branch),
+          # so use the PR's head branch (and its repo, for fork PRs) there.
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -119,20 +121,15 @@ jobs:
             --base-mixin TestBase \
             --lang python,java,cpp
 
-      # -- specsheets/ -> generated/  (Phase 2: Python done, Java/C++ stubs -
-      # see below) -- generate.py itself (source emission, not compiling
-      # the Java/C++ output) succeeds today for all three targets against
-      # the real spec; continue-on-error is kept anyway, since this job
-      # also covers the real spec's OWN emitters continuing to work as
-      # specsheets/ itself changes, and a failure here still must never
-      # block the proven test-specsheets/ half's commit or tests.
+      # -- specsheets/ -> generated/  (Phase 2: all three targets) --
+      # A failure here is a real regression and fails the job, like the
+      # test-specsheets/ half.
 
       - name: Delete existing generated/, if any
         run: rm -rf "$MAIN_GEN_OUT"
 
       - name: Regenerate from specsheets/ (all three targets)
         id: regen_main
-        continue-on-error: true
         run: |
           python3 generator/generate.py \
             --spec-root "$MAIN_SPEC_ROOT" \
@@ -148,15 +145,10 @@ jobs:
             --java-description "Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
             --cpp-namespace libsed2
 
-      - name: Warn if the real-spec regenerate failed
-        if: steps.regen_main.outcome == 'failure'
-        run: |
-          echo "::warning::specsheets/ -> generated/ regeneration failed - see Design.md's Testing section. Not expected (Phase 2's Python target is working), but does not block test-specsheets/ or its tests; test-python-main below will skip since it has nothing to test."
-
       # -- Commit both trees together, one push --
 
       - name: Commit regenerated output if it changed
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if git diff --cached --quiet; then
@@ -165,11 +157,11 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Regenerate generated directories from spec"
-            git push origin "HEAD:${{ github.ref_name }}"
+            git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
           fi
 
-      - name: Fail if this PR's committed output is stale
-        if: github.event_name == 'pull_request'
+      - name: Fail if this fork PR's committed output is stale
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT"
           if ! git diff --cached --quiet; then
@@ -239,10 +231,9 @@ jobs:
   test-python-main:
     name: Python target (specsheets/)
     needs: regenerate
-    # Phase 2's real-spec regenerate step is still allowed to fail today
-    # (continue-on-error - see the regenerate job's own comments); when it
-    # does, there's no generated/ or fixtures/ artifact to download, so
-    # this job has nothing to test and skips rather than failing the run.
+    # The real-spec regenerate step is a hard gate now (a failure there fails
+    # the whole run); this guard only keeps the job from running when that
+    # step did not succeed.
     if: needs.regenerate.outputs.regen_main_outcome == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -316,25 +307,13 @@ jobs:
           name: main-generated
           path: .
       - name: Run fixture suite
-        # Unlike test-python-main, this is allowed to fail today: the real
-        # spec (specsheets/) uses several field-type kinds (any,
-        # BooleanOrRef, ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
-        # ref-discriminator, any-dict) that generator/emit_java.py doesn't
-        # emit yet - only test-specsheets/'s narrower Phase-1 kind
-        # vocabulary is fully implemented for Java so far (Python's
-        # emitter covers all of them - see generator/emit_python.py).
-        # continue-on-error here keeps that gap from blocking the rest of
-        # the run while it gets closed incrementally.
-        id: test_java_main
-        continue-on-error: true
+        # Same as test-python-main: a real gate. The Java target implements
+        # the same reference-resolution and handwritten-rule validation as
+        # Python (verified document-for-document against Python's output).
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/fixtures
         working-directory: ${{ github.workspace }}/generated/java
         run: mvn -B test
-      - name: Warn if the real-spec Java test suite failed
-        if: steps.test_java_main.outcome == 'failure'
-        run: |
-          echo "::warning::generated/java's fixture suite failed against specsheets/ - expected until emit_java.py covers every real-spec field-type kind (see this job's Run fixture suite step). Does not block the rest of the run."
 
   test-cpp:
     name: C++ target (test-specsheets/)
@@ -389,22 +368,11 @@ jobs:
         working-directory: ${{ github.workspace }}/generated/cpp
         run: cmake --build build -j"$(nproc)"
       - name: Run fixture suite
-        # Allowed to fail today, same reason and same shape as
-        # test-java-main: emit_cpp.py has the identical real-spec
-        # field-type-kind gap as emit_java.py (any, BooleanOrRef,
-        # ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
-        # ref-discriminator, any-dict) - only test-specsheets/'s narrower
-        # Phase-1 kind vocabulary is fully implemented for C++ so far.
-        id: test_cpp_main
-        continue-on-error: true
+        # Same as test-python-main: a real gate (see test-java-main).
         env:
           SED2_FIXTURES_DIR: ${{ github.workspace }}/fixtures
         working-directory: ${{ github.workspace }}/generated/cpp/build
         run: ./fixture_tests
-      - name: Warn if the real-spec C++ test suite failed
-        if: steps.test_cpp_main.outcome == 'failure'
-        run: |
-          echo "::warning::generated/cpp's fixture suite failed against specsheets/ - expected until emit_cpp.py covers every real-spec field-type kind (see this job's Run fixture suite step). Does not block the rest of the run."
 
   # ---------------------------------------------------------------------
   # specsheets/ -> generated/   (Phase 2, see Design.md)
@@ -421,11 +389,7 @@ jobs:
   # exists, every *-main job picks its fixtures up automatically too -
   # nothing here is specific to fixtures/generated/ alone.
   #
-  # Only Python is fully implemented against specsheets/ today.
-  # test-java-main/test-cpp-main both run with continue-on-error (see their
-  # own Run fixture suite steps): specsheets/ uses several field-type kinds
-  # (any, BooleanOrRef, ArrayOrRef, IntegerOrRef, ref-class, DictOrRef,
-  # ref-discriminator, any-dict) that generator/emit_java.py and
-  # generator/emit_cpp.py don't emit yet, so real fixture failures are
-  # expected there until that gap is closed - see each job's own comment.
+  # All three targets are fully implemented against specsheets/ and gate
+  # the run: a failing test-python-main, test-java-main, or test-cpp-main
+  # fails CI.
   # ---------------------------------------------------------------------

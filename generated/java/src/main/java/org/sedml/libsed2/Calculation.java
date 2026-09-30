@@ -19,10 +19,10 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Calculation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("math", "StringOrRef", true, "Calculation-0002", "Calculation-0001", "Calculation-0000", null, null, null, null, null, true),
-        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false),
-        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false)
+        new FieldSpec("math", "StringOrRef", true, "Calculation-0002", "Calculation-0001", "Calculation-0000", null, null, null, null, null, true, null, null, "Calculation-0003", null, null),
+        new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("math");
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
@@ -37,6 +37,8 @@ public final class Calculation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "calculation"; }
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values\"}}, \"[id].model\": {\"valid\": false}}}");
+    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getMathValue() { return getOrRefValueNode("math").asText(); }
     public String getMathRef() { return getOrRefRefNode("math").asText(); }

@@ -260,6 +260,10 @@ class RepeatScope:
 
 # ---- evaluation -----------------------------------------------------------
 
+def _is_ref_value(value):
+    return isinstance(value, str) and value.startswith("#")
+
+
 def _resolve_path(node, scope):
     if node.names[0] == "outermost":
         if len(node.names) != 1:
@@ -376,6 +380,11 @@ def eval_expr(node, scope, shape_of):
             return _apply_dim_minus(left, right)
         right = eval_expr(node.right, scope, shape_of)
         if node.op == "==":
+            # A reference-valued operand (for example outputModel given as
+            # "#constants:flag") has no statically known value, so the
+            # comparison is not statically evaluable.
+            if _is_ref_value(left) or _is_ref_value(right):
+                raise NotStatic("== operand is a reference")
             return left == right
         if node.op == "+":
             if isinstance(left, list) and isinstance(right, list):

@@ -13,6 +13,30 @@ dispatch problems bubbled up from a nested item) is detected once, at load
 time, in Dispatch.loadFields - the only point that still has the raw JSON
 before an unrecognized key is dropped.
 
+Beyond that schema pass, validate() runs every check the Python target does
+(Python is the reference implementation; the two must report the same rule
+IDs, locations, severities and messages for every document):
+  - the math-grammar rules (Types-0001..0004, MathRules.java);
+  - reference parsing/resolution and every rule that hangs off a resolved
+    reference - SEDBase-0005 .. -0017 (including the formulaic ref-type field
+    rules and the x-ref-target "model"/"annotatedData" rules), SEDBase-0013's
+    Repeat scoping, AbstractTask-0003's ordering, Repeat-0008/-0009/-0010,
+    LoopVariable-0004 - via References.java (the shared dispatcher, the Java
+    port of the Python RUNTIME's reference machinery) and OutputsShape.java
+    (the outputs.json expr/valid interpreter, the port of OUTPUTS_SHAPE_PY);
+  - the whole-document rules SEDDocument-0009/-0010/-0011 (namespaces,
+    version) and -0013 (constants ordering).
+The per-rule logic of the last two groups is one small hand-written class per
+rule under templates/java/rules/ (named from the rule ID, e.g.
+SedBase0015.java), copied into the generated package by
+_copy_handwritten_rules_java only for rule IDs this spec tree defines - the
+Java analog of emit_python.py's _copy_handwritten_rules_py and its
+ImportError-style "rule absent from this tree -> skip" behavior, realized
+through the generated Handwritten.java facade (no-op stubs + HAS_* flags).
+Only concrete tasks/ classes carry an outputs.json (embedded in each class as
+JSON text). Text placeholders are rendered the way Python's str()/json.dumps()
+would (PyFmt.java), so message text matches across targets.
+
 Unlike the Python target, Java's static typing means there is no
 kwargs-collision hazard equivalent to the `make_problem()` duplicate-
 `location`-argument bug fixed in emit_python.py: RuleCatalog.makeProblem()
@@ -118,6 +142,8 @@ public class ApiError extends RuntimeException {{
 def _field_spec_java() -> str:
     return f'''package {PKG};
 
+import java.util.List;
+
 /** GENERATED - do not hand-edit; regenerate via generator/generate.py. */
 public final class FieldSpec {{
     public final String name;
@@ -132,10 +158,16 @@ public final class FieldSpec {{
     public final String itemClass;         // nullable
     public final String itemDiscriminator; // nullable
     public final boolean isMath;           // x-math (Design.md's Math section / Types-0001..0004)
+    public final Integer minLength;        // nullable (core/Types' URI leaf: "minLength": 1)
+    public final List<String> enumValues;  // nullable: a fixed set of legal string values
+    public final String refTypeRuleId;     // nullable: the formulaic "if a reference, must resolve to type X" rule
+    public final String itemKind;          // nullable: ArrayOrRef element / DictOrRef value kind ("string" | "number" | "ref" | "any")
+    public final String refTarget;         // nullable: x-ref-target ("model" -> SEDBase-0016, "annotatedData" -> SEDBase-0017)
 
     public FieldSpec(String name, String kind, boolean required, String ruleId, String requiredRuleId,
                       String originCatchall, Double minimum, Double exclusiveMinimum, String pattern,
-                      String itemClass, String itemDiscriminator, boolean isMath) {{
+                      String itemClass, String itemDiscriminator, boolean isMath, Integer minLength,
+                      List<String> enumValues, String refTypeRuleId, String itemKind, String refTarget) {{
         this.name = name;
         this.kind = kind;
         this.required = required;
@@ -148,6 +180,11 @@ public final class FieldSpec {{
         this.itemClass = itemClass;
         this.itemDiscriminator = itemDiscriminator;
         this.isMath = isMath;
+        this.minLength = minLength;
+        this.enumValues = enumValues;
+        this.refTypeRuleId = refTypeRuleId;
+        this.itemKind = itemKind;
+        this.refTarget = refTarget;
     }}
 }}
 '''
@@ -156,6 +193,7 @@ def _rule_catalog_java() -> str:
     return f'''package {PKG};
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Rule catalogue + ValidationProblem factory. GENERATED (this file) - do
@@ -195,9 +233,19 @@ public final class RuleCatalog {{
         String out = get(ruleId).messageTemplate;
         out = out.replace("{{location}}", String.valueOf(location));
         for (Map.Entry<String, Object> e : placeholders.entrySet()) {{
-            out = out.replace("{{" + e.getKey() + "}}", String.valueOf(e.getValue()));
+            out = out.replace("{{" + e.getKey() + "}}", PyFmt.str(e.getValue()));
         }}
         return out;
+    }}
+
+    /** makeProblem() with the placeholders given as alternating key, value
+     * arguments - kept in argument order (so substitution order matches the
+     * Python target's make_problem(**kwargs)); a value renders the way
+     * Python's str() would (see PyFmt). */
+    public static ValidationProblem problem(String ruleId, String location, Object... keyValues) {{
+        Map<String, Object> ph = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < keyValues.length; i += 2) ph.put((String) keyValues[i], keyValues[i + 1]);
+        return makeProblem(ruleId, location, ph);
     }}
 
     public static ValidationProblem makeProblem(String ruleId, String location, Map<String, Object> placeholders) {{
@@ -222,7 +270,10 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Per-field leaf validation, via the real JSON Schema validator
  * (networknt's json-schema-validator, per Design.md's Toolchain mandate) -
@@ -330,14 +381,62 @@ public final class LeafValidation {{
         return n;
     }}
 
-    public static boolean leafValueOk(String kind, JsonNode value, Double minimum, Double exclusiveMinimum, String pattern) {{
-        ObjectNode schema = baseSchema(kind);
-        if (minimum != null) schema.put("minimum", minimum);
-        if (exclusiveMinimum != null) schema.put("exclusiveMinimum", exclusiveMinimum);
-        if (pattern != null && "string".equals(kind)) schema.put("pattern", pattern);
-        JsonSchema s = FACTORY.getSchema(schema);
+    /** Java port of emit_python.py's leaf_schema_for(): the per-field schema
+     * fragment for one already-resolved field type. minimum/exclusiveMinimum
+     * are numeric-only JSON Schema keywords - a no-op against a non-numeric
+     * instance (a reference string, for an *OrRef kind) - so bolting them on
+     * at the top level is always safe. pattern/minLength/enum are STRING-only
+     * keywords, and a StringOrRef's reference form is *also* a plain string,
+     * so for that kind the literal value's constraints are split into their
+     * own anyOf branch beside a reference-shaped string, rather than
+     * incorrectly rejecting a perfectly valid reference. */
+    static ObjectNode leafSchemaFor(String kind, Double minimum, Double exclusiveMinimum, String pattern,
+                                    Integer minLength, List<String> enumValues) {{
+        ObjectNode base = baseSchema(kind);
+        if (minimum != null) base.put("minimum", minimum);
+        if (exclusiveMinimum != null) base.put("exclusiveMinimum", exclusiveMinimum);
+        boolean hasStringConstraints = pattern != null || minLength != null || enumValues != null;
+        if (hasStringConstraints) {{
+            ObjectNode constraints = JsonNodeFactory.instance.objectNode();
+            if (pattern != null) constraints.put("pattern", pattern);
+            if (minLength != null) constraints.put("minLength", minLength);
+            if (enumValues != null) {{
+                ArrayNode en = constraints.putArray("enum");
+                for (String v : enumValues) en.add(v);
+            }}
+            if (kind.equals("StringOrRef")) {{
+                ObjectNode wrapped = JsonNodeFactory.instance.objectNode();
+                ArrayNode any = wrapped.putArray("anyOf");
+                ObjectNode lit = JsonNodeFactory.instance.objectNode();
+                lit.put("type", "string");
+                lit.setAll(constraints);
+                ObjectNode ref = JsonNodeFactory.instance.objectNode();
+                ref.put("type", "string");
+                ref.put("pattern", SIDREF_PATTERN);
+                any.add(lit);
+                any.add(ref);
+                return wrapped;
+            }}
+            base.setAll(constraints);
+        }}
+        return base;
+    }}
+
+    // Compiled schemas, keyed by the schema's own text - a document has many
+    // fields of a handful of distinct shapes.
+    private static final Map<String, JsonSchema> SCHEMA_CACHE = new ConcurrentHashMap<>();
+
+    public static boolean leafValueOk(String kind, JsonNode value, Double minimum, Double exclusiveMinimum,
+                                      String pattern, Integer minLength, List<String> enumValues) {{
+        ObjectNode schema = leafSchemaFor(kind, minimum, exclusiveMinimum, pattern, minLength, enumValues);
+        JsonSchema s = SCHEMA_CACHE.computeIfAbsent(schema.toString(), k -> FACTORY.getSchema(schema));
         Set<?> errors = s.validate(value);
         return errors.isEmpty();
+    }}
+
+    public static boolean leafValueOk(String kind, JsonNode value, Double minimum, Double exclusiveMinimum,
+                                      String pattern) {{
+        return leafValueOk(kind, value, minimum, exclusiveMinimum, pattern, null, null);
     }}
 
     public static boolean isSId(String s) {{
@@ -364,11 +463,18 @@ import java.util.Map;
  * SedBase instances - see generator/emit_python.py's _collection_accessors
  * any-dict branch for the reference implementation this mirrors.
  * GENERATED - do not hand-edit. */
-public final class IdKeyedCollection<T> {{
+public final class IdKeyedCollection<T> implements IdCollection {{
     private final List<String> order = new ArrayList<>();
     private final Map<String, T> items = new LinkedHashMap<>();
 
+    @Override
     public List<String> ids() {{ return new ArrayList<>(order); }}
+
+    @Override
+    public boolean has(String itemId) {{ return items.containsKey(itemId); }}
+
+    @Override
+    public Object getObject(String itemId) {{ return items.get(itemId); }}
 
     public T get(String itemId) {{
         if (!items.containsKey(itemId)) throw new ApiError("no entry with id " + itemId);
@@ -451,6 +557,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -473,11 +580,16 @@ public abstract class SedBase {{
             "string", "integer", "number", "boolean", "SId", "SIdRef", "StringOrRef", "NumberOrRef",
             "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"));
     // "any" is deliberately NOT a member: an AnyValueOrRef-typed field (any
-    // JSON value) has no leaf_value_ok()-equivalent schema to check against
-    // - see generator/emit_python.py's own LEAF_KINDS set and its
-    // _validate_own's `elif spec.kind == "any"` branch (whose reference-
-    // resolution dispatch this Java port deliberately does not carry over -
-    // see Design.md's Testing section on Phase 2 scope).
+    // JSON value) has no leafValueOk()-equivalent schema to check against -
+    // its reference form is dispatched separately in validateOwn(), like
+    // generator/emit_python.py's own LEAF_KINDS set and its _validate_own's
+    // `elif spec.kind == "any"` branch.
+
+    // Every LEAF_KINDS member whose value can structurally BE a reference (a
+    // plain "string"/"integer"/etc. field's schema never admits one) - SIdRef
+    // is always a reference, and every *OrRef kind's own anyOf includes one.
+    protected static final Set<String> REFERENCE_CAPABLE_KINDS = new HashSet<>(List.of(
+            "SIdRef", "StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef"));
 
     // -- per-concrete-class metadata, overridden by generated subclasses --
     public List<FieldSpec> fieldSpecs() {{ return Collections.emptyList(); }}
@@ -491,6 +603,38 @@ public abstract class SedBase {{
     public String nameRuleId() {{ return null; }}
     public String descRuleId() {{ return null; }}
     public String baseCatchall() {{ return ""; }}
+
+    /** core-spec.md Section 8's per-class outputs.json envelope (the parsed
+     * JSON) - non-null only for a concrete tasks/ class; read by the
+     * shape-resolution rules SEDBase-0008 through -0015. */
+    public JsonNode outputsJson() {{ return null; }}
+
+    /** True only on the generated document root class - gates the
+     * whole-document checks (SEDDocument-0009 through -0011 and -0013), which
+     * only make sense run once, from the document root. */
+    public boolean isDocumentClass() {{ return false; }}
+
+    /** The newest document version this generator run's spec tree knows (the
+     * document root class only; see SEDDocument-0011). */
+    public String maxKnownDocumentVersion() {{ return null; }}
+
+    /** Every id-keyed collection field name THIS class declares (its "dict" and
+     * "any-dict" fields) - used by ownIdForMessage() to search a PARENT's own
+     * collections for `this`. */
+    public List<String> idCollectionNames() {{ return Collections.emptyList(); }}
+
+    /** The id-keyed collection stored in field `fieldName` ("dict" or
+     * "any-dict" kind), or null if this class has no such field - reference
+     * resolution (References.getSedReference) walks the containment tree
+     * through this. */
+    public IdCollection getIdCollection(String fieldName) {{ return null; }}
+
+    /** The _type value this element carries (its class's const, or an unknown
+     * holder's raw value), or null for a class without one. */
+    public String typeValue() {{ return typeConst(); }}
+
+    /** The stored raw value of a plain leaf field, or null when unset. */
+    public JsonNode valueNode(String name) {{ return values.get(name); }}
 
     protected JsonNode nameNode;
     protected JsonNode descriptionNode;
@@ -641,6 +785,20 @@ public abstract class SedBase {{
     }}
 
     public List<ValidationProblem> validate(String severityAtLeast) {{
+        try {{
+            return validateChecked(severityAtLeast);
+        }} finally {{
+            // parent/document backpointers are WeakReferences (see attach()),
+            // so nothing else may keep the root alive while its own validate()
+            // runs: the JIT is free to treat `this` as dead after its last use,
+            // and a collection mid-validate would silently turn every
+            // reference rule off ("no document to walk"). Python's refcounting
+            // gives the caller's frame this guarantee for free.
+            java.lang.ref.Reference.reachabilityFence(this);
+        }}
+    }}
+
+    private List<ValidationProblem> validateChecked(String severityAtLeast) {{
         List<ValidationProblem> problems = new ArrayList<>(validateOwn());
         Set<String> seen = new HashSet<>();
         for (ValidationProblem p : problems) seen.add(p.ruleId + "\\u0000" + p.location);
@@ -687,21 +845,18 @@ public abstract class SedBase {{
         // in the object itself.
         List<ValidationProblem> problems = new ArrayList<>(loadProblems);
         ObjectNode instance = ownJsonValue();
+        String className = getClass().getSimpleName();
+        String ownId = ownIdForMessage();
 
         // _type const (only meaningful when this class is validated
         // directly, e.g. not through a discriminator that already
         // dispatched on it)
         if (typeConst() != null && typeRuleId() != null) {{
             JsonNode tv = instance.get("_type");
-            String actual = (tv == null || tv.isNull()) ? null : tv.asText();
-            if (!typeConst().equals(actual)) {{
-                Map<String, Object> ph = new HashMap<>();
-                ph.put("attr", "_type");
-                ph.put("class", getClass().getSimpleName());
-                ph.put("id", ownIdForMessage());
-                ph.put("value", actual == null ? "null" : actual);
-                ph.put("allowed", typeConst());
-                problems.add(RuleCatalog.makeProblem(typeRuleId(), "/_type", ph));
+            boolean same = tv != null && tv.isTextual() && typeConst().equals(tv.textValue());
+            if (!same) {{
+                problems.add(RuleCatalog.problem(typeRuleId(), "/_type", "attr", "_type", "class", className,
+                        "id", ownId, "value", tv, "allowed", typeConst()));
             }}
         }}
 
@@ -710,21 +865,13 @@ public abstract class SedBase {{
         // base mixin's own rule IDs (the same on every concrete class).
         if (nameNode != null && !LeafValidation.leafValueOk("string", nameNode, null, null, null)) {{
             String rid = nameRuleId() != null ? nameRuleId() : baseCatchall();
-            Map<String, Object> ph = new HashMap<>();
-            ph.put("attr", "name");
-            ph.put("class", getClass().getSimpleName());
-            ph.put("id", ownIdForMessage());
-            ph.put("value", nameNode.isTextual() ? nameNode.asText() : nameNode.toString());
-            problems.add(RuleCatalog.makeProblem(rid, "/name", ph));
+            problems.add(RuleCatalog.problem(rid, "/name", "attr", "name", "class", className, "id", ownId,
+                    "value", nameNode));
         }}
         if (descriptionNode != null && !LeafValidation.leafValueOk("string", descriptionNode, null, null, null)) {{
             String rid = descRuleId() != null ? descRuleId() : baseCatchall();
-            Map<String, Object> ph = new HashMap<>();
-            ph.put("attr", "description");
-            ph.put("class", getClass().getSimpleName());
-            ph.put("id", ownIdForMessage());
-            ph.put("value", descriptionNode.isTextual() ? descriptionNode.asText() : descriptionNode.toString());
-            problems.add(RuleCatalog.makeProblem(rid, "/description", ph));
+            problems.add(RuleCatalog.problem(rid, "/description", "attr", "description", "class", className,
+                    "id", ownId, "value", descriptionNode));
         }}
 
         List<FieldSpec> all = new ArrayList<>(fieldSpecs());
@@ -734,40 +881,130 @@ public abstract class SedBase {{
             boolean present = instance.has(spec.name);
             if (spec.required && !present) {{
                 String rid = spec.requiredRuleId != null ? spec.requiredRuleId : spec.originCatchall;
-                Map<String, Object> ph = new HashMap<>();
-                ph.put("attr", spec.name);
-                ph.put("class", getClass().getSimpleName());
-                ph.put("id", ownIdForMessage());
-                problems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                problems.add(RuleCatalog.problem(rid, "/" + spec.name, "attr", spec.name, "class", className,
+                        "id", ownId));
                 continue;
             }}
             if (!present) continue;
             JsonNode value = instance.get(spec.name);
             if (LEAF_KINDS.contains(spec.kind)) {{
-                if (!LeafValidation.leafValueOk(spec.kind, value, spec.minimum, spec.exclusiveMinimum, spec.pattern)) {{
+                if (!LeafValidation.leafValueOk(spec.kind, value, spec.minimum, spec.exclusiveMinimum, spec.pattern,
+                        spec.minLength, spec.enumValues)) {{
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
-                    ph.put("class", getClass().getSimpleName());
-                    ph.put("id", ownIdForMessage());
-                    ph.put("value", value.isTextual() ? value.asText() : value.toString());
+                    ph.put("class", className);
+                    ph.put("id", ownId);
+                    ph.put("value", value);
+                    if (spec.enumValues != null) {{
+                        // A rule fired from an enum-constrained leaf's own
+                        // message template may reference {{allowed}} (e.g.
+                        // Curve-0002/Surface's own curveType/surfaceType
+                        // rules) - harmless to always include, since
+                        // formatMessage only substitutes placeholders the
+                        // template actually names.
+                        List<String> reprs = new ArrayList<>();
+                        for (String v : spec.enumValues) reprs.add(PyFmt.reprStr(v));
+                        ph.put("allowed", String.join(", ", reprs));
+                    }}
                     problems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
+                }} else if (REFERENCE_CAPABLE_KINDS.contains(spec.kind) && References.isReference(value)) {{
+                    problems.addAll(References.checkReferenceField(
+                            value.textValue(), getDocument(), className, ownId, spec.name, "/" + spec.name,
+                            this, References.FieldInfo.of(spec)));
+                }} else if (spec.kind.equals("DictOrRef") && value.isObject()) {{
+                    // The dict-literal branch of a DictOrRef field (e.g.
+                    // Repeat.outputVariableMap: an SId-keyed map of column
+                    // name -> SIdRef) - References.isReference(value) above is
+                    // false for this whole-field-is-a-dict shape, so each
+                    // entry gets its OWN reference-resolution dispatch here
+                    // (SEDBase-0005 through -0015, same as any other
+                    // reference-capable field) rather than the field as a
+                    // single unit. No ref-type rule id is passed: the field's
+                    // own describes what the WHOLE FIELD must resolve to when
+                    // IT is a reference, not what each entry's target must be.
+                    Iterator<Map.Entry<String, JsonNode>> it = value.fields();
+                    while (it.hasNext()) {{
+                        Map.Entry<String, JsonNode> e = it.next();
+                        if (References.isReference(e.getValue())) {{
+                            problems.addAll(References.checkReferenceField(
+                                    e.getValue().textValue(), getDocument(), className, ownId, spec.name,
+                                    "/" + spec.name + "/" + e.getKey(), this,
+                                    References.FieldInfo.bare(spec.kind)));
+                        }}
+                    }}
+                }} else if (spec.kind.equals("ArrayOrRef") && value.isArray()) {{
+                    // The array-literal branch of an ArrayOrRef field: each
+                    // element that is itself a reference gets its own
+                    // reference-resolution dispatch (SEDBase-0005.md: the rule
+                    // applies to "an element of an array or object value"),
+                    // with no per-element expected type - same scope as the
+                    // DictOrRef dict-literal branch above.
+                    for (int idx = 0; idx < value.size(); idx++) {{
+                        JsonNode el = value.get(idx);
+                        if (References.isReference(el)) {{
+                            problems.addAll(References.checkReferenceField(
+                                    el.textValue(), getDocument(), className, ownId, spec.name,
+                                    "/" + spec.name + "/" + idx, this,
+                                    References.FieldInfo.bare(spec.kind)));
+                        }}
+                    }}
                 }} else if (spec.isMath && value.isTextual()) {{
                     // Types-0001..0004 (Design.md's Math section) - only for
                     // a literal string value that already passed its own
-                    // leaf schema check above; a $-reference form of an
-                    // OrRef math field is out of scope (see MathRules.java /
-                    // templates/python/rules/Types-0001.py's docstring).
+                    // leaf schema check above; a reference-form value of an
+                    // OrRef math field is dispatched to the reference rules
+                    // in the branch above instead.
                     problems.addAll(MathRules.checkMathField(
-                            value.asText(), getClass().getSimpleName(), ownIdForMessage(),
-                            spec.name, "/" + spec.name));
+                            value.asText(), className, ownId, spec.name, "/" + spec.name));
                 }}
+            }} else if (spec.kind.equals("any") && References.isReference(value)) {{
+                // A scalar AnyValueOrRef field (e.g. LoopVariable.initialValue,
+                // AggregationCalculation.input) isn't in LEAF_KINDS - "any JSON
+                // value" has no leafValueOk() schema to check against - but an
+                // SIdRef string may still substitute for it, so it needs the
+                // same reference-resolution dispatch as every *OrRef-kind
+                // field above.
+                problems.addAll(References.checkReferenceField(
+                        value.textValue(), getDocument(), className, ownId, spec.name, "/" + spec.name,
+                        this, References.FieldInfo.bare("any")));
             }}
         }}
+        if (isDocumentClass()) {{
+            problems.addAll(References.checkNamespaceUsageAndVersion(this));
+            problems.addAll(References.checkConstantsOrdering(this));
+        }}
+        // Repeat-0008/-0009/-0010 (own-subTasks scoping for a Repeat-family
+        // instance's outputVariableMap/aggregateOutputVariables) and
+        // LoopVariable-0004 (own-Loop scoping for subsequentValues) each
+        // internally no-op for every class they don't apply to (a cheap
+        // class-shape check, not a class-name check) - called unconditionally
+        // here, the same as every other per-instance handwritten check above.
+        problems.addAll(References.checkRepeatOwnChildren(this));
+        problems.addAll(References.checkLoopVariableScope(this));
         return problems;
     }}
 
-    public String ownIdForMessage() {{ return "?"; }}
+    /** This element's own SId, for a validation message's {{id}} placeholder -
+     * Design.md's Classes section: id is implicit, the key under which an
+     * element is stored in its owning collection, never a field on the
+     * element itself. So this walks up to the parent and searches every
+     * id-keyed collection IT declares for whichever key maps to `this`.
+     * Falls back to "?" for anything genuinely id-less: the document root, an
+     * array-item class stored positionally rather than by id, or an
+     * unattached/standalone instance no parent has claimed yet. */
+    public String ownIdForMessage() {{
+        SedBase parent = getParent();
+        if (parent == null) return "?";
+        for (String name : parent.idCollectionNames()) {{
+            IdCollection coll = parent.getIdCollection(name);
+            if (coll == null) continue;
+            for (String iid : coll.ids()) {{
+                if (coll.getObject(iid) == this) return iid;
+            }}
+        }}
+        return "?";
+    }}
 
     public abstract ObjectNode ownJsonValue();
 
@@ -1056,6 +1293,27 @@ public final class MathAst {{
         public Node visitParenAtom(mathParser.ParenAtomContext ctx) {{ return visit(ctx.expr()); }}
     }}
 
+    /** The Java ANTLR runtime's DefaultErrorStrategy.recoverInline() reports a
+     * failed match() against the state sync() last deferred at (its
+     * nextTokensContext bookkeeping), so a trailing-junk error reads "expecting
+     * {{'&&', '||', ...}}"; the Python runtime does not track that and reports
+     * the set at the state that actually failed ("expecting <EOF>"). Python is
+     * the reference implementation, so this strategy is recoverInline() minus
+     * the deferred-state bookkeeping, keeping the parse-message text of
+     * Types-0001 identical across targets. */
+    private static final class SimpleErrorStrategy extends DefaultErrorStrategy {{
+        @Override
+        public Token recoverInline(Parser recognizer) throws RecognitionException {{
+            Token matchedSymbol = singleTokenDeletion(recognizer);
+            if (matchedSymbol != null) {{
+                recognizer.consume();
+                return matchedSymbol;
+            }}
+            if (singleTokenInsertion(recognizer)) return getMissingSymbol(recognizer);
+            throw new InputMismatchException(recognizer);
+        }}
+    }}
+
     private static final class CollectingErrorListener extends BaseErrorListener {{
         final List<String> errors = new ArrayList<>();
 
@@ -1076,6 +1334,7 @@ public final class MathAst {{
         lexer.addErrorListener(listener);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         mathParser parser = new mathParser(tokens);
+        parser.setErrorHandler(new SimpleErrorStrategy());
         parser.removeErrorListeners();
         parser.addErrorListener(listener);
         mathParser.StartContext tree = parser.start();
@@ -1092,13 +1351,10 @@ def _math_rules_java() -> str:
     """MathRules.java - Types-0001 through Types-0004 (Design.md's Math
     section), combined into one dispatcher (checkMathField) the way
     emit_python.py's _check_math_field wires together
-    templates/python/rules/Types-000N.py's four `check()` functions. Java
-    has no equivalent of Python's per-rule-ID templates/<lang>/rules/
-    directory (see this module's docstring's "Unlike the Python target..."
-    note on the reference-resolution rules that DIDN'T get ported for the
-    same reason) - these four checks are simple and self-contained enough
-    to live directly here rather than inventing a Java analog of that
-    convention. GENERATED - do not hand-edit; regenerate via
+    templates/python/rules/Types-000N.py's four `check()` functions. Unlike
+    the other handwritten rules (one class each under templates/java/rules/),
+    these four predate that mechanism and are simple and self-contained
+    enough to stay together here. GENERATED - do not hand-edit; regenerate via
     generator/generate.py."""
     return f'''package {PKG};
 
@@ -1117,9 +1373,9 @@ public final class MathRules {{
     /** value is the field's own raw string - never a reference: SedBase's
      * validateOwn() only calls here for a literal string value (Types-
      * 0001.md: "When the math attribute is itself a reference, ... apply
-     * only if the reference resolves statically to a string constant",
-     * out of scope until reference resolution exists for Java - see this
-     * module's docstring). Returns [] if value parses and every function
+     * only if the reference resolves statically to a string constant" -
+     * not implemented by either target: a reference-form value goes to the
+     * reference rules instead). Returns [] if value parses and every function
      * call / bare identifier it contains checks out; otherwise one
      * ValidationProblem per violation (Types-0001 short-circuits the rest,
      * same as emit_python.py's _check_math_field - an unparseable
@@ -1139,6 +1395,16 @@ public final class MathRules {{
             ph.put("parse-message", e.getMessage());
             problems.add(RuleCatalog.makeProblem("Types-0001", location, ph));
             return problems;
+        }}
+        if (Handwritten.HAS_REFERENCE_RULES) {{
+            // SEDBase-0005.md: the root-collection rule also applies to a
+            // REFERENCE token embedded in a math string.
+            for (MathAst.Node node : ast.walk()) {{
+                if (node.isReference()) {{
+                    problems.addAll(Handwritten.sedBase0005(
+                            References.parse(node.text), className, idValue, attr, location));
+                }}
+            }}
         }}
         for (MathAst.Node node : ast.walk()) {{
             if (node.isFunctionCall() && !PredefinedFunctions.FUNCTIONS.containsKey(node.name)) {{
@@ -1308,8 +1574,2012 @@ def emit_predefined_functions_java(registry_path: str | None = None) -> str:
     return "\n".join(lines) + "\n"
 
 
+# ---- BEGIN embedded reference-machinery runtime (Java sources) ----
+# Hand-authored Java for the reference-resolution / outputs.json machinery
+# (Java port of the corresponding half of emit_python.py's RUNTIME and
+# OUTPUTS_SHAPE_PY - see each file's own header). Kept as verbatim Java text
+# with an @PKG@ placeholder for the package (rather than f-strings, which
+# would need every brace doubled); runtime_files() substitutes the package
+# and emits one file per entry, identical for every spec, like the other
+# runtime pieces above.
+_STATIC_RUNTIME_JAVA = {
+    'Dim.java': r'''package @PKG@;
+
+import java.util.List;
+import java.util.Objects;
+
+/** One statically-resolved dimension of a task output's shape (see
+ * OutputsShape.resolveDims): its size and labels when known, and where
+ * that knowledge comes from. GENERATED - do not hand-edit; regenerate via
+ * generator/generate.py. */
+public final class Dim {
+    public final Long size;             // null when not statically known
+    public final List<String> labels;   // null when not statically known
+    public final String source;         // "static" | "input-file" | "runtime" | null
+    public final Long min;              // guaranteed minimum size, or null
+
+    public Dim(Long size, List<String> labels, String source, Long min) {
+        this.size = size;
+        this.labels = labels;
+        this.source = source;
+        this.min = min;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Dim)) return false;
+        Dim d = (Dim) o;
+        return Objects.equals(size, d.size) && Objects.equals(labels, d.labels)
+                && Objects.equals(source, d.source) && Objects.equals(min, d.min);
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(size, labels, source, min); }
+}
+''',
+    'IdCollection.java': r'''package @PKG@;
+
+import java.util.List;
+
+/** Read-only, type-erased view of an ID-keyed collection field (a "dict" of
+ * elements or an "any-dict" of raw JSON values), so reference resolution
+ * (References.getSedReference) can walk any class's containment tree
+ * generically. GENERATED - do not hand-edit; regenerate via
+ * generator/generate.py. */
+public interface IdCollection {
+    List<String> ids();
+
+    boolean has(String itemId);
+
+    /** The entry stored under itemId: a SedBase element for a "dict"
+     * collection, a raw JsonNode for an "any-dict" one. */
+    Object getObject(String itemId);
+}
+''',
+    'OutputsShape.java': r'''package @PKG@;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+/** outputs.json expr/valid notation (core-spec.md Section 8) - parser,
+ * evaluator, and shape/hasSubvalue() resolver, backing SEDBase-0008 through
+ * -0015 (Design.md's Validation section) and the formulaic ref-type rules
+ * that piggyback on SEDBase-0015's scalar-reduction check. Java port of
+ * OUTPUTS_SHAPE_PY in generator/emit_python.py (the reference
+ * implementation); like it, a small runtime interpreter of the notation
+ * rather than code compiled per suffix entry.
+ *
+ * Values inside an expression are plain Java objects mirroring the Python
+ * ones: null (JSON null), Boolean, Long / BigInteger (integers), Double,
+ * String, List (arrays and computed lists), Map (objects), Dim (a resolved
+ * dimension), and the OUTERMOST sentinel. GENERATED - do not hand-edit;
+ * regenerate via generator/generate.py. */
+public final class OutputsShape {
+    private OutputsShape() {}
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** Parses one class's embedded outputs.json text. */
+    public static JsonNode parseJson(String text) {
+        try {
+            return MAPPER.readTree(text);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("bad embedded outputs.json: " + e.getMessage(), e);
+        }
+    }
+
+    /** Raised whenever an expr can't be evaluated against the target's own
+     * literal fields - a reference where a literal was needed, a missing
+     * attribute, an unresolvable shape dependency, a depth guard, and so on.
+     * Every caller treats it as "the rule does not fire". */
+    public static final class NotStatic extends RuntimeException {
+        public NotStatic(String message) { super(message, null, false, false); }
+    }
+
+    /** Raised by indexIntoLiteral when the index chain can't be applied to a
+     * constant's own literal structure - the signal SEDBase-0012 fires on. */
+    public static final class NotIndexable extends RuntimeException {
+        public final String bad;   // the failing index as Python would print it
+
+        public NotIndexable(String bad) {
+            super(bad, null, false, false);
+            this.bad = bad;
+        }
+    }
+
+    public static final Object OUTERMOST = new Object() {
+        @Override public String toString() { return "OUTERMOST"; }
+    };
+
+    // ---- value helpers ---------------------------------------------------
+
+    /** JSON -> the Java object model described in the class comment. */
+    public static Object fromJson(JsonNode n) {
+        if (n == null || n.isNull() || n.isMissingNode()) return null;
+        if (n.isBoolean()) return n.booleanValue();
+        if (n.isTextual()) return n.textValue();
+        if (n.isIntegralNumber()) {
+            BigInteger b = n.bigIntegerValue();
+            return b.bitLength() < 64 ? (Object) b.longValue() : (Object) b;
+        }
+        if (n.isNumber()) return n.doubleValue();
+        if (n.isArray()) {
+            List<Object> out = new ArrayList<>();
+            for (JsonNode c : n) out.add(fromJson(c));
+            return out;
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        Iterator<Map.Entry<String, JsonNode>> it = n.fields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> e = it.next();
+            out.put(e.getKey(), fromJson(e.getValue()));
+        }
+        return out;
+    }
+
+    private static boolean isNumber(Object o) {
+        return o instanceof Long || o instanceof BigInteger || o instanceof Double;
+    }
+
+    private static boolean isRefValue(Object o) {
+        return o instanceof String && ((String) o).startsWith("#");
+    }
+
+    private static boolean isInt(Object o) { return o instanceof Long || o instanceof BigInteger; }
+
+    private static double dbl(Object o) {
+        if (o instanceof Long) return (Long) o;
+        if (o instanceof BigInteger) return ((BigInteger) o).doubleValue();
+        return (Double) o;
+    }
+
+    private static BigInteger big(Object o) {
+        return o instanceof Long ? BigInteger.valueOf((Long) o) : (BigInteger) o;
+    }
+
+    private static Object normInt(BigInteger b) {
+        return b.bitLength() < 64 ? (Object) b.longValue() : (Object) b;
+    }
+
+    /** Python truthiness. */
+    static boolean truthy(Object o) {
+        if (o == null) return false;
+        if (o instanceof Boolean) return (Boolean) o;
+        if (o instanceof Long) return (Long) o != 0L;
+        if (o instanceof BigInteger) return ((BigInteger) o).signum() != 0;
+        if (o instanceof Double) return (Double) o != 0.0;
+        if (o instanceof String) return !((String) o).isEmpty();
+        if (o instanceof List) return !((List<?>) o).isEmpty();
+        if (o instanceof Map) return !((Map<?, ?>) o).isEmpty();
+        return true;
+    }
+
+    private static Object numOfBool(Object o) {
+        if (o instanceof Boolean) return ((Boolean) o) ? 1L : 0L;
+        return o;
+    }
+
+    /** Python == over the value model (True == 1, 1 == 1.0). */
+    static boolean pyEq(Object a, Object b) {
+        a = numOfBool(a);
+        b = numOfBool(b);
+        if (a == null || b == null) return a == b;
+        if (isNumber(a) && isNumber(b)) {
+            if (isInt(a) && isInt(b)) return big(a).equals(big(b));
+            return dbl(a) == dbl(b);
+        }
+        if (a instanceof String && b instanceof String) return a.equals(b);
+        if (a instanceof List && b instanceof List) {
+            List<?> x = (List<?>) a, y = (List<?>) b;
+            if (x.size() != y.size()) return false;
+            for (int i = 0; i < x.size(); i++) if (!pyEq(x.get(i), y.get(i))) return false;
+            return true;
+        }
+        if (a instanceof Map && b instanceof Map) {
+            Map<?, ?> x = (Map<?, ?>) a, y = (Map<?, ?>) b;
+            if (x.size() != y.size()) return false;
+            for (Map.Entry<?, ?> e : x.entrySet()) {
+                if (!y.containsKey(e.getKey())) return false;
+                if (!pyEq(e.getValue(), y.get(e.getKey()))) return false;
+            }
+            return true;
+        }
+        if (a instanceof Dim && b instanceof Dim) return a.equals(b);
+        return a == b;
+    }
+
+    // ---- lexer -------------------------------------------------------------
+
+    private static final class Tok {
+        final String kind, text;
+        Tok(String kind, String text) { this.kind = kind; this.text = text; }
+        @Override public String toString() { return "(" + kind + ", " + text + ")"; }
+    }
+
+    private static List<Tok> tokenize(String text) {
+        List<Tok> toks = new ArrayList<>();
+        int i = 0, n = text.length();
+        while (i < n) {
+            char ch = text.charAt(i);
+            if (Character.isWhitespace(ch)) { i++; continue; }
+            if (ch == '=' && text.startsWith("==", i)) { toks.add(new Tok("==", "==")); i += 2; continue; }
+            if ("+-!(),[].".indexOf(ch) >= 0) { toks.add(new Tok(String.valueOf(ch), String.valueOf(ch))); i++; continue; }
+            if (isDigit(ch) || (ch == '.' && i + 1 < n && isDigit(text.charAt(i + 1)))) {
+                int j = i;
+                while (j < n && (isDigit(text.charAt(j)) || text.charAt(j) == '.')) j++;
+                toks.add(new Tok("NUMBER", text.substring(i, j)));
+                i = j;
+                continue;
+            }
+            if (isAlpha(ch) || ch == '_') {
+                int j = i;
+                while (j < n && (isAlpha(text.charAt(j)) || isDigit(text.charAt(j)) || text.charAt(j) == '_')) j++;
+                String word = text.substring(i, j);
+                if (word.equals("true") || word.equals("false")) toks.add(new Tok("BOOL", word));
+                else if (word.equals("or") || word.equals("if") || word.equals("else")) toks.add(new Tok(word, word));
+                else toks.add(new Tok("IDENT", word));
+                i = j;
+                continue;
+            }
+            throw new NotStatic("unexpected character '" + ch + "' in expr '" + text + "'");
+        }
+        toks.add(new Tok("EOF", ""));
+        return toks;
+    }
+
+    private static boolean isDigit(char c) { return c >= '0' && c <= '9'; }
+
+    private static boolean isAlpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+
+    // ---- AST ---------------------------------------------------------------
+
+    interface Node {}
+    record Num(Object value) implements Node {}
+    record Bool(boolean value) implements Node {}
+    record ArrayLit(List<Node> items) implements Node {}
+    record Path(List<String> names) implements Node {}
+    record Call(String func, List<Node> args) implements Node {}
+    record UnaryNot(Node operand) implements Node {}
+    record BinOp(String op, Node left, Node right) implements Node {}
+    record Conditional(Node cond, Node then, Node orelse) implements Node {}
+
+    private static final List<String> FUNCS = List.of("len", "keys", "shapeOf", "dim", "provided");
+
+    private static final class Parser {
+        private final List<Tok> toks;
+        private int i = 0;
+
+        Parser(List<Tok> toks) { this.toks = toks; }
+
+        private Tok peek() { return toks.get(i); }
+
+        private Tok eat(String kind) {
+            Tok t = toks.get(i);
+            if (!t.kind.equals(kind)) throw new NotStatic("expected " + kind + ", got " + t);
+            i++;
+            return t;
+        }
+
+        Node parse() {
+            Node node = conditional();
+            eat("EOF");
+            return node;
+        }
+
+        private Node conditional() {
+            Node node = orExpr();
+            if (peek().kind.equals("if")) {
+                eat("if");
+                Node cond = orExpr();
+                eat("else");
+                Node orelse = conditional();
+                return new Conditional(cond, node, orelse);
+            }
+            return node;
+        }
+
+        private Node orExpr() {
+            Node node = equality();
+            while (peek().kind.equals("or")) {
+                eat("or");
+                node = new BinOp("or", node, equality());
+            }
+            return node;
+        }
+
+        private Node equality() {
+            Node node = additive();
+            if (peek().kind.equals("==")) {
+                eat("==");
+                node = new BinOp("==", node, additive());
+            }
+            return node;
+        }
+
+        private Node additive() {
+            Node node = unary();
+            while (peek().kind.equals("+") || peek().kind.equals("-")) {
+                String op = eat(peek().kind).kind;
+                node = new BinOp(op, node, unary());
+            }
+            return node;
+        }
+
+        private Node unary() {
+            if (peek().kind.equals("!")) {
+                eat("!");
+                return new UnaryNot(unary());
+            }
+            return primary();
+        }
+
+        private Node primary() {
+            Tok t = peek();
+            String kind = t.kind, text = t.text;
+            if (kind.equals("NUMBER")) {
+                eat("NUMBER");
+                try {
+                    if (text.contains(".")) return new Num(Double.parseDouble(text));
+                    BigInteger b = new BigInteger(text);
+                    return new Num(normInt(b));
+                } catch (NumberFormatException e) {
+                    throw new NotStatic("bad number '" + text + "'");
+                }
+            }
+            if (kind.equals("BOOL")) {
+                eat("BOOL");
+                return new Bool(text.equals("true"));
+            }
+            if (kind.equals("[")) {
+                eat("[");
+                List<Node> items = new ArrayList<>();
+                if (!peek().kind.equals("]")) {
+                    items.add(conditional());
+                    while (peek().kind.equals(",")) { eat(","); items.add(conditional()); }
+                }
+                eat("]");
+                return new ArrayLit(items);
+            }
+            if (kind.equals("IDENT")) {
+                String name = eat("IDENT").text;
+                if (peek().kind.equals("(") && FUNCS.contains(name)) {
+                    eat("(");
+                    List<Node> args = new ArrayList<>();
+                    if (!peek().kind.equals(")")) {
+                        args.add(conditional());
+                        while (peek().kind.equals(",")) { eat(","); args.add(conditional()); }
+                    }
+                    eat(")");
+                    return new Call(name, args);
+                }
+                List<String> names = new ArrayList<>();
+                names.add(name);
+                while (peek().kind.equals(".")) { eat("."); names.add(eat("IDENT").text); }
+                return new Path(names);
+            }
+            throw new NotStatic("unexpected token " + peek() + " in expr");
+        }
+    }
+
+    private static final Map<String, Node> PARSE_CACHE = new HashMap<>();
+
+    static Node parseExpr(String text) {
+        synchronized (PARSE_CACHE) {
+            Node node = PARSE_CACHE.get(text);
+            if (node == null) {
+                node = new Parser(tokenize(text)).parse();
+                PARSE_CACHE.put(text, node);
+            }
+            return node;
+        }
+    }
+
+    // ---- scopes --------------------------------------------------------------
+
+    /** Bare identifiers resolve against a task's own raw JSON field values
+     * (core-spec.md: "A bare identifier names one of the task's own
+     * attributes and evaluates to its value"), or, inside a "repeat"
+     * dimension, against the current array entry ("self" is the entry). */
+    interface Scope {
+        Object lookup(String name);
+        boolean provided(String name);
+    }
+
+    private static final class FieldScope implements Scope {
+        private final JsonNode fields;
+        FieldScope(JsonNode fields) { this.fields = fields; }
+
+        @Override public Object lookup(String name) {
+            if (!fields.has(name)) throw new NotStatic("attribute '" + name + "' not provided");
+            return fromJson(fields.get(name));
+        }
+
+        @Override public boolean provided(String name) { return fields.has(name); }
+    }
+
+    private static final class RepeatScope implements Scope {
+        private final Object entry;
+        RepeatScope(Object entry) { this.entry = entry; }
+
+        @Override public Object lookup(String name) {
+            if (name.equals("self")) return entry;
+            if (!(entry instanceof Map) || !((Map<?, ?>) entry).containsKey(name)) {
+                throw new NotStatic("attribute '" + name + "' not provided on repeat entry");
+            }
+            return ((Map<?, ?>) entry).get(name);
+        }
+
+        @Override public boolean provided(String name) {
+            if (name.equals("self")) return true;
+            return entry instanceof Map && ((Map<?, ?>) entry).containsKey(name);
+        }
+    }
+
+    // ---- evaluation --------------------------------------------------------
+
+    private static Object resolvePath(Path node, Scope scope) {
+        if (node.names().get(0).equals("outermost")) {
+            if (node.names().size() != 1) throw new NotStatic("outermost is not a container");
+            return OUTERMOST;
+        }
+        Object value = scope.lookup(node.names().get(0));
+        for (int i = 1; i < node.names().size(); i++) {
+            String seg = node.names().get(i);
+            if (!(value instanceof Map) || !((Map<?, ?>) value).containsKey(seg)) {
+                throw new NotStatic("attribute '" + String.join(".", node.names()) + "' not provided");
+            }
+            value = ((Map<?, ?>) value).get(seg);
+        }
+        return value;
+    }
+
+    private static boolean isProvided(Node node, Scope scope) {
+        if (!(node instanceof Path)) throw new NotStatic("provided() needs a bare identifier or dotted path");
+        List<String> names = ((Path) node).names();
+        if (names.get(0).equals("outermost")) return true;
+        if (names.size() == 1) return scope.provided(names.get(0));
+        Object value;
+        try {
+            value = scope.lookup(names.get(0));
+        } catch (NotStatic e) {
+            return false;
+        }
+        for (int i = 1; i < names.size() - 1; i++) {
+            if (!(value instanceof Map) || !((Map<?, ?>) value).containsKey(names.get(i))) return false;
+            value = ((Map<?, ?>) value).get(names.get(i));
+        }
+        return value instanceof Map && ((Map<?, ?>) value).containsKey(names.get(names.size() - 1));
+    }
+
+    private static Object fnLen(Object value) {
+        if (value instanceof List) return (long) ((List<?>) value).size();
+        if (value instanceof Map) {
+            Map<?, ?> m = (Map<?, ?>) value;
+            // Range-family dispatch (core-spec.md): len(x.values) if
+            // provided(x.values) else x.numberOfSteps + 1; anything else
+            // object-shaped is a plain SId-keyed map, so len() is its key
+            // count.
+            if (m.containsKey("values")) {
+                Object values = m.get("values");
+                if (values instanceof List) return (long) ((List<?>) values).size();
+                throw new NotStatic("values is not a literal array");
+            }
+            if (m.containsKey("numberOfSteps")) {
+                Object steps = m.get("numberOfSteps");
+                if (isNumber(steps)) return toLongTrunc(steps) + 1;
+                throw new NotStatic("numberOfSteps is not a literal number");
+            }
+            return (long) m.size();
+        }
+        throw new NotStatic("len() needs a literal array, object, or Range-family value");
+    }
+
+    private static long toLongTrunc(Object n) {
+        if (n instanceof Long) return (Long) n;
+        if (n instanceof BigInteger) return RefIndex.saturate((BigInteger) n);
+        double d = (Double) n;
+        if (Double.isNaN(d) || Double.isInfinite(d)) throw new NotStatic("non-finite number");
+        return (long) d;
+    }
+
+    private static Object fnKeys(Object value) {
+        if (!(value instanceof Map)) throw new NotStatic("keys() needs a literal object");
+        return new ArrayList<Object>(((Map<?, ?>) value).keySet());
+    }
+
+    static Object eval(Node node, Scope scope, Function<String, List<Dim>> shapeOf) {
+        if (node instanceof Num) return ((Num) node).value();
+        if (node instanceof Bool) return ((Bool) node).value();
+        if (node instanceof ArrayLit) {
+            List<Object> out = new ArrayList<>();
+            for (Node item : ((ArrayLit) node).items()) out.add(eval(item, scope, shapeOf));
+            return out;
+        }
+        if (node instanceof Path) return resolvePath((Path) node, scope);
+        if (node instanceof UnaryNot) return !truthy(eval(((UnaryNot) node).operand(), scope, shapeOf));
+        if (node instanceof Call) {
+            Call call = (Call) node;
+            switch (call.func()) {
+                case "provided":
+                    if (call.args().size() != 1) throw new NotStatic("provided() takes exactly one argument");
+                    return isProvided(call.args().get(0), scope);
+                case "len":
+                    if (call.args().isEmpty()) throw new NotStatic("len() takes one argument");
+                    return fnLen(eval(call.args().get(0), scope, shapeOf));
+                case "keys":
+                    if (call.args().isEmpty()) throw new NotStatic("keys() takes one argument");
+                    return fnKeys(eval(call.args().get(0), scope, shapeOf));
+                case "shapeOf": {
+                    if (call.args().isEmpty()) throw new NotStatic("shapeOf() takes one argument");
+                    Object ref = eval(call.args().get(0), scope, shapeOf);
+                    if (!(ref instanceof String) || !((String) ref).startsWith("#")) {
+                        throw new NotStatic("shapeOf() needs a reference-valued operand");
+                    }
+                    return shapeOf.apply((String) ref);
+                }
+                case "dim": {
+                    if (call.args().size() != 1) throw new NotStatic("dim() takes exactly one argument");
+                    Object value = eval(call.args().get(0), scope, shapeOf);
+                    if (value == OUTERMOST) {
+                        List<Object> l = new ArrayList<>();
+                        l.add(OUTERMOST);
+                        return l;
+                    }
+                    if (value instanceof String) {
+                        List<Object> l = new ArrayList<>();
+                        l.add(value);
+                        return l;
+                    }
+                    if (value instanceof List) return value;
+                    throw new NotStatic("dim() needs a name or a list of names");
+                }
+                default:
+                    throw new NotStatic("unknown function " + call.func() + "()");
+            }
+        }
+        if (node instanceof BinOp) {
+            BinOp b = (BinOp) node;
+            if (b.op().equals("or")) {
+                if (isProvided(b.left(), scope)) return eval(b.left(), scope, shapeOf);
+                return eval(b.right(), scope, shapeOf);
+            }
+            Object left = eval(b.left(), scope, shapeOf);
+            if (b.op().equals("-")) {
+                Object right = eval(b.right(), scope, shapeOf);
+                return applyDimMinus(left, right);
+            }
+            Object right = eval(b.right(), scope, shapeOf);
+            if (b.op().equals("==")) {
+                if (isRefValue(left) || isRefValue(right)) throw new NotStatic("== operand is a reference");
+                return pyEq(left, right);
+            }
+            if (b.op().equals("+")) {
+                if (left instanceof List && right instanceof List) {
+                    List<Object> out = new ArrayList<>((List<?>) left);
+                    out.addAll((List<?>) right);
+                    return out;
+                }
+                if (isNumber(left) && isNumber(right)) {
+                    if (isInt(left) && isInt(right)) return normInt(big(left).add(big(right)));
+                    return dbl(left) + dbl(right);
+                }
+                throw new NotStatic("+ needs two arrays or two numbers");
+            }
+            throw new NotStatic("unknown operator " + b.op());
+        }
+        if (node instanceof Conditional) {
+            Conditional c = (Conditional) node;
+            if (truthy(eval(c.cond(), scope, shapeOf))) return eval(c.then(), scope, shapeOf);
+            return eval(c.orelse(), scope, shapeOf);
+        }
+        throw new NotStatic("unknown AST node " + node);
+    }
+
+    /** shapeOf(x) - dim(y): a dims list (see resolveDims) with the
+     * dimension(s) named by `selectors` removed. Only the reserved
+     * `outermost` sentinel removes a SPECIFIC, still-fully-known dimension
+     * (the first); anything else can only shrink the known dimension COUNT,
+     * with the remaining dimensions' own details marked unknown. */
+    private static Object applyDimMinus(Object dims, Object selectors) {
+        if (dims == null) return null;
+        if (!(dims instanceof List)) throw new NotStatic("- needs a dimensions list on the left");
+        List<?> d = (List<?>) dims;
+        int count = selectors instanceof List ? ((List<?>) selectors).size() : 1;
+        if (count >= d.size()) return new ArrayList<Object>();
+        if (selectors instanceof List && ((List<?>) selectors).size() == 1
+                && ((List<?>) selectors).get(0) == OUTERMOST) {
+            return new ArrayList<Object>(d.subList(1, d.size()));
+        }
+        List<Object> out = new ArrayList<>();
+        for (int i = 0; i < d.size() - count; i++) out.add(new Dim(null, null, "runtime", null));
+        return out;
+    }
+
+    // ---- outputs.json "sourced" value resolution ---------------------------
+
+    private static String text(JsonNode n) {
+        return (n != null && n.isTextual()) ? n.textValue() : null;
+    }
+
+    private static Long sizeOf(JsonNode n) {
+        if (n == null || !n.isNumber()) return null;
+        return n.isIntegralNumber() ? Long.valueOf(RefIndex.saturate(n.bigIntegerValue())) : Long.valueOf((long) n.doubleValue());
+    }
+
+    private static Long evalSourcedSize(JsonNode sourced, Scope scope, Function<String, List<Dim>> shapeOf) {
+        if (sourced == null || sourced.isNull()) return null;
+        if (!"static".equals(text(sourced.get("source")))) return null;   // runtime / input-file
+        Object value;
+        try {
+            value = eval(parseExpr(text(sourced.get("expr"))), scope, shapeOf);
+        } catch (NotStatic | NullPointerException e) {
+            return null;
+        }
+        if (isNumber(value)) {
+            try {
+                return toLongTrunc(value);
+            } catch (NotStatic e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** null (JSON null) means "no labels for this dimension" - statically
+     * known as empty, not "unresolvable" - so this returns an empty list for
+     * that case, reserving null for a genuine failure to resolve. */
+    @SuppressWarnings("unchecked")
+    private static List<String> evalSourcedLabels(JsonNode spec, Scope scope, Function<String, List<Dim>> shapeOf) {
+        if (spec == null || spec.isNull()) return new ArrayList<>();
+        if (spec.isArray()) {
+            List<String> out = new ArrayList<>();
+            for (JsonNode c : spec) {
+                if (!c.isTextual()) return null;
+                out.add(c.textValue());
+            }
+            return out;
+        }
+        if (spec.isObject()) {
+            if (!"static".equals(text(spec.get("source")))) return null;
+            Object value;
+            try {
+                value = eval(parseExpr(text(spec.get("expr"))), scope, shapeOf);
+            } catch (NotStatic | NullPointerException e) {
+                return null;
+            }
+            if (value instanceof List) {
+                List<String> out = new ArrayList<>();
+                for (Object v : (List<Object>) value) {
+                    if (!(v instanceof String)) return null;
+                    out.add((String) v);
+                }
+                return out;
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /** dimsSpec is outputs.json's own "dimensions" value for one suffix entry
+     * - either a fixed-length array of per-dimension entries, or a single
+     * "sourced" object describing the whole shape. Returns one Dim per
+     * dimension, in order, or null when the dimension COUNT itself isn't
+     * statically known. */
+    @SuppressWarnings("unchecked")
+    static List<Dim> resolveDims(JsonNode dimsSpec, Scope scope, Function<String, List<Dim>> shapeOf) {
+        if (dimsSpec == null || dimsSpec.isNull()) return null;
+        if (dimsSpec.isArray()) {
+            List<Dim> result = new ArrayList<>();
+            for (JsonNode d : dimsSpec) {
+                if (d.has("repeat")) {
+                    JsonNode rep = d.get("repeat");
+                    Object overVal;
+                    try {
+                        overVal = scope.lookup(text(rep.get("over")));
+                    } catch (NotStatic | NullPointerException e) {
+                        return null;
+                    }
+                    if (!(overVal instanceof List)) return null;
+                    for (Object item : (List<Object>) overVal) {
+                        Scope itemScope = new RepeatScope(item);
+                        JsonNode size = rep.get("size");
+                        result.add(new Dim(evalSourcedSize(size, itemScope, shapeOf),
+                                evalSourcedLabels(rep.get("labels"), itemScope, shapeOf),
+                                text(size.get("source")), sizeOf(size.get("min"))));
+                    }
+                } else {
+                    JsonNode size = d.get("size");
+                    result.add(new Dim(evalSourcedSize(size, scope, shapeOf),
+                            evalSourcedLabels(d.get("labels"), scope, shapeOf),
+                            text(size.get("source")), sizeOf(size.get("min"))));
+                }
+            }
+            return result;
+        }
+        // single sourced object - the whole shape's derivation
+        if (!"static".equals(text(dimsSpec.get("source")))) return null;
+        Object value;
+        try {
+            value = eval(parseExpr(text(dimsSpec.get("expr"))), scope, shapeOf);
+        } catch (NotStatic | NullPointerException e) {
+            return null;
+        }
+        if (!(value instanceof List)) return null;
+        List<Dim> out = new ArrayList<>();
+        for (Object o : (List<Object>) value) {
+            if (!(o instanceof Dim)) return null;
+            out.add((Dim) o);
+        }
+        return out;
+    }
+
+    /** Applies a reference's own bracket-index chain to a resolved dims
+     * list, left-to-right, each index against the CORRESPONDING original
+     * dimension position. A positional/label index drops its dimension from
+     * the result; a range keeps it; a dimension beyond the index chain's own
+     * length passes through untouched. */
+    static List<Dim> applyIndexChain(List<Dim> dims, List<RefIndex> indexAccessors) {
+        if (dims == null) return null;
+        List<Dim> result = new ArrayList<>();
+        for (int i = 0; i < dims.size(); i++) {
+            if (i < indexAccessors.size()) {
+                if (indexAccessors.get(i).kind.equals("range")) result.add(dims.get(i));
+            } else {
+                result.add(dims.get(i));
+            }
+        }
+        return result;
+    }
+
+    /** entry["valid"] is true/false, or a boolean expr string over the
+     * task's own fields. Returns TRUE/FALSE, or null when a string expr
+     * couldn't be evaluated statically ("the rule does not fire"). */
+    static Boolean evalValid(JsonNode entry, Scope scope, Function<String, List<Dim>> shapeOf) {
+        JsonNode valid = entry.get("valid");
+        if (valid != null && valid.isBoolean()) return valid.booleanValue();
+        if (valid != null && valid.isTextual()) {
+            try {
+                return truthy(eval(parseExpr(valid.textValue()), scope, shapeOf));
+            } catch (NotStatic e) {
+                return null;
+            }
+        }
+        return Boolean.FALSE;
+    }
+
+    /** The result of resolveOutput: see that method. */
+    public static final class Resolution {
+        /** TRUE (suffix exists and its "valid" evaluated true), FALSE (absent
+         * or evaluates false), or null (couldn't be determined statically). */
+        public final Boolean ok;
+        public final JsonNode entry;            // the raw outputEntry, or null when the suffix key is absent
+        public final List<Dim> dimsBefore;      // null unless ok == TRUE and the entry has resolvable "dimensions"
+        public final List<Dim> dimsAfter;       // dimsBefore after the index chain
+        public final String dotName;            // first dot-accessor, or null for a bare [id] reference
+        public final List<RefIndex> indexAccessors;
+
+        Resolution(Boolean ok, JsonNode entry, List<Dim> dimsBefore, List<Dim> dimsAfter, String dotName,
+                   List<RefIndex> indexAccessors) {
+            this.ok = ok;
+            this.entry = entry;
+            this.dimsBefore = dimsBefore;
+            this.dimsAfter = dimsAfter;
+            this.dotName = dotName;
+            this.indexAccessors = indexAccessors;
+        }
+    }
+
+    /** The core hasSubvalue()-style resolution SEDBase-0008 through -0011 /
+     * -0014 / -0015 and the ref-type rules all share. outputsJson is a
+     * concrete tasks/ class's own parsed outputs.json ({"outputs": {...}});
+     * fields is the referenced task's own JSON value; accessors is a
+     * ParsedReference's own accessor list. */
+    public static Resolution resolveOutput(JsonNode outputsJson, JsonNode fields,
+                                           List<ParsedReference.Accessor> accessors,
+                                           Function<String, List<Dim>> shapeOf) {
+        String dotName = null;
+        List<RefIndex> indexAccessors = new ArrayList<>();
+        for (ParsedReference.Accessor a : accessors) {
+            if (a.isDot() && dotName == null) dotName = a.dotName;
+            else if (!a.isDot()) indexAccessors.add(a.index);
+        }
+        String suffixKey = dotName == null ? "[id]" : "[id]." + dotName;
+        JsonNode outputs = outputsJson == null ? null : outputsJson.get("outputs");
+        JsonNode entry = outputs == null ? null : outputs.get(suffixKey);
+        if (entry == null) return new Resolution(Boolean.FALSE, null, null, null, dotName, indexAccessors);
+        Scope scope = new FieldScope(fields);
+        Boolean ok = evalValid(entry, scope, shapeOf);
+        if (!Boolean.TRUE.equals(ok)) return new Resolution(ok, entry, null, null, dotName, indexAccessors);
+        List<Dim> dimsBefore = resolveDims(entry.get("dimensions"), scope, shapeOf);
+        List<Dim> dimsAfter = applyIndexChain(dimsBefore, indexAccessors);
+        return new Resolution(Boolean.TRUE, entry, dimsBefore, dimsAfter, dotName, indexAccessors);
+    }
+
+    // ---- SEDBase-0012: indexing into a constant's own literal JSON value ---
+
+    /** core-spec.md / SEDBase-0012.md: constants have no outputs.json, their
+     * "shape" is just their own literal JSON value. Applies an index chain
+     * directly against it; `value` is the (already dereferenced) literal - a
+     * JsonNode, or anything else (a document element, null) which is simply
+     * not indexable. Throws NotIndexable the moment an index can't apply;
+     * returns the fully-indexed value otherwise. */
+    public static Object indexIntoLiteral(Object value, List<RefIndex> indexAccessors) {
+        Object cur = value;
+        for (RefIndex idx : indexAccessors) {
+            JsonNode node = cur instanceof JsonNode ? (JsonNode) cur : null;
+            switch (idx.kind) {
+                case "label":
+                    if (node == null || !node.isObject() || !node.has(idx.label)) throw new NotIndexable(idx.label);
+                    cur = node.get(idx.label);
+                    break;
+                case "int": {
+                    if (node == null || !node.isArray()) throw new NotIndexable(idx.intText);
+                    long n = node.size();
+                    long i = idx.intValue;
+                    if (i < -n || i >= n) throw new NotIndexable(idx.intText);
+                    cur = node.get((int) (i < 0 ? i + n : i));
+                    break;
+                }
+                case "range": {
+                    String bad = "(" + (idx.rangeStartText == null ? "None" : idx.rangeStartText) + ", "
+                            + (idx.rangeEndText == null ? "None" : idx.rangeEndText) + ")";
+                    if (node == null || !node.isArray()) throw new NotIndexable(bad);
+                    long n = node.size();
+                    long ea = idx.rangeStart != null ? idx.rangeStart : 0;
+                    long eb = idx.rangeEnd != null ? idx.rangeEnd : n;
+                    if (ea < 0) ea += n;
+                    if (eb < 0) eb += n;
+                    ea = Math.max(ea, 0);
+                    eb = Math.max(eb, 0);
+                    ArrayNode out = JsonNodeFactory.instance.arrayNode();
+                    for (long k = ea; k < Math.min(eb, n); k++) out.add(node.get((int) k));
+                    cur = out;
+                    break;
+                }
+                default:
+                    throw new NotIndexable(idx.valueText());
+            }
+        }
+        return cur;
+    }
+}
+''',
+    'ParsedReference.java': r'''package @PKG@;
+
+import java.util.List;
+
+/** A parsed reference string: '#' + colon-delimited containment path +
+ * an optional chain of dot-accessors / bracket indices, e.g.
+ * "#tasks:loop1:subTasks:sim1.model['S1']" (see References.parse). Pure
+ * syntax - never touches a document. GENERATED - do not hand-edit;
+ * regenerate via generator/generate.py. */
+public final class ParsedReference {
+    /** One accessor: either a dot-accessor (name) or a bracket index. */
+    public static final class Accessor {
+        public final String dotName;    // non-null for a dot-accessor
+        public final RefIndex index;    // non-null for a bracket index
+
+        public Accessor(String dotName, RefIndex index) {
+            this.dotName = dotName;
+            this.index = index;
+        }
+
+        public boolean isDot() { return dotName != null; }
+    }
+
+    public final String raw;
+    public final String collection;        // the segment right after '#', or null if empty
+    public final List<String> path;        // colon-segments after the collection
+    public final List<Accessor> accessors;
+
+    public ParsedReference(String raw, String collection, List<String> path, List<Accessor> accessors) {
+        this.raw = raw;
+        this.collection = collection;
+        this.path = path;
+        this.accessors = accessors;
+    }
+
+    /** The first dot-accessor's name, or null. */
+    public String firstDotName() {
+        for (Accessor a : accessors) if (a.isDot()) return a.dotName;
+        return null;
+    }
+
+    /** Every bracket index, in order, wherever it fell relative to a dot. */
+    public List<RefIndex> indexAccessors() {
+        List<RefIndex> out = new java.util.ArrayList<>();
+        for (Accessor a : accessors) if (!a.isDot()) out.add(a.index);
+        return out;
+    }
+}
+''',
+    'PyFmt.java': r'''package @PKG@;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+/** Python-compatible text rendering of parsed JSON values, so a validation
+ * message reads identically across the Python, Java and C++ targets (the
+ * reference implementation formats placeholders with Python's str(), and a
+ * literal with json.dumps()). GENERATED - do not hand-edit; regenerate via
+ * generator/generate.py. */
+public final class PyFmt {
+    private PyFmt() {}
+
+    /** Python's repr() of a float (shortest round-trip digits, exponent form
+     * outside 1e-4 .. 1e16). */
+    public static String floatRepr(double d) {
+        if (Double.isNaN(d)) return "nan";
+        if (Double.isInfinite(d)) return d > 0 ? "inf" : "-inf";
+        if (d == 0.0) return (1.0 / d < 0) ? "-0.0" : "0.0";
+        String sign = d < 0 ? "-" : "";
+        BigDecimal bd = new BigDecimal(Double.toString(Math.abs(d))).stripTrailingZeros();
+        String digits = bd.unscaledValue().toString();
+        int decpt = digits.length() - bd.scale();   // value = 0.DIGITS * 10^decpt
+        String out;
+        if (decpt > 16 || decpt <= -4) {
+            int exp = decpt - 1;
+            String mant = digits.length() > 1 ? digits.charAt(0) + "." + digits.substring(1) : digits;
+            String es = Integer.toString(Math.abs(exp));
+            if (es.length() < 2) es = "0" + es;
+            out = mant + "e" + (exp < 0 ? "-" : "+") + es;
+        } else if (decpt <= 0) {
+            out = "0." + "0".repeat(-decpt) + digits;
+        } else if (decpt >= digits.length()) {
+            out = digits + "0".repeat(decpt - digits.length()) + ".0";
+        } else {
+            out = digits.substring(0, decpt) + "." + digits.substring(decpt);
+        }
+        return sign + out;
+    }
+
+    private static boolean printable(int cp) {
+        int t = Character.getType(cp);
+        switch (t) {
+            case Character.CONTROL: case Character.FORMAT: case Character.SURROGATE:
+            case Character.PRIVATE_USE: case Character.UNASSIGNED:
+            case Character.LINE_SEPARATOR: case Character.PARAGRAPH_SEPARATOR:
+                return false;
+            case Character.SPACE_SEPARATOR:
+                return cp == 0x20;
+            default:
+                return true;
+        }
+    }
+
+    /** Python's repr() of a str. */
+    public static String reprStr(String s) {
+        boolean hasSingle = s.indexOf('\'') >= 0, hasDouble = s.indexOf('"') >= 0;
+        char q = (hasSingle && !hasDouble) ? '"' : '\'';
+        StringBuilder sb = new StringBuilder();
+        sb.append(q);
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            i += Character.charCount(cp);
+            if (cp == q || cp == '\\') { sb.append('\\').appendCodePoint(cp); }
+            else if (cp == '\n') sb.append("\\n");
+            else if (cp == '\r') sb.append("\\r");
+            else if (cp == '\t') sb.append("\\t");
+            else if (cp < 0x20 || cp == 0x7f) sb.append(String.format("\\x%02x", cp));
+            else if (cp < 0x7f || printable(cp)) sb.appendCodePoint(cp);
+            else if (cp <= 0xff) sb.append(String.format("\\x%02x", cp));
+            else if (cp <= 0xffff) sb.append(String.format("\\u%04x", cp));
+            else sb.append(String.format("\\U%08x", cp));
+        }
+        sb.append(q);
+        return sb.toString();
+    }
+
+    /** Python's repr() of the value json.loads() would produce for `n`. */
+    public static String repr(JsonNode n) {
+        if (n == null || n.isNull() || n.isMissingNode()) return "None";
+        if (n.isBoolean()) return n.booleanValue() ? "True" : "False";
+        if (n.isTextual()) return reprStr(n.textValue());
+        if (n.isIntegralNumber()) return n.bigIntegerValue().toString();
+        if (n.isNumber()) return floatRepr(n.doubleValue());
+        StringBuilder sb = new StringBuilder();
+        if (n.isArray()) {
+            sb.append('[');
+            boolean first = true;
+            for (JsonNode c : n) { if (!first) sb.append(", "); first = false; sb.append(repr(c)); }
+            return sb.append(']').toString();
+        }
+        sb.append('{');
+        boolean first = true;
+        Iterator<Map.Entry<String, JsonNode>> it = n.fields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> e = it.next();
+            if (!first) sb.append(", ");
+            first = false;
+            sb.append(reprStr(e.getKey())).append(": ").append(repr(e.getValue()));
+        }
+        return sb.append('}').toString();
+    }
+
+    /** Python's str() of the value json.loads() would produce for `n`. */
+    public static String str(JsonNode n) {
+        if (n != null && n.isTextual()) return n.textValue();
+        return repr(n);
+    }
+
+    /** Python's str() of a placeholder value: a String is itself, a JsonNode
+     * renders as its parsed Python value, a Boolean as True/False, null as
+     * None. */
+    public static String str(Object o) {
+        if (o == null) return "None";
+        if (o instanceof String) return (String) o;
+        if (o instanceof JsonNode) return str((JsonNode) o);
+        if (o instanceof Boolean) return ((Boolean) o) ? "True" : "False";
+        if (o instanceof Double || o instanceof Float) return floatRepr(((Number) o).doubleValue());
+        if (o instanceof List) {
+            StringBuilder sb = new StringBuilder("[");
+            boolean first = true;
+            for (Object x : (List<?>) o) {
+                if (!first) sb.append(", ");
+                first = false;
+                sb.append(x instanceof String ? reprStr((String) x) : str(x));
+            }
+            return sb.append(']').toString();
+        }
+        return String.valueOf(o);
+    }
+
+    private static void jsonString(StringBuilder sb, String s) {
+        sb.append('"');
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                case '\b': sb.append("\\b"); break;
+                case '\f': sb.append("\\f"); break;
+                default:
+                    if (c < 0x20 || c > 0x7e) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+            }
+        }
+        sb.append('"');
+    }
+
+    /** Python's json.dumps() (default separators, ensure_ascii) of `n`. */
+    public static String jsonDumps(JsonNode n) {
+        StringBuilder sb = new StringBuilder();
+        dumps(sb, n);
+        return sb.toString();
+    }
+
+    private static void dumps(StringBuilder sb, JsonNode n) {
+        if (n == null || n.isNull() || n.isMissingNode()) { sb.append("null"); return; }
+        if (n.isBoolean()) { sb.append(n.booleanValue() ? "true" : "false"); return; }
+        if (n.isTextual()) { jsonString(sb, n.textValue()); return; }
+        if (n.isIntegralNumber()) { sb.append(n.bigIntegerValue().toString()); return; }
+        if (n.isNumber()) {
+            double d = n.doubleValue();
+            if (Double.isNaN(d)) sb.append("NaN");
+            else if (Double.isInfinite(d)) sb.append(d > 0 ? "Infinity" : "-Infinity");
+            else sb.append(floatRepr(d));
+            return;
+        }
+        if (n.isArray()) {
+            sb.append('[');
+            boolean first = true;
+            for (JsonNode c : n) { if (!first) sb.append(", "); first = false; dumps(sb, c); }
+            sb.append(']');
+            return;
+        }
+        sb.append('{');
+        boolean first = true;
+        Iterator<Map.Entry<String, JsonNode>> it = n.fields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> e = it.next();
+            if (!first) sb.append(", ");
+            first = false;
+            jsonString(sb, e.getKey());
+            sb.append(": ");
+            dumps(sb, e.getValue());
+        }
+        sb.append('}');
+    }
+
+    /** str() of an integer as Python would print it. */
+    public static String intStr(BigInteger b) { return b.toString(); }
+}
+''',
+    'RefIndex.java': r'''package @PKG@;
+
+import java.math.BigInteger;
+
+/** One bracket index of a reference: [n] / [-n] ("int"), ['label'] ("label")
+ * or [a:b] ("range", either end optional). GENERATED - do not hand-edit;
+ * regenerate via generator/generate.py. */
+public final class RefIndex {
+    public final String kind;       // "int" | "label" | "range"
+    public final long intValue;     // "int": the index (saturated to the long range)
+    public final String intText;    // "int": the index as Python would print it
+    public final String label;      // "label": the label
+    public final Long rangeStart;   // "range": start (saturated to the long range), or null when open
+    public final Long rangeEnd;     // "range": end (saturated to the long range), or null when open
+    public final String rangeStartText;   // "range": the start as Python would print it, or null when open
+    public final String rangeEndText;     // "range": the end as Python would print it, or null when open
+
+    private RefIndex(String kind, long intValue, String intText, String label, BigInteger rangeStart,
+                     BigInteger rangeEnd) {
+        this.kind = kind;
+        this.intValue = intValue;
+        this.intText = intText;
+        this.label = label;
+        this.rangeStart = rangeStart == null ? null : Long.valueOf(saturate(rangeStart));
+        this.rangeEnd = rangeEnd == null ? null : Long.valueOf(saturate(rangeEnd));
+        this.rangeStartText = rangeStart == null ? null : rangeStart.toString();
+        this.rangeEndText = rangeEnd == null ? null : rangeEnd.toString();
+    }
+
+    public static RefIndex ofInt(BigInteger v) {
+        return new RefIndex("int", saturate(v), v.toString(), null, null, null);
+    }
+
+    public static RefIndex ofLabel(String label) {
+        return new RefIndex("label", 0, null, label, null, null);
+    }
+
+    public static RefIndex ofRange(BigInteger a, BigInteger b) {
+        return new RefIndex("range", 0, null, null, a, b);
+    }
+
+    public static long saturate(BigInteger v) {
+        if (v.bitLength() < 64) return v.longValue();
+        return v.signum() < 0 ? Long.MIN_VALUE : Long.MAX_VALUE;
+    }
+
+    /** The index value as the reference rules print it in a message's
+     * {subvalue} (the label itself, or the integer). */
+    public String valueText() {
+        if (kind.equals("int")) return intText;
+        if (kind.equals("label")) return label;
+        return rangeText();
+    }
+
+    /** "[a:b]" with an open end left empty. */
+    public String rangeText() {
+        return "[" + (rangeStartText == null ? "" : rangeStartText) + ":"
+                + (rangeEndText == null ? "" : rangeEndText) + "]";
+    }
+}
+''',
+    'References.java': r'''package @PKG@;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/** Reference parsing / resolution (Design.md's Cross-references section,
+ * core-spec.md Section 4) and every check that hangs off a resolved
+ * reference: SEDBase-0005 through -0017 (including the formulaic
+ * "if a reference, must resolve to type X" field rules), SEDBase-0013's
+ * Repeat scoping, AbstractTask-0003's chronological ordering, Repeat-0008
+ * through -0010, LoopVariable-0004, SEDDocument-0009 through -0011 and
+ * -0013. Java port of the reference-machinery half of RUNTIME in
+ * generator/emit_python.py (the reference implementation - keep the two in
+ * step, message text and locations included). The per-rule logic itself
+ * lives in the small hand-written classes under templates/java/rules/,
+ * reached through the generated Handwritten facade; this class is the
+ * shared plumbing that decides which rules to call, with what. A reference
+ * into `constants` resolves to a raw JSON value, never an element, and
+ * nothing here ever throws for a bad document. GENERATED - do not
+ * hand-edit; regenerate via generator/generate.py. */
+public final class References {
+    private References() {}
+
+    static final List<String> REF_COLLECTIONS = List.of("tasks", "constants", "outputs", "styles");
+
+    private static final Pattern DOT_ACCESSOR = Pattern.compile("^\\.([A-Za-z_][A-Za-z0-9_]*)");
+
+    public static boolean isReference(JsonNode value) {
+        return value != null && value.isTextual() && value.textValue().startsWith("#");
+    }
+
+    public static boolean isReference(String value) {
+        return value != null && value.startsWith("#");
+    }
+
+    // ---- parsing -------------------------------------------------------------
+
+    /** Python's int(str): optional surrounding whitespace and sign, decimal
+     * digits (single underscores allowed between digits). null when invalid. */
+    static BigInteger pyInt(String s) {
+        String t = s.strip();
+        if (t.isEmpty()) return null;
+        int i = 0;
+        boolean neg = false;
+        if (t.charAt(0) == '+' || t.charAt(0) == '-') { neg = t.charAt(0) == '-'; i = 1; }
+        if (i >= t.length()) return null;
+        StringBuilder digits = new StringBuilder();
+        boolean prevUnderscore = true;   // a leading underscore is invalid too
+        for (; i < t.length(); i++) {
+            char c = t.charAt(i);
+            if (c == '_') {
+                if (prevUnderscore) return null;
+                prevUnderscore = true;
+                continue;
+            }
+            int d = Character.digit(c, 10);
+            if (d < 0) return null;
+            digits.append((char) ('0' + d));
+            prevUnderscore = false;
+        }
+        if (prevUnderscore) return null;
+        BigInteger b = new BigInteger(digits.toString());
+        return neg ? b.negate() : b;
+    }
+
+    static RefIndex parseRefIndex(String rawPart) {
+        String part = rawPart.strip();
+        if (part.indexOf(':') >= 0) {
+            int c = part.indexOf(':');
+            String a = part.substring(0, c), b = part.substring(c + 1);
+            BigInteger av = null, bv = null;
+            boolean ok = true;
+            if (!a.strip().isEmpty()) {
+                av = pyInt(a);
+                if (av == null) ok = false;
+            }
+            if (ok && !b.strip().isEmpty()) {
+                bv = pyInt(b);
+                if (bv == null) ok = false;
+            }
+            // (Python raises ValueError on a non-integer range end; validate()
+            // must never throw, so fall through to the bare-label reading.)
+            if (ok) return RefIndex.ofRange(av, bv);
+            return RefIndex.ofLabel(part);
+        }
+        if (part.length() >= 2 && part.charAt(0) == part.charAt(part.length() - 1)
+                && (part.charAt(0) == '\'' || part.charAt(0) == '"')) {
+            return RefIndex.ofLabel(part.substring(1, part.length() - 1));
+        }
+        BigInteger n = pyInt(part);
+        if (n != null) return RefIndex.ofInt(n);
+        return RefIndex.ofLabel(part);   // bare unquoted label - lenient fallback
+    }
+
+    /** '#' + a colon-delimited containment path + an optional chain of
+     * dot-accessors / bracket indices. Pure syntax, never touches a
+     * document. */
+    public static ParsedReference parse(String text) {
+        String body = text.startsWith("#") ? text.substring(1) : text;
+        int split = -1;
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+            if (c == '.' || c == '[') { split = i; break; }
+        }
+        String pathPart = split >= 0 ? body.substring(0, split) : body;
+        String accessorPart = split >= 0 ? body.substring(split) : "";
+        List<String> segments = new ArrayList<>();
+        if (!pathPart.isEmpty()) {
+            for (String s : pathPart.split(":", -1)) segments.add(s);
+        }
+        String collection = segments.isEmpty() ? null : segments.get(0);
+        List<String> path = segments.isEmpty() ? new ArrayList<>() : new ArrayList<>(segments.subList(1, segments.size()));
+        List<ParsedReference.Accessor> accessors = new ArrayList<>();
+        int i = 0, n = accessorPart.length();
+        while (i < n) {
+            char ch = accessorPart.charAt(i);
+            if (ch == '.') {
+                Matcher m = DOT_ACCESSOR.matcher(accessorPart.substring(i));
+                if (!m.find()) break;
+                accessors.add(new ParsedReference.Accessor(m.group(1), null));
+                i += m.end();
+            } else if (ch == '[') {
+                int close = accessorPart.indexOf(']', i);
+                if (close == -1) break;
+                String inner = accessorPart.substring(i + 1, close);
+                for (String part : inner.split(",", -1)) {
+                    if (!part.strip().isEmpty()) accessors.add(new ParsedReference.Accessor(null, parseRefIndex(part)));
+                }
+                i = close + 1;
+            } else {
+                break;
+            }
+        }
+        return new ParsedReference(text, collection, path, accessors);
+    }
+
+    // ---- resolution ----------------------------------------------------------
+
+    /** getSedReference()'s result: the target (a SedBase element, or a raw
+     * JsonNode for a constants target) - null on failure - and the
+     * '#...'-prefixed string of everything walked (on failure: the longest
+     * prefix that resolved). prefix is null when there was no document to
+     * walk, or the collection name itself is unrecognized. */
+    public static final class Resolved {
+        public final Object element;
+        public final String prefix;
+
+        Resolved(Object element, String prefix) {
+            this.element = element;
+            this.prefix = prefix;
+        }
+    }
+
+    /** Walks parsed.path's containment tree against `document` one
+     * colon-segment at a time (SEDBase-0006). */
+    public static Resolved getSedReference(SedBase document, ParsedReference parsed) {
+        if (document == null || parsed.collection == null || !REF_COLLECTIONS.contains(parsed.collection)) {
+            return new Resolved(null, null);
+        }
+        IdCollection coll = document.getIdCollection(parsed.collection);
+        String prefix = "#" + parsed.collection;
+        if (coll == null || parsed.path.isEmpty()) return new Resolved(null, prefix);
+        List<String> remaining = new ArrayList<>(parsed.path);
+        String firstId = remaining.remove(0);
+        if (!coll.has(firstId)) return new Resolved(null, prefix);
+        Object current = coll.getObject(firstId);
+        prefix = prefix + ":" + firstId;
+        while (!remaining.isEmpty()) {
+            if (remaining.size() < 2) {
+                // A lone trailing segment names a plain attribute, not an
+                // ID-keyed child collection (SEDBase-0006: "a segment naming
+                // a plain attribute... does not resolve").
+                return new Resolved(null, prefix);
+            }
+            String subcollName = remaining.remove(0), itemId = remaining.remove(0);
+            if (!(current instanceof SedBase)) return new Resolved(null, prefix);   // a raw value has no children
+            IdCollection subcoll = ((SedBase) current).getIdCollection(subcollName);
+            if (subcoll == null || !subcoll.has(itemId)) return new Resolved(null, prefix);
+            current = subcoll.getObject(itemId);
+            prefix = prefix + ":" + subcollName + ":" + itemId;
+        }
+        // A constant holding a JSON null is "no element" too: the Python
+        // target's resolution returns None for it, indistinguishable from an
+        // unresolved reference (so SEDBase-0006 reports it).
+        if (current instanceof JsonNode && ((JsonNode) current).isNull()) current = null;
+        return new Resolved(current, prefix);
+    }
+
+    /** The parent of a resolved reference target, or null when the target is
+     * not a document element at all - a reference into `constants` resolves
+     * to a bare JSON value that has no parent and must simply count as "not
+     * one of my own children", never crash validate(). */
+    static SedBase elementParent(Object resolved) {
+        return resolved instanceof SedBase ? ((SedBase) resolved).getParent() : null;
+    }
+
+    // ---- per-field description handed to the reference dispatcher -----------
+
+    /** What a reference-carrying field declares about itself: its kind and,
+     * when the generator derived them, the formulaic ref-type rule id, the
+     * enum / numeric bounds / container item kind the target's literal value
+     * must satisfy, and the x-ref-target ("model" / "annotatedData"). */
+    public static final class FieldInfo {
+        public final String fieldKind;
+        public final String refTypeRuleId;
+        public final List<String> expectedEnum;
+        public final Double minimum;
+        public final Double exclusiveMinimum;
+        public final String itemKind;
+        public final String refTarget;
+
+        FieldInfo(String fieldKind, String refTypeRuleId, List<String> expectedEnum, Double minimum,
+                  Double exclusiveMinimum, String itemKind, String refTarget) {
+            this.fieldKind = fieldKind;
+            this.refTypeRuleId = refTypeRuleId;
+            this.expectedEnum = expectedEnum;
+            this.minimum = minimum;
+            this.exclusiveMinimum = exclusiveMinimum;
+            this.itemKind = itemKind;
+            this.refTarget = refTarget;
+        }
+
+        /** The whole-field form: everything the field's own spec declares. */
+        public static FieldInfo of(FieldSpec spec) {
+            return new FieldInfo(spec.kind, spec.refTypeRuleId, spec.enumValues, spec.minimum,
+                    spec.exclusiveMinimum, spec.itemKind, spec.refTarget);
+        }
+
+        /** A reference with no field-level ref-type rule to check: an
+         * "any"-kind field, or one entry of a DictOrRef dict literal. */
+        public static FieldInfo bare(String fieldKind) {
+            return new FieldInfo(fieldKind, null, null, null, null, null, null);
+        }
+    }
+
+    // ---- shared dispatcher ---------------------------------------------------
+
+    /** Shared per-type dispatcher for every reference-resolution rule
+     * (SEDBase-0005 through -0015, plus the formulaic ref-type rules that
+     * piggyback on -0015's scalar-reduction check). Called for every
+     * SIdRef/*OrRef/any-kind field whose value is a reference. `referrer` is
+     * the element carrying the reference - needed only by SEDBase-0013's
+     * containment-tree scoping check and AbstractTask-0003. */
+    public static List<ValidationProblem> checkReferenceField(
+            String value, SedBase document, String className, String idValue, String attr, String location,
+            SedBase referrer, FieldInfo info) {
+        if (!Handwritten.HAS_REFERENCE_RULES) {
+            // This tree's own model.rules never defined SEDBase-0005 - its own
+            // reference convention (if any) isn't the tasks/constants/outputs/
+            // styles vocabulary these rules check, so skip rather than
+            // misapply a foreign convention.
+            return new ArrayList<>();
+        }
+        ParsedReference parsed = parse(value);
+        List<ValidationProblem> problems = new ArrayList<>(
+                Handwritten.sedBase0005(parsed, className, idValue, attr, location));
+        if (!problems.isEmpty()) return problems;   // unknown collection - nothing further can resolve
+        problems.addAll(Handwritten.sedBase0007(parsed, className, idValue, attr, location));
+        Resolved r = getSedReference(document, parsed);
+        problems.addAll(Handwritten.sedBase0006(parsed, r.element, r.prefix, className, idValue, attr, location));
+        if (r.element == null || "outputs".equals(parsed.collection)) {
+            // Nothing further to check against - either the reference didn't
+            // resolve (SEDBase-0006 already said so), or it targets an Output
+            // (SEDBase-0007 already said so; outputs are never a data SOURCE).
+            return problems;
+        }
+        if (!"constants".equals(parsed.collection)) {
+            if (!(r.element instanceof SedBase)) return problems;   // a raw value below a task: no ancestry to walk
+            // A constants target is a raw JSON value, so there is no
+            // containment ancestry to walk and Repeat scoping doesn't apply.
+            problems.addAll(checkRepeatScoping(referrer, (SedBase) r.element, parsed, className, idValue, location, value));
+        }
+        if ("tasks".equals(parsed.collection)) {
+            problems.addAll(checkTaskOrder(referrer, (SedBase) r.element, document, className, idValue, attr, location, value));
+        }
+        problems.addAll(checkOutputShapeAndRefType(parsed, r.element, document, className, idValue, attr, location, value, info));
+        return problems;
+    }
+
+    // ---- SEDBase-0013: Repeat subTasks/range/index/loopVariables scoping ----
+
+    static SedBase nearestRepeatAncestor(SedBase elem) {
+        SedBase cur = elem;
+        while (cur != null) {
+            if (cur.getIdCollection("subTasks") != null) return cur;
+            cur = cur.getParent();
+        }
+        return null;
+    }
+
+    static boolean isAncestorOrSelf(SedBase candidate, SedBase elem) {
+        SedBase cur = elem;
+        while (cur != null) {
+            if (cur == candidate) return true;
+            cur = cur.getParent();
+        }
+        return false;
+    }
+
+    static List<ValidationProblem> checkRepeatScoping(SedBase referrer, SedBase resolved, ParsedReference parsed,
+            String className, String idValue, String location, String value) {
+        if (!Handwritten.HAS_SCOPING_RULES) return new ArrayList<>();
+        String dotName = parsed.firstDotName();
+        boolean isRepeatItself = resolved.getIdCollection("subTasks") != null;
+        SedBase targetRepeat;
+        if (isRepeatItself) {
+            // A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
+            // is never scoped; only its .range/.index outputs are, since those
+            // only have a value during one iteration.
+            targetRepeat = ("range".equals(dotName) || "index".equals(dotName)) ? resolved : null;
+        } else {
+            SedBase parent = resolved.getParent();
+            targetRepeat = parent != null ? nearestRepeatAncestor(parent) : null;
+        }
+        if (targetRepeat == null || referrer == null) return new ArrayList<>();
+        if (isAncestorOrSelf(targetRepeat, referrer)) return new ArrayList<>();
+        return Handwritten.sedBase0013(false, targetRepeat.ownIdForMessage(), value, className, idValue, location);
+    }
+
+    // ---- AbstractTask-0003: the chronological ("no forward reference") rule -
+
+    /** One step of a chain: the id under which a node is stored in a
+     * tasks/subTasks dictionary, and its position there. */
+    private static final class Step {
+        final String id;
+        final int index;
+        final SedBase owner;
+
+        Step(String id, int index, SedBase owner) {
+            this.id = id;
+            this.index = index;
+            this.owner = owner;
+        }
+    }
+
+    /** (owner, id, index) if node's own parent stores node directly under a
+     * 'tasks' or 'subTasks' id-keyed collection - the two collection kinds
+     * the chronological rule cares about - else null. A node stored under
+     * any OTHER id-keyed field (loopVariables, aggregateOutputVariables,
+     * constants, outputs, styles, ...) doesn't match, which is what lets
+     * taskChain collapse a reference living in one of those fields down to
+     * its owning task's own chronological position. */
+    private static Step dictMembership(SedBase node) {
+        SedBase parent = node.getParent();
+        if (parent == null) return null;
+        for (String collName : new String[]{"tasks", "subTasks"}) {
+            IdCollection coll = parent.getIdCollection(collName);
+            if (coll == null) continue;
+            List<String> ids = coll.ids();
+            for (int idx = 0; idx < ids.size(); idx++) {
+                if (coll.getObject(ids.get(idx)) == node) return new Step(ids.get(idx), idx, parent);
+            }
+        }
+        return null;
+    }
+
+    /** The chain of dict-membership steps from SEDDocument.tasks down to
+     * whichever tasks/subTasks entry directly contains `elem` (elem itself,
+     * if it IS such an entry) - outermost first. null if elem isn't
+     * reachable inside doc.tasks at all (an Output/Style element, or the
+     * document itself). */
+    private static List<Step> taskChain(SedBase elem, SedBase doc) {
+        SedBase node = elem;
+        List<Step> chain = new ArrayList<>();
+        while (node != null && node != doc) {
+            Step m = dictMembership(node);
+            if (m != null) {
+                chain.add(m);
+                node = m.owner;
+                continue;
+            }
+            node = node.getParent();
+        }
+        if (chain.isEmpty()) return null;
+        java.util.Collections.reverse(chain);
+        return chain;
+    }
+
+    /** AbstractTask-0003.md's own chronological comparison, walked level by
+     * level (both chains outermost-first): the first level where the two
+     * chains name a DIFFERENT task-dict entry is decisive - the target must
+     * be strictly earlier there. If every level of the SHORTER chain
+     * matches, the two share a task-lineage prefix: a target chain no
+     * longer than the referrer's names the referrer's own task or an
+     * enclosing Repeat (fine unless the chains are the exact same length -
+     * "a task never references itself"); a longer target chain is a
+     * descendant subTask of the referrer's own task (always fine). */
+    private static boolean taskOrderOk(List<Step> rchain, List<Step> tchain) {
+        int n = Math.min(rchain.size(), tchain.size());
+        for (int i = 0; i < n; i++) {
+            Step r = rchain.get(i), t = tchain.get(i);
+            if (!r.id.equals(t.id)) return t.index < r.index;
+        }
+        if (tchain.size() <= rchain.size()) return tchain.size() < rchain.size();
+        return true;
+    }
+
+    static List<ValidationProblem> checkTaskOrder(SedBase referrer, SedBase resolved, SedBase document,
+            String className, String idValue, String attr, String location, String value) {
+        if (!Handwritten.HAS_TASK_ORDER_RULE) return new ArrayList<>();
+        if (referrer == null || document == null) return new ArrayList<>();
+        List<Step> rchain = taskChain(referrer, document);
+        if (rchain == null) {
+            // The referring element isn't inside SEDDocument.tasks at all
+            // (e.g. a Curve under outputs/): outputs always come
+            // chronologically after every task, so no constraint applies.
+            return new ArrayList<>();
+        }
+        List<Step> tchain = taskChain(resolved, document);
+        if (tchain == null) return new ArrayList<>();
+        boolean ok = taskOrderOk(rchain, tchain);
+        return Handwritten.abstractTask0003(ok, value, className, idValue, attr, location);
+    }
+
+    // ---- Repeat-0008/-0009/-0010: a Repeat-family instance's own children ---
+
+    /** outputVariableMap / aggregateOutputVariables of a Repeat-family
+     * instance must stay scoped to that same instance's own subTasks, and an
+     * aggregateOutputVariables entry may never define appliedDimensions.
+     * Detected by class SHAPE (has a subTasks collection), not by name. */
+    static List<ValidationProblem> checkRepeatOwnChildren(SedBase self) {
+        if (!Handwritten.HAS_REPEAT_OWN_RULES) return new ArrayList<>();
+        if (self.getIdCollection("subTasks") == null) return new ArrayList<>();
+        SedBase document = self.getDocument();
+        String className = self.getClass().getSimpleName();
+        List<ValidationProblem> problems = new ArrayList<>();
+        JsonNode ovm = self.values.get("outputVariableMap");
+        if (ovm != null && ovm.isObject()) {
+            java.util.Iterator<Map.Entry<String, JsonNode>> it = ovm.fields();
+            while (it.hasNext()) {
+                Map.Entry<String, JsonNode> e = it.next();
+                JsonNode entryValue = e.getValue();
+                if (!isReference(entryValue)) continue;
+                if (!resolvesToOwnChild(document, entryValue.textValue(), self)) {
+                    problems.addAll(Handwritten.repeat0008(false, entryValue, className, self.ownIdForMessage(),
+                            e.getKey(), "/outputVariableMap/" + e.getKey()));
+                }
+            }
+        }
+        IdCollection agg = self.getIdCollection("aggregateOutputVariables");
+        if (agg != null) {
+            for (String entryId : agg.ids()) {
+                Object entry = agg.getObject(entryId);
+                if (!(entry instanceof SedBase)) continue;
+                JsonNode entryJson = ((SedBase) entry).ownJsonValue();
+                if (entryJson.has("appliedDimensions")) {
+                    problems.addAll(Handwritten.repeat0010(true, entryJson.get("appliedDimensions"), className,
+                            self.ownIdForMessage(), "appliedDimensions",
+                            "/aggregateOutputVariables/" + entryId + "/appliedDimensions"));
+                }
+                JsonNode inputValue = entryJson.get("input");
+                if (inputValue != null && !inputValue.isNull() && isReference(inputValue)
+                        && !resolvesToOwnChild(document, inputValue.textValue(), self)) {
+                    problems.addAll(Handwritten.repeat0009(false, inputValue, className, self.ownIdForMessage(),
+                            "input", "/aggregateOutputVariables/" + entryId + "/input"));
+                }
+            }
+        }
+        return problems;
+    }
+
+    private static boolean resolvesToOwnChild(SedBase document, String refValue, SedBase self) {
+        if (document == null) return false;
+        Resolved r = getSedReference(document, parse(refValue));
+        return r.element != null && elementParent(r.element) == self;
+    }
+
+    // ---- LoopVariable-0004: subsequentValues stays scoped to the enclosing --
+    // Loop's own subTasks - same shape as Repeat-0008/-0009 above, but for the
+    // one field a LoopVariable itself carries.
+
+    static List<ValidationProblem> checkLoopVariableScope(SedBase self) {
+        if (!Handwritten.HAS_LOOPVAR_RULE) return new ArrayList<>();
+        JsonNode value = self.values.get("subsequentValues");
+        if (value == null || !isReference(value)) return new ArrayList<>();
+        SedBase enclosing = self.getParent();
+        if (enclosing == null) return new ArrayList<>();
+        SedBase document = self.getDocument();
+        Resolved r = document == null ? new Resolved(null, null) : getSedReference(document, parse(value.textValue()));
+        boolean ok = r.element != null && elementParent(r.element) == enclosing;
+        if (ok) return new ArrayList<>();
+        return Handwritten.loopVariable0004(false, value, self.ownIdForMessage(), "/subsequentValues");
+    }
+
+    // ---- formulaic ref-type rules + SEDBase-0008..0012/0014/0015 ------------
+
+    private static final Map<String, String> SCALAR_ORREF_EXPECTED = Map.of(
+            "NumberOrRef", "number", "StringOrRef", "string", "IntegerOrRef", "integer", "BooleanOrRef", "boolean");
+
+    // Every kind the formulaic ref-type rules check: the four scalar kinds
+    // plus the two container kinds. A reference to a model is never
+    // acceptable for any of them: a model is a type of its own
+    // (ProposedRules.md).
+    private static final Set<String> REF_TYPE_KINDS = Set.of(
+            "NumberOrRef", "StringOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef");
+
+    static String fmtLiteral(Object value) {
+        if (value == null) return "null";
+        if (value instanceof JsonNode) return PyFmt.jsonDumps((JsonNode) value);
+        return "<" + value.getClass().getSimpleName() + " object>";
+    }
+
+    private static boolean isNumberNode(Object o) {
+        return o instanceof JsonNode && ((JsonNode) o).isNumber();
+    }
+
+    /** Only called once a constant's own literal value has already been fully
+     * indexed down - a REAL value - so enum membership, numeric bounds and
+     * array/dict element kinds can be checked exactly. A bare JSON boolean
+     * never counts as a number. Inside an array/dict a reference-valued
+     * element is accepted (it may resolve to the right kind). Returns null
+     * for a kind this doesn't check. */
+    static Boolean literalMatchesKind(Object value, FieldInfo info) {
+        JsonNode n = value instanceof JsonNode ? (JsonNode) value : null;
+        switch (info.fieldKind) {
+            case "NumberOrRef":
+            case "IntegerOrRef": {
+                boolean ok;
+                if (n == null || !n.isNumber()) ok = false;
+                else if (info.fieldKind.equals("NumberOrRef")) ok = true;
+                else ok = n.isIntegralNumber() || (n.isFloatingPointNumber() && !Double.isInfinite(n.doubleValue())
+                        && !Double.isNaN(n.doubleValue()) && n.doubleValue() == Math.floor(n.doubleValue()));
+                if (!ok) return false;
+                double d = n.doubleValue();
+                if (info.minimum != null && d < info.minimum) return false;
+                if (info.exclusiveMinimum != null && d <= info.exclusiveMinimum) return false;
+                return true;
+            }
+            case "BooleanOrRef":
+                return n != null && n.isBoolean();
+            case "StringOrRef":
+                if (n == null || !n.isTextual()) return false;
+                if (info.expectedEnum != null) return info.expectedEnum.contains(n.textValue());
+                return true;
+            case "ArrayOrRef":
+                if (n == null || !n.isArray()) return false;
+                for (JsonNode v : n) if (!elementMatches(v, info.itemKind)) return false;
+                return true;
+            case "DictOrRef":
+                if (n == null || !n.isObject()) return false;
+                for (JsonNode v : n) if (!elementMatches(v, info.itemKind)) return false;
+                return true;
+            default:
+                return null;
+        }
+    }
+
+    /** One array element / dict value against the schema's declared kind
+     * ("string" | "number" | "ref" | "any"). A reference-valued element
+     * always passes for string/number (it stands in for a value of that
+     * kind). */
+    private static boolean elementMatches(JsonNode element, String itemKind) {
+        if ("string".equals(itemKind)) return element.isTextual();
+        if ("number".equals(itemKind)) return element.isNumber() || isReference(element);
+        if ("ref".equals(itemKind)) return isReference(element);
+        return true;
+    }
+
+    /** A task-output target has no actual VALUE to type-check - only
+     * outputs.json's own declared "type" for the suffix entry. Coarse by
+     * necessity: an annotatedData cell is always treated as number-shaped, a
+     * stringList entry as string-shaped. null when the declared type maps to
+     * neither. */
+    private static Boolean refTypeMatchesDeclared(String expected, String actualDeclared) {
+        String mapped = "annotatedData".equals(actualDeclared) ? "number"
+                : "stringList".equals(actualDeclared) ? "string" : null;
+        if (mapped == null) return null;
+        return mapped.equals(expected);
+    }
+
+    /** (kind, description) of a constant's (fully indexed) literal value for
+     * SEDBase-0016/-0017: a number/string/boolean/array is AnnotatedData, an
+     * object is neither a model nor AnnotatedData; a JSON null is not
+     * decidable. */
+    private static String[] constantTargetKind(Object finalValue) {
+        if (finalValue instanceof JsonNode) {
+            JsonNode n = (JsonNode) finalValue;
+            if (n.isBoolean()) return new String[]{"annotatedData", "a boolean"};
+            if (n.isNumber()) return new String[]{"annotatedData", "a number"};
+            if (n.isTextual()) return new String[]{"annotatedData", "a string"};
+            if (n.isArray()) return new String[]{"annotatedData", "an array"};
+            if (n.isObject()) return new String[]{"object", "an object"};
+        }
+        return new String[]{null, ""};
+    }
+
+    /** (kind, description) of a task-output suffix entry, from its
+     * outputs.json "type", for SEDBase-0016/-0017. */
+    private static String[] outputTargetKind(JsonNode entry) {
+        String declared = entry != null && entry.has("type") && entry.get("type").isTextual()
+                ? entry.get("type").textValue() : null;
+        if ("model".equals(declared)) return new String[]{"model", "a model"};
+        if ("annotatedData".equals(declared)) return new String[]{"annotatedData", "an annotatedData value"};
+        if ("stringList".equals(declared)) return new String[]{"annotatedData", "a stringList value"};
+        return new String[]{null, ""};
+    }
+
+    /** SEDBase-0016 ("model") / SEDBase-0017 ("annotatedData") dispatch. */
+    private static List<ValidationProblem> checkRefTarget(String refTarget, String kind, String description,
+            String value, String className, String idValue, String attr, String location) {
+        if (!Handwritten.HAS_REF_TARGET_RULES) return new ArrayList<>();
+        if ("model".equals(refTarget)) {
+            return Handwritten.sedBase0016(kind, description, value, className, idValue, attr, location);
+        }
+        if ("annotatedData".equals(refTarget)) {
+            return Handwritten.sedBase0017(kind, description, value, className, idValue, attr, location);
+        }
+        return new ArrayList<>();
+    }
+
+    private static ValidationProblem refTypeProblem(String ruleId, String location, String attr, String value,
+            String className, String idValue, String resolvedDesc) {
+        return RuleCatalog.problem(ruleId, location, "attr", attr, "value", value,
+                "class", className, "id", idValue, "resolved-value", resolvedDesc);
+    }
+
+    private static List<ValidationProblem> checkConstantAccessor(ParsedReference parsed, Object resolved,
+            SedBase document, String className, String idValue, String attr, String location, String value,
+            FieldInfo info) {
+        String dotName = parsed.firstDotName();
+        if (dotName != null) {
+            // SEDBase-0008.md: "For a constants ... target, no dot-accessor is valid."
+            return new ArrayList<>(Handwritten.sedBase0008(false, dotName, value, className, idValue, attr, location));
+        }
+        List<RefIndex> indexAccessors = parsed.indexAccessors();
+        Object constValue = resolved;
+        if (constValue instanceof JsonNode && isReference((JsonNode) constValue)) {
+            // SEDBase-0012.md: "A constant whose value is itself a reference is
+            // followed first." One hop only.
+            constValue = getSedReference(document, parse(((JsonNode) constValue).textValue())).element;
+        }
+        Object finalValue;
+        try {
+            finalValue = OutputsShape.indexIntoLiteral(constValue, indexAccessors);
+        } catch (OutputsShape.NotIndexable e) {
+            return new ArrayList<>(Handwritten.sedBase0012(false, e.bad, fmtLiteral(constValue), value, className,
+                    idValue, attr, location));
+        }
+        if (info.refTarget != null) {
+            String[] k = constantTargetKind(finalValue);
+            return checkRefTarget(info.refTarget, k[0], k[1], value, className, idValue, attr, location);
+        }
+        if (info.refTypeRuleId == null || !REF_TYPE_KINDS.contains(info.fieldKind)) return new ArrayList<>();
+        if (Boolean.FALSE.equals(literalMatchesKind(finalValue, info))) {
+            List<ValidationProblem> out = new ArrayList<>();
+            out.add(refTypeProblem(info.refTypeRuleId, location, attr, value, className, idValue, fmtLiteral(finalValue)));
+            return out;
+        }
+        return new ArrayList<>();
+    }
+
+    /** shapeOf(ref) support for outputs.json expressions: resolves another
+     * reference's post-index dimensions, statically, or gives up with
+     * NotStatic. The depth guard is shared across one check. */
+    private static final class ShapeResolver implements java.util.function.Function<String, List<Dim>> {
+        private final SedBase document;
+        private int depth = 0;
+
+        ShapeResolver(SedBase document) { this.document = document; }
+
+        @Override
+        public List<Dim> apply(String refString) {
+            depth++;
+            if (depth > 25) throw new OutputsShape.NotStatic("shapeOf() recursion too deep");
+            ParsedReference parsed2 = parse(refString);
+            Object inner = getSedReference(document, parsed2).element;
+            JsonNode innerOutputs = inner instanceof SedBase ? ((SedBase) inner).outputsJson() : null;
+            if (innerOutputs == null) throw new OutputsShape.NotStatic("shapeOf() target has no outputs.json");
+            OutputsShape.Resolution r = OutputsShape.resolveOutput(
+                    innerOutputs, ((SedBase) inner).ownJsonValue(), parsed2.accessors, this);
+            if (!Boolean.TRUE.equals(r.ok) || r.dimsAfter == null) {
+                throw new OutputsShape.NotStatic("shapeOf() target shape not statically known");
+            }
+            return r.dimsAfter;
+        }
+    }
+
+    private static List<ValidationProblem> checkOutputShapeAndRefType(ParsedReference parsed, Object resolved,
+            SedBase document, String className, String idValue, String attr, String location, String value,
+            FieldInfo info) {
+        if (!Handwritten.HAS_SHAPE_RULES) {
+            // This tree's own model.rules never defined SEDBase-0008 (a
+            // different spec tree with no outputs.json-shaped tasks/
+            // vocabulary at all).
+            return new ArrayList<>();
+        }
+        if ("constants".equals(parsed.collection)) {
+            return checkConstantAccessor(parsed, resolved, document, className, idValue, attr, location, value, info);
+        }
+        JsonNode outputsJson = resolved instanceof SedBase ? ((SedBase) resolved).outputsJson() : null;
+        if (outputsJson == null) {
+            // styles / a nested non-tasks/-class element reached via a tasks:
+            // path (LoopVariable, TaskParameter, ...): a bare reference is
+            // always fine, only a dot-accessor on top is invalid, and there's
+            // no outputs.json-driven shape to check brackets against.
+            String dotName = parsed.firstDotName();
+            if (dotName == null) return new ArrayList<>();
+            return new ArrayList<>(Handwritten.sedBase0008(false, dotName, value, className, idValue, attr, location));
+        }
+        SedBase target = (SedBase) resolved;
+        OutputsShape.Resolution r = OutputsShape.resolveOutput(
+                outputsJson, target.ownJsonValue(), parsed.accessors, new ShapeResolver(document));
+        List<ValidationProblem> problems = new ArrayList<>(
+                Handwritten.sedBase0008(r.ok, r.dotName, value, className, idValue, attr, location));
+        if (!Boolean.TRUE.equals(r.ok)) return problems;
+        problems.addAll(Handwritten.sedBase0009(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0010(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0011(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0014(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+
+        if (info.refTarget != null) {
+            String[] k = outputTargetKind(r.entry);
+            problems.addAll(checkRefTarget(info.refTarget, k[0], k[1], value, className, idValue, attr, location));
+        }
+        if (info.refTypeRuleId != null && REF_TYPE_KINDS.contains(info.fieldKind)) {
+            String actualDeclared = r.entry != null && r.entry.has("type") && r.entry.get("type").isTextual()
+                    ? r.entry.get("type").textValue() : null;
+            if ("model".equals(actualDeclared)) {
+                // A model is a type of its own: never a number, string,
+                // boolean, array, or dictionary (ProposedRules.md).
+                problems.add(refTypeProblem(info.refTypeRuleId, location, attr, value, className, idValue, "a model"));
+            } else if (SCALAR_ORREF_EXPECTED.containsKey(info.fieldKind)) {
+                String expected = SCALAR_ORREF_EXPECTED.get(info.fieldKind);
+                problems.addAll(Handwritten.sedBase0015(r.dimsAfter, expected, value, className, idValue, attr, location));
+                if (r.dimsAfter != null && r.dimsAfter.isEmpty()) {
+                    if (Boolean.FALSE.equals(refTypeMatchesDeclared(expected, actualDeclared))) {
+                        problems.add(refTypeProblem(info.refTypeRuleId, location, attr, value, className, idValue,
+                                "a " + actualDeclared + " value"));
+                    }
+                }
+            } else if (info.fieldKind.equals("ArrayOrRef")) {
+                // Only the unambiguous mismatch: an array of numbers fed a
+                // stringList output.
+                if ("number".equals(info.itemKind) && "stringList".equals(actualDeclared)) {
+                    problems.add(refTypeProblem(info.refTypeRuleId, location, attr, value, className, idValue,
+                            "a stringList value"));
+                }
+            }
+        }
+        return problems;
+    }
+
+    // ---- SEDDocument-0009 .. -0011: namespaces + version --------------------
+
+    private static void walk(SedBase obj, String prefix, List<SedBase> objs, List<String> locs) {
+        objs.add(obj);
+        locs.add(prefix);
+        for (SedBase.ChildLoc cl : obj.childrenWithLocations()) walk(cl.child, prefix + cl.locationPrefix, objs, locs);
+    }
+
+    /** SEDDocument-0009 through -0011 - whole-document checks, called once
+     * from the document root's validate(). A prefix is "used" when any
+     * attribute key or _type value of the form prefix@identifier appears
+     * anywhere in the document (registered and unregistered prefixes alike);
+     * the <prefix>@version declaration itself (only ever on the root) doesn't
+     * count as a use of that prefix. */
+    static List<ValidationProblem> checkNamespaceUsageAndVersion(SedBase document) {
+        if (!Handwritten.HAS_NAMESPACE_RULES) return new ArrayList<>();
+        Map<String, String> declared = new LinkedHashMap<>();   // prefix -> "/<prefix>@version"
+        for (String k : document.nsAttrs.keySet()) {
+            int at = k.indexOf('@');
+            if (k.substring(at + 1).equals("version")) declared.put(k.substring(0, at), "/" + k);
+        }
+        Map<String, List<String>> used = new LinkedHashMap<>();  // prefix -> [locations]
+        List<SedBase> objs = new ArrayList<>();
+        List<String> locs = new ArrayList<>();
+        walk(document, "", objs, locs);
+        for (int i = 0; i < objs.size(); i++) {
+            SedBase obj = objs.get(i);
+            String loc = locs.get(i);
+            for (String k : obj.nsAttrs.keySet()) {
+                int at = k.indexOf('@');
+                String pfx = k.substring(0, at), key = k.substring(at + 1);
+                if (obj == document && key.equals("version")) continue;
+                used.computeIfAbsent(pfx, x -> new ArrayList<>()).add(loc + "/" + pfx + "@" + key);
+            }
+            String typeValue = obj.typeValue();
+            if (typeValue != null && typeValue.contains("@")) {
+                used.computeIfAbsent(typeValue.split("@", 2)[0], x -> new ArrayList<>()).add(loc + "/_type");
+            }
+        }
+        List<ValidationProblem> problems = new ArrayList<>();
+        for (Map.Entry<String, List<String>> e : used.entrySet()) {
+            if (declared.containsKey(e.getKey())) continue;
+            for (String loc : e.getValue()) problems.addAll(Handwritten.sedDocument0009(e.getKey(), loc));
+        }
+        for (Map.Entry<String, String> e : declared.entrySet()) {
+            if (!used.containsKey(e.getKey())) problems.addAll(Handwritten.sedDocument0010(e.getKey(), e.getValue()));
+        }
+        problems.addAll(Handwritten.sedDocument0011(document));
+        return problems;
+    }
+
+    /** SEDDocument-0013: a constant whose value is a reference may only
+     * reference a constant declared EARLIER in the constants dictionary. */
+    static List<ValidationProblem> checkConstantsOrdering(SedBase document) {
+        if (!Handwritten.HAS_CONSTANTS_ORDER_RULE) return new ArrayList<>();
+        return Handwritten.sedDocument0013(document.getIdCollection("constants"));
+    }
+}
+''',
+}
+# ---- END embedded reference-machinery runtime (Java sources) ----
+
+
 def runtime_files() -> dict:
-    return {
+    files = {
         "ValidationProblem.java": _validation_problem_java(),
         "ApiError.java": _api_error_java(),
         "FieldSpec.java": _field_spec_java(),
@@ -1321,6 +3591,9 @@ def runtime_files() -> dict:
         "MathAst.java": _math_ast_java(),
         "MathRules.java": _math_rules_java(),
     }
+    for fname, src in _STATIC_RUNTIME_JAVA.items():
+        files[fname] = src.replace("@PKG@", PKG)
+    return files
 
 
 # ---------------------------------------------------------------------------
@@ -1340,13 +3613,25 @@ def _java_double_lit(v) -> str:
     return "null" if v is None else repr(float(v))
 
 
+def _java_int_lit(v) -> str:
+    return "null" if v is None else str(int(v))
+
+
+def _java_str_list_lit(vs) -> str:
+    if vs is None:
+        return "null"
+    return "List.of(" + ", ".join(_java_lit(v) for v in vs) + ")"
+
+
 def _field_spec_expr(f: Field) -> str:
     t = f.type
     return (
         f"new FieldSpec({_java_lit(f.name)}, {_java_lit(t.kind)}, {str(f.required).lower()}, "
         f"{_java_lit(f.rule_id)}, {_java_lit(f.required_rule_id)}, {_java_lit(f.origin_class + '-0000')}, "
         f"{_java_double_lit(t.minimum)}, {_java_double_lit(t.exclusive_minimum)}, {_java_lit(t.pattern)}, "
-        f"{_java_lit(t.item_class)}, {_java_lit(t.item_discriminator)}, {str(f.is_math).lower()})"
+        f"{_java_lit(t.item_class)}, {_java_lit(t.item_discriminator)}, {str(f.is_math).lower()}, "
+        f"{_java_int_lit(t.min_length)}, {_java_str_list_lit(t.enum)}, {_java_lit(f.ref_type_rule_id)}, "
+        f"{_java_lit(t.item_kind)}, {_java_lit(f.ref_target)})"
     )
 
 
@@ -1358,7 +3643,7 @@ def _field_spec_expr(f: Field) -> str:
 # setOrRefValueNode/... in SedBase.java), differing only in the natural
 # Java type on the value side - ArrayOrRef/DictOrRef have no better native
 # Java collection representation than the raw JsonNode itself without a lot
-# more work outside this port's scope (Design.md's Phase 2 scope note),
+# more work than it is worth here,
 # so their "value" is the JsonNode as-is, same treatment as "any" below.
 _ORREF_KINDS_JAVA = ("StringOrRef", "NumberOrRef", "IntegerOrRef", "BooleanOrRef", "ArrayOrRef", "DictOrRef")
 
@@ -1643,6 +3928,29 @@ def emit_model_java_files(model: SpecModel) -> dict:
             out.append("    @Override public Set<String> knownNamespacePrefixes() { return KNOWN_NAMESPACE_PREFIXES; }\n")
         if c.type_const is not None:
             out.append(f"    public String getType() {{ return {_java_lit(c.type_const)}; }}\n")
+        if c.is_document:
+            # The document root is its own document (getDocument() must never
+            # be null for anything reachable from it) - Io.readFromString sets
+            # this up for a deserialized document via its own attach(null, obj)
+            # call, but a document built up programmatically (new SEDDocument()
+            # then addTasks(...), never round-tripped through readFromString)
+            # needs the same self-attach here, or every backpointer-dependent
+            # thing downstream (getDocument(), and in particular the
+            # SEDBase-0005/0006/0007 reference-resolution rules, which
+            # silently no-op with no document to walk) breaks silently for
+            # documents built that way. Mirrors emit_python.py's __init__.
+            out.append(f"    public {name}() {{ attach(null, this); }}\n")
+            out.append("    @Override public boolean isDocumentClass() { return true; }\n")
+            out.append(f"    @Override public String maxKnownDocumentVersion() {{ return {_java_lit(model.document_version)}; }}\n")
+        if c.outputs_json is not None:
+            # core-spec.md Section 8 - the class's own outputs.json, embedded
+            # as its JSON text and parsed once at class-init time, so the
+            # OutputsShape interpreter can read it straight off the instance
+            # at validate() time (SEDBase-0008 through -0015). Only concrete
+            # tasks/ classes ever have one; every other class leaves
+            # SedBase.outputsJson()'s own null default.
+            out.append(f"    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson({_java_lit(_json.dumps(c.outputs_json))});\n")
+            out.append("    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }\n")
         out.append("\n")
 
         for f in leaf_fields:
@@ -1679,6 +3987,25 @@ def emit_model_java_files(model: SpecModel) -> dict:
                 ident = _java_ident(f.name)
                 out.append(f"        if ({ident} != null) out.add(new ChildLoc({ident}, \"/{f.name}\"));\n")
             out.append("        return out;\n    }\n\n")
+
+        # Generic containment-tree lookup by field name (SEDBase-0006 /
+        # References.getSedReference - Design.md's Cross-references section):
+        # every ID-keyed collection this class owns, by its own field name, so
+        # a reference's colon-segments can walk into any class's own dict-kind
+        # field generically, not just SEDDocument's top-level tasks/constants/
+        # outputs/styles. "any-dict" fields (constants) are included too -
+        # their own values are plain JSON, not further walkable, but
+        # getSedReference() itself stops there. Mirrors emit_python.py's
+        # _get_id_collection / _id_collection_names.
+        id_coll_fields = [f for f in collection_fields if f.type.kind in ("dict", "any-dict")]
+        if id_coll_fields:
+            out.append("    @Override\n    public IdCollection getIdCollection(String fieldName) {\n        switch (fieldName) {\n")
+            for f in id_coll_fields:
+                ident = _java_ident(f.name)
+                out.append(f"            case {_java_lit(f.name)}: return {ident};\n")
+            out.append("            default: return null;\n        }\n    }\n\n")
+            names = ", ".join(_java_lit(f.name) for f in id_coll_fields)
+            out.append(f"    @Override\n    public List<String> idCollectionNames() {{ return List.of({names}); }}\n\n")
 
         if dict_fields:
             out.append("    @Override\n    protected IdKeyedCollection<SedBase> getDictCollection(String fieldName) {\n        switch (fieldName) {\n")
@@ -1766,6 +4093,9 @@ public final class {uname} extends SedBase {{
     public String getType() {{ return typeValue; }}
 
     @Override
+    public String typeValue() {{ return typeValue; }}
+
+    @Override
     public ObjectNode ownJsonValue() {{
         ObjectNode d = raw.deepCopy();
         if (nameNode != null) d.set("name", nameNode);
@@ -1795,7 +4125,7 @@ def emit_dispatch_java(model: SpecModel) -> str:
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -1846,7 +4176,7 @@ public final class Dispatch {{
         if disc.missing_type_rule_id:
             out.append(f"            return new Result(null, RuleCatalog.makeProblem({_java_lit(disc.missing_type_rule_id)}, \"\"));\n")
         else:
-            out.append(f"            Map<String, Object> ph0 = new HashMap<>();\n")
+            out.append(f"            Map<String, Object> ph0 = new LinkedHashMap<>();\n")
             out.append(f"            ph0.put(\"schema-message\", \"missing _type\");\n")
             out.append(f"            return new Result(null, RuleCatalog.makeProblem({_java_lit(disc_name + '-0000')}, \"\", ph0));\n")
         out.append("        }\n")
@@ -1866,8 +4196,8 @@ public final class Dispatch {{
         out.append("        if (m.matches() && !known.contains(m.group(1))) {\n")
         out.append(f"            return new Result(new {uname}(tv, raw), null);\n")
         out.append("        }\n")
-        out.append("        Map<String, Object> ph = new HashMap<>();\n")
-        out.append("        ph.put(\"schema-message\", \"unrecognized _type '\" + tv + \"'\");\n")
+        out.append("        Map<String, Object> ph = new LinkedHashMap<>();\n")
+        out.append("        ph.put(\"schema-message\", \"unrecognized _type \" + PyFmt.repr(raw.get(\"_type\")));\n")
         out.append(f"        return new Result(new {uname}(tv, raw), RuleCatalog.makeProblem({_java_lit(disc_name + '-0000')}, \"\", ph));\n")
         out.append("    }\n\n")
 
@@ -1928,13 +4258,13 @@ public final class Dispatch {{
                 obj.setNamespaceAttribute(prefix, nsKey, raw.get(key));
                 if (obj.knownNamespacePrefixes().contains(prefix)) {
                     String catchall = obj.namespaceCatchall().getOrDefault(prefix, obj.ownCatchall());
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("schema-message", "Additional property '" + key + "' is not allowed.");
                     obj.loadProblems.add(RuleCatalog.makeProblem(catchall, "", ph));
                 }
                 continue;
             }
-            Map<String, Object> ph = new HashMap<>();
+            Map<String, Object> ph = new LinkedHashMap<>();
             ph.put("schema-message", "Additional property '" + key + "' is not allowed.");
             obj.loadProblems.add(RuleCatalog.makeProblem(obj.ownCatchall(), "", ph));
         }
@@ -1944,11 +4274,11 @@ public final class Dispatch {{
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -1971,7 +4301,7 @@ public final class Dispatch {{
                     JsonNode itemRaw = rawValue.get(itemId);
                     if (!itemId.matches(LeafValidation.SID_PATTERN)) {
                         String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                        Map<String, Object> ph = new HashMap<>();
+                        Map<String, Object> ph = new LinkedHashMap<>();
                         ph.put("attr", spec.name);
                         ph.put("class", obj.getClass().getSimpleName());
                         ph.put("id", obj.ownIdForMessage());
@@ -1993,11 +4323,11 @@ public final class Dispatch {{
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isArray()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -2017,11 +4347,11 @@ public final class Dispatch {{
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -2032,7 +4362,7 @@ public final class Dispatch {{
                     JsonNode itemValue = rawValue.get(itemId);
                     if (!itemId.matches(LeafValidation.SID_PATTERN)) {
                         String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                        Map<String, Object> ph = new HashMap<>();
+                        Map<String, Object> ph = new LinkedHashMap<>();
                         ph.put("attr", spec.name);
                         ph.put("class", obj.getClass().getSimpleName());
                         ph.put("id", obj.ownIdForMessage());
@@ -2053,11 +4383,11 @@ public final class Dispatch {{
                 JsonNode rawValue = raw.get(spec.name);
                 if (!rawValue.isObject()) {
                     String rid = spec.ruleId != null ? spec.ruleId : spec.originCatchall;
-                    Map<String, Object> ph = new HashMap<>();
+                    Map<String, Object> ph = new LinkedHashMap<>();
                     ph.put("attr", spec.name);
                     ph.put("class", obj.getClass().getSimpleName());
                     ph.put("id", obj.ownIdForMessage());
-                    ph.put("value", rawValue.toString());
+                    ph.put("value", rawValue);
                     obj.loadProblems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
                     continue;
                 }
@@ -2146,6 +4476,160 @@ public final class Io {{
     }}
 }}
 '''
+
+
+# Handwritten rule IDs whose per-rule Java logic lives under
+# templates/java/rules/<ClassName>.java (see _copy_handwritten_rules_java) -
+# the Java analog of emit_python.py's _IMPLEMENTED_HANDWRITTEN_RULE_IDS. The
+# four math-grammar rules (Types-0001..0004) are the one exception: they were
+# implemented before this mechanism existed and stay together in the emitted
+# MathRules.java, so they are not listed here. SEDDocument-0012 (duplicate
+# JSON keys) is deliberately NOT implemented - see its own rule file's
+# "Decided not to implement detection for this rule in v1" paragraph.
+_IMPLEMENTED_HANDWRITTEN_RULE_IDS = (
+    "SEDBase-0005", "SEDBase-0006", "SEDBase-0007",
+    "SEDBase-0008", "SEDBase-0009", "SEDBase-0010", "SEDBase-0011", "SEDBase-0012",
+    "SEDBase-0013", "SEDBase-0014", "SEDBase-0015", "SEDBase-0016", "SEDBase-0017",
+    "SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011", "SEDDocument-0013",
+    "AbstractTask-0003", "Repeat-0008", "Repeat-0009", "Repeat-0010", "LoopVariable-0004",
+)
+
+# Which rule IDs a dispatcher in References.java needs all of before it runs
+# at all - the Java analog of the `try: from ._rules import ...; except
+# ImportError: return []` guards in emit_python.py's RUNTIME. A spec tree
+# whose own rule set lacks one (e.g. test-specsheets/) gets `false` here and
+# the dispatcher no-ops.
+_RULE_GROUPS = (
+    ("HAS_REFERENCE_RULES", ("SEDBase-0005", "SEDBase-0006", "SEDBase-0007")),
+    ("HAS_SHAPE_RULES", ("SEDBase-0008", "SEDBase-0009", "SEDBase-0010", "SEDBase-0011",
+                         "SEDBase-0012", "SEDBase-0014", "SEDBase-0015")),
+    ("HAS_REF_TARGET_RULES", ("SEDBase-0016", "SEDBase-0017")),
+    ("HAS_SCOPING_RULES", ("SEDBase-0013",)),
+    ("HAS_TASK_ORDER_RULE", ("AbstractTask-0003",)),
+    ("HAS_REPEAT_OWN_RULES", ("Repeat-0008", "Repeat-0009", "Repeat-0010")),
+    ("HAS_LOOPVAR_RULE", ("LoopVariable-0004",)),
+    ("HAS_NAMESPACE_RULES", ("SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011")),
+    ("HAS_CONSTANTS_ORDER_RULE", ("SEDDocument-0013",)),
+)
+
+
+def _rule_class_name(rule_id: str) -> str:
+    """'SEDBase-0005' -> 'SedBase0005', 'AbstractTask-0003' ->
+    'AbstractTask0003': the rule template's class name (and file stem)."""
+    prefix, num = rule_id.rsplit("-", 1)
+    if prefix.startswith("SED"):
+        prefix = "Sed" + prefix[3:]
+    return prefix + num
+
+
+def _rule_method_name(rule_id: str) -> str:
+    cn = _rule_class_name(rule_id)
+    return cn[0].lower() + cn[1:]
+
+
+def _parse_check_signature(java_src: str, where: str) -> list:
+    """[(java type, param name), ...] of the one `public static
+    List<ValidationProblem> check(...)` a rule template must define."""
+    import re
+    m = re.search(r"public\s+static\s+List<ValidationProblem>\s+check\s*\((.*?)\)\s*\{", java_src, re.S)
+    if not m:
+        raise RuntimeError(f"{where}: no `public static List<ValidationProblem> check(...)` found")
+    text, depth, parts, cur = m.group(1), 0, [], ""
+    for ch in text:
+        if ch == "<":
+            depth += 1
+        elif ch == ">":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        parts.append(cur)
+    out = []
+    for part in parts:
+        toks = part.split()
+        out.append((" ".join(toks[:-1]), toks[-1]))
+    return out
+
+
+def _copy_handwritten_rules_java(pkg_dir: str, model: SpecModel) -> str:
+    """Copies templates/java/rules/<ClassName>.java -> <pkg>/<ClassName>.java
+    for every rule ID in _IMPLEMENTED_HANDWRITTEN_RULE_IDS that this MODEL
+    actually defines (rid in model.rules), verbatim except for the leading
+    `package ...;` line (Java requires it to match the destination) - the
+    Java analog of emit_python.py's _copy_handwritten_rules_py - and returns
+    the source of the generated Handwritten facade.
+
+    Like the Python target, a rule id NOT defined by this model is skipped
+    silently: some of these rules encode a convention specific to the real
+    SED2 spec (the '#tasks:'/'#constants:'/'#outputs:'/'#styles:' vocabulary)
+    and a different spec tree, such as the synthetic test-specsheets/, would
+    be validated by the WRONG convention if they ran anyway. Where Python's
+    dispatchers degrade to a no-op through an ImportError, Java's degrade
+    through the facade: Handwritten.<method> for an absent rule is a no-op
+    with the very same signature (taken from the template itself), and the
+    Handwritten.HAS_* flags let a dispatcher skip its whole group. The
+    missing-file RuntimeError below still fires - failing the whole generator
+    run, per Design.md's Validation section - for any rule id the model DOES
+    define but whose template file is genuinely absent."""
+    templates_dir = os.path.join(_repo_root(), "templates", "java", "rules")
+    missing = []
+    present = {}
+    sigs = {}
+    for rid in _IMPLEMENTED_HANDWRITTEN_RULE_IDS:
+        cn = _rule_class_name(rid)
+        src = os.path.join(templates_dir, f"{cn}.java")
+        if not os.path.isfile(src):
+            if rid in model.rules:
+                missing.append(src)
+            continue
+        with open(src) as f:
+            content = f.read()
+        sigs[rid] = _parse_check_signature(content, src)
+        if rid not in model.rules:
+            continue
+        first_nl = content.index("\n")
+        assert content[:first_nl].startswith("package "), f"{src} must start with a `package ...;` line"
+        content = f"package {PKG};" + content[first_nl:]
+        with open(os.path.join(pkg_dir, f"{cn}.java"), "w") as f:
+            f.write(content)
+        present[rid] = True
+    if missing:
+        raise RuntimeError(
+            "Missing hand-written rule file(s) required by the generator "
+            "(Design.md's Validation section - \"the generator fails its run if a "
+            "handwritten rule is missing its file\"): " + ", ".join(missing)
+        )
+
+    lines = [f"package {PKG};", "", "import java.util.ArrayList;", "import java.util.List;", "",
+             "/** Facade over the hand-written per-rule check() classes (templates/java/rules/),",
+             " * one static method per implemented rule with the same signature as the rule's own",
+             " * check() - or, for a rule this spec tree does not define, the same signature as a",
+             " * no-op - plus the HAS_* group flags References.java's dispatchers consult (the Java",
+             " * analog of emit_python.py's ImportError guards). GENERATED - do not hand-edit;",
+             " * regenerate via generator/generate.py. */",
+             "public final class Handwritten {", "    private Handwritten() {}", ""]
+    for flag, rids in _RULE_GROUPS:
+        ok = all(r in present for r in rids)
+        lines.append(f"    public static final boolean {flag} = {str(ok).lower()};   // {', '.join(rids)}")
+    lines.append("")
+    for rid in _IMPLEMENTED_HANDWRITTEN_RULE_IDS:
+        if rid not in sigs:
+            continue
+        params = ", ".join(f"{t} {n}" for t, n in sigs[rid])
+        args = ", ".join(n for _t, n in sigs[rid])
+        lines.append(f"    /** {rid}. */")
+        lines.append(f"    public static List<ValidationProblem> {_rule_method_name(rid)}({params}) {{")
+        if rid in present:
+            lines.append(f"        return {_rule_class_name(rid)}.check({args});")
+        else:
+            lines.append("        return new ArrayList<>();")
+        lines.append("    }")
+        lines.append("")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
 
 
 def _repo_root() -> str:
@@ -2277,6 +4761,8 @@ def emit_java_package(
     for fname, content in emit_unknown_holder_files(model).items():
         with open(os.path.join(pkg_dir, fname), "w") as f:
             f.write(content)
+    with open(os.path.join(pkg_dir, "Handwritten.java"), "w") as f:
+        f.write(_copy_handwritten_rules_java(pkg_dir, model))
     with open(os.path.join(pkg_dir, "Dispatch.java"), "w") as f:
         f.write(emit_dispatch_java(model))
     with open(os.path.join(pkg_dir, "RulesData.java"), "w") as f:

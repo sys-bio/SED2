@@ -78,6 +78,13 @@ def main():
             fixtures = generate_schema_fixtures(model)
             fixtures_out = os.path.join(os.path.dirname(os.path.normpath(args.out)) or ".", "fixtures", "generated")
             verify_and_write(fixtures, fixtures_out, os.path.join(args.out, "python"), args.python_package)
+            # ref-type tier (formulaic "if a reference, must resolve to type X" rules) -
+            # only for a spec that has some (the synthetic test tree has none).
+            if any(r.check == "ref-type" for r in model.rules.values()):
+                from generator import gen_reftype_fixtures as _reftype
+                _reftype.verify_and_write(
+                    _reftype.generate_reftype_fixtures(model),
+                    fixtures_out, os.path.join(args.out, "python"), args.python_package)
     if "java" in langs:
         from generator.emit_java import emit_java_package
         emit_java_package(

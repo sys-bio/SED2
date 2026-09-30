@@ -91,6 +91,11 @@ class FieldType:
     # *OrRef kinds whose value-side is itself one of those enum-constrained
     # leaves (see _orref_value_kind's one-level-of-$ref resolution).
     enum: Optional[tuple] = None
+    # For "ArrayOrRef" (element type) / "DictOrRef" (value type): one of
+    # "string" | "number" | "ref" | "any". Drives the ref-type check that a
+    # constant a reference resolves to actually has elements/values of the
+    # declared kind. Only set for those two kinds.
+    item_kind: Optional[str] = None
 
 
 @dataclass
@@ -107,6 +112,10 @@ class Field:
     # note: "the schema type every math-bearing attribute uses" is StringOrRef, but
     # not every StringOrRef field is math-bearing, so this needs its own marker
     # rather than being inferred from the field's declared type)
+    ref_target: Optional[str] = None
+    # x-ref-target, if this SIdRef field must resolve to something specific:
+    # "model" (SEDBase-0016) or "annotatedData" (SEDBase-0017). Generator-only
+    # metadata, inert to JSON Schema validators, like x-rule-id and x-math.
     ref_type_rule_id: Optional[str] = None
     # core-spec.md Section 8's "x-rule-id is a single rule-ID string, or an
     # array of them when more than one rule governs the same property (most
@@ -477,6 +486,22 @@ class _Composer:
         }.get(t)
         return kind, resolved
 
+    def _container_item_kind(self, kind: str, resolved: dict, from_file: str) -> Optional[str]:
+        """Element kind of an ArrayOrRef's "items" / value kind of a
+        DictOrRef's "additionalProperties": "string" (StringOrRef or a plain
+        string), "number" (NumberOrRef or a plain number/integer), "ref"
+        (SIdRef), otherwise "any" (AnyValueOrRef, absent, or unrecognized)."""
+        if kind not in ("ArrayOrRef", "DictOrRef"):
+            return None
+        sub = resolved.get("items" if kind == "ArrayOrRef" else "additionalProperties")
+        if not isinstance(sub, dict):
+            return "any"
+        if "$ref" in sub:
+            name = sub["$ref"].rsplit("/", 1)[-1]
+            return {"StringOrRef": "string", "NumberOrRef": "number", "SIdRef": "ref",
+                    "IntegerOrRef": "number", "AnyValueOrRef": "any"}.get(name, "any")
+        return {"string": "string", "number": "number", "integer": "number"}.get(sub.get("type"), "any")
+
     def _orref_shape(self, alts: list, from_file: str) -> Optional[FieldType]:
         """Recognizes Design.md's Classes-section OrRef pattern generically:
         anyOf of [some literal/restricted-value shape, a reference to
@@ -510,6 +535,7 @@ class _Composer:
                 pattern=resolved.get("pattern") if kind == "StringOrRef" else None,
                 min_length=resolved.get("minLength") if kind == "StringOrRef" else None,
                 enum=tuple(enum) if enum else None,
+                item_kind=self._container_item_kind(kind, resolved, from_file),
             )
         return None
 
@@ -667,6 +693,7 @@ class _Composer:
                 required_rule_id=required_rule_ids.get(pname),
                 origin_class=origin_class,
                 is_math=bool(pschema.get("x-math", False)),
+                ref_target=pschema.get("x-ref-target"),
                 ref_type_rule_id=ref_type_rule_id,
             ))
         return fields

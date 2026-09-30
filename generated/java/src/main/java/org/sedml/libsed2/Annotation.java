@@ -19,8 +19,8 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Annotation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("qualifier", "any", true, "Annotation-0002", "Annotation-0001", "Annotation-0000", null, null, null, null, null, false),
-        new FieldSpec("value", "any", true, null, "Annotation-0003", "Annotation-0000", null, null, null, null, null, false)
+        new FieldSpec("qualifier", "any", true, "Annotation-0002", "Annotation-0001", "Annotation-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("value", "any", true, null, "Annotation-0003", "Annotation-0000", null, null, null, null, null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("qualifier", "value");
 

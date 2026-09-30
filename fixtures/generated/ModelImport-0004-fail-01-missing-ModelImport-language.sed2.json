@@ -1,0 +1,9 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "x30": {
+      "_type": "modelImport",
+      "location": "x"
+    }
+  }
+}
