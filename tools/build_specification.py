@@ -12,6 +12,11 @@ description-to-description cross-references rewritten to in-document anchors,
 so the result reads as one document on GitHub and converts cleanly with
 pandoc (see the invocations printed at the end of a run).
 
+Bread crumbs: every section of core-spec.md, every class, and every validation rule
+gets a "Source:" link back to the .md file it was assembled from (repo-root-relative,
+with a #L<line> anchor where a single line is meaningful), so a reader of the
+assembled document can jump straight to the file to edit.
+
 The output is deterministic (no date or other run-dependent content), so CI can
 regenerate it on every run and commit only when it actually changed.
 
@@ -130,7 +135,35 @@ def rewrite_links(md_text, class_rel_dir, anchor_by_class_relpath):
     return re.sub(r"\]\(([^)]+)\)", repl, md_text)
 
 
-def render_validation(validation_dir):
+def source_link(rel_path, line=None):
+    """A bread crumb pointing back at a source .md file (optionally at one line of it)."""
+    if line is None:
+        return f"*Source: [{rel_path}]({rel_path})*"
+    return f"*Source: [{rel_path}, line {line}]({rel_path}#L{line})*"
+
+
+def add_heading_breadcrumbs(md_text, rel_path):
+    """After every level-2 ('## ') heading, add a bread crumb to that line of rel_path.
+
+    Must run on the source text before any heading shifting or first-line dropping,
+    so the line numbers are the file's real ones. Skips fenced code blocks."""
+    out = []
+    in_fence = False
+    for lineno, line in enumerate(md_text.split("\n"), start=1):
+        out.append(line)
+        if re.match(r"^\s*```", line):
+            in_fence = not in_fence
+            continue
+        if not in_fence and re.match(r"^##\s+", line):
+            out.append("")
+            out.append(source_link(rel_path, lineno))
+            out.append("")
+    return "\n".join(out)
+
+
+def render_validation(validation_dir, rel_dir, rewrite):
+    """Render a class's numbered rules. rel_dir is the version dir relative to the repo root
+    (for the bread crumbs); rewrite is applied to rule text/bodies to fix up their links."""
     if not os.path.isdir(validation_dir):
         return ""
     files = sorted(f for f in os.listdir(validation_dir) if f.endswith(".md"))
@@ -152,10 +185,11 @@ def render_validation(validation_dir):
         rule_id = fields.get("id", fn)
         rule = fields.get("rule", "")
         severity = fields.get("severity", "")
-        parts.append(f"**`{rule_id}`** ({severity}) - {rule}\n")
+        crumb = f"([source]({rel_dir}/validation/{fn}))"
+        parts.append(rewrite(f"**`{rule_id}`** ({severity}) - {rule}") + f" {crumb}\n")
         if body:
             quoted = "\n".join(f"> {line}" if line else ">" for line in body.split("\n"))
-            parts.append(quoted + "\n")
+            parts.append(rewrite(quoted) + "\n")
     return "\n".join(parts)
 
 
@@ -191,6 +225,7 @@ def main():
         core_spec_text = f.read()
     # core-spec.md's own "# SED2 Core Specification" -> "## Core Specification" (shift +1),
     # and its "## N. ..." sections become "### N. ...".
+    core_spec_text = add_heading_breadcrumbs(core_spec_text, "core-spec.md")
     core_spec_text = drop_first_heading(core_spec_text)
     core_spec_text = shift_headings(core_spec_text, 1)
     core_spec_anchor = slugify("Core Specification")
@@ -232,6 +267,8 @@ def main():
     # --- Core Specification section ---
     out.append("## Core Specification")
     out.append("")
+    out.append(source_link("core-spec.md"))
+    out.append("")
     out.append(core_spec_text.strip())
     out.append("")
     out.append("---")
@@ -256,13 +293,18 @@ def main():
 
             out.append(f"#### {class_name}")
             out.append("")
+            out.append(source_link(f"{rel_dir}/description.md"))
+            out.append("")
             out.append(desc_text.strip())
             out.append("")
 
             validation_dir = os.path.join(version_dir, "validation")
-            validation_md = render_validation(validation_dir)
+            validation_md = render_validation(
+                validation_dir,
+                rel_dir,
+                lambda text: rewrite_links(text, rel_dir, anchor_by_class_relpath),
+            )
             if validation_md:
-                validation_md = rewrite_links(validation_md, rel_dir, anchor_by_class_relpath)
                 out.append(validation_md.strip())
                 out.append("")
         out.append("---")
