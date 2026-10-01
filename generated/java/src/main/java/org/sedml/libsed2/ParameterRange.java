@@ -44,7 +44,7 @@ public final class ParameterRange extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "parameterRange"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(values) if provided(values) else numberOfSteps + 1\", \"note\": \"same derivation as NumericRange, inherited via NumericRangeCommon\"}, \"labels\": null}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(values) if provided(values) else numberOfSteps + 1\", \"note\": \"same derivation as NumericRange, inherited via NumericRangeCommon\"}, \"labels\": null}]}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModelElementValue() { return getOrRefValueNode("modelElement").asText(); }

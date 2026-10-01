@@ -61,7 +61,7 @@ public final class OneStepODESimulation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "oneStepODE"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}, \"note\": \"a single point, not a series\"}]}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}, \"note\": \"a single point, not a series\"}]}, \"[id].model\": {\"type\": \"model\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getIndependentStepValue() { return getOrRefValueNode("independentStep").asDouble(); }

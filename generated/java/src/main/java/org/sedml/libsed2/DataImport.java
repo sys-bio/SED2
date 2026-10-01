@@ -38,7 +38,7 @@ public final class DataImport extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "dataImport"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"shape\", \"note\": \"shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)\"}}, \"[id].model\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": {\"source\": \"input-file\", \"from\": \"location\", \"extract\": \"shape\", \"note\": \"shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)\"}}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getLocationValue() { return getOrRefValueNode("location").asText(); }

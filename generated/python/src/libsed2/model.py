@@ -353,7 +353,7 @@ class AggregationCalculation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input) - dim(appliedDimensions or outermost)', 'note': "shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input) - dim(appliedDimensions or outermost)', 'note': "shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is"}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -484,7 +484,7 @@ class BoundedODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1089,7 +1089,7 @@ class BoundedStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'runtime', 'note': 'row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1474,7 +1474,7 @@ class Calculation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values"}}, '[id].model': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values"}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1591,7 +1591,7 @@ class CreateDataBlock(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(data)'}, 'labels': {'source': 'static', 'expr': 'keys(data)'}, 'note': "base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case"}]}, '[id].model': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(data)'}, 'labels': {'source': 'static', 'expr': 'keys(data)'}, 'note': "base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case"}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1708,7 +1708,7 @@ class CsvImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'location', 'extract': 'rowCount', 'note': 'row count, read from the CSV file at location'}, 'labels': None}, {'size': {'source': 'input-file', 'from': 'location', 'extract': 'columnCount', 'note': 'column count, read from the CSV file at location together with organization/headers/ncols'}, 'labels': {'source': 'input-file', 'from': 'location', 'extract': 'columnHeaders', 'note': 'column labels, read from the CSV header row when headers is true, else from columnNames'}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'location', 'extract': 'rowCount', 'note': 'row count, read from the CSV file at location'}, 'labels': None}, {'size': {'source': 'input-file', 'from': 'location', 'extract': 'columnCount', 'note': 'column count, read from the CSV file at location together with organization/headers/ncols'}, 'labels': {'source': 'input-file', 'from': 'location', 'extract': 'columnHeaders', 'note': 'column labels, read from the CSV header row when headers is true, else from columnNames'}}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -1979,7 +1979,7 @@ class DataImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'input-file', 'from': 'location', 'extract': 'shape', 'note': 'shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)'}}, '[id].model': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': {'source': 'input-file', 'from': 'location', 'extract': 'shape', 'note': 'shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)'}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -2118,7 +2118,7 @@ class DrawFromDistribution(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [], 'note': 'currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)'}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [], 'note': 'currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -2279,7 +2279,7 @@ class ExplicitODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(independentVariableRange)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(independentVariableRange)'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -2884,7 +2884,7 @@ class ExplicitStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'independentVariableRange.numberOfSteps'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'independentVariableRange.numberOfSteps'}, 'labels': None}, {'size': {'source': 'static', 'expr': '1 + len(outputVariables)'}, 'labels': {'source': 'static', 'expr': '[independentVariable] + outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3261,7 +3261,7 @@ class ExplicitStochasticSimulation(SedBase):
 
 class FluxBalanceAnalysis(SedBase):
     """Generated from test-specsheets/tasks/FluxBalanceAnalysis/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('outputVariables', 'ArrayOrRef', True, 'FluxBalanceAnalysis-0004', 'FluxBalanceAnalysis-0003', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='FluxBalanceAnalysis-0005', item_kind='string', ref_target=None), FieldSpec('outputModel', 'BooleanOrRef', False, 'FluxBalanceAnalysis-0006', None, 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='FluxBalanceAnalysis-0007', item_kind=None, ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'FluxBalanceAnalysis-0002', 'FluxBalanceAnalysis-0001', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('outputVariables', 'ArrayOrRef', True, 'FluxBalanceAnalysis-0004', 'FluxBalanceAnalysis-0003', 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='FluxBalanceAnalysis-0005', item_kind='string', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('workingAlgorithms', 'array', False, 'FluxBalanceAnalysis-0009', None, 'FluxBalanceAnalysis-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'fluxBalanceAnalysis'
     _TYPE_RULE_ID = 'FluxBalanceAnalysis-0008'
@@ -3269,12 +3269,13 @@ class FluxBalanceAnalysis(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'valid': 'outputModel == true', 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
+        self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
         self._annotations = ListCollection()
 
@@ -3315,27 +3316,6 @@ class FluxBalanceAnalysis(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
-    def get_output_model_value(self):
-        return self._get_orref_value('outputModel')
-
-    def get_output_model_ref(self):
-        return self._get_orref_ref('outputModel')
-
-    def set_output_model_value(self, value):
-        self._set_orref_value('outputModel', value)
-
-    def set_output_model_ref(self, ref):
-        self._set_orref_ref('outputModel', ref)
-
-    def is_output_model_ref(self):
-        return self._is_orref_ref('outputModel')
-
-    def is_set_output_model(self):
-        return 'outputModel' in self._values
-
-    def unset_output_model(self):
-        self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
-
     def get_notes(self):
         if 'notes' not in self._values: raise ApiError('notes is not set')
         return self._values['notes']
@@ -3348,6 +3328,18 @@ class FluxBalanceAnalysis(SedBase):
 
     def unset_notes(self):
         self._values.pop('notes', None)
+
+    def get_working_algorithms(self):
+        return self._working_algorithms.items()
+
+    def add_working_algorithms(self, obj):
+        self._working_algorithms.add(obj); obj._attach(self, self.get_document())
+
+    def insert_working_algorithms(self, index, obj):
+        self._working_algorithms.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_working_algorithms(self, index):
+        self._working_algorithms.remove(index)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -3375,6 +3367,7 @@ class FluxBalanceAnalysis(SedBase):
 
     def _children(self):
         kids = []
+        kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
         kids.extend(self._annotations.items())
         return kids
@@ -3384,6 +3377,8 @@ class FluxBalanceAnalysis(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._working_algorithms.items()):
+            out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
         for idx, item in enumerate(self._annotations.items()):
@@ -3400,8 +3395,8 @@ class FluxBalanceAnalysis(SedBase):
         d['_type'] = self._values.get('_type', 'fluxBalanceAnalysis')
         if 'model' in self._values: d['model'] = self._values['model']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
-        if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
         if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -3422,7 +3417,7 @@ class JacobianFull(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'row count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "row labels = the model's ordered species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'column count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "column labels = the model's ordered species list"}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'row count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "row labels = the model's ordered species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': 'column count = number of species in the referenced model'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'floatingSpeciesIds', 'note': "column labels = the model's ordered species list"}}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3531,7 +3526,7 @@ class JacobianReduced(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row labels = the model's ordered, reduced species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column labels = the model's ordered, reduced species list"}}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "row labels = the model's ordered, reduced species list"}}, {'size': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column count = number of species in the referenced model's reduced species set"}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'reducedFloatingSpeciesIds', 'note': "column labels = the model's ordered, reduced species list"}}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3632,15 +3627,15 @@ class JacobianReduced(SedBase):
 
 class Loop(SedBase):
     """Generated from test-specsheets/tasks/Loop/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='LoopVariable', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
-    _REQUIRED_NAMES = {'loopVariables'}
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('loopVariables', 'dict', True, 'Loop-0003', 'Loop-0002', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='LoopVariable', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('range', 'ref-discriminator', True, 'Loop-0007', 'Loop-0006', 'Loop-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
+    _REQUIRED_NAMES = {'loopVariables', 'range'}
     _TYPE_CONST = 'loop'
     _TYPE_RULE_ID = 'Loop-0005'
     _OWN_CATCHALL = 'Loop-0000'
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "2D or more: first dimension = one row per iteration (iteration count is not knowable ahead of the loop actually running - Loop's exact termination condition is an open design question, see core-spec.md Section 10); remaining dimension(s) = one column per entry of outputVariableMap"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within the loop'}, '[id].index': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within the loop'}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(range)'}, 'labels': None, 'note': "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None, 'note': 'one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here'}]}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within the loop'}, '[id].index': {'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within the loop'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -3846,7 +3841,7 @@ class ModelChange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -4043,7 +4038,7 @@ class ModelElementList(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': False}, '[id].strings': {'valid': True, 'type': 'stringList', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'the matched element ids themselves'}}]}}}
+    _OUTPUTS_JSON = {'outputs': {'[id].strings': {'type': 'stringList', 'dimensions': [{'size': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering'}, 'labels': {'source': 'input-file', 'from': 'model', 'extract': 'matchedElementIds', 'note': 'the matched element ids themselves'}}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -4240,7 +4235,7 @@ class ModelImport(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -4379,7 +4374,7 @@ class NumericRange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1'}, 'labels': None}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -4628,7 +4623,7 @@ class OneStepODESimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5238,7 +5233,7 @@ class OneStepStochasticSimulation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'valid': True, 'type': 'model'}, '[id].strings': {'valid': False}, '[id].independentStep': {'valid': '!provided(independentStep)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': '1'}, 'labels': None}], 'note': 'the actual elapsed step; present only when independentStep was NOT given as input'}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}, 'note': 'a single point, not a series'}]}, '[id].model': {'type': 'model'}, '[id].independentStep': {'valid': '!provided(independentStep)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': '1'}, 'labels': None}], 'note': 'the actual elapsed step; present only when independentStep was NOT given as input'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5628,7 +5623,7 @@ class ParameterRange(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1', 'note': 'same derivation as NumericRange, inherited via NumericRangeCommon'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values) if provided(values) else numberOfSteps + 1', 'note': 'same derivation as NumericRange, inherited via NumericRangeCommon'}, 'labels': None}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5891,7 +5886,7 @@ class ParameterRange(SedBase):
 
 class ParameterScan(SedBase):
     """Generated from test-specsheets/tasks/ParameterScan/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRange', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, 'ParameterScan-0002', 'ParameterScan-0001', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('parameterRanges', 'array', True, 'ParameterScan-0004', 'ParameterScan-0003', 'ParameterScan-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='ParameterRange', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'model', 'parameterRanges'}
     _TYPE_CONST = 'parameterScan'
     _TYPE_RULE_ID = 'ParameterScan-0006'
@@ -5899,7 +5894,7 @@ class ParameterScan(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'repeat': {'over': 'parameterRanges', 'size': {'source': 'static', 'expr': 'len(self)'}, 'labels': None, 'note': "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8"}}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None}]}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'repeat': {'over': 'parameterRanges', 'size': {'source': 'static', 'expr': 'len(self)'}, 'labels': {'source': 'static', 'expr': 'modelElement'}, 'note': "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8; each dimension is labeled with (identified by) that entry's modelElement, in parameterRanges order"}}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None}]}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None}]}, '[id].ranges': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(parameterRanges)'}, 'labels': {'source': 'static', 'expr': 'parameterRanges.modelElement'}, 'note': "one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)"}], 'note': 'the current value of each entry of parameterRanges, within the loop only'}, '[id].indexes': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(parameterRanges)'}, 'labels': {'source': 'static', 'expr': 'parameterRanges.modelElement'}, 'note': "one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)"}], 'note': 'the current index into each entry of parameterRanges, within the loop only'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -5910,7 +5905,6 @@ class ParameterScan(SedBase):
         self._aggregate_output_variables = IdKeyedCollection(lambda tv, _cls=AggregationCalculation: (_cls, False))
         self._task_parameters = ListCollection()
         self._annotations = ListCollection()
-        self._range = None
 
     def get_type(self):
         return 'parameterScan'
@@ -6034,19 +6028,6 @@ class ParameterScan(SedBase):
     def remove_annotations(self, index):
         self._annotations.remove(index)
 
-    def get_range(self):
-        if self._range is None: raise ApiError('range is not set')
-        return self._range
-
-    def set_range(self, obj):
-        self._range = obj; obj._attach(self, self.get_document())
-
-    def is_set_range(self):
-        return self._range is not None
-
-    def unset_range(self):
-        self._range = None
-
     def _children(self):
         kids = []
         kids.extend(self._parameter_ranges.items())
@@ -6054,7 +6035,6 @@ class ParameterScan(SedBase):
         kids.extend(self._aggregate_output_variables.get(i) for i in self._aggregate_output_variables.ids())
         kids.extend(self._task_parameters.items())
         kids.extend(self._annotations.items())
-        if self._range is not None: kids.append(self._range)
         return kids
 
     def _get_id_collection(self, field_name):
@@ -6074,7 +6054,6 @@ class ParameterScan(SedBase):
             out.append((item, '/taskParameters/%d' % idx))
         for idx, item in enumerate(self._annotations.items()):
             out.append((item, '/annotations/%d' % idx))
-        if self._range is not None: out.append((self._range, '/range'))
         return out
 
     def _id_collection_names(self):
@@ -6093,7 +6072,6 @@ class ParameterScan(SedBase):
         if len(self._aggregate_output_variables): d['aggregateOutputVariables'] = {i: self._aggregate_output_variables.get(i).to_json_value() for i in self._aggregate_output_variables.ids()}
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
-        if self._range is not None: d['range'] = self._range.to_json_value()
         for (pfx, key), value in self._ns_attrs.items():
             d[f'{pfx}@{key}'] = value
         return d
@@ -6112,7 +6090,7 @@ class Range(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values)'}, 'labels': None}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(values)'}, 'labels': None}]}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -6229,7 +6207,7 @@ class RelabelData(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input)', 'note': "same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape"}}, '[id].model': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': {'source': 'static', 'expr': 'shapeOf(input)', 'note': "same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape"}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -6352,15 +6330,15 @@ class RelabelData(SedBase):
 
 class Scatter(SedBase):
     """Generated from test-specsheets/tasks/Scatter/."""
-    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('range', 'ref-discriminator', False, 'Repeat-0005', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
-    _REQUIRED_NAMES = {}
+    _FIELDS = [FieldSpec('outputVariableMap', 'DictOrRef', False, 'Repeat-0002', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='Repeat-0003', item_kind='ref', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('subTasks', 'dict', False, 'Repeat-0001', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='AbstractTask', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('aggregateOutputVariables', 'dict', False, 'Repeat-0004', None, 'Repeat-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='AggregationCalculation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('range', 'ref-discriminator', True, 'Scatter-0005', 'Scatter-0004', 'Scatter-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator='RangeInline', is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
+    _REQUIRED_NAMES = {'range'}
     _TYPE_CONST = 'scatter'
     _TYPE_RULE_ID = 'Scatter-0003'
     _OWN_CATCHALL = 'Scatter-0000'
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(range)'}, 'labels': None, 'note': "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None, 'note': 'one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here'}]}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the range dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Scatter's own range), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within each iteration'}, '[id].index': {'valid': 'provided(range)', 'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within each iteration'}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(range)'}, 'labels': None, 'note': "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"}, {'size': {'source': 'static', 'expr': 'len(outputVariableMap)'}, 'labels': None, 'note': 'one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here'}]}, '[id].aggregates': {'valid': 'provided(aggregateOutputVariables)', 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(aggregateOutputVariables)'}, 'labels': None, 'note': "each entry collapses the range dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Scatter's own range), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"}]}, '[id].range': {'type': 'annotatedData', 'dimensions': [], 'note': 'the current value of range, within each iteration'}, '[id].index': {'type': 'annotatedData', 'dimensions': [], 'note': 'the current index into range, within each iteration'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -6542,7 +6520,7 @@ class Span(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': False}, '[id].model': {'valid': False}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
@@ -6656,7 +6634,7 @@ class Span(SedBase):
 
 class SteadyState(SedBase):
     """Generated from test-specsheets/tasks/SteadyState/."""
-    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('outputVariables', 'ArrayOrRef', True, None, 'SteadyState-0002', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind='string', ref_target=None), FieldSpec('outputModel', 'BooleanOrRef', False, 'SteadyState-0005', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id='SteadyState-0006', item_kind=None, ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
+    _FIELDS = [FieldSpec('model', 'SIdRef', True, None, 'SteadyState-0001', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target='model'), FieldSpec('independentVariable', 'StringOrRef', False, 'SteadyState-0004', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('outputVariables', 'ArrayOrRef', True, None, 'SteadyState-0002', 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind='string', ref_target=None), FieldSpec('notes', 'any', False, 'SEDBase-0003', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class=None, item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('workingAlgorithms', 'array', False, 'SteadyState-0007', None, 'SteadyState-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='WorkingAlgorithm', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('taskParameters', 'array', False, 'AbstractTask-0001', None, 'AbstractTask-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='TaskParameter', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None), FieldSpec('annotations', 'array', False, 'SEDBase-0004', None, 'SEDBase-0000', minimum=None, exclusive_minimum=None, pattern=None, item_class='Annotation', item_discriminator=None, is_math=False, min_length=None, enum=None, ref_type_rule_id=None, item_kind=None, ref_target=None)]
     _REQUIRED_NAMES = {'model', 'outputVariables'}
     _TYPE_CONST = 'steadyState'
     _TYPE_RULE_ID = 'SteadyState-0003'
@@ -6664,12 +6642,13 @@ class SteadyState(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'valid': 'outputModel == true', 'type': 'model'}, '[id].strings': {'valid': False}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': [{'size': {'source': 'static', 'expr': 'len(outputVariables)'}, 'labels': {'source': 'static', 'expr': 'outputVariables'}}]}, '[id].model': {'type': 'model'}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
     def __init__(self):
         super().__init__()
+        self._working_algorithms = ListCollection()
         self._task_parameters = ListCollection()
         self._annotations = ListCollection()
 
@@ -6731,27 +6710,6 @@ class SteadyState(SedBase):
     def unset_output_variables(self):
         self._values.pop('outputVariables', None); self._orref_is_ref.pop('outputVariables', None)
 
-    def get_output_model_value(self):
-        return self._get_orref_value('outputModel')
-
-    def get_output_model_ref(self):
-        return self._get_orref_ref('outputModel')
-
-    def set_output_model_value(self, value):
-        self._set_orref_value('outputModel', value)
-
-    def set_output_model_ref(self, ref):
-        self._set_orref_ref('outputModel', ref)
-
-    def is_output_model_ref(self):
-        return self._is_orref_ref('outputModel')
-
-    def is_set_output_model(self):
-        return 'outputModel' in self._values
-
-    def unset_output_model(self):
-        self._values.pop('outputModel', None); self._orref_is_ref.pop('outputModel', None)
-
     def get_notes(self):
         if 'notes' not in self._values: raise ApiError('notes is not set')
         return self._values['notes']
@@ -6764,6 +6722,18 @@ class SteadyState(SedBase):
 
     def unset_notes(self):
         self._values.pop('notes', None)
+
+    def get_working_algorithms(self):
+        return self._working_algorithms.items()
+
+    def add_working_algorithms(self, obj):
+        self._working_algorithms.add(obj); obj._attach(self, self.get_document())
+
+    def insert_working_algorithms(self, index, obj):
+        self._working_algorithms.insert(index, obj); obj._attach(self, self.get_document())
+
+    def remove_working_algorithms(self, index):
+        self._working_algorithms.remove(index)
 
     def get_task_parameters(self):
         return self._task_parameters.items()
@@ -6791,6 +6761,7 @@ class SteadyState(SedBase):
 
     def _children(self):
         kids = []
+        kids.extend(self._working_algorithms.items())
         kids.extend(self._task_parameters.items())
         kids.extend(self._annotations.items())
         return kids
@@ -6800,6 +6771,8 @@ class SteadyState(SedBase):
 
     def _children_with_locations(self):
         out = []
+        for idx, item in enumerate(self._working_algorithms.items()):
+            out.append((item, '/workingAlgorithms/%d' % idx))
         for idx, item in enumerate(self._task_parameters.items()):
             out.append((item, '/taskParameters/%d' % idx))
         for idx, item in enumerate(self._annotations.items()):
@@ -6817,8 +6790,8 @@ class SteadyState(SedBase):
         if 'model' in self._values: d['model'] = self._values['model']
         if 'independentVariable' in self._values: d['independentVariable'] = self._values['independentVariable']
         if 'outputVariables' in self._values: d['outputVariables'] = self._values['outputVariables']
-        if 'outputModel' in self._values: d['outputModel'] = self._values['outputModel']
         if 'notes' in self._values: d['notes'] = self._values['notes']
+        if len(self._working_algorithms): d['workingAlgorithms'] = [it.to_json_value() for it in self._working_algorithms.items()]
         if len(self._task_parameters): d['taskParameters'] = [it.to_json_value() for it in self._task_parameters.items()]
         if len(self._annotations): d['annotations'] = [it.to_json_value() for it in self._annotations.items()]
         for (pfx, key), value in self._ns_attrs.items():
@@ -6839,7 +6812,7 @@ class StringFormation(SedBase):
     _NAME_RULE_ID = 'SEDBase-0001'
     _DESC_RULE_ID = 'SEDBase-0002'
     _BASE_CATCHALL = 'SEDBase-0000'
-    _OUTPUTS_JSON = {'outputs': {'[id]': {'valid': True, 'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "scalar when no element of concatenate is itself a list; otherwise N-D matching the shape of the list element(s) within concatenate (1D for one list element, higher-D when several list elements are combined pairwise, all sharing the same length/shape per dimension) - not derivable without evaluating concatenate's actual element values"}}, '[id].model': {'valid': False}, '[id].strings': {'valid': True, 'type': 'stringList', 'dimensions': {'source': 'runtime', 'note': "same as [id]'s dimensions above; not derivable without evaluating concatenate"}}}}
+    _OUTPUTS_JSON = {'outputs': {'[id]': {'type': 'annotatedData', 'dimensions': {'source': 'runtime', 'note': "scalar when no element of concatenate is itself a list; otherwise N-D matching the shape of the list element(s) within concatenate (1D for one list element, higher-D when several list elements are combined pairwise, all sharing the same length/shape per dimension) - not derivable without evaluating concatenate's actual element values"}}, '[id].strings': {'type': 'stringList', 'dimensions': {'source': 'runtime', 'note': "same as [id]'s dimensions above; not derivable without evaluating concatenate"}}}}
     _NAMESPACE_FIELDS = {}
     _NAMESPACE_CATCHALL = {}
 
