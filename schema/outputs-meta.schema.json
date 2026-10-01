@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sed-ml.org/schemas/meta/outputs-meta.schema.json",
   "title": "SED2 outputs.json meta-schema",
-  "description": "Validates the ENVELOPE shape of a per-class outputs.json file (specsheets/tasks/<ClassName>/v1.0.0/outputs.json) - not the internal syntax of its 'expr'/'note' strings, which is documented in prose (see Design.md's Task Output Shapes section) rather than formally parsed here.",
+  "description": "Validates the ENVELOPE shape of a per-class outputs.json file (specsheets/tasks/<ClassName>/v1.0.0/outputs.json) - every listed suffix is valid (optionally only 'valid' if a condition holds), every unlisted suffix is invalid - not the internal syntax of its 'expr'/'note' strings, which is documented in prose (see Design.md's Task Output Shapes section) rather than formally parsed here.",
   "$defs": {
     "sourced": {
       "description": "How a size, label set, or whole dimensions list is known.",
@@ -87,17 +87,15 @@
       "type": "object",
       "properties": {
         "valid": {
-          "description": "true, false, or a boolean expression string conditioning validity on the task's own fields (e.g. \"outputModel == true\", \"provided(range)\").",
-          "anyOf": [ { "type": "boolean" }, { "type": "string", "minLength": 1 } ]
+          "description": "Optional 'valid if' condition: a boolean expression string over the task's own fields (e.g. \"outputModel == true\", \"provided(range)\"). A suffix that is listed with no 'valid' field is always valid; a suffix that is not listed at all is never valid.",
+          "type": "string",
+          "minLength": 1
         },
         "type": { "enum": ["annotatedData", "model", "stringList"] },
         "dimensions": { "$ref": "#/$defs/dimensions" },
         "note": { "type": "string" }
       },
-      "required": ["valid"],
-      "if": { "properties": { "valid": { "const": false } } },
-      "then": {},
-      "else": { "required": ["type"] },
+      "required": ["type"],
       "additionalProperties": false
     }
   },
@@ -106,8 +104,7 @@
     "outputs": {
       "type": "object",
       "propertyNames": { "pattern": "^\\[id\\]" },
-      "additionalProperties": { "$ref": "#/$defs/outputEntry" },
-      "minProperties": 1
+      "additionalProperties": { "$ref": "#/$defs/outputEntry" }
     }
   },
   "required": ["outputs"],

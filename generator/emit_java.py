@@ -2342,13 +2342,16 @@ public final class OutputsShape {
         return result;
     }
 
-    /** entry["valid"] is true/false, or a boolean expr string over the
-     * task's own fields. Returns TRUE/FALSE, or null when a string expr
-     * couldn't be evaluated statically ("the rule does not fire"). */
+    /** A suffix entry that is listed in outputs.json is valid; one that isn't
+     * listed is not (resolveOutput handles that). An entry's optional "valid"
+     * field is a boolean expr string over the task's own fields meaning
+     * "valid if"; no "valid" field means always valid. Returns TRUE/FALSE, or
+     * null when the expr couldn't be evaluated statically ("the rule does not
+     * fire"). */
     static Boolean evalValid(JsonNode entry, Scope scope, Function<String, List<Dim>> shapeOf) {
         JsonNode valid = entry.get("valid");
-        if (valid != null && valid.isBoolean()) return valid.booleanValue();
-        if (valid != null && valid.isTextual()) {
+        if (valid == null) return Boolean.TRUE;
+        if (valid.isTextual()) {
             try {
                 return truthy(eval(parseExpr(valid.textValue()), scope, shapeOf));
             } catch (NotStatic e) {
@@ -2360,8 +2363,9 @@ public final class OutputsShape {
 
     /** The result of resolveOutput: see that method. */
     public static final class Resolution {
-        /** TRUE (suffix exists and its "valid" evaluated true), FALSE (absent
-         * or evaluates false), or null (couldn't be determined statically). */
+        /** TRUE (suffix is listed and has no "valid" field, or its "valid"
+         * ("valid if") expr evaluated true), FALSE (not listed, or the expr
+         * evaluates false), or null (couldn't be determined statically). */
         public final Boolean ok;
         public final JsonNode entry;            // the raw outputEntry, or null when the suffix key is absent
         public final List<Dim> dimsBefore;      // null unless ok == TRUE and the entry has resolvable "dimensions"
