@@ -25,16 +25,22 @@
             "$ref": "../../../auxiliary/LoopVariable/v1.0.0/schema.json#/$defs/LoopVariable"
           },
           "x-rule-id": "Loop-0003"
+        },
+        "range": {
+          "$ref": "../../../tasks/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
+          "x-rule-id": "Loop-0007"
         }
       },
       "required": [
         "_type",
         "subTasks",
-        "loopVariables"
+        "loopVariables",
+        "range"
       ],
       "x-required-rule-ids": {
         "subTasks": "Loop-0001",
-        "loopVariables": "Loop-0002"
+        "loopVariables": "Loop-0002",
+        "range": "Loop-0006"
       },
       "unevaluatedProperties": false
     }

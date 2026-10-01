@@ -1,8 +1,6 @@
 # WorkingAlgorithm
 
-![WorkingAlgorithm UML diagram](../../../tasks/AbstractSimulation/v1.0.0/AbstractSimulation.png)
-
-*(`WorkingAlgorithm` has no standalone diagram of its own - the image above is `AbstractSimulation`'s diagram, reused here because `WorkingAlgorithm` is drawn fully within it as a linked box, right next to `AbstractSimulation`. Look for the `workingAlgorithm` box.)*
+![WorkingAlgorithm UML diagram](./WorkingAlgorithm.png)
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -10,7 +8,7 @@
 
 ## What it does
 
-An algorithm used internally by a simulation task, attached via `AbstractSimulation`'s `workingAlgorithms` list. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
+An algorithm used internally by a task, attached via a `workingAlgorithms` list: the one `AbstractSimulation` defines (and so every ODE/stochastic simulation task has), or the one `SteadyState` and `FluxBalanceAnalysis` each declare directly. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
 
 _(No description yet - placeholder. It's not yet clear from the diagram alone how `algorithm` relates to the task's own `_type` discriminator and `taskParameters`, or how multiple `workingAlgorithms` entries on one task are meant to be distinguished/used - needs updating once that's settled.)_
 

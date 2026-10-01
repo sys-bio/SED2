@@ -1,7 +1,6 @@
 {
   "outputs": {
     "[id]": {
-      "valid": true,
       "type": "annotatedData",
       "dimensions": [
         {
@@ -22,12 +21,6 @@
         }
       ]
     },
-    "[id].model": {
-      "valid": false
-    },
-    "[id].strings": {
-      "valid": false
-    },
     "[id].aggregates": {
       "valid": "provided(aggregateOutputVariables)",
       "type": "annotatedData",
@@ -43,13 +36,11 @@
       ]
     },
     "[id].range": {
-      "valid": "provided(range)",
       "type": "annotatedData",
       "dimensions": [],
       "note": "the current value of range, within each iteration"
     },
     "[id].index": {
-      "valid": "provided(range)",
       "type": "annotatedData",
       "dimensions": [],
       "note": "the current index into range, within each iteration"

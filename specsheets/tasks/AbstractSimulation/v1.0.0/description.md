@@ -8,7 +8,7 @@
 
 ## What it does
 
-`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly.
+`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly (including their own `workingAlgorithms` lists).
 
 Beyond the fields it inherits from `AbstractTask`, it contributes `model`, `independentVariable`, `independentVariableInit`, `outputVariables`, and `workingAlgorithms` - a list of `WorkingAlgorithm` entries describing the algorithm(s) used internally by the simulation.
 

@@ -1,7 +1,6 @@
 {
   "outputs": {
     "[id]": {
-      "valid": true,
       "type": "annotatedData",
       "dimensions": [
         {
@@ -18,11 +17,7 @@
       ]
     },
     "[id].model": {
-      "valid": true,
       "type": "model"
-    },
-    "[id].strings": {
-      "valid": false
     }
   }
 }
