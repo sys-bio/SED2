@@ -21,12 +21,13 @@ public final class FluxBalanceAnalysis extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
         new FieldSpec("model", "SIdRef", true, "FluxBalanceAnalysis-0002", "FluxBalanceAnalysis-0001", "FluxBalanceAnalysis-0000", null, null, null, null, null, false, null, null, null, null, "model"),
         new FieldSpec("outputVariables", "ArrayOrRef", true, "FluxBalanceAnalysis-0004", "FluxBalanceAnalysis-0003", "FluxBalanceAnalysis-0000", null, null, null, null, null, false, null, null, "FluxBalanceAnalysis-0005", "string", null),
-        new FieldSpec("outputModel", "BooleanOrRef", false, "FluxBalanceAnalysis-0006", null, "FluxBalanceAnalysis-0000", null, null, null, null, null, false, null, null, "FluxBalanceAnalysis-0007", null, null),
         new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
+        new FieldSpec("workingAlgorithms", "array", false, "FluxBalanceAnalysis-0009", null, "FluxBalanceAnalysis-0000", null, null, null, "WorkingAlgorithm", null, false, null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
         new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "outputVariables");
+    private final ListCollection<SedBase> workingAlgorithms = new ListCollection<>();
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
     private final ListCollection<SedBase> annotations = new ListCollection<>();
 
@@ -39,7 +40,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "fluxBalanceAnalysis"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}}]}, \"[id].model\": {\"valid\": \"outputModel == true\", \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}}]}, \"[id].model\": {\"type\": \"model\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
@@ -55,18 +56,15 @@ public final class FluxBalanceAnalysis extends SedBase {
     public boolean isSetOutputVariables() { return values.containsKey("outputVariables"); }
     public void unsetOutputVariables() { values.remove("outputVariables"); orRefIsRef.remove("outputVariables"); }
 
-    public boolean getOutputModelValue() { return getOrRefValueNode("outputModel").asBoolean(); }
-    public String getOutputModelRef() { return getOrRefRefNode("outputModel").asText(); }
-    public void setOutputModelValue(boolean value) { setOrRefValueNode("outputModel", BooleanNode.valueOf(value)); }
-    public void setOutputModelRef(String ref) { setOrRefRefNode("outputModel", ref); }
-    public boolean isOutputModelRef() { return isOrRefRef("outputModel"); }
-    public boolean isSetOutputModel() { return values.containsKey("outputModel"); }
-    public void unsetOutputModel() { values.remove("outputModel"); orRefIsRef.remove("outputModel"); }
-
     public JsonNode getNotes() { if (!values.containsKey("notes")) throw new ApiError("notes" + " is not set"); return values.get("notes"); }
     public void setNotes(JsonNode value) { values.put("notes", value); }
     public boolean isSetNotes() { return values.containsKey("notes"); }
     public void unsetNotes() { values.remove("notes"); }
+
+    public List<SedBase> getWorkingAlgorithms() { return workingAlgorithms.items(); }
+    public void addWorkingAlgorithms(SedBase obj) { workingAlgorithms.add(obj); obj.attach(this, getDocument()); }
+    public void insertWorkingAlgorithms(int index, SedBase obj) { workingAlgorithms.insert(index, obj); obj.attach(this, getDocument()); }
+    public void removeWorkingAlgorithms(int index) { workingAlgorithms.remove(index); }
 
     public List<SedBase> getTaskParameters() { return taskParameters.items(); }
     public void addTaskParameters(SedBase obj) { taskParameters.add(obj); obj.attach(this, getDocument()); }
@@ -81,6 +79,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
+        kids.addAll(workingAlgorithms.items());
         kids.addAll(taskParameters.items());
         kids.addAll(annotations.items());
         return kids;
@@ -89,6 +88,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     @Override
     public List<ChildLoc> childrenWithLocations() {
         List<ChildLoc> out = new ArrayList<>();
+        { int idx = 0; for (SedBase item : workingAlgorithms.items()) { out.add(new ChildLoc(item, "/workingAlgorithms/" + idx)); idx++; } }
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
         { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
         return out;
@@ -97,6 +97,7 @@ public final class FluxBalanceAnalysis extends SedBase {
     @Override
     protected ListCollection<SedBase> getListCollection(String fieldName) {
         switch (fieldName) {
+            case "workingAlgorithms": return workingAlgorithms;
             case "taskParameters": return taskParameters;
             case "annotations": return annotations;
             default: return super.getListCollection(fieldName);
@@ -111,8 +112,8 @@ public final class FluxBalanceAnalysis extends SedBase {
         d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("fluxBalanceAnalysis"));
         if (values.containsKey("model")) d.set("model", values.get("model"));
         if (values.containsKey("outputVariables")) d.set("outputVariables", values.get("outputVariables"));
-        if (values.containsKey("outputModel")) d.set("outputModel", values.get("outputModel"));
         if (values.containsKey("notes")) d.set("notes", values.get("notes"));
+        if (workingAlgorithms.size() > 0) { ArrayNode arr = d.putArray("workingAlgorithms"); for (SedBase item : workingAlgorithms.items()) arr.add(item.toJsonValue()); }
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());

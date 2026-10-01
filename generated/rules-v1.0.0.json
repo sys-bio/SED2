@@ -1551,22 +1551,6 @@
     "status": "active",
     "check": "ref-type"
   },
-  "FluxBalanceAnalysis-0006": {
-    "class": "FluxBalanceAnalysis",
-    "rule": "When the value of outputModel of a FluxBalanceAnalysis is provided directly, it must be a boolean.",
-    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
-    "severity": "error",
-    "status": "active",
-    "check": "schema"
-  },
-  "FluxBalanceAnalysis-0007": {
-    "class": "FluxBalanceAnalysis",
-    "rule": "When the value of outputModel of a FluxBalanceAnalysis is a reference, it must be a reference to a boolean.",
-    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
-    "severity": "error",
-    "status": "active",
-    "check": "ref-type"
-  },
   "FluxBalanceAnalysis-0008": {
     "class": "FluxBalanceAnalysis",
     "rule": "The _type attribute of a FluxBalanceAnalysis must be \"fluxBalanceAnalysis\".",
@@ -2607,14 +2591,6 @@
     "status": "active",
     "check": "schema"
   },
-  "Repeat-0005": {
-    "class": "Repeat",
-    "rule": "The range attribute of a Repeat, if present, must be a RangeInline object.",
-    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a RangeInline object.",
-    "severity": "error",
-    "status": "active",
-    "check": "schema"
-  },
   "Repeat-0006": {
     "class": "Repeat",
     "rule": "A Repeat must provide at least one of outputVariableMap or aggregateOutputVariables.",
@@ -3062,22 +3038,6 @@
     "severity": "error",
     "status": "active",
     "check": "schema"
-  },
-  "SteadyState-0005": {
-    "class": "SteadyState",
-    "rule": "When the value of outputModel of a SteadyState is provided directly, it must be a boolean.",
-    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a boolean.",
-    "severity": "error",
-    "status": "active",
-    "check": "schema"
-  },
-  "SteadyState-0006": {
-    "class": "SteadyState",
-    "rule": "When the value of outputModel of a SteadyState is a reference, it must be a reference to a boolean.",
-    "message": "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a boolean.",
-    "severity": "error",
-    "status": "active",
-    "check": "ref-type"
   },
   "StringFormation-0000": {
     "class": "StringFormation",

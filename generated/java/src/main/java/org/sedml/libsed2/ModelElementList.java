@@ -41,7 +41,7 @@ public final class ModelElementList extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "modelElementList"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": false}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": true, \"type\": \"stringList\", \"dimensions\": [{\"size\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"the matched element ids themselves\"}}]}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id].strings\": {\"type\": \"stringList\", \"dimensions\": [{\"size\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"length = number of elements in the referenced model matched after includeElements/includeTypes/excludeElements/excludeTypes filtering\"}, \"labels\": {\"source\": \"input-file\", \"from\": \"model\", \"extract\": \"matchedElementIds\", \"note\": \"the matched element ids themselves\"}}]}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }

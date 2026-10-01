@@ -208,7 +208,7 @@ public:
     std::string class_name() const override { return "AggregationCalculation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"static\",\"expr\":\"shapeOf(input) - dim(appliedDimensions or outermost)\"}},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"static\",\"expr\":\"shapeOf(input) - dim(appliedDimensions or outermost)\"}}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("aggregationCalculation"); }
@@ -329,7 +329,7 @@ public:
     std::string class_name() const override { return "BoundedODESimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"runtime\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"runtime\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("boundedODESimulation"); }
@@ -644,7 +644,7 @@ public:
     std::string class_name() const override { return "BoundedStochasticSimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"runtime\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"runtime\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("boundedStochasticSimulation"); }
@@ -856,7 +856,7 @@ public:
     std::string class_name() const override { return "Calculation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"runtime\"}},\"[id].model\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"runtime\"}}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("calculation"); }
@@ -948,7 +948,7 @@ public:
     std::string class_name() const override { return "CreateDataBlock"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(data)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(data)\"}}]},\"[id].model\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(data)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(data)\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("createDataBlock"); }
@@ -1047,7 +1047,7 @@ public:
     std::string class_name() const override { return "CsvImport"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"rowCount\"},\"labels\":null},{\"size\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"columnCount\"},\"labels\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"columnHeaders\"}}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"rowCount\"},\"labels\":null},{\"size\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"columnCount\"},\"labels\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"columnHeaders\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("csvImport"); }
@@ -1203,7 +1203,7 @@ public:
     std::string class_name() const override { return "DataImport"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"shape\"}},\"[id].model\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"input-file\",\"from\":\"location\",\"extract\":\"shape\"}}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("dataImport"); }
@@ -1306,7 +1306,7 @@ public:
     std::string class_name() const override { return "DrawFromDistribution"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("drawFromDistribution"); }
@@ -1439,7 +1439,7 @@ public:
     std::string class_name() const override { return "ExplicitODESimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(independentVariableRange)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(independentVariableRange)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("explicitODESimulation"); }
@@ -1754,7 +1754,7 @@ public:
     std::string class_name() const override { return "ExplicitStochasticSimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"independentVariableRange.numberOfSteps\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"independentVariableRange.numberOfSteps\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"1 + len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"[independentVariable] + outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("explicitStochasticSimulation"); }
@@ -1948,8 +1948,8 @@ public:
         static const std::vector<FieldSpec> specs = {
             FieldSpec{"model", "SIdRef", true, std::string("FluxBalanceAnalysis-0002"), std::string("FluxBalanceAnalysis-0001"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("model")},
             FieldSpec{"outputVariables", "ArrayOrRef", true, std::string("FluxBalanceAnalysis-0004"), std::string("FluxBalanceAnalysis-0003"), "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("FluxBalanceAnalysis-0005"), std::string("string"), std::nullopt},
-            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("FluxBalanceAnalysis-0006"), std::nullopt, "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("FluxBalanceAnalysis-0007"), std::nullopt, std::nullopt},
             FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("FluxBalanceAnalysis-0009"), std::nullopt, "FluxBalanceAnalysis-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
@@ -1968,7 +1968,7 @@ public:
     std::string class_name() const override { return "FluxBalanceAnalysis"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"valid\":\"outputModel == true\",\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("fluxBalanceAnalysis"); }
@@ -1987,18 +1987,15 @@ public:
     bool is_set_outputVariables() const { return values_.count("outputVariables") > 0; }
     void unset_outputVariables() { values_.erase("outputVariables"); or_ref_is_ref_.erase("outputVariables"); }
 
-    bool get_outputModel_value() const { return get_or_ref_value_node("outputModel").as<bool>(); }
-    std::string get_outputModel_ref() const { return get_or_ref_ref_node("outputModel").as<std::string>(); }
-    void set_outputModel_value(bool value) { set_or_ref_value_node("outputModel", Json(value)); }
-    void set_outputModel_ref(const std::string& ref) { set_or_ref_ref_node("outputModel", ref); }
-    bool is_outputModel_ref() const { return is_or_ref_ref("outputModel"); }
-    bool is_set_outputModel() const { return values_.count("outputModel") > 0; }
-    void unset_outputModel() { values_.erase("outputModel"); or_ref_is_ref_.erase("outputModel"); }
-
     Json get_notes() const { auto it = values_.find("notes"); if (it == values_.end()) throw ApiError(std::string("notes") + " is not set"); return it->second; }
     void set_notes(const Json& value) { values_["notes"] = value; }
     bool is_set_notes() const { return values_.count("notes") > 0; }
     void unset_notes() { values_.erase("notes"); }
+
+    std::vector<SedBase*> get_workingAlgorithms() const { return workingAlgorithms_.items(); }
+    void add_workingAlgorithms(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); workingAlgorithms_.add(std::move(obj)); raw->attach(this, get_document()); }
+    void insert_workingAlgorithms(size_t index, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); workingAlgorithms_.insert(index, std::move(obj)); raw->attach(this, get_document()); }
+    void remove_workingAlgorithms(size_t index) { workingAlgorithms_.remove(index); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -2012,6 +2009,7 @@ public:
 
     std::vector<SedBase*> children() override {
         std::vector<SedBase*> kids;
+        for (auto* item : workingAlgorithms_.items()) kids.push_back(item);
         for (auto* item : taskParameters_.items()) kids.push_back(item);
         for (auto* item : annotations_.items()) kids.push_back(item);
         return kids;
@@ -2019,12 +2017,14 @@ public:
 
     std::vector<ChildLoc> children_with_locations() override {
         std::vector<ChildLoc> out;
+        { size_t idx = 0; for (auto* item : workingAlgorithms_.items()) { out.push_back(ChildLoc{item, "/workingAlgorithms/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : taskParameters_.items()) { out.push_back(ChildLoc{item, "/taskParameters/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : annotations_.items()) { out.push_back(ChildLoc{item, "/annotations/" + std::to_string(idx)}); idx++; } }
         return out;
     }
 
     ListCollection& get_list_collection(const std::string& field_name) override {
+        if (field_name == "workingAlgorithms") return workingAlgorithms_;
         if (field_name == "taskParameters") return taskParameters_;
         if (field_name == "annotations") return annotations_;
         return SedBase::get_list_collection(field_name);
@@ -2037,8 +2037,8 @@ public:
         d["_type"] = values_.count("_type") ? values_.at("_type") : Json("fluxBalanceAnalysis");
         if (values_.count("model")) d["model"] = values_.at("model");
         if (values_.count("outputVariables")) d["outputVariables"] = values_.at("outputVariables");
-        if (values_.count("outputModel")) d["outputModel"] = values_.at("outputModel");
         if (values_.count("notes")) d["notes"] = values_.at("notes");
+        if (workingAlgorithms_.size() > 0) { Json arr = Json::array(); for (auto* item : workingAlgorithms_.items()) arr.push_back(item->to_json_value()); d["workingAlgorithms"] = arr; }
         if (taskParameters_.size() > 0) { Json arr = Json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -2046,6 +2046,7 @@ public:
     }
 
 private:
+    ListCollection workingAlgorithms_;
     ListCollection taskParameters_;
     ListCollection annotations_;
 };
@@ -2075,7 +2076,7 @@ public:
     std::string class_name() const override { return "JacobianFull"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"}},{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"}}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"}},{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"floatingSpeciesIds\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("jacobianFull"); }
@@ -2164,7 +2165,7 @@ public:
     std::string class_name() const override { return "JacobianReduced"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"}},{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"}}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"}},{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"reducedFloatingSpeciesIds\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("jacobianReduced"); }
@@ -2240,12 +2241,12 @@ public:
             FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"range", "ref-discriminator", true, std::string("Loop-0007"), std::string("Loop-0006"), "Loop-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
     const std::set<std::string>& required_names() const override {
-        static const std::set<std::string> names = {"loopVariables"};
+        static const std::set<std::string> names = {"loopVariables", "range"};
         return names;
     }
     std::optional<std::string> type_const() const override { return std::string("loop"); }
@@ -2264,7 +2265,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"loopVariables", "subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"runtime\"}},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"valid\":\"provided(range)\",\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"valid\":\"provided(range)\",\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("loop"); }
@@ -2414,7 +2415,7 @@ public:
     std::string class_name() const override { return "ModelChange"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":false},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("modelChange"); }
@@ -2543,7 +2544,7 @@ public:
     std::string class_name() const override { return "ModelElementList"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":false},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":true,\"type\":\"stringList\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"matchedElementIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"matchedElementIds\"}}]}}}");
+            "{\"outputs\":{\"[id].strings\":{\"type\":\"stringList\",\"dimensions\":[{\"size\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"matchedElementIds\"},\"labels\":{\"source\":\"input-file\",\"from\":\"model\",\"extract\":\"matchedElementIds\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("modelElementList"); }
@@ -2669,7 +2670,7 @@ public:
     std::string class_name() const override { return "ModelImport"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":false},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("modelImport"); }
@@ -2772,7 +2773,7 @@ public:
     std::string class_name() const override { return "NumericRange"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values) if provided(values) else numberOfSteps + 1\"},\"labels\":null}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values) if provided(values) else numberOfSteps + 1\"},\"labels\":null}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("numericRange"); }
@@ -2932,7 +2933,7 @@ public:
     std::string class_name() const override { return "OneStepODESimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("oneStepODE"); }
@@ -3238,7 +3239,7 @@ public:
     std::string class_name() const override { return "OneStepStochasticSimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"valid\":true,\"type\":\"model\"},\"[id].strings\":{\"valid\":false},\"[id].independentStep\":{\"valid\":\"!provided(independentStep)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"1\"},\"labels\":null}]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"},\"[id].independentStep\":{\"valid\":\"!provided(independentStep)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"1\"},\"labels\":null}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("oneStepStochastic"); }
@@ -3452,7 +3453,7 @@ public:
     std::string class_name() const override { return "ParameterRange"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values) if provided(values) else numberOfSteps + 1\"},\"labels\":null}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values) if provided(values) else numberOfSteps + 1\"},\"labels\":null}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("parameterRange"); }
@@ -3585,8 +3586,7 @@ public:
             FieldSpec{"subTasks", "dict", false, std::string("Repeat-0001"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("AbstractTask"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
     }
@@ -3609,7 +3609,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":null}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":{\"source\":\"static\",\"expr\":\"modelElement\"}}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].ranges\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].indexes\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("parameterScan"); }
@@ -3662,11 +3662,6 @@ public:
     void insert_annotations(size_t index, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); annotations_.insert(index, std::move(obj)); raw->attach(this, get_document()); }
     void remove_annotations(size_t index) { annotations_.remove(index); }
 
-    SedBase* get_range() const { if (!range_) throw ApiError(std::string("range") + " is not set"); return range_.get(); }
-    void set_range(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); range_ = std::move(obj); raw->attach(this, get_document()); }
-    bool is_set_range() const { return range_ != nullptr; }
-    void unset_range() { range_.reset(); }
-
     std::vector<SedBase*> children() override {
         std::vector<SedBase*> kids;
         for (const auto& i : subTasks_.ids()) kids.push_back(subTasks_.get(i));
@@ -3674,7 +3669,6 @@ public:
         for (auto* item : parameterRanges_.items()) kids.push_back(item);
         for (auto* item : taskParameters_.items()) kids.push_back(item);
         for (auto* item : annotations_.items()) kids.push_back(item);
-        if (range_) kids.push_back(range_.get());
         return kids;
     }
 
@@ -3685,7 +3679,6 @@ public:
         { size_t idx = 0; for (auto* item : parameterRanges_.items()) { out.push_back(ChildLoc{item, "/parameterRanges/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : taskParameters_.items()) { out.push_back(ChildLoc{item, "/taskParameters/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : annotations_.items()) { out.push_back(ChildLoc{item, "/annotations/" + std::to_string(idx)}); idx++; } }
-        if (range_) out.push_back(ChildLoc{range_.get(), "/range"});
         return out;
     }
 
@@ -3702,11 +3695,6 @@ public:
         return SedBase::get_list_collection(field_name);
     }
 
-    void set_child_field(const std::string& field_name, std::unique_ptr<SedBase> child) override {
-        if (field_name == "range") { range_ = std::move(child); return; }
-        SedBase::set_child_field(field_name, std::move(child));
-    }
-
     Json own_json_value() const override {
         Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
@@ -3720,7 +3708,6 @@ public:
         if (parameterRanges_.size() > 0) { Json arr = Json::array(); for (auto* item : parameterRanges_.items()) arr.push_back(item->to_json_value()); d["parameterRanges"] = arr; }
         if (taskParameters_.size() > 0) { Json arr = Json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
-        if (range_) d["range"] = range_->to_json_value();
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
         return d;
     }
@@ -3731,7 +3718,6 @@ private:
     IdKeyedCollection aggregateOutputVariables_;
     ListCollection taskParameters_;
     ListCollection annotations_;
-    std::unique_ptr<SedBase> range_;
 };
 
 /// Generated from test-specsheets/tasks/Range/.
@@ -3755,7 +3741,7 @@ public:
     std::string class_name() const override { return "Range"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values)\"},\"labels\":null}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(values)\"},\"labels\":null}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("range"); }
@@ -3848,7 +3834,7 @@ public:
     std::string class_name() const override { return "RelabelData"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"static\",\"expr\":\"shapeOf(input)\"}},\"[id].model\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"static\",\"expr\":\"shapeOf(input)\"}}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("relabelData"); }
@@ -3932,9 +3918,13 @@ public:
             FieldSpec{"aggregateOutputVariables", "dict", false, std::string("Repeat-0004"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::string("AggregationCalculation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"range", "ref-discriminator", false, std::string("Repeat-0005"), std::nullopt, "Repeat-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+            FieldSpec{"range", "ref-discriminator", true, std::string("Scatter-0005"), std::string("Scatter-0004"), "Scatter-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("RangeInline"), false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
         return specs;
+    }
+    const std::set<std::string>& required_names() const override {
+        static const std::set<std::string> names = {"range"};
+        return names;
     }
     std::optional<std::string> type_const() const override { return std::string("scatter"); }
     std::optional<std::string> type_rule_id() const override { return std::string("Scatter-0003"); }
@@ -3951,7 +3941,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"valid\":\"provided(range)\",\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"valid\":\"provided(range)\",\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("scatter"); }
@@ -4085,7 +4075,7 @@ public:
     std::string class_name() const override { return "Span"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":false},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("span"); }
@@ -4159,8 +4149,8 @@ public:
             FieldSpec{"model", "SIdRef", true, std::nullopt, std::string("SteadyState-0001"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::string("model")},
             FieldSpec{"independentVariable", "StringOrRef", false, std::string("SteadyState-0004"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"outputVariables", "ArrayOrRef", true, std::nullopt, std::string("SteadyState-0002"), "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::string("string"), std::nullopt},
-            FieldSpec{"outputModel", "BooleanOrRef", false, std::string("SteadyState-0005"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("SteadyState-0006"), std::nullopt, std::nullopt},
             FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"workingAlgorithms", "array", false, std::string("SteadyState-0007"), std::nullopt, "SteadyState-0000", std::nullopt, std::nullopt, std::nullopt, std::string("WorkingAlgorithm"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
         };
@@ -4179,7 +4169,7 @@ public:
     std::string class_name() const override { return "SteadyState"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"valid\":\"outputModel == true\",\"type\":\"model\"},\"[id].strings\":{\"valid\":false}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("steadyState"); }
@@ -4206,18 +4196,15 @@ public:
     bool is_set_outputVariables() const { return values_.count("outputVariables") > 0; }
     void unset_outputVariables() { values_.erase("outputVariables"); or_ref_is_ref_.erase("outputVariables"); }
 
-    bool get_outputModel_value() const { return get_or_ref_value_node("outputModel").as<bool>(); }
-    std::string get_outputModel_ref() const { return get_or_ref_ref_node("outputModel").as<std::string>(); }
-    void set_outputModel_value(bool value) { set_or_ref_value_node("outputModel", Json(value)); }
-    void set_outputModel_ref(const std::string& ref) { set_or_ref_ref_node("outputModel", ref); }
-    bool is_outputModel_ref() const { return is_or_ref_ref("outputModel"); }
-    bool is_set_outputModel() const { return values_.count("outputModel") > 0; }
-    void unset_outputModel() { values_.erase("outputModel"); or_ref_is_ref_.erase("outputModel"); }
-
     Json get_notes() const { auto it = values_.find("notes"); if (it == values_.end()) throw ApiError(std::string("notes") + " is not set"); return it->second; }
     void set_notes(const Json& value) { values_["notes"] = value; }
     bool is_set_notes() const { return values_.count("notes") > 0; }
     void unset_notes() { values_.erase("notes"); }
+
+    std::vector<SedBase*> get_workingAlgorithms() const { return workingAlgorithms_.items(); }
+    void add_workingAlgorithms(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); workingAlgorithms_.add(std::move(obj)); raw->attach(this, get_document()); }
+    void insert_workingAlgorithms(size_t index, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); workingAlgorithms_.insert(index, std::move(obj)); raw->attach(this, get_document()); }
+    void remove_workingAlgorithms(size_t index) { workingAlgorithms_.remove(index); }
 
     std::vector<SedBase*> get_taskParameters() const { return taskParameters_.items(); }
     void add_taskParameters(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); taskParameters_.add(std::move(obj)); raw->attach(this, get_document()); }
@@ -4231,6 +4218,7 @@ public:
 
     std::vector<SedBase*> children() override {
         std::vector<SedBase*> kids;
+        for (auto* item : workingAlgorithms_.items()) kids.push_back(item);
         for (auto* item : taskParameters_.items()) kids.push_back(item);
         for (auto* item : annotations_.items()) kids.push_back(item);
         return kids;
@@ -4238,12 +4226,14 @@ public:
 
     std::vector<ChildLoc> children_with_locations() override {
         std::vector<ChildLoc> out;
+        { size_t idx = 0; for (auto* item : workingAlgorithms_.items()) { out.push_back(ChildLoc{item, "/workingAlgorithms/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : taskParameters_.items()) { out.push_back(ChildLoc{item, "/taskParameters/" + std::to_string(idx)}); idx++; } }
         { size_t idx = 0; for (auto* item : annotations_.items()) { out.push_back(ChildLoc{item, "/annotations/" + std::to_string(idx)}); idx++; } }
         return out;
     }
 
     ListCollection& get_list_collection(const std::string& field_name) override {
+        if (field_name == "workingAlgorithms") return workingAlgorithms_;
         if (field_name == "taskParameters") return taskParameters_;
         if (field_name == "annotations") return annotations_;
         return SedBase::get_list_collection(field_name);
@@ -4257,8 +4247,8 @@ public:
         if (values_.count("model")) d["model"] = values_.at("model");
         if (values_.count("independentVariable")) d["independentVariable"] = values_.at("independentVariable");
         if (values_.count("outputVariables")) d["outputVariables"] = values_.at("outputVariables");
-        if (values_.count("outputModel")) d["outputModel"] = values_.at("outputModel");
         if (values_.count("notes")) d["notes"] = values_.at("notes");
+        if (workingAlgorithms_.size() > 0) { Json arr = Json::array(); for (auto* item : workingAlgorithms_.items()) arr.push_back(item->to_json_value()); d["workingAlgorithms"] = arr; }
         if (taskParameters_.size() > 0) { Json arr = Json::array(); for (auto* item : taskParameters_.items()) arr.push_back(item->to_json_value()); d["taskParameters"] = arr; }
         if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
@@ -4266,6 +4256,7 @@ public:
     }
 
 private:
+    ListCollection workingAlgorithms_;
     ListCollection taskParameters_;
     ListCollection annotations_;
 };
@@ -4295,7 +4286,7 @@ public:
     std::string class_name() const override { return "StringFormation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"valid\":true,\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"runtime\"}},\"[id].model\":{\"valid\":false},\"[id].strings\":{\"valid\":true,\"type\":\"stringList\",\"dimensions\":{\"source\":\"runtime\"}}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":{\"source\":\"runtime\"}},\"[id].strings\":{\"type\":\"stringList\",\"dimensions\":{\"source\":\"runtime\"}}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("stringFormation"); }

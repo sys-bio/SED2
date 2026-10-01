@@ -81,9 +81,14 @@ title: SED2 Specification
 
 ## Core Specification
 
+*Source: [core-spec.md](core-spec.md)*
+
 This document describes the overall shape and design of a SED2 document. It is deliberately short: the detailed, per-class rules (attributes, types, outputs, UML diagram) now live in individual **Specification Sheets** under `specsheets/`, one per Task, Output, and supporting class, each versioned (`v1.0.0/`, and later `v1.0.1/`, etc.) so the spec can evolve without breaking documents or tools written against an earlier version.
 
 ### 1. What a SED2 document is
+
+*Source: [core-spec.md, line 5](core-spec.md#L5)*
+
 
 A SED2 document contains two main sections for describing a simulation experiment: **Tasks** and **Outputs**. Tasks define *how to do things*; Outputs define *how to report the results*. The document also holds predefined **constants** (centrally located so they can be referenced and changed in one place) and **styles** (presentation settings used by plots - still a placeholder, see below).
 
@@ -101,11 +106,17 @@ Full attribute list and UML: [`specsheets/core/SEDDocument/v1.0.0/`](specsheets/
 
 ### 2. Every element (`SEDBase`)
 
+*Source: [core-spec.md, line 21](core-spec.md#L21)*
+
+
 Every element in a SED2 document may optionally carry `name`, `description`, `notes` (markdown), and `annotations` (qualifier/value pairs). Most elements also have an implicit `id`, which is not a child field but the dictionary key under which the element appears in its parent collection.
 
 Full detail: [`specsheets/core/SEDBase/v1.0.0/`](specsheets/core/SEDBase/v1.0.0/description.md)
 
 ### 3. The DAG design: inputs, outputs, and the chronological rule
+
+*Source: [core-spec.md, line 27](core-spec.md#L27)*
+
 
 Every SED2 element defines its inputs and outputs, so a document can be understood as a **Directed Acyclic Graph (DAG)**: Tasks and Outputs are nodes, and references between them (`#tasks:...`, `#constants:...`, etc.) are the edges.
 
@@ -114,6 +125,9 @@ Every SED2 element defines its inputs and outputs, so a document can be understo
 **Abstraction.** SED2 resembles a workflow language, but describes general, abstract tasks rather than specific implementations. Where a workflow language might run `ls -asF`, SED2 would describe a "list the contents of a directory" task with an input directory, a list-of-strings output, and parameters for whether to include sizes and file/directory type.
 
 ### 4. Types and references
+
+*Source: [core-spec.md, line 35](core-spec.md#L35)*
+
 
 Every value in a SED2 document is either a literal or a **reference** (an `SIdRef`) to a value elsewhere in the document - anywhere a `double` is expected, a string like `"#tasks:sim1.model['S1']"` may appear instead, and must be resolved to a double at execution time. 
 
@@ -128,10 +142,16 @@ A full primitive/reference type catalogue: [`specsheets/core/Types/v1.0.0/`](spe
 
 ### 5. Tasks
 
+*Source: [core-spec.md, line 48](core-spec.md#L48)*
+
+
 Every Task derives from `AbstractTask`, which itself derives from `SEDBase`: an implicit id plus a `_type` discriminator naming the concrete task class. Every concrete Task subclass must define what its output(s) are - see [`specsheets/core/SEDBase`](specsheets/core/SEDBase/v1.0.0/description.md) and each task's own Data Sheet under [`specsheets/tasks/`](specsheets/tasks/) for the details.
 
 
 ### 6. Outputs
+
+*Source: [core-spec.md, line 53](core-spec.md#L53)*
+
 
 Every Output derives from `AbstractOutput`, which itself derives from `SEDBase`. An `AbstractOutput` may **never** be used as input to anything else in the document - it is always the final stage of processing; anything that needs to be reused belongs in a Task instead. SED2 dictates only what data an output must contain, not the concrete form it takes (an in-memory object, a web page, exported files).
 
@@ -141,6 +161,9 @@ There are two basic families, documented under [`specsheets/outputs/`](specsheet
 - **`Plot`** - exports graphical output.
 
 ### 7. Namespaces
+
+*Source: [core-spec.md, line 62](core-spec.md#L62)*
+
 
 SED2 allows third parties to extend a document with their own attributes and classes under a **namespace**, written `namespace@identifier` (e.g. `saurolab@thisFactor` as an extra attribute, or `saurolab@thisAnalysis` as a whole new type). This applies at two levels:
 
@@ -152,6 +175,9 @@ A namespace a reader doesn't recognize should not be treated as an error: reader
 A namespace also carries its own version, independent of the document's own `version` attribute. Any document that uses a given namespace anywhere must declare that namespace's version too, as a `<prefix>@version` attribute on the document itself (e.g. `saurolab@version`).
 
 ### 8. Data Sheet folder layout and versioning
+
+*Source: [core-spec.md, line 73](core-spec.md#L73)*
+
 
 ```
 specsheets/
@@ -220,9 +246,15 @@ Any future changes to a class creates a sibling `v#.#.#/` folder alongside `v1.0
 
 ### 9. Validating a document against these schemas
 
+*Source: [core-spec.md, line 140](core-spec.md#L140)*
+
+
 To validate a whole SED2 document, `$ref` the appropriate `specsheets/core/SEDDocument/v1.0.0/schema.json` (which itself only needs `AbstractTask`/`AbstractOutput`, which in turn enumerate the concrete task/output classes) with a schema registry that can resolve relative file `$ref`s - e.g. Python's `referencing`/`jsonschema` packages, pointed at the `specsheets/` root. To validate or compose against just one class (e.g. embedding `ExplicitODESimulation`'s schema inside a larger tool-specific document), `$ref` that class's own `specsheets/tasks/ExplicitODESimulation/v1.0.0/schema.json` directly - its external refs resolve the same way.
 
 ### 10. Known gaps and inconsistencies (flagged, not fixed here)
+
+*Source: [core-spec.md, line 144](core-spec.md#L144)*
+
 
 Per the project's own working rule, this split is descriptive - it surfaces inconsistencies for you to resolve rather than silently deciding them:
 
@@ -239,6 +271,9 @@ Per the project's own working rule, this split is descriptive - it surfaces inco
 
 ### 11. Multi-target consistency reminder
 
+*Source: [core-spec.md, line 159](core-spec.md#L159)*
+
+
 Per this project's own working rules: any future design change to the SED2 class model, cross-reference/math syntax, or validation rules must be reflected in **all three** generated libraries (C++, Java, Python) in the same change - this document split does not touch code generation, but any content change that follows from resolving Section 10's open items will.
 
 ---
@@ -248,6 +283,8 @@ Per this project's own working rules: any future design change to the SED2 class
 ### Core Classes
 
 #### SEDBase
+
+*Source: [specsheets/core/SEDBase/v1.0.0/description.md](specsheets/core/SEDBase/v1.0.0/description.md)*
 
 ![SEDBase UML diagram](specsheets/core/SEDBase/v1.0.0/SEDBase.png)
 
@@ -275,29 +312,29 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 
 ##### Validation Rules
 
-**`SEDBase-0000`** (error) - The element fails a JSON Schema constraint attributable to SEDBase that does not match any other numbered rule.
+**`SEDBase-0000`** (error) - The element fails a JSON Schema constraint attributable to SEDBase that does not match any other numbered rule. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to SEDBase (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`SEDBase-0001`** (error) - The name attribute of a SEDBase-derived element, if present, must be a string.
+**`SEDBase-0001`** (error) - The name attribute of a SEDBase-derived element, if present, must be a string. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0001.md))
 
 > `name` is an unrestricted string in SEDBaseFields.
 
-**`SEDBase-0002`** (error) - The description attribute of a SEDBase-derived element, if present, must be a string.
+**`SEDBase-0002`** (error) - The description attribute of a SEDBase-derived element, if present, must be a string. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0002.md))
 
 > `description` is an unrestricted string in SEDBaseFields.
 
-**`SEDBase-0003`** (error) - The notes attribute of a SEDBase-derived element, if present, must be a markdown-formatted string.
+**`SEDBase-0003`** (error) - The notes attribute of a SEDBase-derived element, if present, must be a markdown-formatted string. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0003.md))
 
 > `notes` is a `MarkdownString` in SEDBaseFields - a CommonMark-formatted string.
 
-**`SEDBase-0004`** (error) - The annotations attribute of a SEDBase-derived element, if present, must be an array of Annotation objects.
+**`SEDBase-0004`** (error) - The annotations attribute of a SEDBase-derived element, if present, must be an array of Annotation objects. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0004.md))
 
 > `annotations` is an array of `Annotation` objects in SEDBaseFields, each with a required `qualifier` (a `Qualifier` string, e.g. 'bqbiol:hasPart') and a required `value` (`AnyValueOrRef`).
 
-**`SEDBase-0005`** (error) - The first segment of a reference must name one of SEDDocument's ID-keyed collections: tasks, constants, outputs, or styles.
+**`SEDBase-0005`** (error) - The first segment of a reference must name one of SEDDocument's ID-keyed collections: tasks, constants, outputs, or styles. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0005.md))
 
 > Applies to every reference anywhere in the document: a whole attribute value,
 > an element of an array or object value, or a REFERENCE token embedded in a
@@ -308,7 +345,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > Listing #outputs as a legal root keeps this rule purely syntactic;
 > SEDBase-0007 is the rule that rejects actually using it.
 
-**`SEDBase-0006`** (error) - Every colon-delimited segment of a reference must resolve to an existing element.
+**`SEDBase-0006`** (error) - Every colon-delimited segment of a reference must resolve to an existing element. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0006.md))
 
 > Walks the containment tree one colon segment at a time: #tasks:loop1 must name
 > a key of SEDDocument.tasks; #tasks:loop1:subTasks:sim1 must name a key of
@@ -326,13 +363,13 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > reference-path prefix, which is exactly what {subvalue} already means for
 > the other reference rules below (SEDBase-0008 through -0011).)
 
-**`SEDBase-0007`** (error) - A reference must not target an AbstractOutput, or anything contained in one.
+**`SEDBase-0007`** (error) - A reference must not target an AbstractOutput, or anything contained in one. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0007.md))
 
 > Enforces core-spec.md Section 6: an AbstractOutput is always a final stage
 > and is never an input to anything else. This includes an output referencing
 > another output.
 
-**`SEDBase-0008`** (error) - A dot-accessor in a reference must be one the target declares valid.
+**`SEDBase-0008`** (error) - A dot-accessor in a reference must be one the target declares valid. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0008.md))
 
 > For a task target, the accessor must appear in that task class's outputs.json,
 > and its "valid" field must be true, or be an expression that evaluates to true
@@ -346,7 +383,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > "[id]" entry: referencing a ModelImport as '#tasks:m1' with no .model fires this
 > rule, with {subvalue} empty.
 
-**`SEDBase-0009`** (error) - A reference must not apply more bracket indices than its target has dimensions.
+**`SEDBase-0009`** (error) - A reference must not apply more bracket indices than its target has dimensions. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0009.md))
 
 > Only fires when the target's dimension count is static in outputs.json (a
 > fixed "dimensions" array, or one whose count is computable from the target's
@@ -354,28 +391,28 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > this rule. {count} is the number of indices used; {expected-count} is the
 > number of dimensions available.
 
-**`SEDBase-0010`** (error) - A label index in a reference must name one of the labels of the dimension it indexes.
+**`SEDBase-0010`** (error) - A label index in a reference must name one of the labels of the dimension it indexes. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0010.md))
 
 > Only fires when that dimension's labels are "static" in outputs.json and all
 > the fields they are computed from are literals. For example, with
 > outputVariables ["S1","S2"], '#tasks:sim1['S3']' fires this rule; with
 > outputVariables given as a reference, it cannot fire.
 
-**`SEDBase-0011`** (error) - An integer or range index in a reference must fall within the size of the dimension it indexes.
+**`SEDBase-0011`** (error) - An integer or range index in a reference must fall within the size of the dimension it indexes. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0011.md))
 
 > Only fires when that dimension's size is "static" and computable. Negative
 > indices count from the end (Python-style), so for size n the legal integer
 > indices are -n..n-1. For a range [a:b], both ends must be within -n..n, and
 > the range must select at least one element.
 
-**`SEDBase-0012`** (error) - A bracket index into a constant must match the structure of that constant's literal value.
+**`SEDBase-0012`** (error) - A bracket index into a constant must match the structure of that constant's literal value. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0012.md))
 
 > Constants have no outputs.json; their shape is simply their literal JSON value.
 > An integer index requires an array of sufficient length, a label index requires
 > an object with that key, and any index into a scalar fires this rule. A
 > constant whose value is itself a reference is followed first.
 
-**`SEDBase-0013`** (error) - A reference to a Repeat's subTasks, its .range/.index outputs, or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat).
+**`SEDBase-0013`** (error) - A reference to a Repeat's subTasks, its .range/.index outputs, or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat). ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0013.md))
 
 > Consolidates three rules that were drafted separately (AbstractTask-0004,
 > Repeat-0007, Loop-0006) into one, moved to SEDBase rather than AbstractTask
@@ -393,7 +430,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > SEDBase-0008 like any other task reference. The only way a subTask's
 > per-iteration result leaves its Repeat is through one of those two exports.
 
-**`SEDBase-0014`** (warning) - An integer or range index into a dimension whose size is sourced as runtime and documents a min should warn when the index requires more entries than min guarantees.
+**`SEDBase-0014`** (warning) - An integer or range index into a dimension whose size is sourced as runtime and documents a min should warn when the index requires more entries than min guarantees. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0014.md))
 
 > Only fires when the target dimension's outputs.json size entry has
 > `source: "runtime"` and carries a `min`. A bare index `n` needs `min > n`;
@@ -403,7 +440,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > guarantee, not the true count. Distinct from SEDBase-0011, which fires as
 > an error against a dimension whose size is statically known for certain.
 
-**`SEDBase-0015`** (error) - A reference required to resolve to a scalar value must apply enough non-range indices to reduce its target's shape to zero remaining dimensions.
+**`SEDBase-0015`** (error) - A reference required to resolve to a scalar value must apply enough non-range indices to reduce its target's shape to zero remaining dimensions. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0015.md))
 
 > This is the rule that actually backs every "must be a reference to a
 > number/string/..." field-level rule (see check: ref-type under Validation)
@@ -416,7 +453,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > own type is then checked as usual by the field's own ref-type rule, not
 > by this one - this rule only covers the "still shaped" failure mode.
 
-**`SEDBase-0016`** (error) - A reference required to resolve to a model must resolve to a model.
+**`SEDBase-0016`** (error) - A reference required to resolve to a model must resolve to a model. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0016.md))
 
 > Applies to every field whose schema property carries `"x-ref-target": "model"`
 > (the `model` attribute of the simulation, FluxBalanceAnalysis, Jacobian,
@@ -432,7 +469,7 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > reference did resolve to, such as "a number", "an array", "an object", or
 > "a annotatedData value".
 
-**`SEDBase-0017`** (error) - A reference required to resolve to AnnotatedData must resolve to AnnotatedData.
+**`SEDBase-0017`** (error) - A reference required to resolve to AnnotatedData must resolve to AnnotatedData. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0017.md))
 
 > Applies to every field whose schema property carries
 > `"x-ref-target": "annotatedData"` (AbstractCurve's `x`; Curve's `y`, `xErrorUpper`,
@@ -451,6 +488,8 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 > fires those rules instead of this one.
 
 #### SEDDocument
+
+*Source: [specsheets/core/SEDDocument/v1.0.0/description.md](specsheets/core/SEDDocument/v1.0.0/description.md)*
 
 ![SEDDocument UML diagram](specsheets/core/SEDDocument/v1.0.0/SEDDocument.png)
 
@@ -507,41 +546,41 @@ The document is the root container, not an addressable element - it is never ref
 
 ##### Validation Rules
 
-**`SEDDocument-0000`** (error) - The element fails a JSON Schema constraint attributable to SEDDocument that does not match any other numbered rule.
+**`SEDDocument-0000`** (error) - The element fails a JSON Schema constraint attributable to SEDDocument that does not match any other numbered rule. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to SEDDocument (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`SEDDocument-0001`** (error) - The version attribute of a SEDDocument is required.
+**`SEDDocument-0001`** (error) - The version attribute of a SEDDocument is required. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0001.md))
 
 > `version` is required.
 
-**`SEDDocument-0002`** (error) - The version attribute of a SEDDocument must be a string.
+**`SEDDocument-0002`** (error) - The version attribute of a SEDDocument must be a string. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0002.md))
 
 > `version` is `string`: it must be a string.
 
-**`SEDDocument-0003`** (error) - The version attribute of a SEDDocument must match the format v#.#.# (major.minor.patch).
+**`SEDDocument-0003`** (error) - The version attribute of a SEDDocument must match the format v#.#.# (major.minor.patch). ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0003.md))
 
 > `version` must match the pattern `v#.#.#` (e.g. `v1.0.0`).
 
-**`SEDDocument-0005`** (error) - The constants attribute of a SEDDocument must be an object whose values are AnyValueOrRef.
+**`SEDDocument-0005`** (error) - The constants attribute of a SEDDocument must be an object whose values are AnyValueOrRef. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0005.md))
 
 > `constants` is `object (values: AnyValueOrRef)`: it must be an object whose values are AnyValueOrRef.
 
-**`SEDDocument-0006`** (error) - The tasks attribute of a SEDDocument must be an object whose values are AbstractTask.
+**`SEDDocument-0006`** (error) - The tasks attribute of a SEDDocument must be an object whose values are AbstractTask. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0006.md))
 
 > `tasks` is `object (values: AbstractTask)`: it must be an object whose values are AbstractTask.
 
-**`SEDDocument-0007`** (error) - The outputs attribute of a SEDDocument must be an object whose values are AbstractOutput.
+**`SEDDocument-0007`** (error) - The outputs attribute of a SEDDocument must be an object whose values are AbstractOutput. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0007.md))
 
 > `outputs` is `object (values: AbstractOutput)`: it must be an object whose values are AbstractOutput.
 
-**`SEDDocument-0008`** (error) - The styles attribute of a SEDDocument must be an object whose values are Style.
+**`SEDDocument-0008`** (error) - The styles attribute of a SEDDocument must be an object whose values are Style. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0008.md))
 
 > `styles` is `object (values: Style)`: it must be an object whose values are Style.
 
-**`SEDDocument-0009`** (error) - For every namespace prefix used anywhere in the document, SEDDocument must declare a <prefix>@version attribute.
+**`SEDDocument-0009`** (error) - For every namespace prefix used anywhere in the document, SEDDocument must declare a <prefix>@version attribute. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0009.md))
 
 > Applies to registered and unregistered prefixes alike: 'used' means any
 > attribute key or _type value of the form prefix@identifier, anywhere in the
@@ -550,17 +589,17 @@ The document is the root container, not an addressable element - it is never ref
 > prefix (see Design.md's Namespaces section); for an unregistered prefix,
 > SEDDocument-0014 checks it by hand instead.
 
-**`SEDDocument-0010`** (warning) - A <prefix>@version attribute should not be declared for a namespace the document never uses.
+**`SEDDocument-0010`** (warning) - A <prefix>@version attribute should not be declared for a namespace the document never uses. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0010.md))
 
 > Harmless but likely a leftover.
 
-**`SEDDocument-0011`** (warning) - The version of a SEDDocument should not be newer than the newest document version this library knows.
+**`SEDDocument-0011`** (warning) - The version of a SEDDocument should not be newer than the newest document version this library knows. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0011.md))
 
 > Version resolution picks the newest directory not greater than the
 > document's version, so a v1.3.0 document silently validates against v1.2.x
 > rules. This makes that visible.
 
-**`SEDDocument-0012`** (error) - No JSON object in a SED2 document may contain the same key more than once.
+**`SEDDocument-0012`** (error) - No JSON object in a SED2 document may contain the same key more than once. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0012.md))
 
 > JSON parsers silently keep one copy of a duplicated key (usually the last),
 > so a document with two tasks named sim1 would lose one without any error.
@@ -580,14 +619,14 @@ The document is the root container, not an addressable element - it is never ref
 > languages. Because of this, no fixture should chain this rule onto
 > another rule's filename the way Testing otherwise allows - see Testing.
 
-**`SEDDocument-0013`** (error) - A constant may only reference constants that appear before it in the constants dictionary.
+**`SEDDocument-0013`** (error) - A constant may only reference constants that appear before it in the constants dictionary. ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0013.md))
 
 > constants is described as coming before tasks, so a constant referencing a
 > task would break file-order execution. Constants may only reference earlier
 > constants, the same chronological principle AbstractTask-0003 applies to
 > tasks.
 
-**`SEDDocument-0014`** (error) - An unregistered namespace's <prefix>@version attribute must match the format v#.#.# (major.minor.patch).
+**`SEDDocument-0014`** (error) - An unregistered namespace's <prefix>@version attribute must match the format v#.#.# (major.minor.patch). ([source](specsheets/core/SEDDocument/v1.0.0/validation/SEDDocument-0014.md))
 
 > For a registered namespace this is already enforced as a generated schema
 > pattern (see Design.md's Namespaces section) - the same mechanism as
@@ -598,6 +637,8 @@ The document is the root container, not an addressable element - it is never ref
 > namespace is registered.
 
 #### Style
+
+*Source: [specsheets/core/Style/v1.0.0/description.md](specsheets/core/Style/v1.0.0/description.md)*
 
 *(No UML diagram exists yet for `Style` in the source spec - see [`DIAGRAM-PENDING.md`](specsheets/core/Style/v1.0.0/DIAGRAM-PENDING.md).)*
 
@@ -633,13 +674,15 @@ _This class defines no additional attributes beyond `SEDBaseFields`._
 
 ##### Validation Rules
 
-**`Style-0000`** (error) - The element fails a JSON Schema constraint attributable to Style that does not match any other numbered rule.
+**`Style-0000`** (error) - The element fails a JSON Schema constraint attributable to Style that does not match any other numbered rule. ([source](specsheets/core/Style/v1.0.0/validation/Style-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Style (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
 #### Types
+
+*Source: [specsheets/core/Types/v1.0.0/description.md](specsheets/core/Types/v1.0.0/description.md)*
 
 *(This page bundles the shared primitive and reference-helper types; it has no single UML class box of its own - see `core/SEDBase` for the base class every element derives from.)*
 
@@ -750,7 +793,7 @@ Not applicable - `Types` bundles primitive/reference-helper definitions; it is n
 
 ##### Validation Rules
 
-**`Types-0001`** (error) - A math expression must be a well-formed expression under the SED2 infix grammar.
+**`Types-0001`** (error) - A math expression must be a well-formed expression under the SED2 infix grammar. ([source](specsheets/core/Types/v1.0.0/validation/Types-0001.md))
 
 > The grammar is the one in Design.md's Math section (math.g4). {parse-message}
 > is the parser's own error text. When the math attribute is itself a
@@ -764,19 +807,19 @@ Not applicable - `Types` bundles primitive/reference-helper definitions; it is n
 > four rules per class or attaching Calculation-specific numbering to a
 > generic grammar concern.
 
-**`Types-0002`** (error) - Every function called in a math expression must be defined in the predefined-functions registry.
+**`Types-0002`** (error) - Every function called in a math expression must be defined in the predefined-functions registry. ([source](specsheets/core/Types/v1.0.0/validation/Types-0002.md))
 
 > The registry is schema/predefined-functions.json: the SBML L3 Core MathML
 > subset, the 12 distrib functions, and SED2's own additions (currently sum).
 > A namespace cannot add functions today; if that is wanted, the registry needs
 > a namespace extension point.
 
-**`Types-0003`** (error) - Every function called in a math expression must be given a number of arguments its registry entry allows.
+**`Types-0003`** (error) - Every function called in a math expression must be given a number of arguments its registry entry allows. ([source](specsheets/core/Types/v1.0.0/validation/Types-0003.md))
 
 > Arity comes from the function's registry entry, including the distrib
 > functions' alternative argument counts (e.g. normal takes 2 or 4).
 
-**`Types-0004`** (error) - Every bare identifier in a math expression must be a predefined constant.
+**`Types-0004`** (error) - Every bare identifier in a math expression must be a predefined constant. ([source](specsheets/core/Types/v1.0.0/validation/Types-0004.md))
 
 > SED2 math has no free variables: anything that is not a number, a predefined
 > constant (pi, exponentiale, true, false, notanumber, infinity), or a function
@@ -788,6 +831,8 @@ Not applicable - `Types` bundles primitive/reference-helper definitions; it is n
 ### Task Classes
 
 #### AbstractODESimulation
+
+*Source: [specsheets/tasks/AbstractODESimulation/v1.0.0/description.md](specsheets/tasks/AbstractODESimulation/v1.0.0/description.md)*
 
 ![AbstractODESimulation UML diagram](specsheets/tasks/AbstractODESimulation/v1.0.0/AbstractODESimulation.png)
 
@@ -869,157 +914,159 @@ There is no output rule for `AbstractODESimulation` itself - see `ExplicitODESim
 
 ##### Validation Rules
 
-**`AbstractODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractODESimulation that does not match any other numbered rule.
+**`AbstractODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractODESimulation that does not match any other numbered rule. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractODESimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractODESimulation-0001`** (error) - When the value of relativeTolerance of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0001`** (error) - When the value of relativeTolerance of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0001.md))
 
 > `relativeTolerance` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0002`** (error) - When the value of relativeTolerance of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0002`** (error) - When the value of relativeTolerance of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0002.md))
 
 > `relativeTolerance` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0003`** (error) - When the value of absoluteTolerance of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0003`** (error) - When the value of absoluteTolerance of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0003.md))
 
 > `absoluteTolerance` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0004`** (error) - When the value of absoluteTolerance of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0004`** (error) - When the value of absoluteTolerance of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0004.md))
 
 > `absoluteTolerance` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0005`** (error) - When the value of absoluteToleranceVector of an AbstractODESimulation is provided directly, it must be an array of numbers.
+**`AbstractODESimulation-0005`** (error) - When the value of absoluteToleranceVector of an AbstractODESimulation is provided directly, it must be an array of numbers. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0005.md))
 
 > `absoluteToleranceVector` is `ListOfNumbersOrRef`: the value, when not a reference, must be an array of numbers.
 
-**`AbstractODESimulation-0006`** (error) - When the value of absoluteToleranceVector of an AbstractODESimulation is a reference, it must be a reference to an array of numbers.
+**`AbstractODESimulation-0006`** (error) - When the value of absoluteToleranceVector of an AbstractODESimulation is a reference, it must be a reference to an array of numbers. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0006.md))
 
 > `absoluteToleranceVector` is `ListOfNumbersOrRef`: when the value is a reference, it must resolve to an array of numbers.
 
-**`AbstractODESimulation-0007`** (error) - When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0007`** (error) - When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0007.md))
 
 > `absoluteToleranceAdjustmentFactor` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0008`** (error) - When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0008`** (error) - When the value of absoluteToleranceAdjustmentFactor of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0008.md))
 
 > `absoluteToleranceAdjustmentFactor` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0009`** (error) - When the value of toleranceForRootFinder of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0009`** (error) - When the value of toleranceForRootFinder of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0009.md))
 
 > `toleranceForRootFinder` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0010`** (error) - When the value of toleranceForRootFinder of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0010`** (error) - When the value of toleranceForRootFinder of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0010.md))
 
 > `toleranceForRootFinder` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0011`** (error) - When the value of initialStepSize of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0011`** (error) - When the value of initialStepSize of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0011.md))
 
 > `initialStepSize` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0012`** (error) - When the value of initialStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0012`** (error) - When the value of initialStepSize of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0012.md))
 
 > `initialStepSize` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0013`** (error) - When the value of maxNumberOfSteps of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0013`** (error) - When the value of maxNumberOfSteps of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0013.md))
 
 > `maxNumberOfSteps` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0014`** (error) - When the value of maxNumberOfSteps of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0014`** (error) - When the value of maxNumberOfSteps of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0014.md))
 
 > `maxNumberOfSteps` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0015`** (error) - When the value of maxInternalSteps of an AbstractODESimulation is provided directly, it must be an integer.
+**`AbstractODESimulation-0015`** (error) - When the value of maxInternalSteps of an AbstractODESimulation is provided directly, it must be an integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0015.md))
 
 > `maxInternalSteps` is `IntegerOrRef`: the value, when not a reference, must be an integer.
 
-**`AbstractODESimulation-0016`** (error) - When the value of maxInternalSteps of an AbstractODESimulation is a reference, it must be a reference to an integer.
+**`AbstractODESimulation-0016`** (error) - When the value of maxInternalSteps of an AbstractODESimulation is a reference, it must be a reference to an integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0016.md))
 
 > `maxInternalSteps` is `IntegerOrRef`: when the value is a reference, it must resolve to an integer.
 
-**`AbstractODESimulation-0017`** (error) - When the value of maxInternalStepSize of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0017`** (error) - When the value of maxInternalStepSize of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0017.md))
 
 > `maxInternalStepSize` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0018`** (error) - When the value of maxInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0018`** (error) - When the value of maxInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0018.md))
 
 > `maxInternalStepSize` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0019`** (error) - When the value of minInternalStepSize of an AbstractODESimulation is provided directly, it must be a number.
+**`AbstractODESimulation-0019`** (error) - When the value of minInternalStepSize of an AbstractODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0019.md))
 
 > `minInternalStepSize` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractODESimulation-0020`** (error) - When the value of minInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number.
+**`AbstractODESimulation-0020`** (error) - When the value of minInternalStepSize of an AbstractODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0020.md))
 
 > `minInternalStepSize` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractODESimulation-0021`** (error) - When the value of forcePhysicalCorrectness of an AbstractODESimulation is provided directly, it must be a boolean.
+**`AbstractODESimulation-0021`** (error) - When the value of forcePhysicalCorrectness of an AbstractODESimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0021.md))
 
 > `forcePhysicalCorrectness` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractODESimulation-0022`** (error) - When the value of forcePhysicalCorrectness of an AbstractODESimulation is a reference, it must be a reference to a boolean.
+**`AbstractODESimulation-0022`** (error) - When the value of forcePhysicalCorrectness of an AbstractODESimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0022.md))
 
 > `forcePhysicalCorrectness` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractODESimulation-0023`** (error) - When the value of integrateReducedModel of an AbstractODESimulation is provided directly, it must be a boolean.
+**`AbstractODESimulation-0023`** (error) - When the value of integrateReducedModel of an AbstractODESimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0023.md))
 
 > `integrateReducedModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractODESimulation-0024`** (error) - When the value of integrateReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean.
+**`AbstractODESimulation-0024`** (error) - When the value of integrateReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0024.md))
 
 > `integrateReducedModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractODESimulation-0025`** (error) - When the value of useReducedModel of an AbstractODESimulation is provided directly, it must be a boolean.
+**`AbstractODESimulation-0025`** (error) - When the value of useReducedModel of an AbstractODESimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0025.md))
 
 > `useReducedModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractODESimulation-0026`** (error) - When the value of useReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean.
+**`AbstractODESimulation-0026`** (error) - When the value of useReducedModel of an AbstractODESimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0026.md))
 
 > `useReducedModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractODESimulation-0027`** (error) - When the value of useStiffSolver of an AbstractODESimulation is provided directly, it must be a boolean.
+**`AbstractODESimulation-0027`** (error) - When the value of useStiffSolver of an AbstractODESimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0027.md))
 
 > `useStiffSolver` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractODESimulation-0028`** (error) - When the value of useStiffSolver of an AbstractODESimulation is a reference, it must be a reference to a boolean.
+**`AbstractODESimulation-0028`** (error) - When the value of useStiffSolver of an AbstractODESimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0028.md))
 
 > `useStiffSolver` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractODESimulation-0029`** (error) - When the value of maxBDForder of an AbstractODESimulation is provided directly, it must be a positive integer.
+**`AbstractODESimulation-0029`** (error) - When the value of maxBDForder of an AbstractODESimulation is provided directly, it must be a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0029.md))
 
 > `maxBDForder` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`AbstractODESimulation-0030`** (error) - When the value of maxBDForder of an AbstractODESimulation is a reference, it must be a reference to a positive integer.
+**`AbstractODESimulation-0030`** (error) - When the value of maxBDForder of an AbstractODESimulation is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0030.md))
 
 > `maxBDForder` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`AbstractODESimulation-0031`** (error) - When the value of maxAdamsOrder of an AbstractODESimulation is provided directly, it must be a positive integer.
+**`AbstractODESimulation-0031`** (error) - When the value of maxAdamsOrder of an AbstractODESimulation is provided directly, it must be a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0031.md))
 
 > `maxAdamsOrder` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`AbstractODESimulation-0032`** (error) - When the value of maxAdamsOrder of an AbstractODESimulation is a reference, it must be a reference to a positive integer.
+**`AbstractODESimulation-0032`** (error) - When the value of maxAdamsOrder of an AbstractODESimulation is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0032.md))
 
 > `maxAdamsOrder` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`AbstractODESimulation-0033`** (error) - When the value of variableStepSize of an AbstractODESimulation is provided directly, it must be a boolean.
+**`AbstractODESimulation-0033`** (error) - When the value of variableStepSize of an AbstractODESimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0033.md))
 
 > `variableStepSize` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractODESimulation-0034`** (error) - When the value of variableStepSize of an AbstractODESimulation is a reference, it must be a reference to a boolean.
+**`AbstractODESimulation-0034`** (error) - When the value of variableStepSize of an AbstractODESimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0034.md))
 
 > `variableStepSize` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractODESimulation-0035`** (error) - When the value of maxOutputRows of an AbstractODESimulation is provided directly, it must be a positive integer.
+**`AbstractODESimulation-0035`** (error) - When the value of maxOutputRows of an AbstractODESimulation is provided directly, it must be a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0035.md))
 
 > `maxOutputRows` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`AbstractODESimulation-0036`** (error) - When the value of maxOutputRows of an AbstractODESimulation is a reference, it must be a reference to a positive integer.
+**`AbstractODESimulation-0036`** (error) - When the value of maxOutputRows of an AbstractODESimulation is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/AbstractODESimulation/v1.0.0/validation/AbstractODESimulation-0036.md))
 
 > `maxOutputRows` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
 #### AbstractSimulation
+
+*Source: [specsheets/tasks/AbstractSimulation/v1.0.0/description.md](specsheets/tasks/AbstractSimulation/v1.0.0/description.md)*
 
 ![AbstractSimulation UML diagram](specsheets/tasks/AbstractSimulation/v1.0.0/AbstractSimulation.png)
 
@@ -1029,7 +1076,7 @@ There is no output rule for `AbstractODESimulation` itself - see `ExplicitODESim
 
 ##### What it does
 
-`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly.
+`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly (including their own `workingAlgorithms` lists).
 
 Beyond the fields it inherits from `AbstractTask`, it contributes `model`, `independentVariable`, `independentVariableInit`, `outputVariables`, and `workingAlgorithms` - a list of `WorkingAlgorithm` entries describing the algorithm(s) used internally by the simulation.
 
@@ -1066,45 +1113,47 @@ There is no single output rule for `AbstractSimulation` itself - see each concre
 
 ##### Validation Rules
 
-**`AbstractSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractSimulation that does not match any other numbered rule.
+**`AbstractSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractSimulation that does not match any other numbered rule. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractSimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractSimulation-0001`** (error) - The model attribute of an AbstractSimulation, if present, must be a reference (a string starting with '#').
+**`AbstractSimulation-0001`** (error) - The model attribute of an AbstractSimulation, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0001.md))
 
 > `model` is defined as `SIdRef` in AbstractSimulation - always a reference, never a literal value.
 
-**`AbstractSimulation-0002`** (error) - When the value of independentVariable of an AbstractSimulation is provided directly, it must be a string.
+**`AbstractSimulation-0002`** (error) - When the value of independentVariable of an AbstractSimulation is provided directly, it must be a string. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0002.md))
 
 > `independentVariable` is `StringOrRef` in AbstractSimulation: the value, when not a reference, must be a string.
 
-**`AbstractSimulation-0003`** (error) - When the value of independentVariable of an AbstractSimulation is a reference, it must be a reference to a string.
+**`AbstractSimulation-0003`** (error) - When the value of independentVariable of an AbstractSimulation is a reference, it must be a reference to a string. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0003.md))
 
 > `independentVariable` is `StringOrRef` in AbstractSimulation: when the value is a reference, it must resolve to a string.
 
-**`AbstractSimulation-0004`** (error) - When the value of independentVariableInit of an AbstractSimulation is provided directly, it must be a number.
+**`AbstractSimulation-0004`** (error) - When the value of independentVariableInit of an AbstractSimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0004.md))
 
 > `independentVariableInit` is `NumberOrRef` in AbstractSimulation: the value, when not a reference, must be a number.
 
-**`AbstractSimulation-0005`** (error) - When the value of independentVariableInit of an AbstractSimulation is a reference, it must be a reference to a number.
+**`AbstractSimulation-0005`** (error) - When the value of independentVariableInit of an AbstractSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0005.md))
 
 > `independentVariableInit` is `NumberOrRef` in AbstractSimulation: when the value is a reference, it must resolve to a number.
 
-**`AbstractSimulation-0006`** (error) - When the value of outputVariables of an AbstractSimulation is provided directly, it must be an array of strings.
+**`AbstractSimulation-0006`** (error) - When the value of outputVariables of an AbstractSimulation is provided directly, it must be an array of strings. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0006.md))
 
 > `outputVariables` is `ListOfStringsOrRef` in AbstractSimulation: the value, when not a reference, must be an array of strings.
 
-**`AbstractSimulation-0007`** (error) - When the value of outputVariables of an AbstractSimulation is a reference, it must be a reference to an array of strings.
+**`AbstractSimulation-0007`** (error) - When the value of outputVariables of an AbstractSimulation is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0007.md))
 
 > `outputVariables` is `ListOfStringsOrRef` in AbstractSimulation: when the value is a reference, it must resolve to an array of strings.
 
-**`AbstractSimulation-0008`** (error) - The workingAlgorithms attribute of an AbstractSimulation, if present, must be an array of WorkingAlgorithm objects.
+**`AbstractSimulation-0008`** (error) - The workingAlgorithms attribute of an AbstractSimulation, if present, must be an array of WorkingAlgorithm objects. ([source](specsheets/tasks/AbstractSimulation/v1.0.0/validation/AbstractSimulation-0008.md))
 
 > `workingAlgorithms` is optional; when present, each entry must be a `WorkingAlgorithm` object.
 
 #### AbstractStochasticSimulation
+
+*Source: [specsheets/tasks/AbstractStochasticSimulation/v1.0.0/description.md](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/description.md)*
 
 ![AbstractStochasticSimulation UML diagram](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/AbstractStochasticSimulation.png)
 
@@ -1156,77 +1205,79 @@ There is no output rule for `AbstractStochasticSimulation` itself - see `Explici
 
 ##### Validation Rules
 
-**`AbstractStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractStochasticSimulation that does not match any other numbered rule.
+**`AbstractStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractStochasticSimulation that does not match any other numbered rule. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractStochasticSimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractStochasticSimulation-0001`** (error) - When the value of seed of an AbstractStochasticSimulation is provided directly, it must be a number.
+**`AbstractStochasticSimulation-0001`** (error) - When the value of seed of an AbstractStochasticSimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0001.md))
 
 > `seed` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractStochasticSimulation-0002`** (error) - When the value of seed of an AbstractStochasticSimulation is a reference, it must be a reference to a number.
+**`AbstractStochasticSimulation-0002`** (error) - When the value of seed of an AbstractStochasticSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0002.md))
 
 > `seed` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractStochasticSimulation-0003`** (error) - When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is provided directly, it must be a number.
+**`AbstractStochasticSimulation-0003`** (error) - When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0003.md))
 
 > `timeDependentRelativeTolerance` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractStochasticSimulation-0004`** (error) - When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is a reference, it must be a reference to a number.
+**`AbstractStochasticSimulation-0004`** (error) - When the value of timeDependentRelativeTolerance of an AbstractStochasticSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0004.md))
 
 > `timeDependentRelativeTolerance` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractStochasticSimulation-0005`** (error) - When the value of variableStepSize of an AbstractStochasticSimulation is provided directly, it must be a boolean.
+**`AbstractStochasticSimulation-0005`** (error) - When the value of variableStepSize of an AbstractStochasticSimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0005.md))
 
 > `variableStepSize` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractStochasticSimulation-0006`** (error) - When the value of variableStepSize of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean.
+**`AbstractStochasticSimulation-0006`** (error) - When the value of variableStepSize of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0006.md))
 
 > `variableStepSize` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractStochasticSimulation-0007`** (error) - When the value of minimumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number.
+**`AbstractStochasticSimulation-0007`** (error) - When the value of minimumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0007.md))
 
 > `minimumTimeStep` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractStochasticSimulation-0008`** (error) - When the value of minimumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number.
+**`AbstractStochasticSimulation-0008`** (error) - When the value of minimumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0008.md))
 
 > `minimumTimeStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractStochasticSimulation-0009`** (error) - When the value of maximumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number.
+**`AbstractStochasticSimulation-0009`** (error) - When the value of maximumTimeStep of an AbstractStochasticSimulation is provided directly, it must be a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0009.md))
 
 > `maximumTimeStep` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`AbstractStochasticSimulation-0010`** (error) - When the value of maximumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number.
+**`AbstractStochasticSimulation-0010`** (error) - When the value of maximumTimeStep of an AbstractStochasticSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0010.md))
 
 > `maximumTimeStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`AbstractStochasticSimulation-0011`** (error) - When the value of nonNegative of an AbstractStochasticSimulation is provided directly, it must be a boolean.
+**`AbstractStochasticSimulation-0011`** (error) - When the value of nonNegative of an AbstractStochasticSimulation is provided directly, it must be a boolean. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0011.md))
 
 > `nonNegative` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`AbstractStochasticSimulation-0012`** (error) - When the value of nonNegative of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean.
+**`AbstractStochasticSimulation-0012`** (error) - When the value of nonNegative of an AbstractStochasticSimulation is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0012.md))
 
 > `nonNegative` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`AbstractStochasticSimulation-0013`** (error) - When the value of maxOutputRows of an AbstractStochasticSimulation is provided directly, it must be a positive integer.
+**`AbstractStochasticSimulation-0013`** (error) - When the value of maxOutputRows of an AbstractStochasticSimulation is provided directly, it must be a positive integer. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0013.md))
 
 > `maxOutputRows` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`AbstractStochasticSimulation-0014`** (error) - When the value of maxOutputRows of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer.
+**`AbstractStochasticSimulation-0014`** (error) - When the value of maxOutputRows of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0014.md))
 
 > `maxOutputRows` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`AbstractStochasticSimulation-0015`** (error) - When the value of maxNumSteps of an AbstractStochasticSimulation is provided directly, it must be a positive integer.
+**`AbstractStochasticSimulation-0015`** (error) - When the value of maxNumSteps of an AbstractStochasticSimulation is provided directly, it must be a positive integer. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0015.md))
 
 > `maxNumSteps` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`AbstractStochasticSimulation-0016`** (error) - When the value of maxNumSteps of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer.
+**`AbstractStochasticSimulation-0016`** (error) - When the value of maxNumSteps of an AbstractStochasticSimulation is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/AbstractStochasticSimulation/v1.0.0/validation/AbstractStochasticSimulation-0016.md))
 
 > `maxNumSteps` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
 #### AbstractTask
+
+*Source: [specsheets/tasks/AbstractTask/v1.0.0/description.md](specsheets/tasks/AbstractTask/v1.0.0/description.md)*
 
 ![AbstractTask UML diagram](specsheets/tasks/AbstractTask/v1.0.0/AbstractTask.png)
 
@@ -1256,17 +1307,17 @@ There is no single output rule for `AbstractTask` itself - see each concrete sub
 
 ##### Validation Rules
 
-**`AbstractTask-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractTask that does not match any other numbered rule.
+**`AbstractTask-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractTask that does not match any other numbered rule. ([source](specsheets/tasks/AbstractTask/v1.0.0/validation/AbstractTask-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractTask (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractTask-0001`** (error) - The taskParameters attribute of an AbstractTask must be an array of TaskParameter objects.
+**`AbstractTask-0001`** (error) - The taskParameters attribute of an AbstractTask must be an array of TaskParameter objects. ([source](specsheets/tasks/AbstractTask/v1.0.0/validation/AbstractTask-0001.md))
 
 > `taskParameters` is `array of TaskParameter` in AbstractTaskCommon: it must be an array of TaskParameter objects.
 
-**`AbstractTask-0002`** (error) - A value that must resolve to a concrete AbstractTask subtype must declare a _type attribute.
+**`AbstractTask-0002`** (error) - A value that must resolve to a concrete AbstractTask subtype must declare a _type attribute. ([source](specsheets/tasks/AbstractTask/v1.0.0/validation/AbstractTask-0002.md))
 
 > A narrower case of AbstractTask-0000's catch-all: fires specifically when
 > the generated oneOf fails because _type is missing entirely, rather than
@@ -1274,7 +1325,7 @@ There is no single output rule for `AbstractTask` itself - see each concrete sub
 > a sibling of x-generated-oneOf; see core-spec.md Section 8 and Design.md's
 > Classes section.
 
-**`AbstractTask-0003`** (error) - A task may only reference constants, tasks that appear earlier in the same tasks dictionary, or (for a subTask) the elements listed in this rule's explanation.
+**`AbstractTask-0003`** (error) - A task may only reference constants, tasks that appear earlier in the same tasks dictionary, or (for a subTask) the elements listed in this rule's explanation. ([source](specsheets/tasks/AbstractTask/v1.0.0/validation/AbstractTask-0003.md))
 
 > The chronological rule (core-spec.md Section 3), made checkable. For a task
 > at the top level of SEDDocument.tasks, a reference may target:
@@ -1291,6 +1342,8 @@ There is no single output rule for `AbstractTask` itself - see each concrete sub
 > impossible, and the document is always a DAG executable in file order.
 
 #### AggregationCalculation
+
+*Source: [specsheets/tasks/AggregationCalculation/v1.0.0/description.md](specsheets/tasks/AggregationCalculation/v1.0.0/description.md)*
 
 ![AggregationCalculation UML diagram](specsheets/tasks/AggregationCalculation/v1.0.0/AggregationCalculation.png)
 
@@ -1342,29 +1395,31 @@ The aggregated value, accessible as `[id]`.
 
 ##### Validation Rules
 
-**`AggregationCalculation-0000`** (error) - The element fails a JSON Schema constraint attributable to AggregationCalculation that does not match any other numbered rule.
+**`AggregationCalculation-0000`** (error) - The element fails a JSON Schema constraint attributable to AggregationCalculation that does not match any other numbered rule. ([source](specsheets/tasks/AggregationCalculation/v1.0.0/validation/AggregationCalculation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AggregationCalculation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AggregationCalculation-0001`** (error) - The input attribute of an AggregationCalculation is required.
+**`AggregationCalculation-0001`** (error) - The input attribute of an AggregationCalculation is required. ([source](specsheets/tasks/AggregationCalculation/v1.0.0/validation/AggregationCalculation-0001.md))
 
 > `input` is required.
 
-**`AggregationCalculation-0002`** (error) - When the value of appliedDimensions of an AggregationCalculation is provided directly, it must be an array of strings.
+**`AggregationCalculation-0002`** (error) - When the value of appliedDimensions of an AggregationCalculation is provided directly, it must be an array of strings. ([source](specsheets/tasks/AggregationCalculation/v1.0.0/validation/AggregationCalculation-0002.md))
 
 > `appliedDimensions` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`AggregationCalculation-0003`** (error) - When the value of appliedDimensions of an AggregationCalculation is a reference, it must be a reference to an array of strings.
+**`AggregationCalculation-0003`** (error) - When the value of appliedDimensions of an AggregationCalculation is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/AggregationCalculation/v1.0.0/validation/AggregationCalculation-0003.md))
 
 > `appliedDimensions` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`AggregationCalculation-0004`** (error) - The _type attribute of an AggregationCalculation must be "aggregationCalculation".
+**`AggregationCalculation-0004`** (error) - The _type attribute of an AggregationCalculation must be "aggregationCalculation". ([source](specsheets/tasks/AggregationCalculation/v1.0.0/validation/AggregationCalculation-0004.md))
 
 > `_type` is the discriminator field. For `AggregationCalculation` it must always equal `"aggregationCalculation"`.
 
 #### BoundedODESimulation
+
+*Source: [specsheets/tasks/BoundedODESimulation/v1.0.0/description.md](specsheets/tasks/BoundedODESimulation/v1.0.0/description.md)*
 
 ![BoundedODESimulation UML diagram](specsheets/tasks/BoundedODESimulation/v1.0.0/BoundedODESimulation.png)
 
@@ -1477,37 +1532,39 @@ A 2D matrix of numbers, accessible as `[id]`, with the same column layout as `Ex
 
 ##### Validation Rules
 
-**`BoundedODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to BoundedODESimulation that does not match any other numbered rule.
+**`BoundedODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to BoundedODESimulation that does not match any other numbered rule. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to BoundedODESimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`BoundedODESimulation-0001`** (error) - The model attribute of a BoundedODESimulation is required.
+**`BoundedODESimulation-0001`** (error) - The model attribute of a BoundedODESimulation is required. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0001.md))
 
 > `model` is required.
 
-**`BoundedODESimulation-0002`** (error) - The independentVariable attribute of a BoundedODESimulation is required.
+**`BoundedODESimulation-0002`** (error) - The independentVariable attribute of a BoundedODESimulation is required. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`BoundedODESimulation-0003`** (error) - The outputVariables attribute of a BoundedODESimulation is required.
+**`BoundedODESimulation-0003`** (error) - The outputVariables attribute of a BoundedODESimulation is required. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`BoundedODESimulation-0004`** (error) - The independentVariableSpan attribute of a BoundedODESimulation is required.
+**`BoundedODESimulation-0004`** (error) - The independentVariableSpan attribute of a BoundedODESimulation is required. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0004.md))
 
 > `independentVariableSpan` is required.
 
-**`BoundedODESimulation-0005`** (error) - The independentVariableSpan attribute of a BoundedODESimulation must be a SpanInline object.
+**`BoundedODESimulation-0005`** (error) - The independentVariableSpan attribute of a BoundedODESimulation must be a SpanInline object. ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0005.md))
 
 > `independentVariableSpan` is `SpanInline`: it must be a SpanInline object.
 
-**`BoundedODESimulation-0006`** (error) - The _type attribute of a BoundedODESimulation must be "boundedODESimulation".
+**`BoundedODESimulation-0006`** (error) - The _type attribute of a BoundedODESimulation must be "boundedODESimulation". ([source](specsheets/tasks/BoundedODESimulation/v1.0.0/validation/BoundedODESimulation-0006.md))
 
 > `_type` is the discriminator field. For `BoundedODESimulation` it must always equal `"boundedODESimulation"`.
 
 #### BoundedStochasticSimulation
+
+*Source: [specsheets/tasks/BoundedStochasticSimulation/v1.0.0/description.md](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/description.md)*
 
 ![BoundedStochasticSimulation UML diagram](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/BoundedStochasticSimulation.png)
 
@@ -1588,37 +1645,39 @@ A 2D matrix of numbers, accessible as `[id]`, with solver-chosen row spacing. Th
 
 ##### Validation Rules
 
-**`BoundedStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to BoundedStochasticSimulation that does not match any other numbered rule.
+**`BoundedStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to BoundedStochasticSimulation that does not match any other numbered rule. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to BoundedStochasticSimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`BoundedStochasticSimulation-0001`** (error) - The model attribute of a BoundedStochasticSimulation is required.
+**`BoundedStochasticSimulation-0001`** (error) - The model attribute of a BoundedStochasticSimulation is required. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0001.md))
 
 > `model` is required.
 
-**`BoundedStochasticSimulation-0002`** (error) - The independentVariable attribute of a BoundedStochasticSimulation is required.
+**`BoundedStochasticSimulation-0002`** (error) - The independentVariable attribute of a BoundedStochasticSimulation is required. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`BoundedStochasticSimulation-0003`** (error) - The outputVariables attribute of a BoundedStochasticSimulation is required.
+**`BoundedStochasticSimulation-0003`** (error) - The outputVariables attribute of a BoundedStochasticSimulation is required. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`BoundedStochasticSimulation-0004`** (error) - The independentVariableSpan attribute of a BoundedStochasticSimulation is required.
+**`BoundedStochasticSimulation-0004`** (error) - The independentVariableSpan attribute of a BoundedStochasticSimulation is required. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0004.md))
 
 > `independentVariableSpan` is required.
 
-**`BoundedStochasticSimulation-0005`** (error) - The independentVariableSpan attribute of a BoundedStochasticSimulation must be a SpanInline object.
+**`BoundedStochasticSimulation-0005`** (error) - The independentVariableSpan attribute of a BoundedStochasticSimulation must be a SpanInline object. ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0005.md))
 
 > `independentVariableSpan` is `SpanInline`: it must be a SpanInline object.
 
-**`BoundedStochasticSimulation-0006`** (error) - The _type attribute of a BoundedStochasticSimulation must be "boundedStochasticSimulation".
+**`BoundedStochasticSimulation-0006`** (error) - The _type attribute of a BoundedStochasticSimulation must be "boundedStochasticSimulation". ([source](specsheets/tasks/BoundedStochasticSimulation/v1.0.0/validation/BoundedStochasticSimulation-0006.md))
 
 > `_type` is the discriminator field. For `BoundedStochasticSimulation` it must always equal `"boundedStochasticSimulation"`.
 
 #### Calculation
+
+*Source: [specsheets/tasks/Calculation/v1.0.0/description.md](specsheets/tasks/Calculation/v1.0.0/description.md)*
 
 ![Calculation UML diagram](specsheets/tasks/Calculation/v1.0.0/Calculation.png)
 
@@ -1660,29 +1719,31 @@ The result of evaluating `math`, accessible as `[id]`.
 
 ##### Validation Rules
 
-**`Calculation-0000`** (error) - The element fails a JSON Schema constraint attributable to Calculation that does not match any other numbered rule.
+**`Calculation-0000`** (error) - The element fails a JSON Schema constraint attributable to Calculation that does not match any other numbered rule. ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Calculation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Calculation-0001`** (error) - The math attribute of a Calculation is required.
+**`Calculation-0001`** (error) - The math attribute of a Calculation is required. ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0001.md))
 
 > `math` is required.
 
-**`Calculation-0002`** (error) - When the value of math of a Calculation is provided directly, it must be a string.
+**`Calculation-0002`** (error) - When the value of math of a Calculation is provided directly, it must be a string. ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0002.md))
 
 > `math` is `StringOrRef`: the value, when not a reference, must be a string.
 
-**`Calculation-0003`** (error) - When the value of math of a Calculation is a reference, it must be a reference to a string.
+**`Calculation-0003`** (error) - When the value of math of a Calculation is a reference, it must be a reference to a string. ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0003.md))
 
 > `math` is `StringOrRef`: when the value is a reference, it must resolve to a string.
 
-**`Calculation-0004`** (error) - The _type attribute of a Calculation must be "calculation".
+**`Calculation-0004`** (error) - The _type attribute of a Calculation must be "calculation". ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0004.md))
 
 > `_type` is the discriminator field. For `Calculation` it must always equal `"calculation"`.
 
 #### CreateDataBlock
+
+*Source: [specsheets/tasks/CreateDataBlock/v1.0.0/description.md](specsheets/tasks/CreateDataBlock/v1.0.0/description.md)*
 
 ![CreateDataBlock UML diagram](specsheets/tasks/CreateDataBlock/v1.0.0/CreateDataBlock.png)
 
@@ -1722,29 +1783,31 @@ A new `AnnotatedData` object whose labels are the `data` dictionary's keys and w
 
 ##### Validation Rules
 
-**`CreateDataBlock-0000`** (error) - The element fails a JSON Schema constraint attributable to CreateDataBlock that does not match any other numbered rule.
+**`CreateDataBlock-0000`** (error) - The element fails a JSON Schema constraint attributable to CreateDataBlock that does not match any other numbered rule. ([source](specsheets/tasks/CreateDataBlock/v1.0.0/validation/CreateDataBlock-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to CreateDataBlock (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`CreateDataBlock-0001`** (error) - The data attribute of a CreateDataBlock is required.
+**`CreateDataBlock-0001`** (error) - The data attribute of a CreateDataBlock is required. ([source](specsheets/tasks/CreateDataBlock/v1.0.0/validation/CreateDataBlock-0001.md))
 
 > `data` is required.
 
-**`CreateDataBlock-0002`** (error) - When the value of data of a CreateDataBlock is provided directly, it must be an object whose values are AnyValueOrRef.
+**`CreateDataBlock-0002`** (error) - When the value of data of a CreateDataBlock is provided directly, it must be an object whose values are AnyValueOrRef. ([source](specsheets/tasks/CreateDataBlock/v1.0.0/validation/CreateDataBlock-0002.md))
 
 > `data` is `object (values: AnyValueOrRef) or SIdRef`: the value, when not a reference, must be an object whose values are AnyValueOrRef.
 
-**`CreateDataBlock-0003`** (error) - When the value of data of a CreateDataBlock is a reference, it must be a reference to an object whose values are AnyValueOrRef.
+**`CreateDataBlock-0003`** (error) - When the value of data of a CreateDataBlock is a reference, it must be a reference to an object whose values are AnyValueOrRef. ([source](specsheets/tasks/CreateDataBlock/v1.0.0/validation/CreateDataBlock-0003.md))
 
 > `data` is `object (values: AnyValueOrRef) or SIdRef`: when the value is a reference, it must resolve to an object whose values are AnyValueOrRef.
 
-**`CreateDataBlock-0004`** (error) - The _type attribute of a CreateDataBlock must be "createDataBlock".
+**`CreateDataBlock-0004`** (error) - The _type attribute of a CreateDataBlock must be "createDataBlock". ([source](specsheets/tasks/CreateDataBlock/v1.0.0/validation/CreateDataBlock-0004.md))
 
 > `_type` is the discriminator field. For `CreateDataBlock` it must always equal `"createDataBlock"`.
 
 #### CsvImport
+
+*Source: [specsheets/tasks/CsvImport/v1.0.0/description.md](specsheets/tasks/CsvImport/v1.0.0/description.md)*
 
 ![CsvImport UML diagram](specsheets/tasks/CsvImport/v1.0.0/CsvImport.png)
 
@@ -1809,85 +1872,87 @@ The imported numeric `AnnotatedData`, accessible as `[id]`.
 
 ##### Validation Rules
 
-**`CsvImport-0000`** (error) - The element fails a JSON Schema constraint attributable to CsvImport that does not match any other numbered rule.
+**`CsvImport-0000`** (error) - The element fails a JSON Schema constraint attributable to CsvImport that does not match any other numbered rule. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to CsvImport (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`CsvImport-0001`** (error) - The location attribute of a CsvImport is required.
+**`CsvImport-0001`** (error) - The location attribute of a CsvImport is required. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0001.md))
 
 > `location` is required.
 
-**`CsvImport-0002`** (error) - When the value of location of a CsvImport is provided directly, it must be a URI string.
+**`CsvImport-0002`** (error) - When the value of location of a CsvImport is provided directly, it must be a URI string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0002.md))
 
 > `location` is `URIOrRef`: the value, when not a reference, must be a URI string.
 
-**`CsvImport-0003`** (error) - When the value of location of a CsvImport is a reference, it must be a reference to a URI string.
+**`CsvImport-0003`** (error) - When the value of location of a CsvImport is a reference, it must be a reference to a URI string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0003.md))
 
 > `location` is `URIOrRef`: when the value is a reference, it must resolve to a URI string.
 
-**`CsvImport-0004`** (error) - When the value of organization of a CsvImport is provided directly, it must be a string.
+**`CsvImport-0004`** (error) - When the value of organization of a CsvImport is provided directly, it must be a string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0004.md))
 
 > `organization` is `StringOrRef`: the value, when not a reference, must be a string.
 
-**`CsvImport-0005`** (error) - When the value of organization of a CsvImport is a reference, it must be a reference to a string.
+**`CsvImport-0005`** (error) - When the value of organization of a CsvImport is a reference, it must be a reference to a string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0005.md))
 
 > `organization` is `StringOrRef`: when the value is a reference, it must resolve to a string.
 
-**`CsvImport-0006`** (error) - When the value of separator of a CsvImport is provided directly, it must be a string.
+**`CsvImport-0006`** (error) - When the value of separator of a CsvImport is provided directly, it must be a string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0006.md))
 
 > `separator` is `StringOrRef`: the value, when not a reference, must be a string.
 
-**`CsvImport-0007`** (error) - When the value of separator of a CsvImport is a reference, it must be a reference to a string.
+**`CsvImport-0007`** (error) - When the value of separator of a CsvImport is a reference, it must be a reference to a string. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0007.md))
 
 > `separator` is `StringOrRef`: when the value is a reference, it must resolve to a string.
 
-**`CsvImport-0008`** (error) - When the value of headers of a CsvImport is provided directly, it must be a boolean.
+**`CsvImport-0008`** (error) - When the value of headers of a CsvImport is provided directly, it must be a boolean. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0008.md))
 
 > `headers` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`CsvImport-0009`** (error) - When the value of headers of a CsvImport is a reference, it must be a reference to a boolean.
+**`CsvImport-0009`** (error) - When the value of headers of a CsvImport is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0009.md))
 
 > `headers` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`CsvImport-0010`** (error) - When the value of columnNames of a CsvImport is provided directly, it must be an array of strings.
+**`CsvImport-0010`** (error) - When the value of columnNames of a CsvImport is provided directly, it must be an array of strings. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0010.md))
 
 > `columnNames` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`CsvImport-0011`** (error) - When the value of columnNames of a CsvImport is a reference, it must be a reference to an array of strings.
+**`CsvImport-0011`** (error) - When the value of columnNames of a CsvImport is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0011.md))
 
 > `columnNames` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`CsvImport-0012`** (error) - When the value of ncols of a CsvImport is provided directly, it must be a positive integer.
+**`CsvImport-0012`** (error) - When the value of ncols of a CsvImport is provided directly, it must be a positive integer. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0012.md))
 
 > `ncols` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`CsvImport-0013`** (error) - When the value of ncols of a CsvImport is a reference, it must be a reference to a positive integer.
+**`CsvImport-0013`** (error) - When the value of ncols of a CsvImport is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0013.md))
 
 > `ncols` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`CsvImport-0014`** (error) - When the value of nrows of a CsvImport is provided directly, it must be a positive integer.
+**`CsvImport-0014`** (error) - When the value of nrows of a CsvImport is provided directly, it must be a positive integer. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0014.md))
 
 > `nrows` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`CsvImport-0015`** (error) - When the value of nrows of a CsvImport is a reference, it must be a reference to a positive integer.
+**`CsvImport-0015`** (error) - When the value of nrows of a CsvImport is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0015.md))
 
 > `nrows` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`CsvImport-0016`** (error) - When the value of units of a CsvImport is provided directly, it must be an array of strings.
+**`CsvImport-0016`** (error) - When the value of units of a CsvImport is provided directly, it must be an array of strings. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0016.md))
 
 > `units` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`CsvImport-0017`** (error) - When the value of units of a CsvImport is a reference, it must be a reference to an array of strings.
+**`CsvImport-0017`** (error) - When the value of units of a CsvImport is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0017.md))
 
 > `units` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`CsvImport-0018`** (error) - The _type attribute of a CsvImport must be "csvImport".
+**`CsvImport-0018`** (error) - The _type attribute of a CsvImport must be "csvImport". ([source](specsheets/tasks/CsvImport/v1.0.0/validation/CsvImport-0018.md))
 
 > `_type` is the discriminator field. For `CsvImport` it must always equal `"csvImport"`.
 
 #### DataImport
+
+*Source: [specsheets/tasks/DataImport/v1.0.0/description.md](specsheets/tasks/DataImport/v1.0.0/description.md)*
 
 ![DataImport UML diagram](specsheets/tasks/DataImport/v1.0.0/DataImport.png)
 
@@ -1932,41 +1997,43 @@ The imported `AnnotatedData`, accessible as `[id]` (e.g. `#tasks:data1`).
 
 ##### Validation Rules
 
-**`DataImport-0000`** (error) - The element fails a JSON Schema constraint attributable to DataImport that does not match any other numbered rule.
+**`DataImport-0000`** (error) - The element fails a JSON Schema constraint attributable to DataImport that does not match any other numbered rule. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to DataImport (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`DataImport-0001`** (error) - The location attribute of a DataImport is required.
+**`DataImport-0001`** (error) - The location attribute of a DataImport is required. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0001.md))
 
 > `location` is required.
 
-**`DataImport-0002`** (error) - When the value of location of a DataImport is provided directly, it must be a URI string.
+**`DataImport-0002`** (error) - When the value of location of a DataImport is provided directly, it must be a URI string. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0002.md))
 
 > `location` is `URIOrRef`: the value, when not a reference, must be a URI string.
 
-**`DataImport-0003`** (error) - When the value of location of a DataImport is a reference, it must be a reference to a URI string.
+**`DataImport-0003`** (error) - When the value of location of a DataImport is a reference, it must be a reference to a URI string. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0003.md))
 
 > `location` is `URIOrRef`: when the value is a reference, it must resolve to a URI string.
 
-**`DataImport-0004`** (error) - The format attribute of a DataImport is required.
+**`DataImport-0004`** (error) - The format attribute of a DataImport is required. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0004.md))
 
 > `format` is required.
 
-**`DataImport-0005`** (error) - When the value of format of a DataImport is provided directly, it must be a URI string.
+**`DataImport-0005`** (error) - When the value of format of a DataImport is provided directly, it must be a URI string. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0005.md))
 
 > `format` is `URIOrRef`: the value, when not a reference, must be a URI string.
 
-**`DataImport-0006`** (error) - When the value of format of a DataImport is a reference, it must be a reference to a URI string.
+**`DataImport-0006`** (error) - When the value of format of a DataImport is a reference, it must be a reference to a URI string. ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0006.md))
 
 > `format` is `URIOrRef`: when the value is a reference, it must resolve to a URI string.
 
-**`DataImport-0007`** (error) - The _type attribute of a DataImport must be "dataImport".
+**`DataImport-0007`** (error) - The _type attribute of a DataImport must be "dataImport". ([source](specsheets/tasks/DataImport/v1.0.0/validation/DataImport-0007.md))
 
 > `_type` is the discriminator field. For `DataImport` it must always equal `"dataImport"`.
 
 #### DrawFromDistribution
+
+*Source: [specsheets/tasks/DrawFromDistribution/v1.0.0/description.md](specsheets/tasks/DrawFromDistribution/v1.0.0/description.md)*
 
 ![DrawFromDistribution UML diagram](specsheets/tasks/DrawFromDistribution/v1.0.0/DrawFromDistribution.png)
 
@@ -2020,49 +2087,51 @@ Typically a single number, indexed as `[id][0]`; the type is multidimensional `A
 
 ##### Validation Rules
 
-**`DrawFromDistribution-0000`** (error) - The element fails a JSON Schema constraint attributable to DrawFromDistribution that does not match any other numbered rule.
+**`DrawFromDistribution-0000`** (error) - The element fails a JSON Schema constraint attributable to DrawFromDistribution that does not match any other numbered rule. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to DrawFromDistribution (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`DrawFromDistribution-0001`** (error) - The arguments attribute of a DrawFromDistribution is required.
+**`DrawFromDistribution-0001`** (error) - The arguments attribute of a DrawFromDistribution is required. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0001.md))
 
 > `arguments` is required.
 
-**`DrawFromDistribution-0002`** (error) - When the value of arguments of a DrawFromDistribution is provided directly, it must be an array of values.
+**`DrawFromDistribution-0002`** (error) - When the value of arguments of a DrawFromDistribution is provided directly, it must be an array of values. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0002.md))
 
 > `arguments` is `ListOfAnyOrRef`: the value, when not a reference, must be an array of values.
 
-**`DrawFromDistribution-0003`** (error) - When the value of arguments of a DrawFromDistribution is a reference, it must be a reference to an array of values.
+**`DrawFromDistribution-0003`** (error) - When the value of arguments of a DrawFromDistribution is a reference, it must be a reference to an array of values. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0003.md))
 
 > `arguments` is `ListOfAnyOrRef`: when the value is a reference, it must resolve to an array of values.
 
-**`DrawFromDistribution-0004`** (error) - When the value of outputPersistent of a DrawFromDistribution is provided directly, it must be a boolean.
+**`DrawFromDistribution-0004`** (error) - When the value of outputPersistent of a DrawFromDistribution is provided directly, it must be a boolean. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0004.md))
 
 > `outputPersistent` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`DrawFromDistribution-0005`** (error) - When the value of outputPersistent of a DrawFromDistribution is a reference, it must be a reference to a boolean.
+**`DrawFromDistribution-0005`** (error) - When the value of outputPersistent of a DrawFromDistribution is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0005.md))
 
 > `outputPersistent` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`DrawFromDistribution-0006`** (error) - The _type attribute of a DrawFromDistribution must be "drawFromDistribution".
+**`DrawFromDistribution-0006`** (error) - The _type attribute of a DrawFromDistribution must be "drawFromDistribution". ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0006.md))
 
 > `_type` is the discriminator field. For `DrawFromDistribution` it must always equal `"drawFromDistribution"`.
 
-**`DrawFromDistribution-0007`** (error) - The distribution attribute of a DrawFromDistribution is required.
+**`DrawFromDistribution-0007`** (error) - The distribution attribute of a DrawFromDistribution is required. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0007.md))
 
 > `distribution` is required.
 
-**`DrawFromDistribution-0008`** (error) - When the value of distribution of a DrawFromDistribution is provided directly, it must be one of the SBML distrib package's definitionURL values.
+**`DrawFromDistribution-0008`** (error) - When the value of distribution of a DrawFromDistribution is provided directly, it must be one of the SBML distrib package's definitionURL values. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0008.md))
 
 > `distribution` is `DistributionURI | SIdRef`: the value, when not a reference, must be one of the 12 `http://www.sbml.org/sbml/symbols/distrib/*` URIs listed in `core/Types`'s `DistributionURI` (kept in sync with `schema/predefined-functions.json`'s `distrib` registry).
 
-**`DrawFromDistribution-0009`** (error) - When the value of distribution of a DrawFromDistribution is a reference, it must be a reference to one of the SBML distrib package's definitionURL values.
+**`DrawFromDistribution-0009`** (error) - When the value of distribution of a DrawFromDistribution is a reference, it must be a reference to one of the SBML distrib package's definitionURL values. ([source](specsheets/tasks/DrawFromDistribution/v1.0.0/validation/DrawFromDistribution-0009.md))
 
 > `distribution` is `DistributionURI | SIdRef`: when the value is a reference, it must resolve to one of the 12 allowed distribution URIs.
 
 #### ExplicitODESimulation
+
+*Source: [specsheets/tasks/ExplicitODESimulation/v1.0.0/description.md](specsheets/tasks/ExplicitODESimulation/v1.0.0/description.md)*
 
 ![ExplicitODESimulation UML diagram](specsheets/tasks/ExplicitODESimulation/v1.0.0/ExplicitODESimulation.png)
 
@@ -2175,37 +2244,39 @@ A 2D matrix of numbers, accessible as `[id]`: the first column is `independentVa
 
 ##### Validation Rules
 
-**`ExplicitODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to ExplicitODESimulation that does not match any other numbered rule.
+**`ExplicitODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to ExplicitODESimulation that does not match any other numbered rule. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ExplicitODESimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ExplicitODESimulation-0001`** (error) - The model attribute of an ExplicitODESimulation is required.
+**`ExplicitODESimulation-0001`** (error) - The model attribute of an ExplicitODESimulation is required. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0001.md))
 
 > `model` is required.
 
-**`ExplicitODESimulation-0002`** (error) - The independentVariable attribute of an ExplicitODESimulation is required.
+**`ExplicitODESimulation-0002`** (error) - The independentVariable attribute of an ExplicitODESimulation is required. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`ExplicitODESimulation-0003`** (error) - The outputVariables attribute of an ExplicitODESimulation is required.
+**`ExplicitODESimulation-0003`** (error) - The outputVariables attribute of an ExplicitODESimulation is required. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`ExplicitODESimulation-0004`** (error) - The independentVariableRange attribute of an ExplicitODESimulation is required.
+**`ExplicitODESimulation-0004`** (error) - The independentVariableRange attribute of an ExplicitODESimulation is required. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0004.md))
 
 > `independentVariableRange` is required.
 
-**`ExplicitODESimulation-0005`** (error) - The independentVariableRange attribute of an ExplicitODESimulation must be a NumericRangeInline object.
+**`ExplicitODESimulation-0005`** (error) - The independentVariableRange attribute of an ExplicitODESimulation must be a NumericRangeInline object. ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0005.md))
 
 > `independentVariableRange` is `NumericRangeInline`: it must be a NumericRangeInline object.
 
-**`ExplicitODESimulation-0006`** (error) - The _type attribute of an ExplicitODESimulation must be "explicitODESimulation".
+**`ExplicitODESimulation-0006`** (error) - The _type attribute of an ExplicitODESimulation must be "explicitODESimulation". ([source](specsheets/tasks/ExplicitODESimulation/v1.0.0/validation/ExplicitODESimulation-0006.md))
 
 > `_type` is the discriminator field. For `ExplicitODESimulation` it must always equal `"explicitODESimulation"`.
 
 #### ExplicitStochasticSimulation
+
+*Source: [specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/description.md](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/description.md)*
 
 ![ExplicitStochasticSimulation UML diagram](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/ExplicitStochasticSimulation.png)
 
@@ -2288,37 +2359,39 @@ A 2D matrix of numbers, accessible as `[id]`: the first column is `independentVa
 
 ##### Validation Rules
 
-**`ExplicitStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to ExplicitStochasticSimulation that does not match any other numbered rule.
+**`ExplicitStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to ExplicitStochasticSimulation that does not match any other numbered rule. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ExplicitStochasticSimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ExplicitStochasticSimulation-0001`** (error) - The model attribute of an ExplicitStochasticSimulation is required.
+**`ExplicitStochasticSimulation-0001`** (error) - The model attribute of an ExplicitStochasticSimulation is required. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0001.md))
 
 > `model` is required.
 
-**`ExplicitStochasticSimulation-0002`** (error) - The independentVariable attribute of an ExplicitStochasticSimulation is required.
+**`ExplicitStochasticSimulation-0002`** (error) - The independentVariable attribute of an ExplicitStochasticSimulation is required. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`ExplicitStochasticSimulation-0003`** (error) - The outputVariables attribute of an ExplicitStochasticSimulation is required.
+**`ExplicitStochasticSimulation-0003`** (error) - The outputVariables attribute of an ExplicitStochasticSimulation is required. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`ExplicitStochasticSimulation-0004`** (error) - The independentVariableRange attribute of an ExplicitStochasticSimulation is required.
+**`ExplicitStochasticSimulation-0004`** (error) - The independentVariableRange attribute of an ExplicitStochasticSimulation is required. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0004.md))
 
 > `independentVariableRange` is required.
 
-**`ExplicitStochasticSimulation-0005`** (error) - The independentVariableRange attribute of an ExplicitStochasticSimulation must be a NumericRangeInline object.
+**`ExplicitStochasticSimulation-0005`** (error) - The independentVariableRange attribute of an ExplicitStochasticSimulation must be a NumericRangeInline object. ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0005.md))
 
 > `independentVariableRange` is `NumericRangeInline`: it must be a NumericRangeInline object.
 
-**`ExplicitStochasticSimulation-0006`** (error) - The _type attribute of an ExplicitStochasticSimulation must be "explicitStochasticSimulation".
+**`ExplicitStochasticSimulation-0006`** (error) - The _type attribute of an ExplicitStochasticSimulation must be "explicitStochasticSimulation". ([source](specsheets/tasks/ExplicitStochasticSimulation/v1.0.0/validation/ExplicitStochasticSimulation-0006.md))
 
 > `_type` is the discriminator field. For `ExplicitStochasticSimulation` it must always equal `"explicitStochasticSimulation"`.
 
 #### FluxBalanceAnalysis
+
+*Source: [specsheets/tasks/FluxBalanceAnalysis/v1.0.0/description.md](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/description.md)*
 
 ![FluxBalanceAnalysis UML diagram](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/FluxBalanceAnalysis.png)
 
@@ -2331,7 +2404,7 @@ A 2D matrix of numbers, accessible as `[id]`: the first column is `independentVa
 
 Uses an objective function and reaction rate bounds (both defined within the model itself) to determine the set of reaction rates that maximizes the objective function. Unlike the other simulation tasks, FBA has no independent variable.
 
-This is an implementation of KISAO:0000437 (FBA).
+This is an implementation of KISAO:0000437 (FBA). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ##### Attributes
 
@@ -2342,7 +2415,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `taskParameters` | array of TaskParameter | no |  |
 | `model` | SIdRef | yes |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ###### Attribute details
 
@@ -2352,61 +2425,53 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
 
-A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables` (typically reaction fluxes) - length depends on how many variables are named there.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
 
-`[id].model` is only produced when `outputModel` is `true`.
-
 ##### Validation Rules
 
-**`FluxBalanceAnalysis-0000`** (error) - The element fails a JSON Schema constraint attributable to FluxBalanceAnalysis that does not match any other numbered rule.
+**`FluxBalanceAnalysis-0000`** (error) - The element fails a JSON Schema constraint attributable to FluxBalanceAnalysis that does not match any other numbered rule. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to FluxBalanceAnalysis (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`FluxBalanceAnalysis-0001`** (error) - The model attribute of a FluxBalanceAnalysis is required.
+**`FluxBalanceAnalysis-0001`** (error) - The model attribute of a FluxBalanceAnalysis is required. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0001.md))
 
 > `model` is required.
 
-**`FluxBalanceAnalysis-0002`** (error) - The model attribute of a FluxBalanceAnalysis, if present, must be a reference (a string starting with '#').
+**`FluxBalanceAnalysis-0002`** (error) - The model attribute of a FluxBalanceAnalysis, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0002.md))
 
 > `model` is `SIdRef` - always a reference, never a literal value.
 
-**`FluxBalanceAnalysis-0003`** (error) - The outputVariables attribute of a FluxBalanceAnalysis is required.
+**`FluxBalanceAnalysis-0003`** (error) - The outputVariables attribute of a FluxBalanceAnalysis is required. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0003.md))
 
 > `outputVariables` is required.
 
-**`FluxBalanceAnalysis-0004`** (error) - When the value of outputVariables of a FluxBalanceAnalysis is provided directly, it must be an array of strings.
+**`FluxBalanceAnalysis-0004`** (error) - When the value of outputVariables of a FluxBalanceAnalysis is provided directly, it must be an array of strings. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0004.md))
 
 > `outputVariables` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`FluxBalanceAnalysis-0005`** (error) - When the value of outputVariables of a FluxBalanceAnalysis is a reference, it must be a reference to an array of strings.
+**`FluxBalanceAnalysis-0005`** (error) - When the value of outputVariables of a FluxBalanceAnalysis is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0005.md))
 
 > `outputVariables` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`FluxBalanceAnalysis-0006`** (error) - When the value of outputModel of a FluxBalanceAnalysis is provided directly, it must be a boolean.
-
-> `outputModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
-
-**`FluxBalanceAnalysis-0007`** (error) - When the value of outputModel of a FluxBalanceAnalysis is a reference, it must be a reference to a boolean.
-
-> `outputModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
-
-**`FluxBalanceAnalysis-0008`** (error) - The _type attribute of a FluxBalanceAnalysis must be "fluxBalanceAnalysis".
+**`FluxBalanceAnalysis-0008`** (error) - The _type attribute of a FluxBalanceAnalysis must be "fluxBalanceAnalysis". ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0008.md))
 
 > `_type` is the discriminator field. For `FluxBalanceAnalysis` it must always equal `"fluxBalanceAnalysis"`.
 
 #### JacobianFull
+
+*Source: [specsheets/tasks/JacobianFull/v1.0.0/description.md](specsheets/tasks/JacobianFull/v1.0.0/description.md)*
 
 ![JacobianFull UML diagram](specsheets/tasks/JacobianFull/v1.0.0/JacobianFull.png)
 
@@ -2448,25 +2513,27 @@ The full Jacobian as a list of lists, accessible as `[id]`, with axis labels giv
 
 ##### Validation Rules
 
-**`JacobianFull-0000`** (error) - The element fails a JSON Schema constraint attributable to JacobianFull that does not match any other numbered rule.
+**`JacobianFull-0000`** (error) - The element fails a JSON Schema constraint attributable to JacobianFull that does not match any other numbered rule. ([source](specsheets/tasks/JacobianFull/v1.0.0/validation/JacobianFull-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to JacobianFull (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`JacobianFull-0001`** (error) - The model attribute of a JacobianFull is required.
+**`JacobianFull-0001`** (error) - The model attribute of a JacobianFull is required. ([source](specsheets/tasks/JacobianFull/v1.0.0/validation/JacobianFull-0001.md))
 
 > `model` is required.
 
-**`JacobianFull-0002`** (error) - The model attribute of a JacobianFull, if present, must be a reference (a string starting with '#').
+**`JacobianFull-0002`** (error) - The model attribute of a JacobianFull, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/JacobianFull/v1.0.0/validation/JacobianFull-0002.md))
 
 > `model` is `SIdRef` - always a reference, never a literal value.
 
-**`JacobianFull-0003`** (error) - The _type attribute of a JacobianFull must be "jacobianFull".
+**`JacobianFull-0003`** (error) - The _type attribute of a JacobianFull must be "jacobianFull". ([source](specsheets/tasks/JacobianFull/v1.0.0/validation/JacobianFull-0003.md))
 
 > `_type` is the discriminator field. For `JacobianFull` it must always equal `"jacobianFull"`.
 
 #### JacobianReduced
+
+*Source: [specsheets/tasks/JacobianReduced/v1.0.0/description.md](specsheets/tasks/JacobianReduced/v1.0.0/description.md)*
 
 ![JacobianReduced UML diagram](specsheets/tasks/JacobianReduced/v1.0.0/JacobianReduced.png)
 
@@ -2508,25 +2575,27 @@ The reduced Jacobian as a list of lists, accessible as `[id]`, with axis labels 
 
 ##### Validation Rules
 
-**`JacobianReduced-0000`** (error) - The element fails a JSON Schema constraint attributable to JacobianReduced that does not match any other numbered rule.
+**`JacobianReduced-0000`** (error) - The element fails a JSON Schema constraint attributable to JacobianReduced that does not match any other numbered rule. ([source](specsheets/tasks/JacobianReduced/v1.0.0/validation/JacobianReduced-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to JacobianReduced (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`JacobianReduced-0001`** (error) - The model attribute of a JacobianReduced is required.
+**`JacobianReduced-0001`** (error) - The model attribute of a JacobianReduced is required. ([source](specsheets/tasks/JacobianReduced/v1.0.0/validation/JacobianReduced-0001.md))
 
 > `model` is required.
 
-**`JacobianReduced-0002`** (error) - The model attribute of a JacobianReduced, if present, must be a reference (a string starting with '#').
+**`JacobianReduced-0002`** (error) - The model attribute of a JacobianReduced, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/JacobianReduced/v1.0.0/validation/JacobianReduced-0002.md))
 
 > `model` is `SIdRef` - always a reference, never a literal value.
 
-**`JacobianReduced-0003`** (error) - The _type attribute of a JacobianReduced must be "jacobianReduced".
+**`JacobianReduced-0003`** (error) - The _type attribute of a JacobianReduced must be "jacobianReduced". ([source](specsheets/tasks/JacobianReduced/v1.0.0/validation/JacobianReduced-0003.md))
 
 > `_type` is the discriminator field. For `JacobianReduced` it must always equal `"jacobianReduced"`.
 
 #### Loop
+
+*Source: [specsheets/tasks/Loop/v1.0.0/description.md](specsheets/tasks/Loop/v1.0.0/description.md)*
 
 ![Loop UML diagram](specsheets/tasks/Loop/v1.0.0/Loop.png)
 
@@ -2537,7 +2606,7 @@ The reduced Jacobian as a list of lists, accessible as `[id]`, with axis labels 
 
 ##### What it does
 
-A `Repeat` whose iterations are chained: each depends on the output of the previous one. This is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`.
+A `Repeat` whose iterations are chained: each depends on the output of the previous one, with one iteration per element of its required `range` (a `Range`/`NumericRange`/`ParameterRange`), taken in order; a `Loop` always runs all of them and cannot end early. The chaining is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`.
 
 ##### Attributes
 
@@ -2549,7 +2618,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `subTasks` | object (values: AbstractTask) | yes |  |
 | `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no |  |
+| `range` | RangeInline | yes |  |
 | `loopVariables` | object (values: LoopVariable) | yes |  |
 
 ###### Attribute details
@@ -2562,7 +2631,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`range`** (RangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
 
 **`loopVariables`** (object (values: LoopVariable), required) - _(no description yet - placeholder, needs to be filled in)_
 
@@ -2572,7 +2641,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 `[id]`: an `AnnotatedData` whose first column is the range values and whose subsequent columns follow `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: 2D (or more): first dimension = one row per iteration; remaining dimension(s) = one column per entry of `outputVariableMap`. Unlike `Scatter`, the row count isn't known in advance from a `range` - it's however many iterations the loop actually runs. _(Exact termination condition for a Loop's iteration count - placeholder, needs to be filled in from the spec.)_
+    - Dimensions: 2D (or more): first dimension = one row per value in `range`; remaining dimension(s) = one column per entry of `outputVariableMap` (or just the range-values column alone, if `outputVariableMap` is empty). As with `Scatter`, the row count is known in advance from `range`. A column whose subTask output is itself multi-dimensional would add further dimensions - not pinned down further here.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
@@ -2581,36 +2650,38 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
-- `[id].range`: Within the loop, the current value of `range`, when `range` is defined (see `Repeat`).
+- `[id].range`: Within the loop, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within the loop, the current index into `range`, when `range` is defined.
+- `[id].index`: Within the loop, the current index into `range`. Always valid.
     - Dimensions: Scalar (0-D) per iteration.
 
 ##### Validation Rules
 
-**`Loop-0000`** (error) - The element fails a JSON Schema constraint attributable to Loop that does not match any other numbered rule.
+**`Loop-0000`** (error) - The element fails a JSON Schema constraint attributable to Loop that does not match any other numbered rule. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Loop (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Loop-0001`** (error) - The subTasks attribute of a Loop is required.
+**`Loop-0001`** (error) - The subTasks attribute of a Loop is required. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0001.md))
 
 > `subTasks` is required.
 
-**`Loop-0002`** (error) - The loopVariables attribute of a Loop is required.
+**`Loop-0002`** (error) - The loopVariables attribute of a Loop is required. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0002.md))
 
 > `loopVariables` is required.
 
-**`Loop-0003`** (error) - The loopVariables attribute of a Loop must be an object whose values are LoopVariable.
+**`Loop-0003`** (error) - The loopVariables attribute of a Loop must be an object whose values are LoopVariable. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0003.md))
 
 > `loopVariables` is `object (values: LoopVariable)`: it must be an object whose values are LoopVariable.
 
-**`Loop-0005`** (error) - The _type attribute of a Loop must be "loop".
+**`Loop-0005`** (error) - The _type attribute of a Loop must be "loop". ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0005.md))
 
 > `_type` is the discriminator field. For `Loop` it must always equal `"loop"`.
 
 #### ModelChange
+
+*Source: [specsheets/tasks/ModelChange/v1.0.0/description.md](specsheets/tasks/ModelChange/v1.0.0/description.md)*
 
 ![ModelChange UML diagram](specsheets/tasks/ModelChange/v1.0.0/ModelChange.png)
 
@@ -2667,57 +2738,59 @@ The modified model, accessible as `[id].model`.
 
 ##### Validation Rules
 
-**`ModelChange-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelChange that does not match any other numbered rule.
+**`ModelChange-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelChange that does not match any other numbered rule. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ModelChange (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ModelChange-0001`** (error) - The inputModel attribute of a ModelChange is required.
+**`ModelChange-0001`** (error) - The inputModel attribute of a ModelChange is required. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0001.md))
 
 > `inputModel` is required.
 
-**`ModelChange-0002`** (error) - The inputModel attribute of a ModelChange, if present, must be a reference (a string starting with '#').
+**`ModelChange-0002`** (error) - The inputModel attribute of a ModelChange, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0002.md))
 
 > `inputModel` is `SIdRef` - always a reference, never a literal value.
 
-**`ModelChange-0003`** (error) - When the value of setValues of a ModelChange is provided directly, it must be an object whose values are AnyValueOrRef.
+**`ModelChange-0003`** (error) - When the value of setValues of a ModelChange is provided directly, it must be an object whose values are AnyValueOrRef. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0003.md))
 
 > `setValues` is `object (values: AnyValueOrRef) or SIdRef`: the value, when not a reference, must be an object whose values are AnyValueOrRef.
 
-**`ModelChange-0004`** (error) - When the value of setValues of a ModelChange is a reference, it must be a reference to an object whose values are AnyValueOrRef.
+**`ModelChange-0004`** (error) - When the value of setValues of a ModelChange is a reference, it must be a reference to an object whose values are AnyValueOrRef. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0004.md))
 
 > `setValues` is `object (values: AnyValueOrRef) or SIdRef`: when the value is a reference, it must resolve to an object whose values are AnyValueOrRef.
 
-**`ModelChange-0005`** (error) - When the value of removeElements of a ModelChange is provided directly, it must be an array of strings.
+**`ModelChange-0005`** (error) - When the value of removeElements of a ModelChange is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0005.md))
 
 > `removeElements` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelChange-0006`** (error) - When the value of removeElements of a ModelChange is a reference, it must be a reference to an array of strings.
+**`ModelChange-0006`** (error) - When the value of removeElements of a ModelChange is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0006.md))
 
 > `removeElements` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelChange-0007`** (error) - When the value of addElements of a ModelChange is provided directly, it must be an array of strings.
+**`ModelChange-0007`** (error) - When the value of addElements of a ModelChange is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0007.md))
 
 > `addElements` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelChange-0008`** (error) - When the value of addElements of a ModelChange is a reference, it must be a reference to an array of strings.
+**`ModelChange-0008`** (error) - When the value of addElements of a ModelChange is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0008.md))
 
 > `addElements` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelChange-0009`** (error) - When the value of replaceElements of a ModelChange is provided directly, it must be an object whose values are StringOrRef.
+**`ModelChange-0009`** (error) - When the value of replaceElements of a ModelChange is provided directly, it must be an object whose values are StringOrRef. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0009.md))
 
 > `replaceElements` is `object (values: StringOrRef) or SIdRef`: the value, when not a reference, must be an object whose values are StringOrRef.
 
-**`ModelChange-0010`** (error) - When the value of replaceElements of a ModelChange is a reference, it must be a reference to an object whose values are StringOrRef.
+**`ModelChange-0010`** (error) - When the value of replaceElements of a ModelChange is a reference, it must be a reference to an object whose values are StringOrRef. ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0010.md))
 
 > `replaceElements` is `object (values: StringOrRef) or SIdRef`: when the value is a reference, it must resolve to an object whose values are StringOrRef.
 
-**`ModelChange-0011`** (error) - The _type attribute of a ModelChange must be "modelChange".
+**`ModelChange-0011`** (error) - The _type attribute of a ModelChange must be "modelChange". ([source](specsheets/tasks/ModelChange/v1.0.0/validation/ModelChange-0011.md))
 
 > `_type` is the discriminator field. For `ModelChange` it must always equal `"modelChange"`.
 
 #### ModelElementList
+
+*Source: [specsheets/tasks/ModelElementList/v1.0.0/description.md](specsheets/tasks/ModelElementList/v1.0.0/description.md)*
 
 ![ModelElementList UML diagram](specsheets/tasks/ModelElementList/v1.0.0/ModelElementList.png)
 
@@ -2771,57 +2844,59 @@ Corrected here to `[id].strings`, per the general `AbstractTask` addressing conv
 
 ##### Validation Rules
 
-**`ModelElementList-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelElementList that does not match any other numbered rule.
+**`ModelElementList-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelElementList that does not match any other numbered rule. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ModelElementList (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ModelElementList-0001`** (error) - The model attribute of a ModelElementList is required.
+**`ModelElementList-0001`** (error) - The model attribute of a ModelElementList is required. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0001.md))
 
 > `model` is required.
 
-**`ModelElementList-0002`** (error) - The model attribute of a ModelElementList, if present, must be a reference (a string starting with '#').
+**`ModelElementList-0002`** (error) - The model attribute of a ModelElementList, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0002.md))
 
 > `model` is `SIdRef` - always a reference, never a literal value.
 
-**`ModelElementList-0003`** (error) - When the value of includeElements of a ModelElementList is provided directly, it must be an array of strings.
+**`ModelElementList-0003`** (error) - When the value of includeElements of a ModelElementList is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0003.md))
 
 > `includeElements` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelElementList-0004`** (error) - When the value of includeElements of a ModelElementList is a reference, it must be a reference to an array of strings.
+**`ModelElementList-0004`** (error) - When the value of includeElements of a ModelElementList is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0004.md))
 
 > `includeElements` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelElementList-0005`** (error) - When the value of includeTypes of a ModelElementList is provided directly, it must be an array of strings.
+**`ModelElementList-0005`** (error) - When the value of includeTypes of a ModelElementList is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0005.md))
 
 > `includeTypes` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelElementList-0006`** (error) - When the value of includeTypes of a ModelElementList is a reference, it must be a reference to an array of strings.
+**`ModelElementList-0006`** (error) - When the value of includeTypes of a ModelElementList is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0006.md))
 
 > `includeTypes` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelElementList-0007`** (error) - When the value of excludeElements of a ModelElementList is provided directly, it must be an array of strings.
+**`ModelElementList-0007`** (error) - When the value of excludeElements of a ModelElementList is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0007.md))
 
 > `excludeElements` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelElementList-0008`** (error) - When the value of excludeElements of a ModelElementList is a reference, it must be a reference to an array of strings.
+**`ModelElementList-0008`** (error) - When the value of excludeElements of a ModelElementList is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0008.md))
 
 > `excludeElements` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelElementList-0009`** (error) - When the value of excludeTypes of a ModelElementList is provided directly, it must be an array of strings.
+**`ModelElementList-0009`** (error) - When the value of excludeTypes of a ModelElementList is provided directly, it must be an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0009.md))
 
 > `excludeTypes` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`ModelElementList-0010`** (error) - When the value of excludeTypes of a ModelElementList is a reference, it must be a reference to an array of strings.
+**`ModelElementList-0010`** (error) - When the value of excludeTypes of a ModelElementList is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0010.md))
 
 > `excludeTypes` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`ModelElementList-0011`** (error) - The _type attribute of a ModelElementList must be "modelElementList".
+**`ModelElementList-0011`** (error) - The _type attribute of a ModelElementList must be "modelElementList". ([source](specsheets/tasks/ModelElementList/v1.0.0/validation/ModelElementList-0011.md))
 
 > `_type` is the discriminator field. For `ModelElementList` it must always equal `"modelElementList"`.
 
 #### ModelImport
+
+*Source: [specsheets/tasks/ModelImport/v1.0.0/description.md](specsheets/tasks/ModelImport/v1.0.0/description.md)*
 
 ![ModelImport UML diagram](specsheets/tasks/ModelImport/v1.0.0/ModelImport.png)
 
@@ -2867,41 +2942,43 @@ The bare id (`#tasks:model1`) has no meaning and must not be used.
 
 ##### Validation Rules
 
-**`ModelImport-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelImport that does not match any other numbered rule.
+**`ModelImport-0000`** (error) - The element fails a JSON Schema constraint attributable to ModelImport that does not match any other numbered rule. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ModelImport (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ModelImport-0001`** (error) - The location attribute of a ModelImport is required.
+**`ModelImport-0001`** (error) - The location attribute of a ModelImport is required. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0001.md))
 
 > `location` is required.
 
-**`ModelImport-0002`** (error) - When the value of location of a ModelImport is provided directly, it must be a URI string.
+**`ModelImport-0002`** (error) - When the value of location of a ModelImport is provided directly, it must be a URI string. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0002.md))
 
 > `location` is `URIOrRef`: the value, when not a reference, must be a URI string.
 
-**`ModelImport-0003`** (error) - When the value of location of a ModelImport is a reference, it must be a reference to a URI string.
+**`ModelImport-0003`** (error) - When the value of location of a ModelImport is a reference, it must be a reference to a URI string. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0003.md))
 
 > `location` is `URIOrRef`: when the value is a reference, it must resolve to a URI string.
 
-**`ModelImport-0004`** (error) - The language attribute of a ModelImport is required.
+**`ModelImport-0004`** (error) - The language attribute of a ModelImport is required. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0004.md))
 
 > `language` is required.
 
-**`ModelImport-0005`** (error) - When the value of language of a ModelImport is provided directly, it must be a URN string.
+**`ModelImport-0005`** (error) - When the value of language of a ModelImport is provided directly, it must be a URN string. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0005.md))
 
 > `language` is `URNOrRef`: the value, when not a reference, must be a URN string.
 
-**`ModelImport-0006`** (error) - When the value of language of a ModelImport is a reference, it must be a reference to a URN string.
+**`ModelImport-0006`** (error) - When the value of language of a ModelImport is a reference, it must be a reference to a URN string. ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0006.md))
 
 > `language` is `URNOrRef`: when the value is a reference, it must resolve to a URN string.
 
-**`ModelImport-0007`** (error) - The _type attribute of a ModelImport must be "modelImport".
+**`ModelImport-0007`** (error) - The _type attribute of a ModelImport must be "modelImport". ([source](specsheets/tasks/ModelImport/v1.0.0/validation/ModelImport-0007.md))
 
 > `_type` is the discriminator field. For `ModelImport` it must always equal `"modelImport"`.
 
 #### NumericRange
+
+*Source: [specsheets/tasks/NumericRange/v1.0.0/description.md](specsheets/tasks/NumericRange/v1.0.0/description.md)*
 
 ![NumericRange UML diagram](specsheets/tasks/Range/v1.0.0/Range.png)
 
@@ -2970,65 +3047,67 @@ Only valid when `NumericRange` is used directly as a `tasks` dictionary entry. A
 
 ##### Validation Rules
 
-**`NumericRange-0000`** (error) - The element fails a JSON Schema constraint attributable to NumericRange that does not match any other numbered rule.
+**`NumericRange-0000`** (error) - The element fails a JSON Schema constraint attributable to NumericRange that does not match any other numbered rule. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to NumericRange (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`NumericRange-0001`** (error) - When the value of start of a NumericRange is provided directly, it must be a number.
+**`NumericRange-0001`** (error) - When the value of start of a NumericRange is provided directly, it must be a number. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0001.md))
 
 > `start` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`NumericRange-0002`** (error) - When the value of start of a NumericRange is a reference, it must be a reference to a number.
+**`NumericRange-0002`** (error) - When the value of start of a NumericRange is a reference, it must be a reference to a number. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0002.md))
 
 > `start` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`NumericRange-0003`** (error) - When the value of end of a NumericRange is provided directly, it must be a number.
+**`NumericRange-0003`** (error) - When the value of end of a NumericRange is provided directly, it must be a number. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0003.md))
 
 > `end` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`NumericRange-0004`** (error) - When the value of end of a NumericRange is a reference, it must be a reference to a number.
+**`NumericRange-0004`** (error) - When the value of end of a NumericRange is a reference, it must be a reference to a number. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0004.md))
 
 > `end` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`NumericRange-0005`** (error) - When the value of interval of a NumericRange is provided directly, it must be a positive number (> 0).
+**`NumericRange-0005`** (error) - When the value of interval of a NumericRange is provided directly, it must be a positive number (> 0). ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0005.md))
 
 > `interval` is `PositiveDoubleOrRef`: the value, when not a reference, must be a positive number (> 0).
 
-**`NumericRange-0006`** (error) - When the value of interval of a NumericRange is a reference, it must be a reference to a positive number (> 0).
+**`NumericRange-0006`** (error) - When the value of interval of a NumericRange is a reference, it must be a reference to a positive number (> 0). ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0006.md))
 
 > `interval` is `PositiveDoubleOrRef`: when the value is a reference, it must resolve to a positive number (> 0).
 
-**`NumericRange-0007`** (error) - When the value of numberOfSteps of a NumericRange is provided directly, it must be a positive integer.
+**`NumericRange-0007`** (error) - When the value of numberOfSteps of a NumericRange is provided directly, it must be a positive integer. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0007.md))
 
 > `numberOfSteps` is `PositiveIntegerOrRef`: the value, when not a reference, must be a positive integer.
 
-**`NumericRange-0008`** (error) - When the value of numberOfSteps of a NumericRange is a reference, it must be a reference to a positive integer.
+**`NumericRange-0008`** (error) - When the value of numberOfSteps of a NumericRange is a reference, it must be a reference to a positive integer. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0008.md))
 
 > `numberOfSteps` is `PositiveIntegerOrRef`: when the value is a reference, it must resolve to a positive integer.
 
-**`NumericRange-0009`** (error) - When the value of scale of a NumericRange is provided directly, it must be one of 'linear', 'log10'.
+**`NumericRange-0009`** (error) - When the value of scale of a NumericRange is provided directly, it must be one of 'linear', 'log10'. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0009.md))
 
 > `ScaleType` is defined in `core/Types` with the allowed values 'linear', 'log10' (see `core/Types/v1.0.0/schema.json`).
 
-**`NumericRange-0010`** (error) - When the value of scale of a NumericRange is a reference, it must be a reference to a valid ScaleType value.
+**`NumericRange-0010`** (error) - When the value of scale of a NumericRange is a reference, it must be a reference to a valid ScaleType value. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0010.md))
 
 > `scale` is `ScaleTypeOrRef`: when the value is a reference, it must resolve to a valid ScaleType value.
 
-**`NumericRange-0011`** (error) - When the value of values of a NumericRange is provided directly, it must be an array of NumberOrRef objects.
+**`NumericRange-0011`** (error) - When the value of values of a NumericRange is provided directly, it must be an array of NumberOrRef objects. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0011.md))
 
 > `values` is `array of NumberOrRef or SIdRef`: the value, when not a reference, must be an array of NumberOrRef objects.
 
-**`NumericRange-0012`** (error) - When the value of values of a NumericRange is a reference, it must be a reference to an array of NumberOrRef objects.
+**`NumericRange-0012`** (error) - When the value of values of a NumericRange is a reference, it must be a reference to an array of NumberOrRef objects. ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0012.md))
 
 > `values` is `array of NumberOrRef or SIdRef`: when the value is a reference, it must resolve to an array of NumberOrRef objects.
 
-**`NumericRange-0013`** (error) - The _type attribute of a NumericRange must be "numericRange".
+**`NumericRange-0013`** (error) - The _type attribute of a NumericRange must be "numericRange". ([source](specsheets/tasks/NumericRange/v1.0.0/validation/NumericRange-0013.md))
 
 > `_type` is the discriminator field. For `NumericRange` it must always equal `"numericRange"`.
 
 #### OneStepODESimulation
+
+*Source: [specsheets/tasks/OneStepODESimulation/v1.0.0/description.md](specsheets/tasks/OneStepODESimulation/v1.0.0/description.md)*
 
 ![OneStepODESimulation UML diagram](specsheets/tasks/OneStepODESimulation/v1.0.0/OneStepODESimulation.png)
 
@@ -3143,41 +3222,43 @@ The final values of `outputVariables` after stepping by `independentStep`, acces
 
 ##### Validation Rules
 
-**`OneStepODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to OneStepODESimulation that does not match any other numbered rule.
+**`OneStepODESimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to OneStepODESimulation that does not match any other numbered rule. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to OneStepODESimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`OneStepODESimulation-0001`** (error) - The model attribute of an OneStepODESimulation is required.
+**`OneStepODESimulation-0001`** (error) - The model attribute of an OneStepODESimulation is required. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0001.md))
 
 > `model` is required.
 
-**`OneStepODESimulation-0002`** (error) - The independentVariable attribute of an OneStepODESimulation is required.
+**`OneStepODESimulation-0002`** (error) - The independentVariable attribute of an OneStepODESimulation is required. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`OneStepODESimulation-0003`** (error) - The outputVariables attribute of an OneStepODESimulation is required.
+**`OneStepODESimulation-0003`** (error) - The outputVariables attribute of an OneStepODESimulation is required. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`OneStepODESimulation-0004`** (error) - The independentStep attribute of an OneStepODESimulation is required.
+**`OneStepODESimulation-0004`** (error) - The independentStep attribute of an OneStepODESimulation is required. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0004.md))
 
 > `independentStep` is required.
 
-**`OneStepODESimulation-0005`** (error) - When the value of independentStep of an OneStepODESimulation is provided directly, it must be a number.
+**`OneStepODESimulation-0005`** (error) - When the value of independentStep of an OneStepODESimulation is provided directly, it must be a number. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0005.md))
 
 > `independentStep` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`OneStepODESimulation-0006`** (error) - When the value of independentStep of an OneStepODESimulation is a reference, it must be a reference to a number.
+**`OneStepODESimulation-0006`** (error) - When the value of independentStep of an OneStepODESimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0006.md))
 
 > `independentStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`OneStepODESimulation-0007`** (error) - The _type attribute of an OneStepODESimulation must be "oneStepODE".
+**`OneStepODESimulation-0007`** (error) - The _type attribute of an OneStepODESimulation must be "oneStepODE". ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0007.md))
 
 > `_type` is the discriminator field. For `OneStepODESimulation` it must always equal `"oneStepODE"`.
 
 #### OneStepStochasticSimulation
+
+*Source: [specsheets/tasks/OneStepStochasticSimulation/v1.0.0/description.md](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/description.md)*
 
 ![OneStepStochasticSimulation UML diagram](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/OneStepStochasticSimulation.png)
 
@@ -3263,37 +3344,39 @@ Additional possible outputs beyond the three standard ones:
 
 ##### Validation Rules
 
-**`OneStepStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to OneStepStochasticSimulation that does not match any other numbered rule.
+**`OneStepStochasticSimulation-0000`** (error) - The element fails a JSON Schema constraint attributable to OneStepStochasticSimulation that does not match any other numbered rule. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to OneStepStochasticSimulation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`OneStepStochasticSimulation-0001`** (error) - The model attribute of an OneStepStochasticSimulation is required.
+**`OneStepStochasticSimulation-0001`** (error) - The model attribute of an OneStepStochasticSimulation is required. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0001.md))
 
 > `model` is required.
 
-**`OneStepStochasticSimulation-0002`** (error) - The independentVariable attribute of an OneStepStochasticSimulation is required.
+**`OneStepStochasticSimulation-0002`** (error) - The independentVariable attribute of an OneStepStochasticSimulation is required. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0002.md))
 
 > `independentVariable` is required.
 
-**`OneStepStochasticSimulation-0003`** (error) - The outputVariables attribute of an OneStepStochasticSimulation is required.
+**`OneStepStochasticSimulation-0003`** (error) - The outputVariables attribute of an OneStepStochasticSimulation is required. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0003.md))
 
 > `outputVariables` is required.
 
-**`OneStepStochasticSimulation-0004`** (error) - When the value of independentStep of an OneStepStochasticSimulation is provided directly, it must be a number.
+**`OneStepStochasticSimulation-0004`** (error) - When the value of independentStep of an OneStepStochasticSimulation is provided directly, it must be a number. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0004.md))
 
 > `independentStep` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`OneStepStochasticSimulation-0005`** (error) - When the value of independentStep of an OneStepStochasticSimulation is a reference, it must be a reference to a number.
+**`OneStepStochasticSimulation-0005`** (error) - When the value of independentStep of an OneStepStochasticSimulation is a reference, it must be a reference to a number. ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0005.md))
 
 > `independentStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`OneStepStochasticSimulation-0006`** (error) - The _type attribute of an OneStepStochasticSimulation must be "oneStepStochastic".
+**`OneStepStochasticSimulation-0006`** (error) - The _type attribute of an OneStepStochasticSimulation must be "oneStepStochastic". ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0006.md))
 
 > `_type` is the discriminator field. For `OneStepStochasticSimulation` it must always equal `"oneStepStochastic"`.
 
 #### ParameterRange
+
+*Source: [specsheets/tasks/ParameterRange/v1.0.0/description.md](specsheets/tasks/ParameterRange/v1.0.0/description.md)*
 
 ![ParameterRange UML diagram](specsheets/tasks/Range/v1.0.0/Range.png)
 
@@ -3357,29 +3440,31 @@ Only valid when `ParameterRange` is used directly as a `tasks` dictionary entry.
 
 ##### Validation Rules
 
-**`ParameterRange-0000`** (error) - The element fails a JSON Schema constraint attributable to ParameterRange that does not match any other numbered rule.
+**`ParameterRange-0000`** (error) - The element fails a JSON Schema constraint attributable to ParameterRange that does not match any other numbered rule. ([source](specsheets/tasks/ParameterRange/v1.0.0/validation/ParameterRange-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ParameterRange (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ParameterRange-0001`** (error) - The modelElement attribute of a ParameterRange is required.
+**`ParameterRange-0001`** (error) - The modelElement attribute of a ParameterRange is required. ([source](specsheets/tasks/ParameterRange/v1.0.0/validation/ParameterRange-0001.md))
 
 > `modelElement` is required.
 
-**`ParameterRange-0002`** (error) - When the value of modelElement of a ParameterRange is provided directly, it must be a string.
+**`ParameterRange-0002`** (error) - When the value of modelElement of a ParameterRange is provided directly, it must be a string. ([source](specsheets/tasks/ParameterRange/v1.0.0/validation/ParameterRange-0002.md))
 
 > `modelElement` is `StringOrRef`: the value, when not a reference, must be a string.
 
-**`ParameterRange-0003`** (error) - When the value of modelElement of a ParameterRange is a reference, it must be a reference to a string.
+**`ParameterRange-0003`** (error) - When the value of modelElement of a ParameterRange is a reference, it must be a reference to a string. ([source](specsheets/tasks/ParameterRange/v1.0.0/validation/ParameterRange-0003.md))
 
 > `modelElement` is `StringOrRef`: when the value is a reference, it must resolve to a string.
 
-**`ParameterRange-0016`** (error) - The _type attribute of a ParameterRange must be "parameterRange".
+**`ParameterRange-0016`** (error) - The _type attribute of a ParameterRange must be "parameterRange". ([source](specsheets/tasks/ParameterRange/v1.0.0/validation/ParameterRange-0016.md))
 
 > `_type` is the discriminator field. For `ParameterRange` it must always equal `"parameterRange"`.
 
 #### ParameterScan
+
+*Source: [specsheets/tasks/ParameterScan/v1.0.0/description.md](specsheets/tasks/ParameterScan/v1.0.0/description.md)*
 
 ![ParameterScan UML diagram](specsheets/tasks/ParameterScan/v1.0.0/ParameterScan.png)
 
@@ -3390,7 +3475,7 @@ Only valid when `ParameterRange` is used directly as a `tasks` dictionary entry.
 
 ##### What it does
 
-Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement`, which must be an id within the child `model`. One of the `subTasks` must reference the scan's `model` child (`#tasks:[scanid]:model`) as its own input; the model is initialized with every combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks.
+Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement` (ParameterScan-0007), which must be an id within the child `model`; the `modelElement` also serves as the entry's name in `[id].ranges` and `[id].indexes`. One of the `subTasks` must reference the scan's `model` child (`#tasks:[scanid]:model`) as its own input; the model is initialized with every combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks. Within the loop, the current value and index of each range are available as `[id].ranges` and `[id].indexes` (see Outputs below).
 
 ##### Attributes
 
@@ -3417,7 +3502,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`model`** (SIdRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`parameterRanges`** (array of ParameterRangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
+**`parameterRanges`** (array of ParameterRangeInline, required) - The ranges to scan; at least one. The `modelElement` of each entry must be distinct within the scan (ParameterScan-0007), and labels that entry in `[id].ranges` and `[id].indexes`.
 
 
 ##### Outputs
@@ -3425,7 +3510,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 `[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges`, plus one further dimension sized by the number of entries in `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
+    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps, and each labeled with that range's `modelElement`), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
@@ -3434,39 +3519,46 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation collapses *all* of `[id]`'s scanned-range dimensions together (per `Repeat`, the applied dimension defaults to 'the Repeat' itself - here, the whole combined scan) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
+- `[id].ranges`: Within the loop only, the current value of each of the scan's `parameterRanges`.
+    - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement`. For example, with children whose `modelElement`s are `calc`, `phos`, and `ant`, it holds the current values of `calc`, `phos`, and `ant`, in that order, labeled accordingly.
+- `[id].indexes`: Within the loop only, the current index into each of the scan's `parameterRanges`.
+    - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement` - the current index of `calc`, `phos`, and `ant`, in that order, in the example above.
+
 ##### Validation Rules
 
-**`ParameterScan-0000`** (error) - The element fails a JSON Schema constraint attributable to ParameterScan that does not match any other numbered rule.
+**`ParameterScan-0000`** (error) - The element fails a JSON Schema constraint attributable to ParameterScan that does not match any other numbered rule. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to ParameterScan (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`ParameterScan-0001`** (error) - The model attribute of a ParameterScan is required.
+**`ParameterScan-0001`** (error) - The model attribute of a ParameterScan is required. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0001.md))
 
 > `model` is required.
 
-**`ParameterScan-0002`** (error) - The model attribute of a ParameterScan, if present, must be a reference (a string starting with '#').
+**`ParameterScan-0002`** (error) - The model attribute of a ParameterScan, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0002.md))
 
 > `model` is `SIdRef` - always a reference, never a literal value.
 
-**`ParameterScan-0003`** (error) - The parameterRanges attribute of a ParameterScan is required.
+**`ParameterScan-0003`** (error) - The parameterRanges attribute of a ParameterScan is required. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0003.md))
 
 > `parameterRanges` is required.
 
-**`ParameterScan-0004`** (error) - The parameterRanges attribute of a ParameterScan must be an array of ParameterRangeInline objects.
+**`ParameterScan-0004`** (error) - The parameterRanges attribute of a ParameterScan must be an array of ParameterRangeInline objects. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0004.md))
 
 > `parameterRanges` is `array of ParameterRangeInline`: it must be an array of ParameterRangeInline objects.
 
-**`ParameterScan-0005`** (error) - The subTasks attribute of a ParameterScan is required.
+**`ParameterScan-0005`** (error) - The subTasks attribute of a ParameterScan is required. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0005.md))
 
 > `subTasks` is required.
 
-**`ParameterScan-0006`** (error) - The _type attribute of a ParameterScan must be "parameterScan".
+**`ParameterScan-0006`** (error) - The _type attribute of a ParameterScan must be "parameterScan". ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0006.md))
 
 > `_type` is the discriminator field. For `ParameterScan` it must always equal `"parameterScan"`.
 
 #### Range
+
+*Source: [specsheets/tasks/Range/v1.0.0/description.md](specsheets/tasks/Range/v1.0.0/description.md)*
 
 ![Range UML diagram](specsheets/tasks/Range/v1.0.0/Range.png)
 
@@ -3512,25 +3604,25 @@ Only valid when `Range` is used directly as a `tasks` dictionary entry. As an em
 
 ##### Validation Rules
 
-**`Range-0000`** (error) - The element fails a JSON Schema constraint attributable to Range that does not match any other numbered rule.
+**`Range-0000`** (error) - The element fails a JSON Schema constraint attributable to Range that does not match any other numbered rule. ([source](specsheets/tasks/Range/v1.0.0/validation/Range-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Range (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Range-0001`** (error) - When the value of values of a Range is provided directly, it must be an array of AnyValueOrRef objects.
+**`Range-0001`** (error) - When the value of values of a Range is provided directly, it must be an array of AnyValueOrRef objects. ([source](specsheets/tasks/Range/v1.0.0/validation/Range-0001.md))
 
 > `values` is `array of AnyValueOrRef or SIdRef`: the value, when not a reference, must be an array of AnyValueOrRef objects.
 
-**`Range-0002`** (error) - When the value of values of a Range is a reference, it must be a reference to an array of AnyValueOrRef objects.
+**`Range-0002`** (error) - When the value of values of a Range is a reference, it must be a reference to an array of AnyValueOrRef objects. ([source](specsheets/tasks/Range/v1.0.0/validation/Range-0002.md))
 
 > `values` is `array of AnyValueOrRef or SIdRef`: when the value is a reference, it must resolve to an array of AnyValueOrRef objects.
 
-**`Range-0003`** (error) - The _type attribute of a Range must be "range".
+**`Range-0003`** (error) - The _type attribute of a Range must be "range". ([source](specsheets/tasks/Range/v1.0.0/validation/Range-0003.md))
 
 > `_type` is the discriminator field. For `Range` it must always equal `"range"`.
 
-**`Range-0004`** (error) - A value that must resolve to a concrete Range subtype must declare a _type attribute.
+**`Range-0004`** (error) - A value that must resolve to a concrete Range subtype must declare a _type attribute. ([source](specsheets/tasks/Range/v1.0.0/validation/Range-0004.md))
 
 > A narrower case of Range-0000's catch-all: fires specifically when
 > RangeInline's generated oneOf fails because _type is missing entirely,
@@ -3539,6 +3631,8 @@ Only valid when `Range` is used directly as a `tasks` dictionary entry. As an em
 > see core-spec.md Section 8 and Design.md's Classes section.
 
 #### RelabelData
+
+*Source: [specsheets/tasks/RelabelData/v1.0.0/description.md](specsheets/tasks/RelabelData/v1.0.0/description.md)*
 
 ![RelabelData UML diagram](specsheets/tasks/RelabelData/v1.0.0/RelabelData.png)
 
@@ -3581,37 +3675,39 @@ The relabeled `AnnotatedData`, accessible as `[id]`.
 
 ##### Validation Rules
 
-**`RelabelData-0000`** (error) - The element fails a JSON Schema constraint attributable to RelabelData that does not match any other numbered rule.
+**`RelabelData-0000`** (error) - The element fails a JSON Schema constraint attributable to RelabelData that does not match any other numbered rule. ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to RelabelData (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`RelabelData-0001`** (error) - The input attribute of a RelabelData is required.
+**`RelabelData-0001`** (error) - The input attribute of a RelabelData is required. ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0001.md))
 
 > `input` is required.
 
-**`RelabelData-0002`** (error) - The input attribute of a RelabelData, if present, must be a reference (a string starting with '#').
+**`RelabelData-0002`** (error) - The input attribute of a RelabelData, if present, must be a reference (a string starting with '#'). ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0002.md))
 
 > `input` is `SIdRef` - always a reference, never a literal value.
 
-**`RelabelData-0003`** (error) - The labels attribute of a RelabelData is required.
+**`RelabelData-0003`** (error) - The labels attribute of a RelabelData is required. ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0003.md))
 
 > `labels` is required.
 
-**`RelabelData-0004`** (error) - When the value of labels of a RelabelData is provided directly, it must be an array of strings.
+**`RelabelData-0004`** (error) - When the value of labels of a RelabelData is provided directly, it must be an array of strings. ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0004.md))
 
 > `labels` is `ListOfStringsOrRef`: the value, when not a reference, must be an array of strings.
 
-**`RelabelData-0005`** (error) - When the value of labels of a RelabelData is a reference, it must be a reference to an array of strings.
+**`RelabelData-0005`** (error) - When the value of labels of a RelabelData is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0005.md))
 
 > `labels` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
 
-**`RelabelData-0006`** (error) - The _type attribute of a RelabelData must be "relabelData".
+**`RelabelData-0006`** (error) - The _type attribute of a RelabelData must be "relabelData". ([source](specsheets/tasks/RelabelData/v1.0.0/validation/RelabelData-0006.md))
 
 > `_type` is the discriminator field. For `RelabelData` it must always equal `"relabelData"`.
 
 #### Repeat
+
+*Source: [specsheets/tasks/Repeat/v1.0.0/description.md](specsheets/tasks/Repeat/v1.0.0/description.md)*
 
 ![Repeat UML diagram](specsheets/tasks/Repeat/v1.0.0/Repeat.png)
 
@@ -3623,11 +3719,11 @@ The relabeled `AnnotatedData`, accessible as `[id]`.
 
 Like SED-ML Level 1's RepeatedTask, SED2 needs to repeat a group of tasks multiple times. `Repeat` is the set of fields shared by all three concrete subclasses (`Scatter`, `Loop`, `ParameterScan`), composed via `allOf` rather than instantiated on its own - the prose spec calls this abstract concept simply "Repeat".
 
-The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own `range`/`index` (the current iteration's range value and position, available as `[id].range`/`[id].index` - see Outputs below). `outputVariableMap` defines the columns of the repeat's own `[id]` output: the first column is always the range values, and each further named entry maps an output column name to a value produced by a subTask; if empty, `[id]` contains only the range values. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
+The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own per-iteration outputs (the current iteration's range value and position: `[id].range`/`[id].index` for `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` for `ParameterScan` - see those classes). `outputVariableMap` (optional) defines the columns of the repeat's own `[id]` output: each named entry maps an output column name to a value produced by a subTask. `Scatter` and `Loop` additionally make the first column the range values, so for them `[id]` contains only the range values if `outputVariableMap` is omitted; see each subclass for its exact `[id]` shape. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
 
 A `Repeat`-derived task must define at least one of `outputVariableMap` or `aggregateOutputVariables`.
 
-`range` (a `Range`/`NumericRange`/`ParameterRange`) is shared here rather than being redefined separately on each subclass - `Loop` and `Scatter` both use it directly; `ParameterScan` does not (it uses `parameterRanges` instead).
+`Repeat` itself has no `range`: `Loop` and `Scatter` each define their own required `range` child (a `Range`/`NumericRange`/`ParameterRange`), and `ParameterScan` uses `parameterRanges` instead.
 
 ##### Attributes
 
@@ -3636,9 +3732,8 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
 | `subTasks` | object (values: AbstractTask) | no |  |
-| `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
+| `outputVariableMap` | object (values: SIdRef) or SIdRef | no | Optional, but at least one of this or `aggregateOutputVariables` must be provided (Repeat-0006). |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no | Used by `Loop`/`Scatter`; not used by `ParameterScan` (see `parameterRanges` there instead). |
 
 ###### Attribute details
 
@@ -3648,66 +3743,57 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
-
 
 ##### Outputs
 
-Not applicable on its own - see `Scatter`, `Loop`, and `ParameterScan` for their concrete output shapes (`[id]` per `outputVariableMap`, `[id].aggregates` per `aggregateOutputVariables`).
-
-- `[id].range`: Within the loop, the current value of `range`. _(No description yet - placeholder, needs to be filled in: exact reference form and availability when `range` is unset.)_
-- `[id].index`: Within the loop, the current index into `range`. _(No description yet - placeholder, needs to be filled in.)_
+Not applicable on its own - see `Scatter`, `Loop`, and `ParameterScan` for their concrete output shapes (`[id]` per `outputVariableMap`, `[id].aggregates` per `aggregateOutputVariables`). The per-iteration range outputs (`[id].range`/`[id].index` on `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` on `ParameterScan`) belong to those subclasses, not to `Repeat`.
 
 Shared mixin for the three `Repeat` subclasses - not instantiated on its own; see `Scatter`, `Loop`, `ParameterScan`.
 
 ##### Validation Rules
 
-**`Repeat-0000`** (error) - The element fails a JSON Schema constraint attributable to Repeat that does not match any other numbered rule.
+**`Repeat-0000`** (error) - The element fails a JSON Schema constraint attributable to Repeat that does not match any other numbered rule. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Repeat (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Repeat-0001`** (error) - The subTasks attribute of a Repeat must be an object whose values are AbstractTask.
+**`Repeat-0001`** (error) - The subTasks attribute of a Repeat must be an object whose values are AbstractTask. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0001.md))
 
 > `subTasks` is `object (values: AbstractTask)` in Repeat: it must be an object whose values are AbstractTask.
 
-**`Repeat-0002`** (error) - When the value of outputVariableMap of a Repeat is provided directly, it must be an object whose values are SIdRef.
+**`Repeat-0002`** (error) - When the value of outputVariableMap of a Repeat is provided directly, it must be an object whose values are SIdRef. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0002.md))
 
 > `outputVariableMap` is `object (values: SIdRef) or SIdRef` in Repeat: the value, when not a reference, must be an object whose values are SIdRef.
 
-**`Repeat-0003`** (error) - When the value of outputVariableMap of a Repeat is a reference, it must be a reference to an object whose values are SIdRef.
+**`Repeat-0003`** (error) - When the value of outputVariableMap of a Repeat is a reference, it must be a reference to an object whose values are SIdRef. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0003.md))
 
 > `outputVariableMap` is `object (values: SIdRef) or SIdRef` in Repeat: when the value is a reference, it must resolve to an object whose values are SIdRef.
 
-**`Repeat-0004`** (error) - The aggregateOutputVariables attribute of a Repeat must be an object whose values are AggregationCalculation.
+**`Repeat-0004`** (error) - The aggregateOutputVariables attribute of a Repeat must be an object whose values are AggregationCalculation. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0004.md))
 
 > `aggregateOutputVariables` is `object (values: AggregationCalculation)` in Repeat: it must be an object whose values are AggregationCalculation.
 
-**`Repeat-0005`** (error) - The range attribute of a Repeat, if present, must be a RangeInline object.
-
-> `range` is optional; when present, it must be a `Range`/`NumericRange`/`ParameterRange` object in its embedded `RangeInline` form.
-
-**`Repeat-0006`** (error) - A Repeat must provide at least one of outputVariableMap or aggregateOutputVariables.
+**`Repeat-0006`** (error) - A Repeat must provide at least one of outputVariableMap or aggregateOutputVariables. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0006.md))
 
 > Repeat's schema expresses this as an `anyOf` of two single-field `required`
 > alternatives rather than a flat `required` list, since either field alone
 > satisfies it. See core-spec.md Section 8 for the `x-anyof-required-rule-id`
 > keyword that wires this rule to that `anyOf`.
 
-**`Repeat-0008`** (error) - Every value in a Repeat's outputVariableMap must reference one of that Repeat's own subTasks, or an output of one.
+**`Repeat-0008`** (error) - Every value in a Repeat's outputVariableMap must reference one of that Repeat's own subTasks, or an output of one. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0008.md))
 
 > outputVariableMap defines the columns of the Repeat's [id] output, each
 > collected from a subTask per iteration. The reference may carry accessors and
 > indices into the subTask's output (e.g. '#tasks:loop1:subTasks:sim1['S1']'),
 > checked as usual by SEDBase-0008 through SEDBase-0011.
 
-**`Repeat-0009`** (error) - The input of every entry in a Repeat's aggregateOutputVariables must reference one of that Repeat's own subTasks, or an output of one.
+**`Repeat-0009`** (error) - The input of every entry in a Repeat's aggregateOutputVariables must reference one of that Repeat's own subTasks, or an output of one. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0009.md))
 
 > Same as Repeat-0008, for the AggregationCalculation entries that define
 > [id].aggregates.
 
-**`Repeat-0010`** (error) - An entry in a Repeat's aggregateOutputVariables must not define appliedDimensions.
+**`Repeat-0010`** (error) - An entry in a Repeat's aggregateOutputVariables must not define appliedDimensions. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0010.md))
 
 > Stated in Repeat's description.md. Could instead be expressed in the schema
 > (a dedicated AggregationCalculation variant without appliedDimensions) and
@@ -3715,6 +3801,8 @@ Shared mixin for the three `Repeat` subclasses - not instantiated on its own; se
 > reuses AggregationCalculation as-is.
 
 #### Scatter
+
+*Source: [specsheets/tasks/Scatter/v1.0.0/description.md](specsheets/tasks/Scatter/v1.0.0/description.md)*
 
 ![Scatter UML diagram](specsheets/tasks/Scatter/v1.0.0/Scatter.png)
 
@@ -3725,7 +3813,7 @@ Shared mixin for the three `Repeat` subclasses - not instantiated on its own; se
 
 ##### What it does
 
-A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a `Range`/`NumericRange`/`ParameterRange`) defines one iteration per element.
+A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a required `Range`/`NumericRange`/`ParameterRange` child) defines one iteration per element.
 
 ##### Attributes
 
@@ -3737,7 +3825,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `subTasks` | object (values: AbstractTask) | yes |  |
 | `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no |  |
+| `range` | RangeInline | yes |  |
 
 ###### Attribute details
 
@@ -3749,7 +3837,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`range`** (RangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
@@ -3766,28 +3854,30 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation function collapses the `range` dimension of `[id]` (per `Repeat`, the applied dimension defaults to 'the Repeat' itself, i.e. this one) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
-- `[id].range`: Within each iteration, the current value of `range` (see `Repeat`).
+- `[id].range`: Within each iteration, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within each iteration, the current index into `range`.
+- `[id].index`: Within each iteration, the current index into `range`. Always valid.
     - Dimensions: Scalar (0-D) per iteration.
 
 ##### Validation Rules
 
-**`Scatter-0000`** (error) - The element fails a JSON Schema constraint attributable to Scatter that does not match any other numbered rule.
+**`Scatter-0000`** (error) - The element fails a JSON Schema constraint attributable to Scatter that does not match any other numbered rule. ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Scatter (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Scatter-0001`** (error) - The subTasks attribute of a Scatter is required.
+**`Scatter-0001`** (error) - The subTasks attribute of a Scatter is required. ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0001.md))
 
 > `subTasks` is required.
 
-**`Scatter-0003`** (error) - The _type attribute of a Scatter must be "scatter".
+**`Scatter-0003`** (error) - The _type attribute of a Scatter must be "scatter". ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0003.md))
 
 > `_type` is the discriminator field. For `Scatter` it must always equal `"scatter"`.
 
 #### Span
+
+*Source: [specsheets/tasks/Span/v1.0.0/description.md](specsheets/tasks/Span/v1.0.0/description.md)*
 
 ![Span UML diagram](specsheets/tasks/Span/v1.0.0/Span.png)
 
@@ -3832,41 +3922,43 @@ Not independently referenceable - a `Span` only exists as a named child of the t
 
 ##### Validation Rules
 
-**`Span-0000`** (error) - The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule.
+**`Span-0000`** (error) - The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Span (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Span-0001`** (error) - The start attribute of a Span is required.
+**`Span-0001`** (error) - The start attribute of a Span is required. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0001.md))
 
 > `start` is required.
 
-**`Span-0002`** (error) - When the value of start of a Span is provided directly, it must be a number.
+**`Span-0002`** (error) - When the value of start of a Span is provided directly, it must be a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0002.md))
 
 > `start` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`Span-0003`** (error) - When the value of start of a Span is a reference, it must be a reference to a number.
+**`Span-0003`** (error) - When the value of start of a Span is a reference, it must be a reference to a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0003.md))
 
 > `start` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`Span-0004`** (error) - The end attribute of a Span is required.
+**`Span-0004`** (error) - The end attribute of a Span is required. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0004.md))
 
 > `end` is required.
 
-**`Span-0005`** (error) - When the value of end of a Span is provided directly, it must be a number.
+**`Span-0005`** (error) - When the value of end of a Span is provided directly, it must be a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0005.md))
 
 > `end` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`Span-0006`** (error) - When the value of end of a Span is a reference, it must be a reference to a number.
+**`Span-0006`** (error) - When the value of end of a Span is a reference, it must be a reference to a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0006.md))
 
 > `end` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`Span-0007`** (error) - The _type attribute of a Span must be "span".
+**`Span-0007`** (error) - The _type attribute of a Span must be "span". ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0007.md))
 
 > `_type` is the discriminator field. For `Span` it must always equal `"span"`.
 
 #### SteadyState
+
+*Source: [specsheets/tasks/SteadyState/v1.0.0/description.md](specsheets/tasks/SteadyState/v1.0.0/description.md)*
 
 ![SteadyState UML diagram](specsheets/tasks/SteadyState/v1.0.0/SteadyState.png)
 
@@ -3879,7 +3971,7 @@ Not independently referenceable - a `Span` only exists as a named child of the t
 
 Computes the steady state of a model: where dX/dt = 0 for every varying element X of the model, with respect to the independent variable (usually time). `independentVariable` follows the same rules as the simulation tasks (either the model's own variable, or an implicit URN such as `urn:sedml:symbol:time`).
 
-This is an implementation of KISAO:0000407 (steady-state root-finding method).
+This is an implementation of KISAO:0000407 (steady-state root-finding method). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ##### Attributes
 
@@ -3891,7 +3983,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `model` | SIdRef | yes |  |
 | `independentVariable` | StringOrRef | no |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ###### Attribute details
 
@@ -3903,53 +3995,45 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
 
-The steady-state values of `outputVariables`, accessible as `[id]`. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+The steady-state values of `outputVariables`, accessible as `[id]`. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables`, at steady state.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
 
-`[id].model` is only produced when `outputModel` is `true`.
-
 ##### Validation Rules
 
-**`SteadyState-0000`** (error) - The element fails a JSON Schema constraint attributable to SteadyState that does not match any other numbered rule.
+**`SteadyState-0000`** (error) - The element fails a JSON Schema constraint attributable to SteadyState that does not match any other numbered rule. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to SteadyState (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`SteadyState-0001`** (error) - The model attribute of a SteadyState is required.
+**`SteadyState-0001`** (error) - The model attribute of a SteadyState is required. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0001.md))
 
 > `model` is required.
 
-**`SteadyState-0002`** (error) - The outputVariables attribute of a SteadyState is required.
+**`SteadyState-0002`** (error) - The outputVariables attribute of a SteadyState is required. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0002.md))
 
 > `outputVariables` is required.
 
-**`SteadyState-0003`** (error) - The _type attribute of a SteadyState must be "steadyState".
+**`SteadyState-0003`** (error) - The _type attribute of a SteadyState must be "steadyState". ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0003.md))
 
 > `_type` is the discriminator field. For `SteadyState` it must always equal `"steadyState"`.
 
-**`SteadyState-0004`** (error) - The independentVariable attribute of a SteadyState, if present, must be a string.
+**`SteadyState-0004`** (error) - The independentVariable attribute of a SteadyState, if present, must be a string. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0004.md))
 
 > `independentVariable` is `StringOrRef`, which resolves to a plain string type; when present, it must be a string.
 
-**`SteadyState-0005`** (error) - When the value of outputModel of a SteadyState is provided directly, it must be a boolean.
-
-> `outputModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
-
-**`SteadyState-0006`** (error) - When the value of outputModel of a SteadyState is a reference, it must be a reference to a boolean.
-
-> `outputModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
-
 #### StringFormation
+
+*Source: [specsheets/tasks/StringFormation/v1.0.0/description.md](specsheets/tasks/StringFormation/v1.0.0/description.md)*
 
 ![StringFormation UML diagram](specsheets/tasks/StringFormation/v1.0.0/StringFormation.png)
 
@@ -3992,25 +4076,25 @@ Open question: the spec text accesses both the single-string and list-of-strings
 
 ##### Validation Rules
 
-**`StringFormation-0000`** (error) - The element fails a JSON Schema constraint attributable to StringFormation that does not match any other numbered rule.
+**`StringFormation-0000`** (error) - The element fails a JSON Schema constraint attributable to StringFormation that does not match any other numbered rule. ([source](specsheets/tasks/StringFormation/v1.0.0/validation/StringFormation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to StringFormation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`StringFormation-0001`** (error) - The concatenate attribute of a StringFormation is required.
+**`StringFormation-0001`** (error) - The concatenate attribute of a StringFormation is required. ([source](specsheets/tasks/StringFormation/v1.0.0/validation/StringFormation-0001.md))
 
 > `concatenate` is required.
 
-**`StringFormation-0002`** (error) - When the value of concatenate of a StringFormation is provided directly, it must be an array of values.
+**`StringFormation-0002`** (error) - When the value of concatenate of a StringFormation is provided directly, it must be an array of values. ([source](specsheets/tasks/StringFormation/v1.0.0/validation/StringFormation-0002.md))
 
 > `concatenate` is `ListOfAnyOrRef`: the value, when not a reference, must be an array of values.
 
-**`StringFormation-0003`** (error) - When the value of concatenate of a StringFormation is a reference, it must be a reference to an array of values.
+**`StringFormation-0003`** (error) - When the value of concatenate of a StringFormation is a reference, it must be a reference to an array of values. ([source](specsheets/tasks/StringFormation/v1.0.0/validation/StringFormation-0003.md))
 
 > `concatenate` is `ListOfAnyOrRef`: when the value is a reference, it must resolve to an array of values.
 
-**`StringFormation-0004`** (error) - The _type attribute of a StringFormation must be "stringFormation".
+**`StringFormation-0004`** (error) - The _type attribute of a StringFormation must be "stringFormation". ([source](specsheets/tasks/StringFormation/v1.0.0/validation/StringFormation-0004.md))
 
 > `_type` is the discriminator field. For `StringFormation` it must always equal `"stringFormation"`.
 
@@ -4019,6 +4103,8 @@ Open question: the spec text accesses both the single-string and list-of-strings
 ### Output Classes
 
 #### AbstractOutput
+
+*Source: [specsheets/outputs/AbstractOutput/v1.0.0/description.md](specsheets/outputs/AbstractOutput/v1.0.0/description.md)*
 
 ![AbstractOutput UML diagram](specsheets/outputs/AbstractOutput/v1.0.0/AbstractOutput.png)
 
@@ -4054,17 +4140,17 @@ By design, nothing - an `AbstractOutput` is always a terminal node and is never 
 
 ##### Validation Rules
 
-**`AbstractOutput-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractOutput that does not match any other numbered rule.
+**`AbstractOutput-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractOutput that does not match any other numbered rule. ([source](specsheets/outputs/AbstractOutput/v1.0.0/validation/AbstractOutput-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractOutput (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractOutput-0001`** (error) - The outputParameters attribute of an AbstractOutput must be an array of OutputParameter objects.
+**`AbstractOutput-0001`** (error) - The outputParameters attribute of an AbstractOutput must be an array of OutputParameter objects. ([source](specsheets/outputs/AbstractOutput/v1.0.0/validation/AbstractOutput-0001.md))
 
 > `outputParameters` is `array of OutputParameter` in AbstractOutputCommon: it must be an array of OutputParameter objects.
 
-**`AbstractOutput-0002`** (error) - A value that must resolve to a concrete AbstractOutput subtype must declare a _type attribute.
+**`AbstractOutput-0002`** (error) - A value that must resolve to a concrete AbstractOutput subtype must declare a _type attribute. ([source](specsheets/outputs/AbstractOutput/v1.0.0/validation/AbstractOutput-0002.md))
 
 > A narrower case of AbstractOutput-0000's catch-all: fires specifically when
 > the generated oneOf fails because _type is missing entirely, rather than
@@ -4073,6 +4159,8 @@ By design, nothing - an `AbstractOutput` is always a terminal node and is never 
 > Classes section.
 
 #### Plot
+
+*Source: [specsheets/outputs/Plot/v1.0.0/description.md](specsheets/outputs/Plot/v1.0.0/description.md)*
 
 ![Plot UML diagram](specsheets/outputs/Plot/v1.0.0/Plot.png)
 
@@ -4117,45 +4205,47 @@ Shared mixin for `Plot2D`/`Plot3D` - not instantiated on its own. Every concrete
 
 ##### Validation Rules
 
-**`Plot-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot that does not match any other numbered rule.
+**`Plot-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot that does not match any other numbered rule. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Plot (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Plot-0001`** (error) - When the value of legend of a Plot is provided directly, it must be a boolean.
+**`Plot-0001`** (error) - When the value of legend of a Plot is provided directly, it must be a boolean. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0001.md))
 
 > `legend` is `BooleanOrRef` in Plot: the value, when not a reference, must be a boolean.
 
-**`Plot-0002`** (error) - When the value of legend of a Plot is a reference, it must be a reference to a boolean.
+**`Plot-0002`** (error) - When the value of legend of a Plot is a reference, it must be a reference to a boolean. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0002.md))
 
 > `legend` is `BooleanOrRef` in Plot: when the value is a reference, it must resolve to a boolean.
 
-**`Plot-0003`** (error) - When the value of height of a Plot is provided directly, it must be a number.
+**`Plot-0003`** (error) - When the value of height of a Plot is provided directly, it must be a number. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0003.md))
 
 > `height` is `NumberOrRef` in Plot: the value, when not a reference, must be a number.
 
-**`Plot-0004`** (error) - When the value of height of a Plot is a reference, it must be a reference to a number.
+**`Plot-0004`** (error) - When the value of height of a Plot is a reference, it must be a reference to a number. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0004.md))
 
 > `height` is `NumberOrRef` in Plot: when the value is a reference, it must resolve to a number.
 
-**`Plot-0005`** (error) - When the value of width of a Plot is provided directly, it must be a number.
+**`Plot-0005`** (error) - When the value of width of a Plot is provided directly, it must be a number. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0005.md))
 
 > `width` is `NumberOrRef` in Plot: the value, when not a reference, must be a number.
 
-**`Plot-0006`** (error) - When the value of width of a Plot is a reference, it must be a reference to a number.
+**`Plot-0006`** (error) - When the value of width of a Plot is a reference, it must be a reference to a number. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0006.md))
 
 > `width` is `NumberOrRef` in Plot: when the value is a reference, it must resolve to a number.
 
-**`Plot-0007`** (error) - The xAxis attribute of a Plot must be an Axis object.
+**`Plot-0007`** (error) - The xAxis attribute of a Plot must be an Axis object. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0007.md))
 
 > `xAxis` is `Axis` in Plot: it must be an Axis object.
 
-**`Plot-0008`** (error) - When the value of yAxis of a Plot is a reference, it must be a reference to a valid one of `"right"`, `"left"` value.
+**`Plot-0008`** (error) - When the value of yAxis of a Plot is a reference, it must be a reference to a valid one of `"right"`, `"left"` value. ([source](specsheets/outputs/Plot/v1.0.0/validation/Plot-0008.md))
 
 > `yAxis` is `one of `"right"`, `"left"` or SIdRef` in Plot: when the value is a reference, it must resolve to a valid one of `"right"`, `"left"` value.
 
 #### Plot2D
+
+*Source: [specsheets/outputs/Plot2D/v1.0.0/description.md](specsheets/outputs/Plot2D/v1.0.0/description.md)*
 
 ![Plot2D UML diagram](specsheets/outputs/Plot2D/v1.0.0/Plot2D.png)
 
@@ -4216,29 +4306,31 @@ Terminal node - see `AbstractOutput`.
 
 ##### Validation Rules
 
-**`Plot2D-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot2D that does not match any other numbered rule.
+**`Plot2D-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot2D that does not match any other numbered rule. ([source](specsheets/outputs/Plot2D/v1.0.0/validation/Plot2D-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Plot2D (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Plot2D-0001`** (error) - The curves attribute of a Plot2D is required.
+**`Plot2D-0001`** (error) - The curves attribute of a Plot2D is required. ([source](specsheets/outputs/Plot2D/v1.0.0/validation/Plot2D-0001.md))
 
 > `curves` is required.
 
-**`Plot2D-0002`** (error) - The curves attribute of a Plot2D must be an object whose values are Curve.
+**`Plot2D-0002`** (error) - The curves attribute of a Plot2D must be an object whose values are Curve. ([source](specsheets/outputs/Plot2D/v1.0.0/validation/Plot2D-0002.md))
 
 > `curves` is `object (values: Curve)`: it must be an object whose values are Curve.
 
-**`Plot2D-0003`** (error) - The rightYAxis attribute of a Plot2D must be an Axis object.
+**`Plot2D-0003`** (error) - The rightYAxis attribute of a Plot2D must be an Axis object. ([source](specsheets/outputs/Plot2D/v1.0.0/validation/Plot2D-0003.md))
 
 > `rightYAxis` is `Axis`: it must be an Axis object.
 
-**`Plot2D-0004`** (error) - The _type attribute of a Plot2D must be "plot2D".
+**`Plot2D-0004`** (error) - The _type attribute of a Plot2D must be "plot2D". ([source](specsheets/outputs/Plot2D/v1.0.0/validation/Plot2D-0004.md))
 
 > `_type` is the discriminator field. For `Plot2D` it must always equal `"plot2D"`.
 
 #### Plot3D
+
+*Source: [specsheets/outputs/Plot3D/v1.0.0/description.md](specsheets/outputs/Plot3D/v1.0.0/description.md)*
 
 ![Plot3D UML diagram](specsheets/outputs/Plot3D/v1.0.0/Plot3D.png)
 
@@ -4299,29 +4391,31 @@ Terminal node - see `AbstractOutput`.
 
 ##### Validation Rules
 
-**`Plot3D-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot3D that does not match any other numbered rule.
+**`Plot3D-0000`** (error) - The element fails a JSON Schema constraint attributable to Plot3D that does not match any other numbered rule. ([source](specsheets/outputs/Plot3D/v1.0.0/validation/Plot3D-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Plot3D (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Plot3D-0001`** (error) - The surfaces attribute of a Plot3D is required.
+**`Plot3D-0001`** (error) - The surfaces attribute of a Plot3D is required. ([source](specsheets/outputs/Plot3D/v1.0.0/validation/Plot3D-0001.md))
 
 > `surfaces` is required.
 
-**`Plot3D-0002`** (error) - The surfaces attribute of a Plot3D must be an object whose values are Surface.
+**`Plot3D-0002`** (error) - The surfaces attribute of a Plot3D must be an object whose values are Surface. ([source](specsheets/outputs/Plot3D/v1.0.0/validation/Plot3D-0002.md))
 
 > `surfaces` is `object (values: Surface)`: it must be an object whose values are Surface.
 
-**`Plot3D-0003`** (error) - The zAxis attribute of a Plot3D must be an Axis object.
+**`Plot3D-0003`** (error) - The zAxis attribute of a Plot3D must be an Axis object. ([source](specsheets/outputs/Plot3D/v1.0.0/validation/Plot3D-0003.md))
 
 > `zAxis` is `Axis`: it must be an Axis object.
 
-**`Plot3D-0004`** (error) - The _type attribute of a Plot3D must be "plot3D".
+**`Plot3D-0004`** (error) - The _type attribute of a Plot3D must be "plot3D". ([source](specsheets/outputs/Plot3D/v1.0.0/validation/Plot3D-0004.md))
 
 > `_type` is the discriminator field. For `Plot3D` it must always equal `"plot3D"`.
 
 #### Report
+
+*Source: [specsheets/outputs/Report/v1.0.0/description.md](specsheets/outputs/Report/v1.0.0/description.md)*
 
 ![Report UML diagram](specsheets/outputs/Report/v1.0.0/Report.png)
 
@@ -4366,25 +4460,27 @@ Terminal node - see `AbstractOutput`.
 
 ##### Validation Rules
 
-**`Report-0000`** (error) - The element fails a JSON Schema constraint attributable to Report that does not match any other numbered rule.
+**`Report-0000`** (error) - The element fails a JSON Schema constraint attributable to Report that does not match any other numbered rule. ([source](specsheets/outputs/Report/v1.0.0/validation/Report-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Report (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Report-0001`** (error) - The data attribute of a Report is required.
+**`Report-0001`** (error) - The data attribute of a Report is required. ([source](specsheets/outputs/Report/v1.0.0/validation/Report-0001.md))
 
 > `data` is required.
 
-**`Report-0002`** (error) - The data attribute of a Report, if present, must be a reference (a string starting with '#').
+**`Report-0002`** (error) - The data attribute of a Report, if present, must be a reference (a string starting with '#'). ([source](specsheets/outputs/Report/v1.0.0/validation/Report-0002.md))
 
 > `data` is `SIdRef` - always a reference, never a literal value.
 
-**`Report-0003`** (error) - The _type attribute of a Report must be "report".
+**`Report-0003`** (error) - The _type attribute of a Report must be "report". ([source](specsheets/outputs/Report/v1.0.0/validation/Report-0003.md))
 
 > `_type` is the discriminator field. For `Report` it must always equal `"report"`.
 
 #### Surface
+
+*Source: [specsheets/outputs/Surface/v1.0.0/description.md](specsheets/outputs/Surface/v1.0.0/description.md)*
 
 ![Surface UML diagram](specsheets/outputs/Surface/v1.0.0/Surface.png)
 
@@ -4438,57 +4534,57 @@ Not independently referenceable - only exists as a named child within a `Plot3D`
 
 ##### Validation Rules
 
-**`Surface-0000`** (error) - The element fails a JSON Schema constraint attributable to Surface that does not match any other numbered rule.
+**`Surface-0000`** (error) - The element fails a JSON Schema constraint attributable to Surface that does not match any other numbered rule. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Surface (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Surface-0001`** (error) - The surfaceType attribute of a Surface is required.
+**`Surface-0001`** (error) - The surfaceType attribute of a Surface is required. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0001.md))
 
 > `surfaceType` is required.
 
-**`Surface-0002`** (error) - When the value of surfaceType of a Surface is provided directly, it must be one of 'parametricCurve', 'surfaceMesh', 'surfaceContour', 'contour', 'heatMap', 'stackedCurves', 'bar'.
+**`Surface-0002`** (error) - When the value of surfaceType of a Surface is provided directly, it must be one of 'parametricCurve', 'surfaceMesh', 'surfaceContour', 'contour', 'heatMap', 'stackedCurves', 'bar'. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0002.md))
 
 > `SurfaceType` is defined in `core/Types` with the allowed values 'parametricCurve', 'surfaceMesh', 'surfaceContour', 'contour', 'heatMap', 'stackedCurves', 'bar' (see `core/Types/v1.0.0/schema.json`).
 
-**`Surface-0003`** (error) - When the value of surfaceType of a Surface is a reference, it must be a reference to a valid SurfaceType value.
+**`Surface-0003`** (error) - When the value of surfaceType of a Surface is a reference, it must be a reference to a valid SurfaceType value. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0003.md))
 
 > `surfaceType` is `SurfaceType or SIdRef`: when the value is a reference, it must resolve to a valid SurfaceType value.
 
-**`Surface-0004`** (error) - The x attribute of a Surface is required.
+**`Surface-0004`** (error) - The x attribute of a Surface is required. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0004.md))
 
 > `x` is required.
 
-**`Surface-0005`** (error) - The x attribute of a Surface, if present, must be a reference (a string starting with '#').
+**`Surface-0005`** (error) - The x attribute of a Surface, if present, must be a reference (a string starting with '#'). ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0005.md))
 
 > `x` is `SIdRef` - always a reference, never a literal value.
 
-**`Surface-0006`** (error) - The y attribute of a Surface is required.
+**`Surface-0006`** (error) - The y attribute of a Surface is required. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0006.md))
 
 > `y` is required.
 
-**`Surface-0007`** (error) - The y attribute of a Surface, if present, must be a reference (a string starting with '#').
+**`Surface-0007`** (error) - The y attribute of a Surface, if present, must be a reference (a string starting with '#'). ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0007.md))
 
 > `y` is `SIdRef` - always a reference, never a literal value.
 
-**`Surface-0008`** (error) - The z attribute of a Surface is required.
+**`Surface-0008`** (error) - The z attribute of a Surface is required. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0008.md))
 
 > `z` is required.
 
-**`Surface-0009`** (error) - The z attribute of a Surface, if present, must be a reference (a string starting with '#').
+**`Surface-0009`** (error) - The z attribute of a Surface, if present, must be a reference (a string starting with '#'). ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0009.md))
 
 > `z` is `SIdRef` - always a reference, never a literal value.
 
-**`Surface-0010`** (error) - The style attribute of a Surface, if present, must be a reference (a string starting with '#').
+**`Surface-0010`** (error) - The style attribute of a Surface, if present, must be a reference (a string starting with '#'). ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0010.md))
 
 > `style` is `SIdRef` - always a reference, never a literal value.
 
-**`Surface-0011`** (error) - When the value of order of a Surface is provided directly, it must be a non-negative integer.
+**`Surface-0011`** (error) - When the value of order of a Surface is provided directly, it must be a non-negative integer. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0011.md))
 
 > `order` is `NonNegativeIntegerOrRef`: the value, when not a reference, must be a non-negative integer.
 
-**`Surface-0012`** (error) - When the value of order of a Surface is a reference, it must be a reference to a non-negative integer.
+**`Surface-0012`** (error) - When the value of order of a Surface is a reference, it must be a reference to a non-negative integer. ([source](specsheets/outputs/Surface/v1.0.0/validation/Surface-0012.md))
 
 > `order` is `NonNegativeIntegerOrRef`: when the value is a reference, it must resolve to a non-negative integer.
 
@@ -4497,6 +4593,8 @@ Not independently referenceable - only exists as a named child within a `Plot3D`
 ### Auxiliary Classes
 
 #### AbstractCurve
+
+*Source: [specsheets/auxiliary/AbstractCurve/v1.0.0/description.md](specsheets/auxiliary/AbstractCurve/v1.0.0/description.md)*
 
 ![AbstractCurve UML diagram](specsheets/auxiliary/AbstractCurve/v1.0.0/AbstractCurve.png)
 
@@ -4544,41 +4642,41 @@ Not independently referenceable - `AbstractCurve` is never used directly; only i
 
 ##### Validation Rules
 
-**`AbstractCurve-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractCurve that does not match any other numbered rule.
+**`AbstractCurve-0000`** (error) - The element fails a JSON Schema constraint attributable to AbstractCurve that does not match any other numbered rule. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to AbstractCurve (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`AbstractCurve-0001`** (error) - The x attribute of an AbstractCurve is required.
+**`AbstractCurve-0001`** (error) - The x attribute of an AbstractCurve is required. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0001.md))
 
 > `x` is required.
 
-**`AbstractCurve-0002`** (error) - The x attribute of an AbstractCurve, if present, must be a reference (a string starting with '#').
+**`AbstractCurve-0002`** (error) - The x attribute of an AbstractCurve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0002.md))
 
 > `x` is `SIdRef` in AbstractCurveCommon - always a reference, never a literal value.
 
-**`AbstractCurve-0003`** (error) - When the value of order of an AbstractCurve is provided directly, it must be a non-negative integer.
+**`AbstractCurve-0003`** (error) - When the value of order of an AbstractCurve is provided directly, it must be a non-negative integer. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0003.md))
 
 > `order` is `NonNegativeIntegerOrRef` in AbstractCurveCommon: the value, when not a reference, must be a non-negative integer.
 
-**`AbstractCurve-0004`** (error) - When the value of order of an AbstractCurve is a reference, it must be a reference to a non-negative integer.
+**`AbstractCurve-0004`** (error) - When the value of order of an AbstractCurve is a reference, it must be a reference to a non-negative integer. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0004.md))
 
 > `order` is `NonNegativeIntegerOrRef` in AbstractCurveCommon: when the value is a reference, it must resolve to a non-negative integer.
 
-**`AbstractCurve-0005`** (error) - The style attribute of an AbstractCurve, if present, must be a reference (a string starting with '#').
+**`AbstractCurve-0005`** (error) - The style attribute of an AbstractCurve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0005.md))
 
 > `style` is `SIdRef` in AbstractCurveCommon - always a reference, never a literal value.
 
-**`AbstractCurve-0006`** (error) - When the value of yAxis of an AbstractCurve is provided directly, it must be one of 'right' or 'left'.
+**`AbstractCurve-0006`** (error) - When the value of yAxis of an AbstractCurve is provided directly, it must be one of 'right' or 'left'. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0006.md))
 
 > `yAxis` is `one of "right", "left" or SIdRef` in AbstractCurveCommon: the value, when not a reference, must be one of 'right' or 'left'.
 
-**`AbstractCurve-0007`** (error) - When the value of yAxis of an AbstractCurve is a reference, it must be a reference to one of 'right' or 'left'.
+**`AbstractCurve-0007`** (error) - When the value of yAxis of an AbstractCurve is a reference, it must be a reference to one of 'right' or 'left'. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0007.md))
 
 > `yAxis` is `one of "right", "left" or SIdRef` in AbstractCurveCommon: when the value is a reference, it must resolve to one of 'right' or 'left'.
 
-**`AbstractCurve-0008`** (error) - A value that must resolve to a concrete AbstractCurve subtype must declare a _type attribute.
+**`AbstractCurve-0008`** (error) - A value that must resolve to a concrete AbstractCurve subtype must declare a _type attribute. ([source](specsheets/auxiliary/AbstractCurve/v1.0.0/validation/AbstractCurve-0008.md))
 
 > A narrower case of AbstractCurve-0000's catch-all: fires specifically when
 > the generated oneOf fails because _type is missing entirely, rather than
@@ -4587,6 +4685,8 @@ Not independently referenceable - `AbstractCurve` is never used directly; only i
 > Classes section.
 
 #### Annotation
+
+*Source: [specsheets/auxiliary/Annotation/v1.0.0/description.md](specsheets/auxiliary/Annotation/v1.0.0/description.md)*
 
 ![Annotation UML diagram](specsheets/core/SEDBase/v1.0.0/SEDBase.png)
 
@@ -4630,25 +4730,27 @@ Not independently referenceable - only exists as an entry in its parent element'
 
 ##### Validation Rules
 
-**`Annotation-0000`** (error) - The element fails a JSON Schema constraint attributable to Annotation that does not match any other numbered rule.
+**`Annotation-0000`** (error) - The element fails a JSON Schema constraint attributable to Annotation that does not match any other numbered rule. ([source](specsheets/auxiliary/Annotation/v1.0.0/validation/Annotation-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Annotation (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Annotation-0001`** (error) - The qualifier attribute of an Annotation is required.
+**`Annotation-0001`** (error) - The qualifier attribute of an Annotation is required. ([source](specsheets/auxiliary/Annotation/v1.0.0/validation/Annotation-0001.md))
 
 > `qualifier` is required.
 
-**`Annotation-0002`** (error) - The qualifier attribute of an Annotation must be a Qualifier string (a 'namespace:term' pair).
+**`Annotation-0002`** (error) - The qualifier attribute of an Annotation must be a Qualifier string (a 'namespace:term' pair). ([source](specsheets/auxiliary/Annotation/v1.0.0/validation/Annotation-0002.md))
 
 > `qualifier` is `Qualifier`: it must be a Qualifier string (a 'namespace:term' pair).
 
-**`Annotation-0003`** (error) - The value attribute of an Annotation is required.
+**`Annotation-0003`** (error) - The value attribute of an Annotation is required. ([source](specsheets/auxiliary/Annotation/v1.0.0/validation/Annotation-0003.md))
 
 > `value` is required.
 
 #### Axis
+
+*Source: [specsheets/auxiliary/Axis/v1.0.0/description.md](specsheets/auxiliary/Axis/v1.0.0/description.md)*
 
 ![Axis UML diagram](specsheets/outputs/Plot/v1.0.0/Plot.png)
 
@@ -4704,57 +4806,59 @@ Not independently referenceable - only exists as a named child of a `Plot`-deriv
 
 ##### Validation Rules
 
-**`Axis-0000`** (error) - The element fails a JSON Schema constraint attributable to Axis that does not match any other numbered rule.
+**`Axis-0000`** (error) - The element fails a JSON Schema constraint attributable to Axis that does not match any other numbered rule. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Axis (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Axis-0001`** (error) - When the value of scale of an Axis is provided directly, it must be one of 'linear', 'log10'.
+**`Axis-0001`** (error) - When the value of scale of an Axis is provided directly, it must be one of 'linear', 'log10'. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0001.md))
 
 > `ScaleType` is defined in `core/Types` with the allowed values 'linear', 'log10' (see `core/Types/v1.0.0/schema.json`).
 
-**`Axis-0002`** (error) - When the value of scale of an Axis is a reference, it must be a reference to a valid ScaleType value.
+**`Axis-0002`** (error) - When the value of scale of an Axis is a reference, it must be a reference to a valid ScaleType value. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0002.md))
 
 > `scale` is `ScaleTypeOrRef`: when the value is a reference, it must resolve to a valid ScaleType value.
 
-**`Axis-0003`** (error) - When the value of min of an Axis is provided directly, it must be a number.
+**`Axis-0003`** (error) - When the value of min of an Axis is provided directly, it must be a number. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0003.md))
 
 > `min` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`Axis-0004`** (error) - When the value of min of an Axis is a reference, it must be a reference to a number.
+**`Axis-0004`** (error) - When the value of min of an Axis is a reference, it must be a reference to a number. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0004.md))
 
 > `min` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`Axis-0005`** (error) - When the value of max of an Axis is provided directly, it must be a number.
+**`Axis-0005`** (error) - When the value of max of an Axis is provided directly, it must be a number. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0005.md))
 
 > `max` is `NumberOrRef`: the value, when not a reference, must be a number.
 
-**`Axis-0006`** (error) - When the value of max of an Axis is a reference, it must be a reference to a number.
+**`Axis-0006`** (error) - When the value of max of an Axis is a reference, it must be a reference to a number. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0006.md))
 
 > `max` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`Axis-0007`** (error) - When the value of grid of an Axis is provided directly, it must be a boolean.
+**`Axis-0007`** (error) - When the value of grid of an Axis is provided directly, it must be a boolean. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0007.md))
 
 > `grid` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`Axis-0008`** (error) - When the value of grid of an Axis is a reference, it must be a reference to a boolean.
+**`Axis-0008`** (error) - When the value of grid of an Axis is a reference, it must be a reference to a boolean. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0008.md))
 
 > `grid` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
-**`Axis-0009`** (error) - The style attribute of an Axis, if present, must be a reference (a string starting with '#').
+**`Axis-0009`** (error) - The style attribute of an Axis, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0009.md))
 
 > `style` is `SIdRef` - always a reference, never a literal value.
 
-**`Axis-0010`** (error) - When the value of reverse of an Axis is provided directly, it must be a boolean.
+**`Axis-0010`** (error) - When the value of reverse of an Axis is provided directly, it must be a boolean. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0010.md))
 
 > `reverse` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
 
-**`Axis-0011`** (error) - When the value of reverse of an Axis is a reference, it must be a reference to a boolean.
+**`Axis-0011`** (error) - When the value of reverse of an Axis is a reference, it must be a reference to a boolean. ([source](specsheets/auxiliary/Axis/v1.0.0/validation/Axis-0011.md))
 
 > `reverse` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
 #### Curve
+
+*Source: [specsheets/auxiliary/Curve/v1.0.0/description.md](specsheets/auxiliary/Curve/v1.0.0/description.md)*
 
 ![Curve UML diagram](specsheets/auxiliary/AbstractCurve/v1.0.0/AbstractCurve.png)
 
@@ -4833,65 +4937,65 @@ Not independently referenceable - only exists as a named child within a `Plot2D`
 
 ##### Validation Rules
 
-**`Curve-0000`** (error) - The element fails a JSON Schema constraint attributable to Curve that does not match any other numbered rule.
+**`Curve-0000`** (error) - The element fails a JSON Schema constraint attributable to Curve that does not match any other numbered rule. ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to Curve (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`Curve-0001`** (error) - The curveType attribute of a Curve is required.
+**`Curve-0001`** (error) - The curveType attribute of a Curve is required. ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0001.md))
 
 > `curveType` is required.
 
-**`Curve-0002`** (error) - When the value of curveType of a Curve is provided directly, it must be one of 'points', 'bar', 'barStacked', 'horizontalBar', 'horizontalBarStacked', 'shadedArea'.
+**`Curve-0002`** (error) - When the value of curveType of a Curve is provided directly, it must be one of 'points', 'bar', 'barStacked', 'horizontalBar', 'horizontalBarStacked', 'shadedArea'. ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0002.md))
 
 > `CurveType` is defined in `core/Types` with the allowed values 'points', 'bar', 'barStacked', 'horizontalBar', 'horizontalBarStacked', 'shadedArea' (see `core/Types/v1.0.0/schema.json`).
 
-**`Curve-0003`** (error) - When the value of curveType of a Curve is a reference, it must be a reference to a valid CurveType value.
+**`Curve-0003`** (error) - When the value of curveType of a Curve is a reference, it must be a reference to a valid CurveType value. ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0003.md))
 
 > `curveType` is `CurveType or SIdRef`: when the value is a reference, it must resolve to a valid CurveType value.
 
-**`Curve-0004`** (error) - The y attribute of a Curve is required.
+**`Curve-0004`** (error) - The y attribute of a Curve is required. ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0004.md))
 
 > `y` is required.
 
-**`Curve-0005`** (error) - The y attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0005`** (error) - The y attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0005.md))
 
 > `y` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0006`** (error) - The xErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0006`** (error) - The xErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0006.md))
 
 > `xErrorUpper` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0007`** (error) - The xErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0007`** (error) - The xErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0007.md))
 
 > `xErrorLower` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0008`** (error) - The yErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0008`** (error) - The yErrorUpper attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0008.md))
 
 > `yErrorUpper` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0009`** (error) - The yErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0009`** (error) - The yErrorLower attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0009.md))
 
 > `yErrorLower` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0010`** (error) - The yFrom attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0010`** (error) - The yFrom attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0010.md))
 
 > `yFrom` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0011`** (error) - The yTo attribute of a Curve, if present, must be a reference (a string starting with '#').
+**`Curve-0011`** (error) - The yTo attribute of a Curve, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0011.md))
 
 > `yTo` is `SIdRef` - always a reference, never a literal value.
 
-**`Curve-0012`** (error) - The _type attribute of a Curve must be "curve".
+**`Curve-0012`** (error) - The _type attribute of a Curve must be "curve". ([source](specsheets/auxiliary/Curve/v1.0.0/validation/Curve-0012.md))
 
 > `_type` is the discriminator field. For `Curve` it must always equal `"curve"`.
 
 #### LoopVariable
 
-![LoopVariable UML diagram](specsheets/tasks/Loop/v1.0.0/Loop.png)
+*Source: [specsheets/auxiliary/LoopVariable/v1.0.0/description.md](specsheets/auxiliary/LoopVariable/v1.0.0/description.md)*
 
-*(`LoopVariable` has no standalone diagram of its own - the image above is `Loop`'s diagram, reused here because `LoopVariable` is drawn fully within it as a linked box, right next to `Loop`. Look for the `LoopVariable` box.)*
+![LoopVariable UML diagram](specsheets/auxiliary/LoopVariable/v1.0.0/LoopVariable.png)
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -4934,25 +5038,25 @@ Not independently referenceable outside its parent `Loop`.
 
 ##### Validation Rules
 
-**`LoopVariable-0000`** (error) - The element fails a JSON Schema constraint attributable to LoopVariable that does not match any other numbered rule.
+**`LoopVariable-0000`** (error) - The element fails a JSON Schema constraint attributable to LoopVariable that does not match any other numbered rule. ([source](specsheets/auxiliary/LoopVariable/v1.0.0/validation/LoopVariable-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to LoopVariable (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`LoopVariable-0001`** (error) - The initialValue attribute of a LoopVariable is required.
+**`LoopVariable-0001`** (error) - The initialValue attribute of a LoopVariable is required. ([source](specsheets/auxiliary/LoopVariable/v1.0.0/validation/LoopVariable-0001.md))
 
 > `initialValue` is required.
 
-**`LoopVariable-0002`** (error) - The subsequentValues attribute of a LoopVariable is required.
+**`LoopVariable-0002`** (error) - The subsequentValues attribute of a LoopVariable is required. ([source](specsheets/auxiliary/LoopVariable/v1.0.0/validation/LoopVariable-0002.md))
 
 > `subsequentValues` is required.
 
-**`LoopVariable-0003`** (error) - The subsequentValues attribute of a LoopVariable, if present, must be a reference (a string starting with '#').
+**`LoopVariable-0003`** (error) - The subsequentValues attribute of a LoopVariable, if present, must be a reference (a string starting with '#'). ([source](specsheets/auxiliary/LoopVariable/v1.0.0/validation/LoopVariable-0003.md))
 
 > `subsequentValues` is `SIdRef` - always a reference, never a literal value.
 
-**`LoopVariable-0004`** (error) - The subsequentValues of a LoopVariable must reference one of its enclosing Loop's own subTasks, or an output of one.
+**`LoopVariable-0004`** (error) - The subsequentValues of a LoopVariable must reference one of its enclosing Loop's own subTasks, or an output of one. ([source](specsheets/auxiliary/LoopVariable/v1.0.0/validation/LoopVariable-0004.md))
 
 > subsequentValues is the value this loop variable takes on after each
 > iteration, produced by one of the loop's own subTasks. This is the one place
@@ -4960,6 +5064,8 @@ Not independently referenceable outside its parent `Loop`.
 > loopVariables), which AbstractTask-0003 must allow.
 
 #### OutputParameter
+
+*Source: [specsheets/auxiliary/OutputParameter/v1.0.0/description.md](specsheets/auxiliary/OutputParameter/v1.0.0/description.md)*
 
 ![OutputParameter UML diagram](specsheets/outputs/AbstractOutput/v1.0.0/AbstractOutput.png)
 
@@ -5000,17 +5106,19 @@ Not independently referenceable - only exists as an entry in its parent output's
 
 ##### Validation Rules
 
-**`OutputParameter-0000`** (error) - The element fails a JSON Schema constraint attributable to OutputParameter that does not match any other numbered rule.
+**`OutputParameter-0000`** (error) - The element fails a JSON Schema constraint attributable to OutputParameter that does not match any other numbered rule. ([source](specsheets/auxiliary/OutputParameter/v1.0.0/validation/OutputParameter-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to OutputParameter (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`OutputParameter-0001`** (error) - The value attribute of an OutputParameter is required.
+**`OutputParameter-0001`** (error) - The value attribute of an OutputParameter is required. ([source](specsheets/auxiliary/OutputParameter/v1.0.0/validation/OutputParameter-0001.md))
 
 > `value` is required. Its type is `AnyValueOrRef` - any JSON value or a reference is accepted, so no separate type rule applies beyond presence.
 
 #### TaskParameter
+
+*Source: [specsheets/auxiliary/TaskParameter/v1.0.0/description.md](specsheets/auxiliary/TaskParameter/v1.0.0/description.md)*
 
 ![TaskParameter UML diagram](specsheets/tasks/AbstractTask/v1.0.0/AbstractTask.png)
 
@@ -5051,21 +5159,21 @@ Not independently referenceable - only exists as an entry in its parent task's `
 
 ##### Validation Rules
 
-**`TaskParameter-0000`** (error) - The element fails a JSON Schema constraint attributable to TaskParameter that does not match any other numbered rule.
+**`TaskParameter-0000`** (error) - The element fails a JSON Schema constraint attributable to TaskParameter that does not match any other numbered rule. ([source](specsheets/auxiliary/TaskParameter/v1.0.0/validation/TaskParameter-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to TaskParameter (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`TaskParameter-0001`** (error) - The value attribute of a TaskParameter is required.
+**`TaskParameter-0001`** (error) - The value attribute of a TaskParameter is required. ([source](specsheets/auxiliary/TaskParameter/v1.0.0/validation/TaskParameter-0001.md))
 
 > `value` is required. Its type is `AnyValueOrRef` - any JSON value or a reference is accepted, so no separate type rule applies beyond presence.
 
 #### WorkingAlgorithm
 
-![WorkingAlgorithm UML diagram](specsheets/tasks/AbstractSimulation/v1.0.0/AbstractSimulation.png)
+*Source: [specsheets/auxiliary/WorkingAlgorithm/v1.0.0/description.md](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/description.md)*
 
-*(`WorkingAlgorithm` has no standalone diagram of its own - the image above is `AbstractSimulation`'s diagram, reused here because `WorkingAlgorithm` is drawn fully within it as a linked box, right next to `AbstractSimulation`. Look for the `workingAlgorithm` box.)*
+![WorkingAlgorithm UML diagram](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/WorkingAlgorithm.png)
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -5073,7 +5181,7 @@ Not independently referenceable - only exists as an entry in its parent task's `
 
 ##### What it does
 
-An algorithm used internally by a simulation task, attached via `AbstractSimulation`'s `workingAlgorithms` list. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
+An algorithm used internally by a task, attached via a `workingAlgorithms` list: the one `AbstractSimulation` defines (and so every ODE/stochastic simulation task has), or the one `SteadyState` and `FluxBalanceAnalysis` each declare directly. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
 
 _(No description yet - placeholder. It's not yet clear from the diagram alone how `algorithm` relates to the task's own `_type` discriminator and `taskParameters`, or how multiple `workingAlgorithms` entries on one task are meant to be distinguished/used - needs updating once that's settled.)_
 
@@ -5104,13 +5212,13 @@ Not independently referenceable - only exists as an entry in its parent task's `
 
 ##### Validation Rules
 
-**`WorkingAlgorithm-0000`** (error) - The element fails a JSON Schema constraint attributable to WorkingAlgorithm that does not match any other numbered rule.
+**`WorkingAlgorithm-0000`** (error) - The element fails a JSON Schema constraint attributable to WorkingAlgorithm that does not match any other numbered rule. ([source](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/validation/WorkingAlgorithm-0000.md))
 
 > Catch-all rule for schema-pass failures attributable to WorkingAlgorithm (or a
 > more specific descendant whose own class's failure location can't be
 > resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
 
-**`WorkingAlgorithm-0001`** (error) - The algorithm attribute of a WorkingAlgorithm is required.
+**`WorkingAlgorithm-0001`** (error) - The algorithm attribute of a WorkingAlgorithm is required. ([source](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/validation/WorkingAlgorithm-0001.md))
 
 > `algorithm` is required. Its type is `StringOrRef` - a string value or a reference to one.
 
