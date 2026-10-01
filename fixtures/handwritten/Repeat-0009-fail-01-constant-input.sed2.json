@@ -37,6 +37,14 @@
           "_type": "aggregationCalculation",
           "input": "#constants:mynumber"
         }
+      },
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
       }
     }
   }

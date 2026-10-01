@@ -39,7 +39,7 @@ public final class DrawFromDistribution extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "drawFromDistribution"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)\"}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [], \"note\": \"currently always a single scalar value (0-D), indexed historically as [id][0]; the type is multidimensional AnnotatedData to leave room for future correlated multi-value draws (shape of that future case is not yet designed - see core-spec.md Section 10)\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getDistributionValue() { return getOrRefValueNode("distribution").asText(); }

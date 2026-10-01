@@ -4,7 +4,7 @@
   "title": "SED2 WorkingAlgorithm",
   "$defs": {
     "WorkingAlgorithm": {
-      "description": "An algorithm used internally by a simulation task, referenced via AbstractSimulation's workingAlgorithms list. Inherits from SEDBase.",
+      "description": "An algorithm used internally by a task, listed in a workingAlgorithms list (AbstractSimulation, SteadyState, FluxBalanceAnalysis). Inherits from SEDBase.",
       "type": "object",
       "allOf": [
         {

@@ -1,7 +1,6 @@
 {
   "outputs": {
     "[id]": {
-      "valid": true,
       "type": "annotatedData",
       "dimensions": {
         "source": "input-file",
@@ -9,9 +8,6 @@
         "extract": "shape",
         "note": "shape is whatever the imported file itself has; depends on format and the file at location - extraction is format-specific (format names how to parse it)"
       }
-    },
-    "[id].model": {
-      "valid": false
     }
   }
 }

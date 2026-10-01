@@ -38,7 +38,7 @@ public final class AggregationCalculation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "aggregationCalculation"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input) - dim(appliedDimensions or outermost)\", \"note\": \"shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is\"}}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input) - dim(appliedDimensions or outermost)\", \"note\": \"shape is input's shape with the dimension(s) named in appliedDimensions removed (or the outermost dimension, if appliedDimensions is unset); dimension count/sizes are therefore only as knowable as input's own shape is\"}}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getInput() { if (!values.containsKey("input")) throw new ApiError("input" + " is not set"); return values.get("input"); }

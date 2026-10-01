@@ -37,7 +37,7 @@ public final class Range extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "range"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(values)\"}, \"labels\": null}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(values)\"}, \"labels\": null}]}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getValuesValue() { return getOrRefValueNode("values"); }

@@ -62,7 +62,7 @@ public final class BoundedODESimulation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "boundedODESimulation"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"runtime\", \"note\": \"row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)\"}, \"labels\": null}, {\"size\": {\"source\": \"static\", \"expr\": \"1 + len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"[independentVariable] + outputVariables\"}}]}, \"[id].model\": {\"valid\": true, \"type\": \"model\"}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"runtime\", \"note\": \"row count is chosen by the solver/simulator at run time under variable step size, not fixed by independentVariableSpan (only its start/end bound the range)\"}, \"labels\": null}, {\"size\": {\"source\": \"static\", \"expr\": \"1 + len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"[independentVariable] + outputVariables\"}}]}, \"[id].model\": {\"type\": \"model\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getRelativeToleranceValue() { return getOrRefValueNode("relativeTolerance").asDouble(); }

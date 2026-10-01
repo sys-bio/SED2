@@ -1,7 +1,6 @@
 {
   "outputs": {
     "[id]": {
-      "valid": true,
       "type": "annotatedData",
       "dimensions": [
         {
@@ -11,8 +10,11 @@
               "source": "static",
               "expr": "len(self)"
             },
-            "labels": null,
-            "note": "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8"
+            "labels": {
+              "source": "static",
+              "expr": "modelElement"
+            },
+            "note": "one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8; each dimension is labeled with (identified by) that entry's modelElement, in parameterRanges order"
           }
         },
         {
@@ -23,12 +25,6 @@
           "labels": null
         }
       ]
-    },
-    "[id].model": {
-      "valid": false
-    },
-    "[id].strings": {
-      "valid": false
     },
     "[id].aggregates": {
       "valid": "provided(aggregateOutputVariables)",
@@ -42,6 +38,40 @@
           "labels": null
         }
       ]
+    },
+    "[id].ranges": {
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(parameterRanges)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "parameterRanges.modelElement"
+          },
+          "note": "one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)"
+        }
+      ],
+      "note": "the current value of each entry of parameterRanges, within the loop only"
+    },
+    "[id].indexes": {
+      "type": "annotatedData",
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(parameterRanges)"
+          },
+          "labels": {
+            "source": "static",
+            "expr": "parameterRanges.modelElement"
+          },
+          "note": "one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)"
+        }
+      ],
+      "note": "the current index into each entry of parameterRanges, within the loop only"
     }
   }
 }

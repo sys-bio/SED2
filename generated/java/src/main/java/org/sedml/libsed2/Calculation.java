@@ -37,7 +37,7 @@ public final class Calculation extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "calculation"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values\"}}, \"[id].model\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values\"}}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getMathValue() { return getOrRefValueNode("math").asText(); }

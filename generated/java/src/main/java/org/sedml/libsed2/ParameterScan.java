@@ -26,8 +26,7 @@ public final class ParameterScan extends SedBase {
         new FieldSpec("subTasks", "dict", false, "Repeat-0001", null, "Repeat-0000", null, null, null, null, "AbstractTask", false, null, null, null, null, null),
         new FieldSpec("aggregateOutputVariables", "dict", false, "Repeat-0004", null, "Repeat-0000", null, null, null, "AggregationCalculation", null, false, null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
-        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null),
-        new FieldSpec("range", "ref-discriminator", false, "Repeat-0005", null, "Repeat-0000", null, null, null, null, "RangeInline", false, null, null, null, null, null)
+        new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)
     );
     private static final Set<String> REQUIRED_NAMES = Set.of("model", "parameterRanges");
     private final ListCollection<SedBase> parameterRanges = new ListCollection<>();
@@ -35,7 +34,6 @@ public final class ParameterScan extends SedBase {
     private final IdKeyedCollection<SedBase> aggregateOutputVariables = new IdKeyedCollection<>();
     private final ListCollection<SedBase> taskParameters = new ListCollection<>();
     private final ListCollection<SedBase> annotations = new ListCollection<>();
-    private SedBase range;
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
@@ -46,7 +44,7 @@ public final class ParameterScan extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "parameterScan"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"repeat\": {\"over\": \"parameterRanges\", \"size\": {\"source\": \"static\", \"expr\": \"len(self)\"}, \"labels\": null, \"note\": \"one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8\"}}, {\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariableMap)\"}, \"labels\": null}]}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}, \"[id].aggregates\": {\"valid\": \"provided(aggregateOutputVariables)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(aggregateOutputVariables)\"}, \"labels\": null}]}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"repeat\": {\"over\": \"parameterRanges\", \"size\": {\"source\": \"static\", \"expr\": \"len(self)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"modelElement\"}, \"note\": \"one dimension per entry of parameterRanges, each sized by that entry's own length; len(self) dispatches on the entry's actual Range/NumericRange/ParameterRange type - see core-spec.md Section 8; each dimension is labeled with (identified by) that entry's modelElement, in parameterRanges order\"}}, {\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariableMap)\"}, \"labels\": null}]}, \"[id].aggregates\": {\"valid\": \"provided(aggregateOutputVariables)\", \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(aggregateOutputVariables)\"}, \"labels\": null}]}, \"[id].ranges\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(parameterRanges)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"parameterRanges.modelElement\"}, \"note\": \"one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)\"}], \"note\": \"the current value of each entry of parameterRanges, within the loop only\"}, \"[id].indexes\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(parameterRanges)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"parameterRanges.modelElement\"}, \"note\": \"one entry per ParameterRange child, in order, labeled with that child's modelElement (parameterRanges.modelElement is the modelElement of each entry, in order)\"}], \"note\": \"the current index into each entry of parameterRanges, within the loop only\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getModel() { if (!values.containsKey("model")) throw new ApiError("model" + " is not set"); return values.get("model").asText(); }
@@ -96,11 +94,6 @@ public final class ParameterScan extends SedBase {
     public void insertAnnotations(int index, SedBase obj) { annotations.insert(index, obj); obj.attach(this, getDocument()); }
     public void removeAnnotations(int index) { annotations.remove(index); }
 
-    public SedBase getRange() { if (range == null) throw new ApiError("range" + " is not set"); return range; }
-    public void setRange(SedBase obj) { range = obj; obj.attach(this, getDocument()); }
-    public boolean isSetRange() { return range != null; }
-    public void unsetRange() { range = null; }
-
     @Override
     public List<SedBase> children() {
         List<SedBase> kids = new ArrayList<>();
@@ -109,7 +102,6 @@ public final class ParameterScan extends SedBase {
         kids.addAll(parameterRanges.items());
         kids.addAll(taskParameters.items());
         kids.addAll(annotations.items());
-        if (range != null) kids.add(range);
         return kids;
     }
 
@@ -121,7 +113,6 @@ public final class ParameterScan extends SedBase {
         { int idx = 0; for (SedBase item : parameterRanges.items()) { out.add(new ChildLoc(item, "/parameterRanges/" + idx)); idx++; } }
         { int idx = 0; for (SedBase item : taskParameters.items()) { out.add(new ChildLoc(item, "/taskParameters/" + idx)); idx++; } }
         { int idx = 0; for (SedBase item : annotations.items()) { out.add(new ChildLoc(item, "/annotations/" + idx)); idx++; } }
-        if (range != null) out.add(new ChildLoc(range, "/range"));
         return out;
     }
 
@@ -157,14 +148,6 @@ public final class ParameterScan extends SedBase {
     }
 
     @Override
-    protected void setChildField(String fieldName, SedBase child) {
-        switch (fieldName) {
-            case "range": range = child; return;
-            default: super.setChildField(fieldName, child);
-        }
-    }
-
-    @Override
     public ObjectNode ownJsonValue() {
         ObjectNode d = JsonNodeFactory.instance.objectNode();
         if (nameNode != null) d.set("name", nameNode);
@@ -178,7 +161,6 @@ public final class ParameterScan extends SedBase {
         if (parameterRanges.size() > 0) { ArrayNode arr = d.putArray("parameterRanges"); for (SedBase item : parameterRanges.items()) arr.add(item.toJsonValue()); }
         if (taskParameters.size() > 0) { ArrayNode arr = d.putArray("taskParameters"); for (SedBase item : taskParameters.items()) arr.add(item.toJsonValue()); }
         if (annotations.size() > 0) { ArrayNode arr = d.putArray("annotations"); for (SedBase item : annotations.items()) arr.add(item.toJsonValue()); }
-        if (range != null) d.set("range", range.toJsonValue());
         for (Map.Entry<String, JsonNode> e : nsAttrs.entrySet()) d.set(e.getKey(), e.getValue());
         return d;
     }

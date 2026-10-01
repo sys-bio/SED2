@@ -51,10 +51,6 @@
             "$ref": "../../../tasks/AggregationCalculation/v1.0.0/schema.json#/$defs/AggregationCalculation"
           },
           "x-rule-id": "Repeat-0004"
-        },
-        "range": {
-          "$ref": "../../../tasks/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
-          "x-rule-id": "Repeat-0005"
         }
       },
       "anyOf": [

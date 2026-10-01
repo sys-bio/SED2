@@ -55,6 +55,14 @@
           "location": "model.xml",
           "language": "urn:sedml:language:sbml"
         }
+      },
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
       }
     },
     "r1": {

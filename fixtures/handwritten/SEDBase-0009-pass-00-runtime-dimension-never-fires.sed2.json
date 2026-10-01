@@ -41,25 +41,13 @@
         ]
       }
     },
-    "loop1": {
-      "_type": "loop",
-      "loopVariables": {
-        "lv1": {
-          "initialValue": 0,
-          "subsequentValues": "#tasks:loop1:subTasks:s1.model"
-        }
-      },
-      "subTasks": {
-        "s1": {
-          "_type": "modelImport",
-          "location": "model.xml",
-          "language": "urn:sedml:language:sbml"
-        }
-      }
+    "calc1": {
+      "_type": "calculation",
+      "math": "1 + 1"
     },
     "r1": {
       "_type": "relabelData",
-      "input": "#tasks:loop1[0][1][2]",
+      "input": "#tasks:calc1[0][1][2]",
       "labels": "#constants:k_strings"
     }
   }

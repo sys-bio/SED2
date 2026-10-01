@@ -37,7 +37,7 @@ public final class CreateDataBlock extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "createDataBlock"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(data)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"keys(data)\"}, \"note\": \"base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case\"}]}, \"[id].model\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(data)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"keys(data)\"}, \"note\": \"base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case\"}]}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getDataValue() { return getOrRefValueNode("data"); }

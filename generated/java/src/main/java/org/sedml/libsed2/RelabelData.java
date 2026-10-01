@@ -38,7 +38,7 @@ public final class RelabelData extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "relabelData"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": true, \"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input)\", \"note\": \"same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape\"}}, \"[id].model\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": {\"source\": \"static\", \"expr\": \"shapeOf(input)\", \"note\": \"same dimensions as the referenced input AnnotatedData - this task only replaces the topmost dimension's labels (from labels), not the shape\"}}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public String getInput() { if (!values.containsKey("input")) throw new ApiError("input" + " is not set"); return values.get("input").asText(); }

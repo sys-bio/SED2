@@ -1,13 +1,6 @@
 {
   "outputs": {
-    "[id]": {
-      "valid": false
-    },
-    "[id].model": {
-      "valid": false
-    },
     "[id].strings": {
-      "valid": true,
       "type": "stringList",
       "dimensions": [
         {

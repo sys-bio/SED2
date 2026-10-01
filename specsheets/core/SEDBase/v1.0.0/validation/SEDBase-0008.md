@@ -7,9 +7,10 @@ status: active
 check: handwritten
 ---
 
-For a task target, the accessor must appear in that task class's outputs.json,
-and its "valid" field must be true, or be an expression that evaluates to true
-against the target's own fields. When the expression cannot be evaluated
+For a task target, the accessor must be listed in that task class's outputs.json
+(a suffix that is not listed is not valid), and, if the entry has a "valid"
+field, that field's expression must evaluate to true against the target's own
+fields. An entry with no "valid" field is always valid. When the expression cannot be evaluated
 statically (it depends on a reference that resolves only at run time), the
 rule does not fire.
 

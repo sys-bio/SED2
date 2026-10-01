@@ -209,7 +209,7 @@ Each `<Category>/<ClassName>/v1.0.0/` folder normally contains exactly:
 
 Every `schema.json`'s `required` array carries a sibling `x-required-rule-ids` object mapping each required field's name to the numbered validation rule that documents its presence requirement, and any property whose own constraint - a `_type` discriminator `const`, or a type/shape check beyond bare presence - has a matching numbered rule carries a sibling `x-rule-id` alongside that constraint (as a sibling of `$ref` where the property is declared that way); `x-rule-id` is a single rule-ID string, or an array of them when more than one rule governs the same property (most commonly an `OrRef` field's separate direct-value and reference-form rules, e.g. `AbstractODESimulation.forcePhysicalCorrectness`). A bare `SIdRef` property that must resolve to a particular kind of thing also carries `"x-ref-target": "model"` (SEDBase-0016) or `"x-ref-target": "annotatedData"` (SEDBase-0017). All of these are inert to any JSON Schema validator (unknown keywords are ignored) and exist purely as generator-only metadata - see Design.md's Validation section - so the generator can wire each hand-written `validate()` check straight to the schema location it corresponds to rather than re-deriving that mapping itself. Not every numbered rule has a schema-visible home this way: most are semantic (cross-reference resolution, math well-formedness, tolerance interactions, and the like) with no single JSON Schema keyword to attach to; only presence, discriminator, and simple type/shape constraints get one. A class whose own requiredness is disjunctive rather than a flat list - so far, only `Repeat`, whose subclasses need at least one of `outputVariableMap` or `aggregateOutputVariables` rather than a fixed set - expresses that as an `anyOf` of single-field `required` objects at the class's own top level (sibling to `properties`), with a sibling `x-anyof-required-rule-id` naming the one rule documenting the whole disjunction, rather than forcing it into `x-required-rule-ids`'s per-field mapping. A `oneOf` discriminator built via `x-generated-oneOf` (see Design.md's Classes section) can similarly carry a sibling `x-missing-type-rule-id`, naming a rule for the narrower case where `_type` is absent from the instance entirely, rather than present but unrecognized - a more specific error than the discriminator's own catch-all, for whichever discriminators want to distinguish it (e.g. `AbstractTask-0002`).
 
-**Task output shapes (`outputs.json`).** Every concrete `tasks/` class (one with its own `_type`) additionally carries an `outputs.json`, machine-describing what each output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific suffix like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to - replacing the free-text "Valid"/"Invalid"/"Dimensions:" bullets that used to be the only record of this. Each suffix entry has a `valid` flag (`true`/`false`, or a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`), a `type` (`annotatedData`/`model`/`stringList`) when valid, and for `annotatedData` a `dimensions` list. Every place a size, a label set, or a whole shape needs stating, it's tagged with where that knowledge actually comes from - `"static"` (an `expr` computed from the task's own fields: `len(outputVariables)`, `independentVariableRange.numberOfSteps`, `keys(data)`, `[independentVariable] + outputVariables` as an array-literal-plus-concatenation, `shapeOf(input)` to inherit another reference's whole shape, optionally minus a dropped dimension via `- dim(...)`), `"input-file"` (knowable only by reading whatever external resource a field like `model` or `location` points to - `JacobianFull`'s species count, `CsvImport`'s column headers - tagged with `from`/`extract`/`note` rather than a formula, since the actual parsing is format-specific generator work, not something this file does itself), or `"runtime"` (genuinely not derivable without executing the simulation, e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count - always paired with a `note` explaining why). A `"runtime"` size may also carry an optional `min`, a guaranteed lower bound when one is actually known (e.g. "at least 2 rows"); an index or range that requires more entries than `min` guarantees is flagged by `SEDBase-0014` as a warning rather than an error, since it may still be valid once the simulation actually runs. `dimensions` itself is either a fixed array of per-dimension entries - an ordinary entry, or a `repeat` entry that expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan`'s one dimension per entry of `parameterRanges`) - when the shape is decomposable dimension-by-dimension, or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (`shapeOf(x)` whole-shape inheritance, or a `"runtime"`/`"input-file"` source where the dimension count itself isn't knowable ahead of time). `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope (the object shapes above); it does not parse `expr`/`note` string contents, which stay documentation for whoever implements the generator's shape-inference step. Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
+**Task output shapes (`outputs.json`).** Every concrete `tasks/` class (one with its own `_type`) additionally carries an `outputs.json`, machine-describing what each output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific suffix like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to - replacing the free-text "Valid"/"Invalid"/"Dimensions:" bullets that used to be the only record of this. A suffix that is listed is valid, and a suffix that is not listed is not valid (a class with no valid suffixes, such as `Span`, lists none). A listed entry may carry an optional `valid` field meaning "valid if": a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`; with no `valid` field the entry is always valid. Each entry has a `type` (`annotatedData`/`model`/`stringList`), and for `annotatedData` a `dimensions` list. Every place a size, a label set, or a whole shape needs stating, it's tagged with where that knowledge actually comes from - `"static"` (an `expr` computed from the task's own fields: `len(outputVariables)`, `independentVariableRange.numberOfSteps`, `keys(data)`, `[independentVariable] + outputVariables` as an array-literal-plus-concatenation, `shapeOf(input)` to inherit another reference's whole shape, optionally minus a dropped dimension via `- dim(...)`), `"input-file"` (knowable only by reading whatever external resource a field like `model` or `location` points to - `JacobianFull`'s species count, `CsvImport`'s column headers - tagged with `from`/`extract`/`note` rather than a formula, since the actual parsing is format-specific generator work, not something this file does itself), or `"runtime"` (genuinely not derivable without executing the simulation, e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count - always paired with a `note` explaining why). A `"runtime"` size may also carry an optional `min`, a guaranteed lower bound when one is actually known (e.g. "at least 2 rows"); an index or range that requires more entries than `min` guarantees is flagged by `SEDBase-0014` as a warning rather than an error, since it may still be valid once the simulation actually runs. `dimensions` itself is either a fixed array of per-dimension entries - an ordinary entry, or a `repeat` entry that expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan`'s one dimension per entry of `parameterRanges`) - when the shape is decomposable dimension-by-dimension, or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (`shapeOf(x)` whole-shape inheritance, or a `"runtime"`/`"input-file"` source where the dimension count itself isn't knowable ahead of time). `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope (the object shapes above); it does not parse `expr`/`note` string contents, which stay documentation for whoever implements the generator's shape-inference step. Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
 
 **The `expr`/`valid` notation.** Both fields reuse one small expression language, evaluated against the task's own attribute values at generate/validate time - never against runtime data, and not the SED2 math grammar `Types-0001` through `Types-0004` validate (see this section's `x-rule-id` paragraph above and `Design.md`'s Math section for that separate grammar): `outputs.json` describes shape, `math` describes computation. A bare identifier names one of the task's own attributes and evaluates to its value (`outputVariables`); a dotted path reaches into a nested attribute the same way (`independentVariableRange.numberOfSteps`). `[x]` is an array literal (`[independentVariable]`); JSON numbers and `true`/`false` are literals too. Five functions: `len(x)` - the length of an array-valued `x`; or, when `x` is a Range-family value (a `RangeInline`/`NumericRangeInline`/`ParameterRangeInline`-typed field, or the reserved identifier `self` inside a `repeat` entry - see below), the number of points it resolves to, dispatched on `x`'s own discriminated type: `len(x.values) if provided(x.values) else x.numberOfSteps + 1` for `NumericRange`/`ParameterRange`, or just `len(x.values)` for a bare `Range` (which has no `numberOfSteps` alternative); `keys(x)` - the keys of an object-valued `x`, as an array; `shapeOf(x)` - the whole `dimensions` shape of a referenced AnnotatedData value; `dim(x)` - the dimension(s) named by `x` (a single name or a list of names) within a shape, meaningful only as the right operand of `-`; `provided(x)` - `true` iff attribute `x` was given a value in the document. Operators, at ordinary precedence: `!x` (boolean negation); `x == y` (equality); `x + y` (numeric addition when both operands are numbers, array concatenation when both are arrays - `1 + len(outputVariables)` vs. `[independentVariable] + outputVariables`); `shapeOf(x) - dim(y)` (a shape with the named dimension(s) removed - the only place `-` appears); `x or y` (`x`'s value when `provided(x)` holds, else the literal `y` - used for a field with a documented default, e.g. `dim(appliedDimensions or outermost)`, where `outermost` is a sentinel meaning the shape's own first dimension); and a conditional `x if provided(y) else z` for a value with two different derivations depending on whether an alternate field was given instead (e.g. `NumericRange`'s `len(values) if provided(values) else numberOfSteps + 1`). This is the only formal definition of the notation - `schema/outputs-meta.schema.json` does not parse it, as noted above - so a generator's shape-inference step implements it by hand. Inside a `dimensions` array's `repeat` entry (see above), this same notation applies to that entry's own `size`/`labels`, with two scoping additions: a bare identifier there resolves against the current array entry's own fields, not the task's top-level attributes; and the reserved identifier `self` refers to the current entry as a whole (for taking its `len()`, per above) rather than one of its fields. `ParameterScan`'s `repeat` over `parameterRanges` uses `size: len(self)`, letting each entry's own type (`Range`/`NumericRange`/`ParameterRange`) determine its own length the same way `Scatter`'s `len(range)` and `ExplicitODESimulation`'s `len(independentVariableRange)` do for their own named Range-family fields.
 
@@ -226,7 +226,7 @@ tasks/Range/v1.0.0/                  tasks/NumericRange/v1.0.0/             task
 
 `Range` and `NumericRange` carry an extra `common.schema.json` that `ParameterRange` and `Span` don't need: `Range` is both directly instantiable and the parent of `NumericRange`, and `NumericRange` is in turn both directly instantiable and the parent of `ParameterRange` - so each contributes a `RangeCommon`/`NumericRangeCommon` mixin (composed via `allOf`) carrying the fields its subclass inherits, alongside its own `schema.json` for the standalone-task form. `ParameterRange` and `Span` are leaves - nothing subclasses them - so they need no such split. Each mixin composes the next one up in turn (`NumericRangeCommon` composes `RangeCommon`, which composes `AbstractTaskCommon`), so a concrete class's own `allOf` names only its one most specific ancestor mixin - `ParameterRange` lists just `NumericRangeCommon`, not `RangeCommon` and `NumericRangeCommon` side by side - mirroring the UML chain directly rather than flattening every ancestor into each leaf; see `Design.md`'s Classes section for why.
 
-Each `description.md` in these four folders explains all of that folder's schema files. Everything else in the document - including every cross-reference into these four classes from other Data Sheets' `schema.json` files - still resolves correctly; this was verified by validating real SED2 example documents against the split schemas after the merge. All four live under `tasks/` rather than `auxiliary/`, so each also carries the ordinary `outputs.json` every concrete `tasks/` class does - `Range`, `NumericRange`, and `ParameterRange` describe their `[id]` output for when they're used as a standalone `tasks` entry, and `Span`'s marks every suffix invalid, matching its own `description.md` (`Span` can never be a standalone `tasks` entry, only ever an embedded child, so it has no output of its own).
+Each `description.md` in these four folders explains all of that folder's schema files. Everything else in the document - including every cross-reference into these four classes from other Data Sheets' `schema.json` files - still resolves correctly; this was verified by validating real SED2 example documents against the split schemas after the merge. All four live under `tasks/` rather than `auxiliary/`, so each also carries the ordinary `outputs.json` every concrete `tasks/` class does - `Range`, `NumericRange`, and `ParameterRange` describe their `[id]` output for when they're used as a standalone `tasks` entry, and `Span`'s lists no suffixes at all (so every suffix is invalid), matching its own `description.md` (`Span` can never be a standalone `tasks` entry, only ever an embedded child, so it has no output of its own).
 
 **Exception - the two `*Common` mixins.** `AbstractTaskCommon` and `AbstractOutputCommon` are schema-only mixins (composed via `allOf`) rather than modeled classes with their own UML box: they contribute the fields every concrete Task (or Output) picks up beyond `SEDBase` - `taskParameters`/`outputParameters` - but have no `_type` of their own and are never instantiated directly. Rather than give them placeholder folders, each is merged into its family's base-class folder as a second schema file:
 
@@ -371,9 +371,10 @@ Every element inherits `SEDBase`, but whether `[id]`, `[id].model`, or `[id].str
 
 **`SEDBase-0008`** (error) - A dot-accessor in a reference must be one the target declares valid. ([source](specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0008.md))
 
-> For a task target, the accessor must appear in that task class's outputs.json,
-> and its "valid" field must be true, or be an expression that evaluates to true
-> against the target's own fields. When the expression cannot be evaluated
+> For a task target, the accessor must be listed in that task class's outputs.json
+> (a suffix that is not listed is not valid), and, if the entry has a "valid"
+> field, that field's expression must evaluate to true against the target's own
+> fields. An entry with no "valid" field is always valid. When the expression cannot be evaluated
 > statically (it depends on a reference that resolves only at run time), the
 > rule does not fire.
 >
@@ -1076,7 +1077,7 @@ There is no output rule for `AbstractODESimulation` itself - see `ExplicitODESim
 
 ##### What it does
 
-`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly.
+`AbstractSimulation` is a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own beyond the one shown here) contributing the fields shared by every ODE or stochastic simulation task, by way of `AbstractODESimulation` and `AbstractStochasticSimulation`. It replaces the earlier `SimulationCommon`, and (unlike `SimulationCommon`) is no longer used by `SteadyState` or `FluxBalanceAnalysis`, which now declare their own fields directly (including their own `workingAlgorithms` lists).
 
 Beyond the fields it inherits from `AbstractTask`, it contributes `model`, `independentVariable`, `independentVariableInit`, `outputVariables`, and `workingAlgorithms` - a list of `WorkingAlgorithm` entries describing the algorithm(s) used internally by the simulation.
 
@@ -2404,7 +2405,7 @@ A 2D matrix of numbers, accessible as `[id]`: the first column is `independentVa
 
 Uses an objective function and reaction rate bounds (both defined within the model itself) to determine the set of reaction rates that maximizes the objective function. Unlike the other simulation tasks, FBA has no independent variable.
 
-This is an implementation of KISAO:0000437 (FBA).
+This is an implementation of KISAO:0000437 (FBA). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ##### Attributes
 
@@ -2415,7 +2416,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `taskParameters` | array of TaskParameter | no |  |
 | `model` | SIdRef | yes |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ###### Attribute details
 
@@ -2425,19 +2426,17 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
 
-A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables` (typically reaction fluxes) - length depends on how many variables are named there.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
-
-`[id].model` is only produced when `outputModel` is `true`.
 
 ##### Validation Rules
 
@@ -2466,14 +2465,6 @@ A dictionary of model variables (usually fluxes) to their final values, accessib
 **`FluxBalanceAnalysis-0005`** (error) - When the value of outputVariables of a FluxBalanceAnalysis is a reference, it must be a reference to an array of strings. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0005.md))
 
 > `outputVariables` is `ListOfStringsOrRef`: when the value is a reference, it must resolve to an array of strings.
-
-**`FluxBalanceAnalysis-0006`** (error) - When the value of outputModel of a FluxBalanceAnalysis is provided directly, it must be a boolean. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0006.md))
-
-> `outputModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
-
-**`FluxBalanceAnalysis-0007`** (error) - When the value of outputModel of a FluxBalanceAnalysis is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0007.md))
-
-> `outputModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
 **`FluxBalanceAnalysis-0008`** (error) - The _type attribute of a FluxBalanceAnalysis must be "fluxBalanceAnalysis". ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0008.md))
 
@@ -2616,7 +2607,7 @@ The reduced Jacobian as a list of lists, accessible as `[id]`, with axis labels 
 
 ##### What it does
 
-A `Repeat` whose iterations are chained: each depends on the output of the previous one. This is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`.
+A `Repeat` whose iterations are chained: each depends on the output of the previous one, with one iteration per element of its required `range` (a `Range`/`NumericRange`/`ParameterRange`), taken in order; a `Loop` always runs all of them and cannot end early. The chaining is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`.
 
 ##### Attributes
 
@@ -2628,7 +2619,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `subTasks` | object (values: AbstractTask) | yes |  |
 | `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no |  |
+| `range` | RangeInline | yes |  |
 | `loopVariables` | object (values: LoopVariable) | yes |  |
 
 ###### Attribute details
@@ -2641,7 +2632,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`range`** (RangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
 
 **`loopVariables`** (object (values: LoopVariable), required) - _(no description yet - placeholder, needs to be filled in)_
 
@@ -2651,7 +2642,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 `[id]`: an `AnnotatedData` whose first column is the range values and whose subsequent columns follow `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: 2D (or more): first dimension = one row per iteration; remaining dimension(s) = one column per entry of `outputVariableMap`. Unlike `Scatter`, the row count isn't known in advance from a `range` - it's however many iterations the loop actually runs. _(Exact termination condition for a Loop's iteration count - placeholder, needs to be filled in from the spec.)_
+    - Dimensions: 2D (or more): first dimension = one row per value in `range`; remaining dimension(s) = one column per entry of `outputVariableMap` (or just the range-values column alone, if `outputVariableMap` is empty). As with `Scatter`, the row count is known in advance from `range`. A column whose subTask output is itself multi-dimensional would add further dimensions - not pinned down further here.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
@@ -2660,9 +2651,9 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
-- `[id].range`: Within the loop, the current value of `range`, when `range` is defined (see `Repeat`).
+- `[id].range`: Within the loop, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within the loop, the current index into `range`, when `range` is defined.
+- `[id].index`: Within the loop, the current index into `range`. Always valid.
     - Dimensions: Scalar (0-D) per iteration.
 
 ##### Validation Rules
@@ -3485,7 +3476,7 @@ Only valid when `ParameterRange` is used directly as a `tasks` dictionary entry.
 
 ##### What it does
 
-Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement`, which must be an id within the child `model`. One of the `subTasks` must reference the scan's `model` child (`#tasks:[scanid]:model`) as its own input; the model is initialized with every combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks.
+Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement` (ParameterScan-0007), which must be an id within the child `model`; the `modelElement` also serves as the entry's name in `[id].ranges` and `[id].indexes`. One of the `subTasks` must reference the scan's `model` child (`#tasks:[scanid]:model`) as its own input; the model is initialized with every combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks. Within the loop, the current value and index of each range are available as `[id].ranges` and `[id].indexes` (see Outputs below).
 
 ##### Attributes
 
@@ -3512,7 +3503,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`model`** (SIdRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`parameterRanges`** (array of ParameterRangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
+**`parameterRanges`** (array of ParameterRangeInline, required) - The ranges to scan; at least one. The `modelElement` of each entry must be distinct within the scan (ParameterScan-0007), and labels that entry in `[id].ranges` and `[id].indexes`.
 
 
 ##### Outputs
@@ -3520,7 +3511,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 `[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges`, plus one further dimension sized by the number of entries in `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
+    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps, and each labeled with that range's `modelElement`), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
@@ -3528,6 +3519,11 @@ Additional possible outputs beyond the three standard ones:
 
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation collapses *all* of `[id]`'s scanned-range dimensions together (per `Repeat`, the applied dimension defaults to 'the Repeat' itself - here, the whole combined scan) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
+
+- `[id].ranges`: Within the loop only, the current value of each of the scan's `parameterRanges`.
+    - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement`. For example, with children whose `modelElement`s are `calc`, `phos`, and `ant`, it holds the current values of `calc`, `phos`, and `ant`, in that order, labeled accordingly.
+- `[id].indexes`: Within the loop only, the current index into each of the scan's `parameterRanges`.
+    - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement` - the current index of `calc`, `phos`, and `ant`, in that order, in the example above.
 
 ##### Validation Rules
 
@@ -3724,11 +3720,11 @@ The relabeled `AnnotatedData`, accessible as `[id]`.
 
 Like SED-ML Level 1's RepeatedTask, SED2 needs to repeat a group of tasks multiple times. `Repeat` is the set of fields shared by all three concrete subclasses (`Scatter`, `Loop`, `ParameterScan`), composed via `allOf` rather than instantiated on its own - the prose spec calls this abstract concept simply "Repeat".
 
-The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own `range`/`index` (the current iteration's range value and position, available as `[id].range`/`[id].index` - see Outputs below). `outputVariableMap` defines the columns of the repeat's own `[id]` output: the first column is always the range values, and each further named entry maps an output column name to a value produced by a subTask; if empty, `[id]` contains only the range values. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
+The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own per-iteration outputs (the current iteration's range value and position: `[id].range`/`[id].index` for `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` for `ParameterScan` - see those classes). `outputVariableMap` (optional) defines the columns of the repeat's own `[id]` output: each named entry maps an output column name to a value produced by a subTask. `Scatter` and `Loop` additionally make the first column the range values, so for them `[id]` contains only the range values if `outputVariableMap` is omitted; see each subclass for its exact `[id]` shape. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
 
 A `Repeat`-derived task must define at least one of `outputVariableMap` or `aggregateOutputVariables`.
 
-`range` (a `Range`/`NumericRange`/`ParameterRange`) is shared here rather than being redefined separately on each subclass - `Loop` and `Scatter` both use it directly; `ParameterScan` does not (it uses `parameterRanges` instead).
+`Repeat` itself has no `range`: `Loop` and `Scatter` each define their own required `range` child (a `Range`/`NumericRange`/`ParameterRange`), and `ParameterScan` uses `parameterRanges` instead.
 
 ##### Attributes
 
@@ -3737,9 +3733,8 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
 | `subTasks` | object (values: AbstractTask) | no |  |
-| `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
+| `outputVariableMap` | object (values: SIdRef) or SIdRef | no | Optional, but at least one of this or `aggregateOutputVariables` must be provided (Repeat-0006). |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no | Used by `Loop`/`Scatter`; not used by `ParameterScan` (see `parameterRanges` there instead). |
 
 ###### Attribute details
 
@@ -3749,15 +3744,10 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
-
 
 ##### Outputs
 
-Not applicable on its own - see `Scatter`, `Loop`, and `ParameterScan` for their concrete output shapes (`[id]` per `outputVariableMap`, `[id].aggregates` per `aggregateOutputVariables`).
-
-- `[id].range`: Within the loop, the current value of `range`. _(No description yet - placeholder, needs to be filled in: exact reference form and availability when `range` is unset.)_
-- `[id].index`: Within the loop, the current index into `range`. _(No description yet - placeholder, needs to be filled in.)_
+Not applicable on its own - see `Scatter`, `Loop`, and `ParameterScan` for their concrete output shapes (`[id]` per `outputVariableMap`, `[id].aggregates` per `aggregateOutputVariables`). The per-iteration range outputs (`[id].range`/`[id].index` on `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` on `ParameterScan`) belong to those subclasses, not to `Repeat`.
 
 Shared mixin for the three `Repeat` subclasses - not instantiated on its own; see `Scatter`, `Loop`, `ParameterScan`.
 
@@ -3784,10 +3774,6 @@ Shared mixin for the three `Repeat` subclasses - not instantiated on its own; se
 **`Repeat-0004`** (error) - The aggregateOutputVariables attribute of a Repeat must be an object whose values are AggregationCalculation. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0004.md))
 
 > `aggregateOutputVariables` is `object (values: AggregationCalculation)` in Repeat: it must be an object whose values are AggregationCalculation.
-
-**`Repeat-0005`** (error) - The range attribute of a Repeat, if present, must be a RangeInline object. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0005.md))
-
-> `range` is optional; when present, it must be a `Range`/`NumericRange`/`ParameterRange` object in its embedded `RangeInline` form.
 
 **`Repeat-0006`** (error) - A Repeat must provide at least one of outputVariableMap or aggregateOutputVariables. ([source](specsheets/tasks/Repeat/v1.0.0/validation/Repeat-0006.md))
 
@@ -3828,7 +3814,7 @@ Shared mixin for the three `Repeat` subclasses - not instantiated on its own; se
 
 ##### What it does
 
-A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a `Range`/`NumericRange`/`ParameterRange`) defines one iteration per element.
+A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a required `Range`/`NumericRange`/`ParameterRange` child) defines one iteration per element.
 
 ##### Attributes
 
@@ -3840,7 +3826,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `subTasks` | object (values: AbstractTask) | yes |  |
 | `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no |  |
+| `range` | RangeInline | yes |  |
 
 ###### Attribute details
 
@@ -3852,7 +3838,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`range`** (RangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
@@ -3869,9 +3855,9 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation function collapses the `range` dimension of `[id]` (per `Repeat`, the applied dimension defaults to 'the Repeat' itself, i.e. this one) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
-- `[id].range`: Within each iteration, the current value of `range` (see `Repeat`).
+- `[id].range`: Within each iteration, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within each iteration, the current index into `range`.
+- `[id].index`: Within each iteration, the current index into `range`. Always valid.
     - Dimensions: Scalar (0-D) per iteration.
 
 ##### Validation Rules
@@ -3986,7 +3972,7 @@ Not independently referenceable - a `Span` only exists as a named child of the t
 
 Computes the steady state of a model: where dX/dt = 0 for every varying element X of the model, with respect to the independent variable (usually time). `independentVariable` follows the same rules as the simulation tasks (either the model's own variable, or an implicit URN such as `urn:sedml:symbol:time`).
 
-This is an implementation of KISAO:0000407 (steady-state root-finding method).
+This is an implementation of KISAO:0000407 (steady-state root-finding method). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ##### Attributes
 
@@ -3998,7 +3984,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `model` | SIdRef | yes |  |
 | `independentVariable` | StringOrRef | no |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ###### Attribute details
 
@@ -4010,19 +3996,17 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ##### Outputs
 
-The steady-state values of `outputVariables`, accessible as `[id]`. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+The steady-state values of `outputVariables`, accessible as `[id]`. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables`, at steady state.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
-
-`[id].model` is only produced when `outputModel` is `true`.
 
 ##### Validation Rules
 
@@ -4047,14 +4031,6 @@ The steady-state values of `outputVariables`, accessible as `[id]`. If `outputMo
 **`SteadyState-0004`** (error) - The independentVariable attribute of a SteadyState, if present, must be a string. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0004.md))
 
 > `independentVariable` is `StringOrRef`, which resolves to a plain string type; when present, it must be a string.
-
-**`SteadyState-0005`** (error) - When the value of outputModel of a SteadyState is provided directly, it must be a boolean. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0005.md))
-
-> `outputModel` is `BooleanOrRef`: the value, when not a reference, must be a boolean.
-
-**`SteadyState-0006`** (error) - When the value of outputModel of a SteadyState is a reference, it must be a reference to a boolean. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0006.md))
-
-> `outputModel` is `BooleanOrRef`: when the value is a reference, it must resolve to a boolean.
 
 #### StringFormation
 
@@ -5020,9 +4996,7 @@ Not independently referenceable - only exists as a named child within a `Plot2D`
 
 *Source: [specsheets/auxiliary/LoopVariable/v1.0.0/description.md](specsheets/auxiliary/LoopVariable/v1.0.0/description.md)*
 
-![LoopVariable UML diagram](specsheets/tasks/Loop/v1.0.0/Loop.png)
-
-*(`LoopVariable` has no standalone diagram of its own - the image above is `Loop`'s diagram, reused here because `LoopVariable` is drawn fully within it as a linked box, right next to `Loop`. Look for the `LoopVariable` box.)*
+![LoopVariable UML diagram](specsheets/auxiliary/LoopVariable/v1.0.0/LoopVariable.png)
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -5200,9 +5174,7 @@ Not independently referenceable - only exists as an entry in its parent task's `
 
 *Source: [specsheets/auxiliary/WorkingAlgorithm/v1.0.0/description.md](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/description.md)*
 
-![WorkingAlgorithm UML diagram](specsheets/tasks/AbstractSimulation/v1.0.0/AbstractSimulation.png)
-
-*(`WorkingAlgorithm` has no standalone diagram of its own - the image above is `AbstractSimulation`'s diagram, reused here because `WorkingAlgorithm` is drawn fully within it as a linked box, right next to `AbstractSimulation`. Look for the `workingAlgorithm` box.)*
+![WorkingAlgorithm UML diagram](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/WorkingAlgorithm.png)
 
 **Category:** auxiliary  
 **Version:** v1  
@@ -5210,7 +5182,7 @@ Not independently referenceable - only exists as an entry in its parent task's `
 
 ##### What it does
 
-An algorithm used internally by a simulation task, attached via `AbstractSimulation`'s `workingAlgorithms` list. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
+An algorithm used internally by a task, attached via a `workingAlgorithms` list: the one `AbstractSimulation` defines (and so every ODE/stochastic simulation task has), or the one `SteadyState` and `FluxBalanceAnalysis` each declare directly. Beyond the fields it inherits from `SEDBase`, it carries a required `algorithm`.
 
 _(No description yet - placeholder. It's not yet clear from the diagram alone how `algorithm` relates to the task's own `_type` discriminator and `taskParameters`, or how multiple `workingAlgorithms` entries on one task are meant to be distinguished/used - needs updating once that's settled.)_
 

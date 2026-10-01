@@ -4,7 +4,7 @@
   "title": "SED2 FluxBalanceAnalysis",
   "$defs": {
     "FluxBalanceAnalysis": {
-      "description": "Flux balance analysis. kisaoID must be KISAO:0000437 (FBA) or a child.",
+      "description": "Flux balance analysis.",
       "type": "object",
       "allOf": [
         {
@@ -28,12 +28,12 @@
             "FluxBalanceAnalysis-0005"
           ]
         },
-        "outputModel": {
-          "$ref": "../../../core/Types/v1.0.0/schema.json#/$defs/BooleanOrRef",
-          "x-rule-id": [
-            "FluxBalanceAnalysis-0006",
-            "FluxBalanceAnalysis-0007"
-          ]
+        "workingAlgorithms": {
+          "type": "array",
+          "items": {
+            "$ref": "../../../auxiliary/WorkingAlgorithm/v1.0.0/schema.json#/$defs/WorkingAlgorithm"
+          },
+          "x-rule-id": "FluxBalanceAnalysis-0009"
         }
       },
       "required": [

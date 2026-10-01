@@ -11,7 +11,7 @@
 
 Uses an objective function and reaction rate bounds (both defined within the model itself) to determine the set of reaction rates that maximizes the objective function. Unlike the other simulation tasks, FBA has no independent variable.
 
-This is an implementation of KISAO:0000437 (FBA).
+This is an implementation of KISAO:0000437 (FBA). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ## Attributes
 
@@ -22,7 +22,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `taskParameters` | array of TaskParameter | no |  |
 | `model` | SIdRef | yes |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ### Attribute details
 
@@ -32,16 +32,14 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ## Outputs
 
-A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+A dictionary of model variables (usually fluxes) to their final values, accessible via `outputVariables` as `[id]` - analogous to a `SteadyState` result. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables` (typically reaction fluxes) - length depends on how many variables are named there.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
-
-`[id].model` is only produced when `outputModel` is `true`.

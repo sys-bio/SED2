@@ -11,7 +11,7 @@
 
 Computes the steady state of a model: where dX/dt = 0 for every varying element X of the model, with respect to the independent variable (usually time). `independentVariable` follows the same rules as the simulation tasks (either the model's own variable, or an implicit URN such as `urn:sedml:symbol:time`).
 
-This is an implementation of KISAO:0000407 (steady-state root-finding method).
+This is an implementation of KISAO:0000407 (steady-state root-finding method). The algorithm(s) it uses internally may be listed in the optional `workingAlgorithms` (see `WorkingAlgorithm`).
 
 ## Attributes
 
@@ -23,7 +23,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `model` | SIdRef | yes |  |
 | `independentVariable` | StringOrRef | no |  |
 | `outputVariables` | ListOfStringsOrRef | yes |  |
-| `outputModel` | BooleanOrRef | no |  |
+| `workingAlgorithms` | array of WorkingAlgorithm | no |  |
 
 ### Attribute details
 
@@ -35,16 +35,14 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`outputVariables`** (ListOfStringsOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
 
-**`outputModel`** (BooleanOrRef, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`workingAlgorithms`** (array of WorkingAlgorithm, optional) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ## Outputs
 
-The steady-state values of `outputVariables`, accessible as `[id]`. If `outputModel` is `true`, the resulting model state is also available as `[id].model`.
+The steady-state values of `outputVariables`, accessible as `[id]`. The resulting model state is always also available as `[id].model`.
 
 - `[id]`: **Valid**
     - Dimensions: 1D: one value per entry of `outputVariables`, at steady state.
 - `[id].model`: **Valid**
 - `[id].strings`: **Invalid**
-
-`[id].model` is only produced when `outputModel` is `true`.

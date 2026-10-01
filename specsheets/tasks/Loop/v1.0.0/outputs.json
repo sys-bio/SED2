@@ -1,18 +1,25 @@
 {
   "outputs": {
     "[id]": {
-      "valid": true,
       "type": "annotatedData",
-      "dimensions": {
-        "source": "runtime",
-        "note": "2D or more: first dimension = one row per iteration (iteration count is not knowable ahead of the loop actually running - Loop's exact termination condition is an open design question, see core-spec.md Section 10); remaining dimension(s) = one column per entry of outputVariableMap"
-      }
-    },
-    "[id].model": {
-      "valid": false
-    },
-    "[id].strings": {
-      "valid": false
+      "dimensions": [
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(range)"
+          },
+          "labels": null,
+          "note": "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"
+        },
+        {
+          "size": {
+            "source": "static",
+            "expr": "len(outputVariableMap)"
+          },
+          "labels": null,
+          "note": "one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here"
+        }
+      ]
     },
     "[id].aggregates": {
       "valid": "provided(aggregateOutputVariables)",
@@ -29,13 +36,11 @@
       ]
     },
     "[id].range": {
-      "valid": "provided(range)",
       "type": "annotatedData",
       "dimensions": [],
       "note": "the current value of range, within the loop"
     },
     "[id].index": {
-      "valid": "provided(range)",
       "type": "annotatedData",
       "dimensions": [],
       "note": "the current index into range, within the loop"

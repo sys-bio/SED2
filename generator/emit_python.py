@@ -2411,13 +2411,15 @@ def _apply_index_chain(dims, index_accessors):
 
 
 def eval_valid(entry, scope, shape_of):
-    """entry["valid"] is True/False, or a boolean expr string over the
-    task's own fields. Returns True/False, or None when a string expr
-    couldn't be evaluated statically (SEDBase-0008: "the rule does not
-    fire" in that case)."""
+    """A suffix entry that is listed in outputs.json is valid; one that
+    isn't listed is not (resolve_output handles that). An entry's optional
+    "valid" field is a boolean expr string over the task's own fields
+    meaning "valid if". No "valid" field: always valid. Returns True/False,
+    or None when the expr couldn't be evaluated statically (SEDBase-0008:
+    "the rule does not fire" in that case)."""
     valid = entry.get("valid")
-    if valid is True or valid is False:
-        return valid
+    if valid is None:
+        return True
     if isinstance(valid, str):
         try:
             return bool(eval_expr(parse_expr(valid), scope, shape_of))
@@ -2433,8 +2435,9 @@ def resolve_output(outputs_json, fields, accessors, shape_of):
     `fields` is the referenced task's own _own_json_value() dict; `accessors`
     is a ParsedReference's own .accessors list. Returns (accessor_ok, entry,
     dims_before, dims_after, dot_name, index_accessors):
-      - accessor_ok: True (the suffix exists and its "valid" evaluated
-        true), False (suffix absent or "valid" is/evaluates false), or None
+      - accessor_ok: True (the suffix is listed and has no "valid" field,
+        or its "valid" ("valid if") expr evaluated true), False (suffix
+        not listed, or its "valid" expr evaluated false), or None
         (couldn't be determined statically - every caller treats this the
         same as False for "don't fire a positive claim" but ALSO suppresses
         every rule that would need to know for sure, per the "only fires

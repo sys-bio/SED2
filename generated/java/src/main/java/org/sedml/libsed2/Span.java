@@ -36,7 +36,7 @@ public final class Span extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "span"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"valid\": false}, \"[id].model\": {\"valid\": false}, \"[id].strings\": {\"valid\": false}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getStartValue() { return getOrRefValueNode("start").asDouble(); }

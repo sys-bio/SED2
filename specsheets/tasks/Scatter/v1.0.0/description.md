@@ -9,7 +9,7 @@
 
 ## What it does
 
-A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a `Range`/`NumericRange`/`ParameterRange`) defines one iteration per element.
+A `Repeat` whose iterations are guaranteed fully independent of one another - no subTask output from one iteration feeds into another - so a conforming interpreter may execute the iterations in parallel if it chooses. `range` (a required `Range`/`NumericRange`/`ParameterRange` child) defines one iteration per element.
 
 ## Attributes
 
@@ -21,7 +21,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 | `subTasks` | object (values: AbstractTask) | yes |  |
 | `outputVariableMap` | object (values: SIdRef) or SIdRef | no |  |
 | `aggregateOutputVariables` | object (values: AggregationCalculation) | no |  |
-| `range` | RangeInline | no |  |
+| `range` | RangeInline | yes |  |
 
 ### Attribute details
 
@@ -33,7 +33,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 **`aggregateOutputVariables`** (object (values: AggregationCalculation), optional) - _(no description yet - placeholder, needs to be filled in)_
 
-**`range`** (RangeInline, optional) - _(no description yet - placeholder, needs to be filled in)_
+**`range`** (RangeInline, required) - _(no description yet - placeholder, needs to be filled in)_
 
 
 ## Outputs
@@ -50,7 +50,7 @@ Additional possible outputs beyond the three standard ones:
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation function collapses the `range` dimension of `[id]` (per `Repeat`, the applied dimension defaults to 'the Repeat' itself, i.e. this one) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
 
-- `[id].range`: Within each iteration, the current value of `range` (see `Repeat`).
+- `[id].range`: Within each iteration, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within each iteration, the current index into `range`.
+- `[id].index`: Within each iteration, the current index into `range`. Always valid.
     - Dimensions: Scalar (0-D) per iteration.

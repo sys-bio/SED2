@@ -41,31 +41,47 @@
         ]
       }
     },
-    "ss1": {
-      "_type": "steadyState",
-      "model": "#tasks:m1.model",
-      "outputVariables": [
-        "S1"
-      ],
-      "outputModel": false
-    },
-    "s2": {
-      "_type": "explicitODESimulation",
-      "model": "#tasks:ss1.model",
-      "independentVariable": "time",
-      "outputVariables": [
-        "S1",
-        "S2"
-      ],
-      "independentVariableRange": {
+    "loop1": {
+      "_type": "loop",
+      "loopVariables": {
+        "lv1": {
+          "initialValue": 0,
+          "subsequentValues": "#tasks:loop1:subTasks:s1"
+        }
+      },
+      "subTasks": {
+        "s1": {
+          "_type": "explicitODESimulation",
+          "model": "#tasks:m1.model",
+          "independentVariable": "time",
+          "outputVariables": [
+            "S1",
+            "S2"
+          ],
+          "independentVariableRange": {
+            "_type": "numericRange",
+            "values": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "range": {
         "_type": "numericRange",
         "values": [
-          0,
           1,
           2,
           3
         ]
       }
+    },
+    "r1": {
+      "_type": "relabelData",
+      "input": "#tasks:loop1.aggregates",
+      "labels": "#constants:k_strings"
     }
   }
 }

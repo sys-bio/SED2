@@ -15,14 +15,20 @@
         "_type": {
           "const": "scatter",
           "x-rule-id": "Scatter-0003"
+        },
+        "range": {
+          "$ref": "../../../tasks/Range/v1.0.0/inline.schema.json#/$defs/RangeInline",
+          "x-rule-id": "Scatter-0005"
         }
       },
       "required": [
         "_type",
-        "subTasks"
+        "subTasks",
+        "range"
       ],
       "x-required-rule-ids": {
-        "subTasks": "Scatter-0001"
+        "subTasks": "Scatter-0001",
+        "range": "Scatter-0004"
       },
       "unevaluatedProperties": false
     }
