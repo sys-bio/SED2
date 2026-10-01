@@ -615,12 +615,15 @@ inline OptDims apply_index_chain(const OptDims& dims, const std::vector<RefIndex
     return result;
 }
 
-/// entry["valid"] is true/false, or a boolean expr string over the task's own
-/// fields. nullopt when a string expr couldn't be evaluated statically.
+/// A suffix entry that is listed in outputs.json is valid; one that isn't
+/// listed is not (resolve_output handles that). An entry's optional "valid"
+/// field is a boolean expr string over the task's own fields meaning "valid
+/// if"; no "valid" field means always valid. nullopt when the expr couldn't
+/// be evaluated statically.
 inline std::optional<bool> eval_valid(const Json& entry, const Scope& scope, const ShapeOf& shape_of) {
     const Json* valid = member(entry, "valid");
-    if (valid && valid->is_bool()) return valid->as<bool>();
-    if (valid && valid->is_string()) {
+    if (!valid) return true;
+    if (valid->is_string()) {
         try {
             return val_truthy(eval_expr(*parse_expr(valid->as<std::string>()), scope, shape_of));
         } catch (const NotStatic&) {
