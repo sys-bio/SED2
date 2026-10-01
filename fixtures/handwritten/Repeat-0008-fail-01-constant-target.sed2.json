@@ -31,6 +31,14 @@
       },
       "outputVariableMap": {
         "col": "#constants:myNumberArray"
+      },
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
       }
     }
   }

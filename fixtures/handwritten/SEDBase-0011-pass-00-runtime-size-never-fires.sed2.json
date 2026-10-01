@@ -41,25 +41,23 @@
         ]
       }
     },
-    "loop1": {
-      "_type": "loop",
-      "loopVariables": {
-        "lv1": {
-          "initialValue": 0,
-          "subsequentValues": "#tasks:loop1:subTasks:s1.model"
-        }
-      },
-      "subTasks": {
-        "s1": {
-          "_type": "modelImport",
-          "location": "model.xml",
-          "language": "urn:sedml:language:sbml"
-        }
+    "b1": {
+      "_type": "boundedODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableSpan": {
+        "_type": "span",
+        "start": 0,
+        "end": 10
       }
     },
     "r1": {
       "_type": "relabelData",
-      "input": "#tasks:loop1[1000]",
+      "input": "#tasks:b1[1000]",
       "labels": "#constants:k_strings"
     }
   }

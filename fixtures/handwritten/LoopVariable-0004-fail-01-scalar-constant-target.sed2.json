@@ -31,6 +31,14 @@
       },
       "outputVariableMap": {
         "col": "#tasks:loop1:subTasks:sub1.model"
+      },
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
       }
     }
   }
