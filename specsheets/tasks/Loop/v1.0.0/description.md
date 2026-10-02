@@ -50,10 +50,9 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 Additional possible outputs beyond the three standard ones:
 
-- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
+- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`.  If that attribute is not defined, the `AnnotatedData` is empty.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
-
-- `[id].range`: Within the loop, the current value of `range`. Always valid, since `range` is required.
+- `[id].range`: Within the loop, the current value of `range`.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within the loop, the current index into `range`. Always valid.
+- `[id].index`: Within the loop, the current index into `range`.
     - Dimensions: Scalar (0-D) per iteration.

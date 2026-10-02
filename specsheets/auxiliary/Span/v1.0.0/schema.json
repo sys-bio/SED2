@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sed-ml.org/schemas/tasks/Span/v1.0.0/schema.json",
+  "$id": "https://sed-ml.org/schemas/auxiliary/Span/v1.0.0/schema.json",
   "title": "SED2 Span",
   "$defs": {
     "Span": {

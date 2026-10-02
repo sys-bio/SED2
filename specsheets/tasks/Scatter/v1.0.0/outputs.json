@@ -22,7 +22,6 @@
       ]
     },
     "[id].aggregates": {
-      "valid": "provided(aggregateOutputVariables)",
       "type": "annotatedData",
       "dimensions": [
         {

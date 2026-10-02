@@ -541,7 +541,7 @@ class _Composer:
 
     def _resolve_inline_alias(self, target_top: dict, rpath: str) -> Optional[str]:
         """An 'XInline' wrapper schema (Design.md's Classes section - e.g.
-        tasks/Span/v1.0.0/inline.schema.json's SpanInline) is a bare oneOf of
+        auxiliary/Span/v1.0.0/inline.schema.json's SpanInline) is a bare oneOf of
         exactly one $ref to the real class: not a discriminator (that's the
         separate x-generated-oneOf marker, e.g. RangeInline), just a way to
         embed a single concrete class as a named child field without an

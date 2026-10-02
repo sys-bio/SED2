@@ -17,7 +17,7 @@
           "x-rule-id": "BoundedODESimulation-0006"
         },
         "independentVariableSpan": {
-          "$ref": "../../../tasks/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
+          "$ref": "../../../auxiliary/Span/v1.0.0/inline.schema.json#/$defs/SpanInline",
           "x-rule-id": "BoundedODESimulation-0005"
         }
       },
