@@ -57,7 +57,6 @@ title: SED2 Specification
         - [RelabelData](#relabeldata)
         - [Repeat](#repeat)
         - [Scatter](#scatter)
-        - [Span](#span)
         - [SteadyState](#steadystate)
         - [StringFormation](#stringformation)
     - [Output Classes](#output-classes)
@@ -74,6 +73,7 @@ title: SED2 Specification
         - [Curve](#curve)
         - [LoopVariable](#loopvariable)
         - [OutputParameter](#outputparameter)
+        - [Span](#span)
         - [TaskParameter](#taskparameter)
         - [WorkingAlgorithm](#workingalgorithm)
 
@@ -201,7 +201,7 @@ specsheets/
     ...
 ```
 
-Each `<Category>/<ClassName>/v1.0.0/` folder normally contains exactly:
+Each `<Category>/<ClassName>/<version>/` folder normally contains exactly:
 
 - **`schema.json`** - a standalone JSON Schema (2020-12) for that one class, with its own `$id`. Shared primitives and base-class fields are pulled in via `$ref` to the relevant `core/`/`tasks/`/`outputs/`/`auxiliary/` schema file rather than duplicated, so the file stays small; it can still be dropped into another JSON Schema document and resolved as long as the relative folder layout above is preserved (or the `$id` is used with a schema-aware `$ref` resolver/registry).
 - **`description.md`** - a link to the class's UML diagram (or a note that one doesn't exist yet), what the class does, a table of its child attributes (name, type, required/optional), and a description of what referencing the class's id produces as output.
@@ -209,24 +209,26 @@ Each `<Category>/<ClassName>/v1.0.0/` folder normally contains exactly:
 
 Every `schema.json`'s `required` array carries a sibling `x-required-rule-ids` object mapping each required field's name to the numbered validation rule that documents its presence requirement, and any property whose own constraint - a `_type` discriminator `const`, or a type/shape check beyond bare presence - has a matching numbered rule carries a sibling `x-rule-id` alongside that constraint (as a sibling of `$ref` where the property is declared that way); `x-rule-id` is a single rule-ID string, or an array of them when more than one rule governs the same property (most commonly an `OrRef` field's separate direct-value and reference-form rules, e.g. `AbstractODESimulation.forcePhysicalCorrectness`). A bare `SIdRef` property that must resolve to a particular kind of thing also carries `"x-ref-target": "model"` (SEDBase-0016) or `"x-ref-target": "annotatedData"` (SEDBase-0017). All of these are inert to any JSON Schema validator (unknown keywords are ignored) and exist purely as generator-only metadata - see Design.md's Validation section - so the generator can wire each hand-written `validate()` check straight to the schema location it corresponds to rather than re-deriving that mapping itself. Not every numbered rule has a schema-visible home this way: most are semantic (cross-reference resolution, math well-formedness, tolerance interactions, and the like) with no single JSON Schema keyword to attach to; only presence, discriminator, and simple type/shape constraints get one. A class whose own requiredness is disjunctive rather than a flat list - so far, only `Repeat`, whose subclasses need at least one of `outputVariableMap` or `aggregateOutputVariables` rather than a fixed set - expresses that as an `anyOf` of single-field `required` objects at the class's own top level (sibling to `properties`), with a sibling `x-anyof-required-rule-id` naming the one rule documenting the whole disjunction, rather than forcing it into `x-required-rule-ids`'s per-field mapping. A `oneOf` discriminator built via `x-generated-oneOf` (see Design.md's Classes section) can similarly carry a sibling `x-missing-type-rule-id`, naming a rule for the narrower case where `_type` is absent from the instance entirely, rather than present but unrecognized - a more specific error than the discriminator's own catch-all, for whichever discriminators want to distinguish it (e.g. `AbstractTask-0002`).
 
-**Task output shapes (`outputs.json`).** Every concrete `tasks/` class (one with its own `_type`) additionally carries an `outputs.json`, machine-describing what each output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific suffix like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to - replacing the free-text "Valid"/"Invalid"/"Dimensions:" bullets that used to be the only record of this. A suffix that is listed is valid, and a suffix that is not listed is not valid (a class with no valid suffixes, such as `Span`, lists none). A listed entry may carry an optional `valid` field meaning "valid if": a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`; with no `valid` field the entry is always valid. Each entry has a `type` (`annotatedData`/`model`/`stringList`), and for `annotatedData` a `dimensions` list. Every place a size, a label set, or a whole shape needs stating, it's tagged with where that knowledge actually comes from - `"static"` (an `expr` computed from the task's own fields: `len(outputVariables)`, `independentVariableRange.numberOfSteps`, `keys(data)`, `[independentVariable] + outputVariables` as an array-literal-plus-concatenation, `shapeOf(input)` to inherit another reference's whole shape, optionally minus a dropped dimension via `- dim(...)`), `"input-file"` (knowable only by reading whatever external resource a field like `model` or `location` points to - `JacobianFull`'s species count, `CsvImport`'s column headers - tagged with `from`/`extract`/`note` rather than a formula, since the actual parsing is format-specific generator work, not something this file does itself), or `"runtime"` (genuinely not derivable without executing the simulation, e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count - always paired with a `note` explaining why). A `"runtime"` size may also carry an optional `min`, a guaranteed lower bound when one is actually known (e.g. "at least 2 rows"); an index or range that requires more entries than `min` guarantees is flagged by `SEDBase-0014` as a warning rather than an error, since it may still be valid once the simulation actually runs. `dimensions` itself is either a fixed array of per-dimension entries - an ordinary entry, or a `repeat` entry that expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan`'s one dimension per entry of `parameterRanges`) - when the shape is decomposable dimension-by-dimension, or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (`shapeOf(x)` whole-shape inheritance, or a `"runtime"`/`"input-file"` source where the dimension count itself isn't knowable ahead of time). `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope (the object shapes above); it does not parse `expr`/`note` string contents, which stay documentation for whoever implements the generator's shape-inference step. Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
+**Task output shapes (`outputs.json`).** Every concrete `tasks/` class (one with its own `_type`) additionally carries an `outputs.json`, machine-describing what each output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific suffix like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to - replacing the free-text "Valid"/"Invalid"/"Dimensions:" bullets that used to be the only record of this. A suffix that is listed is valid, and a suffix that is not listed is not valid. A listed entry may carry an optional `valid` field meaning "valid if": a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`; with no `valid` field the entry is always valid. Each entry has a `type` (`annotatedData`/`model`/`stringList`), and for `annotatedData` a `dimensions` list. Every place a size, a label set, or a whole shape needs stating, it's tagged with where that knowledge actually comes from - `"static"` (an `expr` computed from the task's own fields: `len(outputVariables)`, `independentVariableRange.numberOfSteps`, `keys(data)`, `[independentVariable] + outputVariables` as an array-literal-plus-concatenation, `shapeOf(input)` to inherit another reference's whole shape, optionally minus a dropped dimension via `- dim(...)`), `"input-file"` (knowable only by reading whatever external resource a field like `model` or `location` points to - `JacobianFull`'s species count, `CsvImport`'s column headers - tagged with `from`/`extract`/`note` rather than a formula, since the actual parsing is format-specific generator work, not something this file does itself), or `"runtime"` (genuinely not derivable without executing the simulation, e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count - always paired with a `note` explaining why). A `"runtime"` size may also carry an optional `min`, a guaranteed lower bound when one is actually known (e.g. "at least 2 rows"); an index or range that requires more entries than `min` guarantees is flagged by `SEDBase-0014` as a warning rather than an error, since it may still be valid once the simulation actually runs. `dimensions` itself is either a fixed array of per-dimension entries - an ordinary entry, or a `repeat` entry that expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan`'s one dimension per entry of `parameterRanges`) - when the shape is decomposable dimension-by-dimension, or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (`shapeOf(x)` whole-shape inheritance, or a `"runtime"`/`"input-file"` source where the dimension count itself isn't knowable ahead of time). `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope (the object shapes above); it does not parse `expr`/`note` string contents, which stay documentation for whoever implements the generator's shape-inference step. Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
 
 **The `expr`/`valid` notation.** Both fields reuse one small expression language, evaluated against the task's own attribute values at generate/validate time - never against runtime data, and not the SED2 math grammar `Types-0001` through `Types-0004` validate (see this section's `x-rule-id` paragraph above and `Design.md`'s Math section for that separate grammar): `outputs.json` describes shape, `math` describes computation. A bare identifier names one of the task's own attributes and evaluates to its value (`outputVariables`); a dotted path reaches into a nested attribute the same way (`independentVariableRange.numberOfSteps`). `[x]` is an array literal (`[independentVariable]`); JSON numbers and `true`/`false` are literals too. Five functions: `len(x)` - the length of an array-valued `x`; or, when `x` is a Range-family value (a `RangeInline`/`NumericRangeInline`/`ParameterRangeInline`-typed field, or the reserved identifier `self` inside a `repeat` entry - see below), the number of points it resolves to, dispatched on `x`'s own discriminated type: `len(x.values) if provided(x.values) else x.numberOfSteps + 1` for `NumericRange`/`ParameterRange`, or just `len(x.values)` for a bare `Range` (which has no `numberOfSteps` alternative); `keys(x)` - the keys of an object-valued `x`, as an array; `shapeOf(x)` - the whole `dimensions` shape of a referenced AnnotatedData value; `dim(x)` - the dimension(s) named by `x` (a single name or a list of names) within a shape, meaningful only as the right operand of `-`; `provided(x)` - `true` iff attribute `x` was given a value in the document. Operators, at ordinary precedence: `!x` (boolean negation); `x == y` (equality); `x + y` (numeric addition when both operands are numbers, array concatenation when both are arrays - `1 + len(outputVariables)` vs. `[independentVariable] + outputVariables`); `shapeOf(x) - dim(y)` (a shape with the named dimension(s) removed - the only place `-` appears); `x or y` (`x`'s value when `provided(x)` holds, else the literal `y` - used for a field with a documented default, e.g. `dim(appliedDimensions or outermost)`, where `outermost` is a sentinel meaning the shape's own first dimension); and a conditional `x if provided(y) else z` for a value with two different derivations depending on whether an alternate field was given instead (e.g. `NumericRange`'s `len(values) if provided(values) else numberOfSteps + 1`). This is the only formal definition of the notation - `schema/outputs-meta.schema.json` does not parse it, as noted above - so a generator's shape-inference step implements it by hand. Inside a `dimensions` array's `repeat` entry (see above), this same notation applies to that entry's own `size`/`labels`, with two scoping additions: a bare identifier there resolves against the current array entry's own fields, not the task's top-level attributes; and the reserved identifier `self` refers to the current entry as a whole (for taking its `len()`, per above) rather than one of its fields. `ParameterScan`'s `repeat` over `parameterRanges` uses `size: len(self)`, letting each entry's own type (`Range`/`NumericRange`/`ParameterRange`) determine its own length the same way `Scatter`'s `len(range)` and `ExplicitODESimulation`'s `len(independentVariableRange)` do for their own named Range-family fields.
 
-**Exception - the four Range/Span "inline" wrappers.** `Range`, `NumericRange`, `ParameterRange`, and `Span` can each be used two ways: standalone, as an entry in the `tasks` dictionary (with the full task apparatus - the `_type` discriminator, `taskParameters`, etc.), or embedded as a named child field of another task (e.g. `ExplicitODESimulation.independentVariableRange`, `BoundedODESimulation.independentVariableSpan`, `Scatter.range`, `ParameterScan.parameterRanges[]`). The schema represents the second, embedded form with four small wrapper `$defs` - `RangeInline`, `NumericRangeInline`, `ParameterRangeInline`, `SpanInline` - that exist purely to give the embedded-child usage its own schema seam (so it could diverge from the standalone-task form later) without being a distinct modeled *class* with its own UML diagram. Rather than give each of those four its own folder, they are merged into their base class's folder as extra schema files:
+**Exception - the three Range "inline" wrappers.** `Range`, `NumericRange`, and `ParameterRange` can each be used two ways: standalone, as an entry in the `tasks` dictionary (with the full task apparatus - the `_type` discriminator, `taskParameters`, etc.), or embedded as a named child field of another task (e.g. `ExplicitODESimulation.independentVariableRange`, `Scatter.range`, `ParameterScan.parameterRanges[]`). The schema represents the second, embedded form with three small wrapper `$defs` - `RangeInline`, `NumericRangeInline`, `ParameterRangeInline` - that exist purely to give the embedded-child usage its own schema seam (so it could diverge from the standalone-task form later) without being a distinct modeled *class* with its own UML diagram. Rather than give each of those three its own folder, they are merged into their base class's folder as extra schema files:
 
 ```
-tasks/Range/v1.0.0/                  tasks/NumericRange/v1.0.0/             tasks/ParameterRange/v1.0.0/        tasks/Span/v1.0.0/
-  schema.json   (Range)              schema.json   (NumericRange)          schema.json   (ParameterRange)      schema.json   (Span)
+tasks/Range/v1.0.0/                  tasks/NumericRange/v1.0.0/             tasks/ParameterRange/v1.0.0/
+  schema.json   (Range)              schema.json   (NumericRange)          schema.json   (ParameterRange)
   common.schema.json (RangeCommon)   common.schema.json (NumericRangeCommon)
-  inline.schema.json (RangeInline)   inline.schema.json (NumericRangeInline) inline.schema.json (ParameterRangeInline) inline.schema.json (SpanInline)
-  Range.png                          NumericRange.png                       ParameterRange.png                  Span.png
-  description.md                     description.md                        description.md                      description.md
+  inline.schema.json (RangeInline)   inline.schema.json (NumericRangeInline) inline.schema.json (ParameterRangeInline)
+  Range.png                          NumericRange.png                       ParameterRange.png
+  description.md                     description.md                        description.md
 ```
 
-`Range` and `NumericRange` carry an extra `common.schema.json` that `ParameterRange` and `Span` don't need: `Range` is both directly instantiable and the parent of `NumericRange`, and `NumericRange` is in turn both directly instantiable and the parent of `ParameterRange` - so each contributes a `RangeCommon`/`NumericRangeCommon` mixin (composed via `allOf`) carrying the fields its subclass inherits, alongside its own `schema.json` for the standalone-task form. `ParameterRange` and `Span` are leaves - nothing subclasses them - so they need no such split. Each mixin composes the next one up in turn (`NumericRangeCommon` composes `RangeCommon`, which composes `AbstractTaskCommon`), so a concrete class's own `allOf` names only its one most specific ancestor mixin - `ParameterRange` lists just `NumericRangeCommon`, not `RangeCommon` and `NumericRangeCommon` side by side - mirroring the UML chain directly rather than flattening every ancestor into each leaf; see `Design.md`'s Classes section for why.
+`Range` and `NumericRange` carry an extra `common.schema.json` that `ParameterRange` doesn't need: `Range` is both directly instantiable and the parent of `NumericRange`, and `NumericRange` is in turn both directly instantiable and the parent of `ParameterRange` - so each contributes a `RangeCommon`/`NumericRangeCommon` mixin (composed via `allOf`) carrying the fields its subclass inherits, alongside its own `schema.json` for the standalone-task form. `ParameterRange` is a leaf - nothing subclasses it - so it needs no such split. Each mixin composes the next one up in turn (`NumericRangeCommon` composes `RangeCommon`, which composes `AbstractTaskCommon`), so a concrete class's own `allOf` names only its one most specific ancestor mixin - `ParameterRange` lists just `NumericRangeCommon`, not `RangeCommon` and `NumericRangeCommon` side by side - mirroring the UML chain directly rather than flattening every ancestor into each leaf; see `Design.md`'s Classes section for why.
 
-Each `description.md` in these four folders explains all of that folder's schema files. Everything else in the document - including every cross-reference into these four classes from other Data Sheets' `schema.json` files - still resolves correctly; this was verified by validating real SED2 example documents against the split schemas after the merge. All four live under `tasks/` rather than `auxiliary/`, so each also carries the ordinary `outputs.json` every concrete `tasks/` class does - `Range`, `NumericRange`, and `ParameterRange` describe their `[id]` output for when they're used as a standalone `tasks` entry, and `Span`'s lists no suffixes at all (so every suffix is invalid), matching its own `description.md` (`Span` can never be a standalone `tasks` entry, only ever an embedded child, so it has no output of its own).
+Each `description.md` in these three folders explains all of that folder's schema files. Everything else in the document - including every cross-reference into these three classes from other Data Sheets' `schema.json` files - still resolves correctly; this was verified by validating real SED2 example documents against the split schemas after the merge. All three live under `tasks/`, so each also carries the ordinary `outputs.json` every concrete `tasks/` class does, describing its `[id]` output for when it is used as a standalone `tasks` entry.
+
+**`Span` follows the same two-file pattern, but is an auxiliary class.** `Span` (`auxiliary/Span/v1.0.0/`) is a simple `start`/`end` pair, used only as the embedded child `independentVariableSpan` of `BoundedODESimulation` and `BoundedStochasticSimulation`. Unlike the Range family it does not inherit from `AbstractTask` and is not in `AbstractTask`'s union, so it can never be a standalone `tasks` entry and carries no `outputs.json` (like every non-`tasks/` class). It still keeps its own `schema.json` (`Span`) and `inline.schema.json` (`SpanInline`) in the one folder, with its `description.md` explaining both, exactly as above; `SpanInline` is unwrapped by the generator the same way the Range inline wrappers are.
 
 **Exception - the two `*Common` mixins.** `AbstractTaskCommon` and `AbstractOutputCommon` are schema-only mixins (composed via `allOf`) rather than modeled classes with their own UML box: they contribute the fields every concrete Task (or Output) picks up beyond `SEDBase` - `taskParameters`/`outputParameters` - but have no `_type` of their own and are never instantiated directly. Rather than give them placeholder folders, each is merged into its family's base-class folder as a second schema file:
 
@@ -238,7 +240,7 @@ tasks/AbstractTask/v1.0.0/              outputs/AbstractOutput/v1.0.0/
   description.md                      description.md
 ```
 
-`schema.json` in each of these two folders still holds only the `oneOf` discriminator over the concrete subclasses, unchanged; `common.schema.json` holds the mixin, and every concrete Task/Output's own `schema.json` still `$ref`s the mixin the same way it always did - just pointed at `common.schema.json` instead of a dropped standalone folder. Re-validated the same way as the Range/Span merge above. This `oneOf` is generator-populated rather than hand-maintained: each discriminator-bearing `$defs` entry (`AbstractTask`, `AbstractOutput`, and `RangeInline` - see the exception above) carries a structured pointer at the `common.schema.json` mixin it discriminates over, and the generator finds every concrete class that composes that same mixin and pins a `_type` const, treating each as a branch - so a newly-introduced abstract-class family needs no generator code changes, just its own mixin file and pointer. See `Design.md`'s Classes section for the full algorithm.
+`schema.json` in each of these two folders still holds only the `oneOf` discriminator over the concrete subclasses, unchanged; `common.schema.json` holds the mixin, and every concrete Task/Output's own `schema.json` still `$ref`s the mixin the same way it always did - just pointed at `common.schema.json` instead of a dropped standalone folder. Re-validated the same way as the inline-wrapper merge above. This `oneOf` is generator-populated rather than hand-maintained: each discriminator-bearing `$defs` entry (`AbstractTask`, `AbstractOutput`, and `RangeInline` - see the exception above) carries a structured pointer at the `common.schema.json` mixin it discriminates over, and the generator finds every concrete class that composes that same mixin and pins a `_type` const, treating each as a branch - so a newly-introduced abstract-class family needs no generator code changes, just its own mixin file and pointer. See `Design.md`'s Classes section for the full algorithm.
 
 **Exception - standalone schema-only mixins with no oneOf of their own.** `AbstractSimulation`, `AbstractODESimulation`, and `AbstractStochasticSimulation` (all under `tasks/`) are schema-only mixins too, but unlike `AbstractTaskCommon`/`AbstractOutputCommon` above, nothing else ever needs to reference them as a field type, so there's no bare oneOf-bearing sibling to merge them into. Each simply gets its own ordinary-looking folder (`schema.json` + `description.md` + `<ClassName>.png`) whose `schema.json` holds a mixin instead of a concrete class - no `_type`, no `oneOf`, composed via `allOf` by its subclasses like any other mixin. `AbstractSimulation` provides the fields shared by every ODE/stochastic simulation task (superseding the former `SimulationCommon` - see Section 10); `AbstractODESimulation` and `AbstractStochasticSimulation` each add solver-tuning fields on top of it, composing `AbstractSimulation` via `allOf` in turn. `ExplicitODESimulation`/`BoundedODESimulation`/`OneStepODESimulation` and their three stochastic counterparts then each compose only their own one most-specific mixin (`AbstractODESimulation` or `AbstractStochasticSimulation`), which already reaches `AbstractSimulation`, `AbstractTaskCommon`, and `SEDBaseFields` transitively - mirroring the UML inheritance chain directly rather than flattening every ancestor's composition at the leaf (see Classes). `WorkingAlgorithm` (`auxiliary/WorkingAlgorithm/v1.0.0/`, referenced from `AbstractSimulation.workingAlgorithms`) needs no such exception - it's an ordinary directly-instantiable class inheriting only from `SEDBase`, following the general folder pattern above.
 
@@ -246,20 +248,20 @@ Any future changes to a class creates a sibling `v#.#.#/` folder alongside `v1.0
 
 ### 9. Validating a document against these schemas
 
-*Source: [core-spec.md, line 140](core-spec.md#L140)*
+*Source: [core-spec.md, line 142](core-spec.md#L142)*
 
 
 To validate a whole SED2 document, `$ref` the appropriate `specsheets/core/SEDDocument/v1.0.0/schema.json` (which itself only needs `AbstractTask`/`AbstractOutput`, which in turn enumerate the concrete task/output classes) with a schema registry that can resolve relative file `$ref`s - e.g. Python's `referencing`/`jsonschema` packages, pointed at the `specsheets/` root. To validate or compose against just one class (e.g. embedding `ExplicitODESimulation`'s schema inside a larger tool-specific document), `$ref` that class's own `specsheets/tasks/ExplicitODESimulation/v1.0.0/schema.json` directly - its external refs resolve the same way.
 
 ### 10. Known gaps and inconsistencies (flagged, not fixed here)
 
-*Source: [core-spec.md, line 144](core-spec.md#L144)*
+*Source: [core-spec.md, line 146](core-spec.md#L146)*
 
 
 Per the project's own working rule, this split is descriptive - it surfaces inconsistencies for you to resolve rather than silently deciding them:
 
 - **`Style` is unspecified.** Both the prose (`"[To be filled in; should be a straight copy of SED-ML's Style class.]"`) and the schema (a permissive `{"type": "object"}` placeholder) mark this as incomplete.
-- **9 classes have no standalone UML diagram of their own**, and instead their `description.md` links directly to another class's diagram (a relative-path image reference, not a copied file) rather than claiming no diagram exists. 6 of these are fully drawn inside the referenced diagram as a linked box with their own attributes: `auxiliary/Annotation` (in `core/SEDBase`'s diagram), `auxiliary/TaskParameter` (in `tasks/AbstractTask`'s), `auxiliary/OutputParameter` (in `outputs/AbstractOutput`'s), `auxiliary/LoopVariable` (in `tasks/Loop`'s), `auxiliary/Axis` (in `outputs/Plot`'s), and `auxiliary/WorkingAlgorithm` (in `tasks/AbstractSimulation`'s). The other 3 don't have a separately-cropped diagram of their own: `tasks/NumericRange` and `tasks/ParameterRange` just point to `tasks/Range`'s diagram, since inheriting from `Range` is all there is to show, and `auxiliary/Curve` points to `auxiliary/AbstractCurve`'s diagram, which already draws `Curve` directly as `AbstractCurve`'s one concrete subclass. (`tasks/Span` used to be in this list too, reusing `BoundedODESimulation`'s diagram, but now has its own standalone diagram.)
+- **9 classes have no standalone UML diagram of their own**, and instead their `description.md` links directly to another class's diagram (a relative-path image reference, not a copied file) rather than claiming no diagram exists. 6 of these are fully drawn inside the referenced diagram as a linked box with their own attributes: `auxiliary/Annotation` (in `core/SEDBase`'s diagram), `auxiliary/TaskParameter` (in `tasks/AbstractTask`'s), `auxiliary/OutputParameter` (in `outputs/AbstractOutput`'s), `auxiliary/LoopVariable` (in `tasks/Loop`'s), `auxiliary/Axis` (in `outputs/Plot`'s), and `auxiliary/WorkingAlgorithm` (in `tasks/AbstractSimulation`'s). The other 3 don't have a separately-cropped diagram of their own: `tasks/NumericRange` and `tasks/ParameterRange` just point to `tasks/Range`'s diagram, since inheriting from `Range` is all there is to show, and `auxiliary/Curve` points to `auxiliary/AbstractCurve`'s diagram, which already draws `Curve` directly as `AbstractCurve`'s one concrete subclass.
 - **`core/Style` is the one class with genuinely no UML diagram anywhere**, as it does not yet have a full definition. It keeps its `DIAGRAM-PENDING.md` for now.
 - **`tasks/AbstractTaskCommon` and `outputs/AbstractOutputCommon` are schema-only mixins, not modeled classes** - they were never drawn as their own UML box (their fields are drawn flattened onto `AbstractTask`'s/`AbstractOutput`'s own box instead), so there's no gap to flag for them; see Section 8's exception for how they're now filed as a second schema file (`common.schema.json`) in their base class's folder.
 - **`sed\spec\sed2.schema.json` (in the `sed` repo/folder) is corrupted** - it has a complete, valid JSON document followed by ~1,140 bytes of duplicated trailing content that makes the file as a whole invalid JSON. This split was generated from the *valid prefix* of that file (which is also the more complete of the two `sed2.schema.json` copies found - `SED2\spec\sed2.schema.json` is missing the `Surface` definition and part of `Curve`). Worth cleaning up that file directly.
@@ -271,7 +273,7 @@ Per the project's own working rule, this split is descriptive - it surfaces inco
 
 ### 11. Multi-target consistency reminder
 
-*Source: [core-spec.md, line 159](core-spec.md#L159)*
+*Source: [core-spec.md, line 161](core-spec.md#L161)*
 
 
 Per this project's own working rules: any future design change to the SED2 class model, cross-reference/math syntax, or validation rules must be reflected in **all three** generated libraries (C++, Java, Python) in the same change - this document split does not touch code generation, but any content change that follows from resolving Section 10's open items will.
@@ -2648,12 +2650,11 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 Additional possible outputs beyond the three standard ones:
 
-- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
+- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`.  If that attribute is not defined, the `AnnotatedData` is empty.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
-
-- `[id].range`: Within the loop, the current value of `range`. Always valid, since `range` is required.
+- `[id].range`: Within the loop, the current value of `range`.
     - Dimensions: Scalar (0-D) per iteration.
-- `[id].index`: Within the loop, the current index into `range`. Always valid.
+- `[id].index`: Within the loop, the current index into `range`.
     - Dimensions: Scalar (0-D) per iteration.
 
 ##### Validation Rules
@@ -3517,9 +3518,8 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 Additional possible outputs beyond the three standard ones:
 
-- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
+- `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`.  If that attribute is not defined, the `AnnotatedData` is empty.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation collapses *all* of `[id]`'s scanned-range dimensions together (per `Repeat`, the applied dimension defaults to 'the Repeat' itself - here, the whole combined scan) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
-
 - `[id].ranges`: Within the loop only, the current value of each of the scan's `parameterRanges`.
     - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement`. For example, with children whose `modelElement`s are `calc`, `phos`, and `ant`, it holds the current values of `calc`, `phos`, and `ant`, in that order, labeled accordingly.
 - `[id].indexes`: Within the loop only, the current index into each of the scan's `parameterRanges`.
@@ -3875,87 +3875,6 @@ Additional possible outputs beyond the three standard ones:
 **`Scatter-0003`** (error) - The _type attribute of a Scatter must be "scatter". ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0003.md))
 
 > `_type` is the discriminator field. For `Scatter` it must always equal `"scatter"`.
-
-#### Span
-
-*Source: [specsheets/tasks/Span/v1.0.0/description.md](specsheets/tasks/Span/v1.0.0/description.md)*
-
-![Span UML diagram](specsheets/tasks/Span/v1.0.0/Span.png)
-
-**Category:** tasks  
-**Version:** v1  
-**Schema:** [`schema.json`](specsheets/tasks/Span/v1.0.0/schema.json) + [`inline.schema.json`](specsheets/tasks/Span/v1.0.0/inline.schema.json) (`SpanInline`)  
-**`_type` discriminator:** `"span"`
-
-##### What it does
-
-A minimal range: just a `start` and an `end` value, with no explicit intermediate points. Used by `BoundedODESimulation` (`independentVariableSpan`) and `BoundedStochasticSimulation` (`independentVariableSpan`) to bound a simulation whose output points are chosen by the solver rather than the document.
-
-**Two schema files in this folder.** `schema.json` defines `Span` itself. `inline.schema.json` defines `SpanInline` - the wrapper used for named child fields like `independentVariableSpan`. See `tasks/Range` for why the two are kept separate. Unlike `Range`/`NumericRange`/`ParameterRange`, `Span` is not itself in `AbstractTask`'s union, so it cannot appear as a standalone `tasks` dictionary entry - it only ever appears embedded, via `SpanInline`.
-
-##### Attributes
-
-All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](#sedbase).
-
-| Attribute | Type | Required | Notes |
-|---|---|---|---|
-| `start` | NumberOrRef | yes |  |
-| `end` | NumberOrRef | yes |  |
-
-###### Attribute details
-
-**`start`** (NumberOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
-
-**`end`** (NumberOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
-
-
-##### Outputs
-
-Not independently referenceable - a `Span` only exists as a named child of the task that bounds itself with it.
-
-- `[id]`: **Invalid**
-- `[id].model`: **Invalid**
-- `[id].strings`: **Invalid**
-
-(Any output suffix not listed above is invalid for this class.)
-
-`Span` can never be a standalone `tasks` entry - it only ever appears embedded (via `SpanInline`), and has no output of its own.
-
-##### Validation Rules
-
-**`Span-0000`** (error) - The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0000.md))
-
-> Catch-all rule for schema-pass failures attributable to Span (or a
-> more specific descendant whose own class's failure location can't be
-> resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
-
-**`Span-0001`** (error) - The start attribute of a Span is required. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0001.md))
-
-> `start` is required.
-
-**`Span-0002`** (error) - When the value of start of a Span is provided directly, it must be a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0002.md))
-
-> `start` is `NumberOrRef`: the value, when not a reference, must be a number.
-
-**`Span-0003`** (error) - When the value of start of a Span is a reference, it must be a reference to a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0003.md))
-
-> `start` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
-
-**`Span-0004`** (error) - The end attribute of a Span is required. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0004.md))
-
-> `end` is required.
-
-**`Span-0005`** (error) - When the value of end of a Span is provided directly, it must be a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0005.md))
-
-> `end` is `NumberOrRef`: the value, when not a reference, must be a number.
-
-**`Span-0006`** (error) - When the value of end of a Span is a reference, it must be a reference to a number. ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0006.md))
-
-> `end` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
-
-**`Span-0007`** (error) - The _type attribute of a Span must be "span". ([source](specsheets/tasks/Span/v1.0.0/validation/Span-0007.md))
-
-> `_type` is the discriminator field. For `Span` it must always equal `"span"`.
 
 #### SteadyState
 
@@ -5116,6 +5035,87 @@ Not independently referenceable - only exists as an entry in its parent output's
 **`OutputParameter-0001`** (error) - The value attribute of an OutputParameter is required. ([source](specsheets/auxiliary/OutputParameter/v1.0.0/validation/OutputParameter-0001.md))
 
 > `value` is required. Its type is `AnyValueOrRef` - any JSON value or a reference is accepted, so no separate type rule applies beyond presence.
+
+#### Span
+
+*Source: [specsheets/auxiliary/Span/v1.0.0/description.md](specsheets/auxiliary/Span/v1.0.0/description.md)*
+
+![Span UML diagram](specsheets/auxiliary/Span/v1.0.0/Span.png)
+
+**Category:** auxiliary  
+**Version:** v1  
+**Schema:** [`schema.json`](specsheets/auxiliary/Span/v1.0.0/schema.json) + [`inline.schema.json`](specsheets/auxiliary/Span/v1.0.0/inline.schema.json) (`SpanInline`)  
+**`_type` discriminator:** `"span"`
+
+##### What it does
+
+A minimal range: just a `start` and an `end` value, with no explicit intermediate points. Used by `BoundedODESimulation` (`independentVariableSpan`) and `BoundedStochasticSimulation` (`independentVariableSpan`) to bound a simulation whose output points are chosen by the solver rather than the document.
+
+**Two schema files in this folder.** `schema.json` defines `Span` itself. `inline.schema.json` defines `SpanInline` - the wrapper used for named child fields like `independentVariableSpan`. See `tasks/Range` for why the two are kept separate. Unlike `Range`/`NumericRange`/`ParameterRange`, `Span` is an auxiliary class rather than a task: it does not inherit from `AbstractTask` and is not in `AbstractTask`'s union, so it cannot appear as a standalone `tasks` dictionary entry - it only ever appears embedded, via `SpanInline`.
+
+##### Attributes
+
+All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](#sedbase).
+
+| Attribute | Type | Required | Notes |
+|---|---|---|---|
+| `start` | NumberOrRef | yes |  |
+| `end` | NumberOrRef | yes |  |
+
+###### Attribute details
+
+**`start`** (NumberOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
+
+**`end`** (NumberOrRef, required) - _(no description yet - placeholder, needs to be filled in)_
+
+
+##### Outputs
+
+Not independently referenceable - a `Span` only exists as a named child of the task that bounds itself with it.
+
+- `[id]`: **Invalid**
+- `[id].model`: **Invalid**
+- `[id].strings`: **Invalid**
+
+(Any output suffix not listed above is invalid for this class.)
+
+`Span` is not a task, so it can never be a standalone `tasks` entry - it only ever appears embedded (via `SpanInline`), and has no output of its own.
+
+##### Validation Rules
+
+**`Span-0000`** (error) - The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0000.md))
+
+> Catch-all rule for schema-pass failures attributable to Span (or a
+> more specific descendant whose own class's failure location can't be
+> resolved to any other numbered rule). See Design.md, Schema-Pass Errors.
+
+**`Span-0001`** (error) - The start attribute of a Span is required. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0001.md))
+
+> `start` is required.
+
+**`Span-0002`** (error) - When the value of start of a Span is provided directly, it must be a number. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0002.md))
+
+> `start` is `NumberOrRef`: the value, when not a reference, must be a number.
+
+**`Span-0003`** (error) - When the value of start of a Span is a reference, it must be a reference to a number. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0003.md))
+
+> `start` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
+
+**`Span-0004`** (error) - The end attribute of a Span is required. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0004.md))
+
+> `end` is required.
+
+**`Span-0005`** (error) - When the value of end of a Span is provided directly, it must be a number. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0005.md))
+
+> `end` is `NumberOrRef`: the value, when not a reference, must be a number.
+
+**`Span-0006`** (error) - When the value of end of a Span is a reference, it must be a reference to a number. ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0006.md))
+
+> `end` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
+
+**`Span-0007`** (error) - The _type attribute of a Span must be "span". ([source](specsheets/auxiliary/Span/v1.0.0/validation/Span-0007.md))
+
+> `_type` is the discriminator field. For `Span` it must always equal `"span"`.
 
 #### TaskParameter
 

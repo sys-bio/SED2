@@ -40,13 +40,13 @@ inline const std::map<std::string, std::function<std::unique_ptr<SedBase>()>>& d
         {"Range-0003", [] { return std::unique_ptr<SedBase>(std::make_unique<Range>()); }},
         {"RelabelData-0006", [] { return std::unique_ptr<SedBase>(std::make_unique<RelabelData>()); }},
         {"Scatter-0003", [] { return std::unique_ptr<SedBase>(std::make_unique<Scatter>()); }},
-        {"Span-0007", [] { return std::unique_ptr<SedBase>(std::make_unique<Span>()); }},
         {"SteadyState-0003", [] { return std::unique_ptr<SedBase>(std::make_unique<SteadyState>()); }},
         {"StringFormation-0004", [] { return std::unique_ptr<SedBase>(std::make_unique<StringFormation>()); }},
         {"Plot2D-0004", [] { return std::unique_ptr<SedBase>(std::make_unique<Plot2D>()); }},
         {"Plot3D-0004", [] { return std::unique_ptr<SedBase>(std::make_unique<Plot3D>()); }},
         {"Report-0003", [] { return std::unique_ptr<SedBase>(std::make_unique<Report>()); }},
         {"Curve-0012", [] { return std::unique_ptr<SedBase>(std::make_unique<Curve>()); }},
+        {"Span-0007", [] { return std::unique_ptr<SedBase>(std::make_unique<Span>()); }},
     };
     return m;
 }

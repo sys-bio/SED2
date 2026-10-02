@@ -2265,7 +2265,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"loopVariables", "subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("loop"); }
@@ -3239,7 +3239,7 @@ public:
     std::string class_name() const override { return "OneStepStochasticSimulation"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"},\"[id].independentStep\":{\"valid\":\"!provided(independentStep)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"1\"},\"labels\":null}]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"},\"[id].independentStep\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"1\"},\"labels\":null}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("oneStepStochastic"); }
@@ -3609,7 +3609,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":{\"source\":\"static\",\"expr\":\"modelElement\"}}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].ranges\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].indexes\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":{\"source\":\"static\",\"expr\":\"modelElement\"}}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].ranges\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].indexes\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("parameterScan"); }
@@ -3941,7 +3941,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"valid\":\"provided(aggregateOutputVariables)\",\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("scatter"); }
@@ -4048,97 +4048,6 @@ private:
     ListCollection taskParameters_;
     ListCollection annotations_;
     std::unique_ptr<SedBase> range_;
-};
-
-/// Generated from test-specsheets/tasks/Span/.
-class Span : public SedBase {
-public:
-    const std::vector<FieldSpec>& field_specs() const override {
-        static const std::vector<FieldSpec> specs = {
-            FieldSpec{"start", "NumberOrRef", true, std::string("Span-0002"), std::string("Span-0001"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("Span-0003"), std::nullopt, std::nullopt},
-            FieldSpec{"end", "NumberOrRef", true, std::string("Span-0005"), std::string("Span-0004"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("Span-0006"), std::nullopt, std::nullopt},
-            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
-            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
-        };
-        return specs;
-    }
-    const std::set<std::string>& required_names() const override {
-        static const std::set<std::string> names = {"start", "end"};
-        return names;
-    }
-    std::optional<std::string> type_const() const override { return std::string("span"); }
-    std::optional<std::string> type_rule_id() const override { return std::string("Span-0007"); }
-    std::string own_catchall() const override { return "Span-0000"; }
-    std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
-    std::optional<std::string> desc_rule_id() const override { return std::string("SEDBase-0002"); }
-    std::string base_catchall() const override { return "SEDBase-0000"; }
-    std::string class_name() const override { return "Span"; }
-    const Json* outputs_json() const override {
-        static const Json j = Json::parse(
-            "{\"outputs\":{}}");
-        return &j;
-    }
-    std::optional<std::string> get_type_value() const override { return std::string("span"); }
-    std::string get_type() const { return "span"; }
-
-    double get_start_value() const { return get_or_ref_value_node("start").as<double>(); }
-    std::string get_start_ref() const { return get_or_ref_ref_node("start").as<std::string>(); }
-    void set_start_value(double value) { set_or_ref_value_node("start", Json(value)); }
-    void set_start_ref(const std::string& ref) { set_or_ref_ref_node("start", ref); }
-    bool is_start_ref() const { return is_or_ref_ref("start"); }
-    bool is_set_start() const { return values_.count("start") > 0; }
-    void unset_start() { values_.erase("start"); or_ref_is_ref_.erase("start"); }
-
-    double get_end_value() const { return get_or_ref_value_node("end").as<double>(); }
-    std::string get_end_ref() const { return get_or_ref_ref_node("end").as<std::string>(); }
-    void set_end_value(double value) { set_or_ref_value_node("end", Json(value)); }
-    void set_end_ref(const std::string& ref) { set_or_ref_ref_node("end", ref); }
-    bool is_end_ref() const { return is_or_ref_ref("end"); }
-    bool is_set_end() const { return values_.count("end") > 0; }
-    void unset_end() { values_.erase("end"); or_ref_is_ref_.erase("end"); }
-
-    Json get_notes() const { auto it = values_.find("notes"); if (it == values_.end()) throw ApiError(std::string("notes") + " is not set"); return it->second; }
-    void set_notes(const Json& value) { values_["notes"] = value; }
-    bool is_set_notes() const { return values_.count("notes") > 0; }
-    void unset_notes() { values_.erase("notes"); }
-
-    std::vector<SedBase*> get_annotations() const { return annotations_.items(); }
-    void add_annotations(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); annotations_.add(std::move(obj)); raw->attach(this, get_document()); }
-    void insert_annotations(size_t index, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); annotations_.insert(index, std::move(obj)); raw->attach(this, get_document()); }
-    void remove_annotations(size_t index) { annotations_.remove(index); }
-
-    std::vector<SedBase*> children() override {
-        std::vector<SedBase*> kids;
-        for (auto* item : annotations_.items()) kids.push_back(item);
-        return kids;
-    }
-
-    std::vector<ChildLoc> children_with_locations() override {
-        std::vector<ChildLoc> out;
-        { size_t idx = 0; for (auto* item : annotations_.items()) { out.push_back(ChildLoc{item, "/annotations/" + std::to_string(idx)}); idx++; } }
-        return out;
-    }
-
-    ListCollection& get_list_collection(const std::string& field_name) override {
-        if (field_name == "annotations") return annotations_;
-        return SedBase::get_list_collection(field_name);
-    }
-
-    Json own_json_value() const override {
-        Json d = Json::object();
-        if (name_node_) d["name"] = *name_node_;
-        if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("span");
-        if (values_.count("start")) d["start"] = values_.at("start");
-        if (values_.count("end")) d["end"] = values_.at("end");
-        if (values_.count("notes")) d["notes"] = values_.at("notes");
-        if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
-        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
-        return d;
-    }
-
-private:
-    ListCollection annotations_;
 };
 
 /// Generated from test-specsheets/tasks/SteadyState/.
@@ -5335,6 +5244,92 @@ public:
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
         if (values_.count("value")) d["value"] = values_.at("value");
+        if (values_.count("notes")) d["notes"] = values_.at("notes");
+        if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
+        for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;
+        return d;
+    }
+
+private:
+    ListCollection annotations_;
+};
+
+/// Generated from test-specsheets/auxiliary/Span/.
+class Span : public SedBase {
+public:
+    const std::vector<FieldSpec>& field_specs() const override {
+        static const std::vector<FieldSpec> specs = {
+            FieldSpec{"start", "NumberOrRef", true, std::string("Span-0002"), std::string("Span-0001"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("Span-0003"), std::nullopt, std::nullopt},
+            FieldSpec{"end", "NumberOrRef", true, std::string("Span-0005"), std::string("Span-0004"), "Span-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::string("Span-0006"), std::nullopt, std::nullopt},
+            FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
+            FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
+        };
+        return specs;
+    }
+    const std::set<std::string>& required_names() const override {
+        static const std::set<std::string> names = {"start", "end"};
+        return names;
+    }
+    std::optional<std::string> type_const() const override { return std::string("span"); }
+    std::optional<std::string> type_rule_id() const override { return std::string("Span-0007"); }
+    std::string own_catchall() const override { return "Span-0000"; }
+    std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
+    std::optional<std::string> desc_rule_id() const override { return std::string("SEDBase-0002"); }
+    std::string base_catchall() const override { return "SEDBase-0000"; }
+    std::string class_name() const override { return "Span"; }
+    std::optional<std::string> get_type_value() const override { return std::string("span"); }
+    std::string get_type() const { return "span"; }
+
+    double get_start_value() const { return get_or_ref_value_node("start").as<double>(); }
+    std::string get_start_ref() const { return get_or_ref_ref_node("start").as<std::string>(); }
+    void set_start_value(double value) { set_or_ref_value_node("start", Json(value)); }
+    void set_start_ref(const std::string& ref) { set_or_ref_ref_node("start", ref); }
+    bool is_start_ref() const { return is_or_ref_ref("start"); }
+    bool is_set_start() const { return values_.count("start") > 0; }
+    void unset_start() { values_.erase("start"); or_ref_is_ref_.erase("start"); }
+
+    double get_end_value() const { return get_or_ref_value_node("end").as<double>(); }
+    std::string get_end_ref() const { return get_or_ref_ref_node("end").as<std::string>(); }
+    void set_end_value(double value) { set_or_ref_value_node("end", Json(value)); }
+    void set_end_ref(const std::string& ref) { set_or_ref_ref_node("end", ref); }
+    bool is_end_ref() const { return is_or_ref_ref("end"); }
+    bool is_set_end() const { return values_.count("end") > 0; }
+    void unset_end() { values_.erase("end"); or_ref_is_ref_.erase("end"); }
+
+    Json get_notes() const { auto it = values_.find("notes"); if (it == values_.end()) throw ApiError(std::string("notes") + " is not set"); return it->second; }
+    void set_notes(const Json& value) { values_["notes"] = value; }
+    bool is_set_notes() const { return values_.count("notes") > 0; }
+    void unset_notes() { values_.erase("notes"); }
+
+    std::vector<SedBase*> get_annotations() const { return annotations_.items(); }
+    void add_annotations(std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); annotations_.add(std::move(obj)); raw->attach(this, get_document()); }
+    void insert_annotations(size_t index, std::unique_ptr<SedBase> obj) { SedBase* raw = obj.get(); annotations_.insert(index, std::move(obj)); raw->attach(this, get_document()); }
+    void remove_annotations(size_t index) { annotations_.remove(index); }
+
+    std::vector<SedBase*> children() override {
+        std::vector<SedBase*> kids;
+        for (auto* item : annotations_.items()) kids.push_back(item);
+        return kids;
+    }
+
+    std::vector<ChildLoc> children_with_locations() override {
+        std::vector<ChildLoc> out;
+        { size_t idx = 0; for (auto* item : annotations_.items()) { out.push_back(ChildLoc{item, "/annotations/" + std::to_string(idx)}); idx++; } }
+        return out;
+    }
+
+    ListCollection& get_list_collection(const std::string& field_name) override {
+        if (field_name == "annotations") return annotations_;
+        return SedBase::get_list_collection(field_name);
+    }
+
+    Json own_json_value() const override {
+        Json d = Json::object();
+        if (name_node_) d["name"] = *name_node_;
+        if (description_node_) d["description"] = *description_node_;
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("span");
+        if (values_.count("start")) d["start"] = values_.at("start");
+        if (values_.count("end")) d["end"] = values_.at("end");
         if (values_.count("notes")) d["notes"] = values_.at("notes");
         if (annotations_.size() > 0) { Json arr = Json::array(); for (auto* item : annotations_.items()) arr.push_back(item->to_json_value()); d["annotations"] = arr; }
         for (const auto& kv : ns_attrs_) d[kv.first] = kv.second;

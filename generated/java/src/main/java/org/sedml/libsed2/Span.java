@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Generated from test-specsheets/tasks/Span/. GENERATED - do not
+/** Generated from test-specsheets/auxiliary/Span/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class Span extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
@@ -36,8 +36,6 @@ public final class Span extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "span"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {}}");
-    @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public double getStartValue() { return getOrRefValueNode("start").asDouble(); }
     public String getStartRef() { return getOrRefRefNode("start").asText(); }
