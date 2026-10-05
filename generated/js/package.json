@@ -1,0 +1,24 @@
+{
+  "name": "libsed2js",
+  "version": "0.1.0",
+  "description": "Generated SED2 library (JavaScript/WebAssembly target, the C++ library compiled with Emscripten) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "libsed2.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sed-ml",
+    "sed2",
+    "simulation",
+    "webassembly"
+  ]
+}
