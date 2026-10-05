@@ -59,6 +59,16 @@ GitHub Actions runs the pipeline on every push, in two stages:
 
 Any job failing fails the whole run.  Because the matrix jobs are separate, a compile or test failure is attributed to the specific language and stage that broke, and a break in one target's generated code can't hide a break in another's.
 
+### Releases
+
+Once a language's test job has passed against the real spec, a matching release job packages that language's library, smoke-tests the packaged artifact itself (not the source tree), and uploads it as a workflow artifact - on every CI run, so a packaging break is caught on the push that caused it:
+
+* Python (`release-python`): one pure-Python wheel, `libsed2-<version>-py3-none-any.whl`, installed into a clean virtualenv and used to load and validate every `fixtures/handwritten/pass-*` fixture.
+* Java (`release-java`): `libsed2j-<version>.jar`, plus `-sources` and `-javadoc` jars (from the generated pom.xml's `release` profile) and the pom itself.
+* C++ (`release-cpp`): `libsed2-cpp-<version>.tar.gz` and `.zip`, the self-contained CMake project (headers, the few ANTLR `.cpp` files, CMakeLists.txt, LICENSE, VERSION.txt).  The library is header-only apart from the math parser and fetches its dependencies with FetchContent, so the release is source, not prebuilt binaries.  The smoke test (`templates/cpp/release-smoke/`) extracts the archive and consumes it through `add_subdirectory()` and `libsed2::libsed2`.
+
+All three take their version from `VERSION.txt` at the repository root, which is the version of the libraries and is unrelated to the SED2 document-format version (see Versioning).  `generator/generate.py` reads it (or takes `--version`) and stamps it into pyproject.toml, pom.xml, and CMakeLists.txt, so the committed generated/ trees stay in step with it; the format is strictly MAJOR.MINOR.PATCH, the one shape valid unchanged in PEP 440, Maven, and CMake.  To cut a release: bump `VERSION.txt`, merge, then push a tag named `v<version>` (for example `v0.1.0`).  A tag that doesn't match `VERSION.txt` fails the run before anything is built; a matching one also runs `publish-release`, which attaches every artifact above plus `SHA256SUMS.txt` to a new GitHub release.  Publishing to PyPI or Maven Central is not done by CI.
+
 ## Repository Layout
 
 ```
@@ -67,6 +77,7 @@ SED2/
 |-- Claude.md
 |-- README.md
 |-- LICENSE
+|-- VERSION.txt                      version of the generated libraries (MAJOR.MINOR.PATCH) - see CI's Releases
 |-- core-spec.md                     canonical spec: overall shape/design of a SED2 document
 |-- specsheets/                      canonical per-class Data Sheets (schema + diagram + description)
 |   |-- core/, tasks/, outputs/, auxiliary/
@@ -90,6 +101,7 @@ SED2/
 |-- generator/                       the generator's own hand-written source
 |-- templates/
 |   |-- cpp/                         hand-written C++-only code
+|   |   `-- release-smoke/           consumer project CI uses to smoke-test the C++ release package
 |   |-- java/
 |   |   `-- tests/                   hand-written JUnit fixture-harness glue
 |   `-- python/
@@ -386,7 +398,7 @@ The full description of how references work is in the spec, but briefly: documen
 
 `hasSubvalue()` above needs to know, ahead of ever running anything, whether a given subelement reference is even plausible for a particular task - and a future typed output accessor in the generated libraries would need the same information to know what type to return.  That's what each concrete `tasks/` class's `outputs.json` is for: a machine-readable description of what every output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific ones like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to, replacing what used to be free-text "Valid"/"Invalid"/"Dimensions:" prose in `description.md` with something code can actually read.  `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope; see `core-spec.md` Section 8 for the full file format and grammar.
 
-The interesting design problem here wasn't the format so much as being honest about what's actually knowable and when, rather than collapsing everything into one "dynamic" bucket.  A dimension's size or labels get tagged with where that knowledge comes from: `"static"` - computed from the task's own field values alone, right now (`len(outputVariables)`, `independentVariableRange.numberOfSteps`, `shapeOf(input)` to inherit another reference's whole shape); `"input-file"` - computable in principle, but only by actually reading whatever external resource a field like `model` or `location` points to (`JacobianFull`'s species count lives in the referenced SBML file, not the SED2 document; `CsvImport`'s column headers live in the referenced CSV) - real validation before execution, but a strictly heavier lift than reading the document alone, and one the generator has to implement per file format (SBML, CSV, whatever `DataImport.format` names) rather than get for free from the grammar itself; or `"runtime"` - genuinely not derivable without actually executing the simulation, full stop, such as a variable-step-size ODE solver's row count or a `Loop`'s iteration count.  A `hasSubvalue()` implementation (or a future stricter validation pass) can treat these three differently - reject a reference outright on a `static` mismatch, defer to file-reading validation for an `input-file` case, accept-but-can't-fully-verify for a `runtime` one - rather than the single all-or-nothing "Valid"/"Invalid" the old prose gave it.
+The interesting design problem here wasn't the format so much as being honest about what's actually knowable and when, rather than collapsing everything into one "dynamic" bucket.  A dimension's size or labels get tagged with where that knowledge comes from: `"static"` - computed from the task's own field values alone, right now (`len(outputVariables)`, `independentVariableRange.numberOfSteps`, `shapeOf(input)` to inherit another reference's whole shape); `"input-file"` - computable in principle, but only by actually reading whatever external resource a field like `model` or `location` points to (`JacobianFull`'s species count lives in the referenced SBML file, not the SED2 document; `CsvImport`'s column headers live in the referenced CSV) - real validation before execution, but a strictly heavier lift than reading the document alone, and one the generator has to implement per file format (SBML, CSV, whatever `DataImport.format` names) rather than get for free from the grammar itself; or `"runtime"` - genuinely not derivable without actually executing the simulation, full stop, such as a variable-step-size ODE solver's row count or a `Calculation`'s result shape.  A `hasSubvalue()` implementation (or a future stricter validation pass) can treat these three differently - reject a reference outright on a `static` mismatch, defer to file-reading validation for an `input-file` case, accept-but-can't-fully-verify for a `runtime` one - rather than the single all-or-nothing "Valid"/"Invalid" the old prose gave it.
 
 The generator implements this notation by parsing it once, at generate time, and compiling it into real code in each target language - shape-inference and `hasSubvalue()` logic generated directly into each library - rather than shipping a small runtime interpreter for the notation in all three languages. This is the same "one canonical definition, three generated targets" shape the schema, the validation rules, and the math grammar already use (see Math). It also means every `expr` has to actually parse under the grammar core-spec.md Section 8 defines: a class's `outputs.json` can't fall back to free-text English the way `description.md`'s old "Valid"/"Invalid"/"Dimensions:" prose could, since the generator has nothing to compile from a sentence.
 

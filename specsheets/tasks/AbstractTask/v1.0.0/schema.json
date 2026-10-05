@@ -4,7 +4,7 @@
   "title": "SED2 AbstractTask",
   "$defs": {
     "AbstractTask": {
-      "description": "Any concrete task type. Discriminated by the _type field. oneOf is generated - never hand-edited; see Design.md's Classes section.",
+      "description": "The base class of any concrete task type. Discriminated by the _type field. oneOf is generated.",
       "x-generated-oneOf": "common.schema.json#/$defs/AbstractTaskCommon",
       "x-missing-type-rule-id": "AbstractTask-0002"
     }

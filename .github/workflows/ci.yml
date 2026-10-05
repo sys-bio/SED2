@@ -56,12 +56,29 @@
 # the first time this ran. A failure regenerating either tree fails the job,
 # and with it every downstream test job. Every test job, for both trees and
 # all three languages, is a real gate.
+#
+# Releases: after the main-spec test jobs pass, three release-* jobs package
+# the generated libraries - release-python builds a wheel, release-java a jar
+# (plus -sources and -javadoc jars and the pom), release-cpp a CMake source
+# package (.tar.gz and .zip) - and smoke-test the packaged artifact itself
+# (wheel installed into a clean virtualenv; jar contents checked; C++ package
+# consumed through add_subdirectory()), then upload each as a workflow
+# artifact (release-python / release-java / release-cpp) on every run, so a
+# packaging break shows up on the push that caused it. All three take their
+# version from VERSION.txt at the repository root (via generator/generate.py,
+# which stamps it into pyproject.toml, pom.xml and CMakeLists.txt). Pushing a
+# tag named v<VERSION.txt contents> (e.g. v0.1.0) additionally runs the
+# publish-release job, which attaches those files plus SHA256SUMS.txt to a new
+# GitHub release. A tag that doesn't match VERSION.txt fails the run before
+# anything is built, and on a tag run a stale generated/ tree fails the job
+# (nothing is committed back to a tag).
 
 name: CI
 
 on:
   push:
     branches: [develop]
+    tags: ["v*"]
   pull_request:
     branches: [develop]
   workflow_dispatch:
@@ -90,6 +107,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       regen_main_outcome: ${{ steps.regen_main.outcome }}
+      version: ${{ steps.version.outputs.value }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,6 +118,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # VERSION.txt is the library's version (not the SED2 document-format
+      # version). generator/generate.py reads it by itself and stamps it into
+      # all three libraries' build files; it is read here too so the release
+      # jobs below can name their files, and so a tag that doesn't match it
+      # fails immediately.
+      - name: Read library version from VERSION.txt
+        id: version
+        run: |
+          version="$(tr -d '[:space:]' < VERSION.txt)"
+          echo "Library version: $version"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check the release tag matches VERSION.txt
+        if: github.ref_type == 'tag'
+        run: |
+          if [ "${{ github.ref_name }}" != "v${{ steps.version.outputs.value }}" ]; then
+            echo "::error::Tag ${{ github.ref_name }} does not match VERSION.txt (${{ steps.version.outputs.value }}); expected tag v${{ steps.version.outputs.value }}." >&2
+            exit 1
+          fi
 
       # The generator process itself (not just the libraries it writes)
       # imports these: emit_python.py's own leaf_value_ok() uses jsonschema
@@ -167,7 +205,7 @@ jobs:
       # -- Commit all regenerated output together, one push --
 
       - name: Commit regenerated output if it changed
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && github.ref_type != 'tag'
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if git diff --cached --quiet; then
@@ -179,8 +217,8 @@ jobs:
             git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
           fi
 
-      - name: Fail if this fork PR's committed output is stale
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      - name: Fail if this fork PR's (or release tag's) committed output is stale
+        if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) || github.ref_type == 'tag'
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if ! git diff --cached --quiet; then
@@ -412,3 +450,226 @@ jobs:
   # the run: a failing test-python-main, test-java-main, or test-cpp-main
   # fails CI.
   # ---------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------
+  # Releases. Each release-* job needs the matching main-spec test job (so
+  # nothing is packaged from a build whose fixture suite failed), builds the
+  # distributable for its platform from this run's fresh generated/ tree,
+  # smoke-tests that artifact (not the source tree), and uploads it. Runs on
+  # every CI run; publish-release below only runs for a v* tag.
+  # ---------------------------------------------------------------------
+
+  release-python:
+    name: Release - Python wheel
+    needs: [regenerate, test-python-main]
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.regenerate.outputs.version }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Build the wheel
+        # The library is pure Python (its ANTLR parser is generated .py
+        # source, shipped via package-data), so this is one universal
+        # py3-none-any wheel. No sdist: the wheel is the Python release.
+        run: |
+          pip install build
+          python -m build --wheel --outdir dist generated/python
+          ls -l dist
+      - name: Check the wheel's name carries VERSION.txt's version
+        run: |
+          set -eu
+          [ "$(ls dist | wc -l)" -eq 1 ] || { echo "::error::expected exactly one file in dist/"; exit 1; }
+          [ -f "dist/libsed2-${VERSION}-py3-none-any.whl" ] || { echo "::error::expected dist/libsed2-${VERSION}-py3-none-any.whl"; ls dist; exit 1; }
+      - name: Smoke-test the wheel in a clean virtualenv
+        # Installs only the wheel (never the source tree), then, from an
+        # unrelated directory, reports the installed version, loads every
+        # pass fixture through the installed package and validates it. This
+        # proves the wheel carries everything it needs at run time (the
+        # ANTLR parser and handwritten rule modules in particular).
+        run: |
+          set -eu
+          python -m venv "$RUNNER_TEMP/wheel-venv"
+          "$RUNNER_TEMP/wheel-venv/bin/pip" install "dist/libsed2-${VERSION}-py3-none-any.whl"
+          mkdir "$RUNNER_TEMP/neutral"
+          cd "$RUNNER_TEMP/neutral"
+          FIXTURES="${{ github.workspace }}/fixtures/handwritten" "$RUNNER_TEMP/wheel-venv/bin/python" - <<'PY'
+          import glob, importlib.metadata, os, sys
+          import libsed2
+
+          expected = os.environ["VERSION"]
+          installed = importlib.metadata.version("libsed2")
+          assert installed == expected, f"installed {installed}, expected {expected}"
+          assert "site-packages" in libsed2.__file__, libsed2.__file__
+
+          paths = sorted(glob.glob(os.path.join(os.environ["FIXTURES"], "pass-*.sed2.json")))
+          assert paths, "no pass-*.sed2.json fixtures found"
+          bad = 0
+          for p in paths:
+              problems = libsed2.read_from_file(p).validate()
+              print(os.path.basename(p), "->", len(problems), "problem(s)")
+              bad += bool(problems)
+          libsed2.parse_math("a + 2*b")
+          sys.exit(1 if bad else 0)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-python
+          path: dist/*.whl
+          retention-days: 7
+
+  release-java:
+    name: Release - Java jar
+    needs: [regenerate, test-java-main]
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.regenerate.outputs.version }}
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Build jar, sources jar and javadoc jar
+        # The release profile (generated pom.xml) adds the -sources and
+        # -javadoc jars. Tests already ran in test-java-main, which this job
+        # needs, so they are skipped here.
+        working-directory: ${{ github.workspace }}/generated/java
+        run: mvn -B -Prelease package -DskipTests
+      - name: Collect release files
+        run: |
+          set -eu
+          mkdir dist
+          for f in "libsed2j-${VERSION}.jar" "libsed2j-${VERSION}-sources.jar" "libsed2j-${VERSION}-javadoc.jar"; do
+            [ -f "generated/java/target/$f" ] || { echo "::error::missing $f"; ls -l generated/java/target; exit 1; }
+            cp "generated/java/target/$f" dist/
+          done
+          # The pom travels with the jar so a consumer's build tool can
+          # resolve its dependencies.
+          cp generated/java/pom.xml "dist/libsed2j-${VERSION}.pom"
+          grep -q "<version>${VERSION}</version>" "dist/libsed2j-${VERSION}.pom"
+          unzip -l "dist/libsed2j-${VERSION}.jar" | grep -q "org/sedml/libsed2/"
+          ls -l dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-java
+          path: dist/*
+          retention-days: 7
+
+  release-cpp:
+    name: Release - C++ source package
+    needs: [regenerate, test-cpp-main]
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.regenerate.outputs.version }}
+    steps:
+      # Checkout supplies LICENSE, VERSION.txt and the hand-written smoke
+      # test under templates/cpp/release-smoke/.
+      - uses: actions/checkout@v4
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - name: Assemble the package
+        # The C++ library is header-only apart from the small ANTLR math
+        # parser library, and fetches its dependencies (jsoncons, the ANTLR4
+        # C++ runtime) with CMake FetchContent, so the release is the
+        # self-contained CMake project, not prebuilt binaries: headers, the
+        # few .cpp sources, CMakeLists.txt, LICENSE and VERSION.txt. No
+        # tests/ - they need this repository's fixtures/.
+        run: |
+          set -eu
+          name="libsed2-cpp-${VERSION}"
+          mkdir -p "dist/$name"
+          cp -r generated/cpp/CMakeLists.txt generated/cpp/include generated/cpp/src "dist/$name/"
+          cp LICENSE VERSION.txt "dist/$name/"
+          cat > "dist/$name/README.md" <<README
+          # libsed2 (C++) ${VERSION}
+
+          C++17 library for reading, writing and validating SED2 documents.
+          Header-only apart from a small static library for its math parser.
+          Requires CMake 3.16 or newer and network access at configure time:
+          jsoncons and the ANTLR4 C++ runtime are fetched with FetchContent.
+
+          Use it from another CMake project:
+
+              add_subdirectory(libsed2-cpp-${VERSION})
+              target_link_libraries(myapp PRIVATE libsed2::libsed2)
+
+          and in code:
+
+              #include <libsed2/Io.hpp>
+              auto doc = libsed2::read_from_file("experiment.sed2.json");
+              auto problems = doc->validate();
+
+          The fixture test suite is only built when this directory is the
+          top-level CMake project.
+          README
+          tar -C dist --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/$name.tar.gz" "$name"
+          (cd dist && zip -qr "$name.zip" "$name")
+          rm -rf "dist/$name"
+          ls -l dist
+      - name: Smoke-test the package as a CMake consumer
+        # Extracts the .tar.gz and builds a tiny consumer project
+        # (templates/cpp/release-smoke) that add_subdirectory()s it, checks
+        # the declared version equals VERSION.txt, then validates every pass
+        # fixture through the packaged library.
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/pkg"
+          tar -C "$RUNNER_TEMP/pkg" -xzf "dist/libsed2-cpp-${VERSION}.tar.gz"
+          cmake -S templates/cpp/release-smoke -B "$RUNNER_TEMP/smoke-build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLIBSED2_DIR="$RUNNER_TEMP/pkg/libsed2-cpp-${VERSION}" \
+            -DEXPECTED_VERSION="${VERSION}"
+          cmake --build "$RUNNER_TEMP/smoke-build" -j"$(nproc)"
+          set -- fixtures/handwritten/pass-*.sed2.json
+          [ -e "$1" ] || { echo "::error::no pass-*.sed2.json fixtures found"; exit 1; }
+          for f in "$@"; do "$RUNNER_TEMP/smoke-build/smoke" "$f"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-cpp
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          retention-days: 7
+
+  publish-release:
+    name: Publish GitHub release
+    needs: [regenerate, release-python, release-java, release-cpp]
+    # Only for a pushed v* tag (regenerate has already failed the run if the
+    # tag does not equal v<VERSION.txt>).
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.regenerate.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release
+      - name: Create the GitHub release
+        run: |
+          set -eu
+          (cd release && sha256sum * > SHA256SUMS.txt)
+          ls -l release
+          gh release create "${{ github.ref_name }}" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "libsed2 ${VERSION}" \
+            --generate-notes \
+            --verify-tag

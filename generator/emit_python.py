@@ -3263,7 +3263,10 @@ def emit_python_package(
     description: str | None = None,
     build_math: bool = True,
     antlr_cache_dir: str | None = None,
+    version: str | None = None,
 ) -> None:
+    from .version import check_version, library_version
+    version = check_version(version, "version") if version is not None else library_version()
     description = description or (
         "Generated SED2 test-fixture library (Python target) - exercises the "
         "SED2 generator against test-specsheets/, see Design.md's Testing "
@@ -3316,7 +3319,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "{package_name}"
-version = "0.1.0"
+version = "{version}"
 description = "{description}"
 requires-python = ">=3.10"
 dependencies = ["jsonschema>=4.18", "antlr4-python3-runtime=={antlr_runtime_version}"]

@@ -4664,13 +4664,13 @@ def _copy_fixture_test_java(out_dir: str, java_package: str) -> None:
         f.write(content)
 
 
-def _pom_xml(group_id: str, artifact_id: str, description: str, antlr_runtime_version: str) -> str:
+def _pom_xml(group_id: str, artifact_id: str, description: str, antlr_runtime_version: str, version: str) -> str:
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
   <groupId>{group_id}</groupId>
   <artifactId>{artifact_id}</artifactId>
-  <version>0.1.0</version>
+  <version>{version}</version>
   <packaging>jar</packaging>
   <description>{description}</description>
 
@@ -4730,6 +4730,51 @@ def _pom_xml(group_id: str, artifact_id: str, description: str, antlr_runtime_ve
       </plugin>
     </plugins>
   </build>
+
+  <!-- `mvn -Prelease package` additionally attaches the -sources and
+       -javadoc jars next to the main jar, which is what a published release
+       carries (CI's release-java job, see .github/workflows/ci.yml). Off by
+       default so the everyday build/test cycle stays fast. Javadoc's doclint
+       is off because this is generated code, not hand-written prose. -->
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.10.1</version>
+            <configuration>
+              <doclint>none</doclint>
+              <quiet>true</quiet>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
 '''
 
@@ -4743,8 +4788,11 @@ def emit_java_package(
     description: str | None = None,
     build_math: bool = True,
     antlr_cache_dir: str | None = None,
+    version: str | None = None,
 ) -> None:
     global PKG
+    from .version import check_version, library_version
+    version = check_version(version, "version") if version is not None else library_version()
     PKG = java_package
     maven_group_id = maven_group_id or java_package
     description = description or (
@@ -4788,6 +4836,6 @@ def emit_java_package(
         generate_java_math_parser(os.path.join(pkg_dir, "antlr"), PKG + ".antlr", cache_dir=antlr_cache_dir)
 
     with open(os.path.join(out_dir, "pom.xml"), "w") as f:
-        f.write(_pom_xml(maven_group_id, maven_artifact_id, description, ANTLR_VERSION))
+        f.write(_pom_xml(maven_group_id, maven_artifact_id, description, ANTLR_VERSION, version))
 
     _copy_fixture_test_java(out_dir, PKG)

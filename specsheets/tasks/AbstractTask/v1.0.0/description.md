@@ -12,7 +12,7 @@
 
 Every concrete subclass of `AbstractTask` must define what its output (or outputs) are. In particular, a task's own id (`#tasks:id`) - when the task defines it - always resolves to an `AnnotatedData` value (dimensions vary by task). A task's id suffixed with `.model` (`#tasks:id.model`) is used whenever the task exports a model; suffixed with `.strings` (`#tasks:id.strings`) whenever it exports a list of strings. Other output suffixes may be used when needed, but common suffixes should stay standardized across tasks.
 
-**Two schema files in this folder.** `schema.json` defines `AbstractTask` itself - the `oneOf` discriminator listing all 26 concrete task types. `common.schema.json` defines `AbstractTaskCommon` - a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own) contributing the fields every concrete task picks up beyond `SEDBase`: `taskParameters` (a list of `TaskParameter` objects further configuring the algorithm).
+**Two schema files in this folder.** `schema.json` defines `AbstractTask` itself. `common.schema.json` defines `AbstractTaskCommon` - a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own) contributing the fields every concrete task picks up beyond `SEDBase`: `taskParameters` (a list of `TaskParameter` objects further configuring the algorithm).
 
 ## Attributes
 

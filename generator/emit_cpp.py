@@ -2550,10 +2550,10 @@ def _copy_fixture_test_cpp(out_dir: str, ns: str) -> None:
         f.write(content)
 
 
-def _cmake_lists(name: str) -> str:
+def _cmake_lists(name: str, version: str) -> str:
     build_tests_opt = f"{name.upper()}_BUILD_TESTS"
     return f'''cmake_minimum_required(VERSION 3.16)
-project({name} CXX)
+project({name} VERSION {version} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -2617,10 +2617,21 @@ target_link_libraries({name}_math PUBLIC antlr4_static)
 # include paths and its jsoncons/{name}_math dependencies to propagate to
 # consumers.
 add_library({name} INTERFACE)
+add_library({name}::{name} ALIAS {name})
 target_include_directories({name} INTERFACE ${{CMAKE_CURRENT_SOURCE_DIR}}/include)
 target_link_libraries({name} INTERFACE jsoncons {name}_math)
 
-option({build_tests_opt} "Build the fixture test suite" ON)
+# The fixture test suite (and the googletest fetch it needs) is on by default
+# only when this is the top-level project. Pulled in as a dependency via
+# add_subdirectory()/FetchContent - which is how a released source package is
+# consumed - it is off unless the consumer opts in. Also, the test target's
+# fixtures/ directory (see below) is not part of a release package.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set({name}_is_top_level ON)
+else()
+  set({name}_is_top_level OFF)
+endif()
+option({build_tests_opt} "Build the fixture test suite" ${{{name}_is_top_level}})
 if({build_tests_opt})
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -2750,8 +2761,11 @@ def _copy_handwritten_rules_cpp(inc_dir: str, model: SpecModel, ns: str) -> None
 
 
 def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2test",
-                      build_math: bool = True, antlr_cache_dir: str | None = None) -> None:
+                      build_math: bool = True, antlr_cache_dir: str | None = None,
+                      version: str | None = None) -> None:
     global NS
+    from .version import check_version, library_version
+    version = check_version(version, "version") if version is not None else library_version()
     NS = cpp_namespace
 
     inc_dir = os.path.join(out_dir, "include", NS)
@@ -2792,6 +2806,6 @@ def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2t
         )
 
     with open(os.path.join(out_dir, "CMakeLists.txt"), "w") as f:
-        f.write(_cmake_lists(NS))
+        f.write(_cmake_lists(NS, version))
 
     _copy_fixture_test_cpp(out_dir, NS)

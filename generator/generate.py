@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from generator.spec import load_spec
+from generator.version import check_version, library_version
 
 
 def main():
@@ -38,10 +39,15 @@ def main():
                      help="pom.xml <description>; defaults to the Phase-1 test-tree description")
     ap.add_argument("--cpp-namespace", default="sed2test",
                      help="C++ namespace / CMake project+target name (default: sed2test, the Phase-1 test-tree name)")
+    ap.add_argument("--version", default=None,
+                     help="Library version stamped into pyproject.toml, pom.xml and CMakeLists.txt "
+                          "(MAJOR.MINOR.PATCH). Defaults to the contents of VERSION.txt at the repository root.")
     ap.add_argument("--no-gen-fixtures", action="store_true",
                      help="Skip schema-derivable fixture generation (fixtures/generated/ next to --out's parent) - "
                           "on by default whenever Python is in --lang, since verification needs the Python library")
     args = ap.parse_args()
+
+    version = check_version(args.version, "--version") if args.version is not None else library_version()
 
     model = load_spec(args.spec_root, document_class_hint=args.doc_class)
     model.base_mixin = args.base_mixin
@@ -71,6 +77,7 @@ def main():
             model, os.path.join(args.out, "python"),
             package_name=args.python_package,
             description=args.python_description,
+            version=version,
         )
         print(f"[generate] wrote Python package '{args.python_package}' to {os.path.join(args.out, 'python')}")
         if not args.no_gen_fixtures:
@@ -93,6 +100,7 @@ def main():
             maven_group_id=args.java_group_id,
             maven_artifact_id=args.java_artifact_id,
             description=args.java_description,
+            version=version,
         )
         print(f"[generate] wrote Java package '{args.java_package}' to {os.path.join(args.out, 'java')}")
     if "cpp" in langs:
@@ -100,9 +108,11 @@ def main():
         emit_cpp_package(
             model, os.path.join(args.out, "cpp"),
             cpp_namespace=args.cpp_namespace,
+            version=version,
         )
         print(f"[generate] wrote C++ package '{args.cpp_namespace}' to {os.path.join(args.out, 'cpp')}")
 
+    print(f"[generate] library version: {version}")
     print(f"[generate] classes: {sorted(model.generatable_classes())}")
     print(f"[generate] rules: {len(model.rules)}")
 
