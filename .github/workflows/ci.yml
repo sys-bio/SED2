@@ -63,22 +63,19 @@
 # package (.tar.gz and .zip) - and smoke-test the packaged artifact itself
 # (wheel installed into a clean virtualenv; jar contents checked; C++ package
 # consumed through add_subdirectory()), then upload each as a workflow
-# artifact (release-python / release-java / release-cpp) on every run, so a
-# packaging break shows up on the push that caused it. All three take their
-# version from VERSION.txt at the repository root (via generator/generate.py,
-# which stamps it into pyproject.toml, pom.xml and CMakeLists.txt). Pushing a
-# tag named v<VERSION.txt contents> (e.g. v0.1.0) additionally runs the
-# publish-release job, which attaches those files plus SHA256SUMS.txt to a new
-# GitHub release. A tag that doesn't match VERSION.txt fails the run before
-# anything is built, and on a tag run a stale generated/ tree fails the job
-# (nothing is committed back to a tag).
+# artifact (release-python / release-java / release-cpp) on every run. CI does
+# not create or touch any GitHub release: to release, download the artifacts
+# from a run's summary page and attach them to a release by hand, and to
+# update a release, replace its files with the ones from a newer run. All
+# three take their version from VERSION.txt at the repository root (via
+# generator/generate.py, which stamps it into pyproject.toml, pom.xml and
+# CMakeLists.txt), so the file names carry that version.
 
 name: CI
 
 on:
   push:
     branches: [develop]
-    tags: ["v*"]
   pull_request:
     branches: [develop]
   workflow_dispatch:
@@ -122,22 +119,13 @@ jobs:
       # VERSION.txt is the library's version (not the SED2 document-format
       # version). generator/generate.py reads it by itself and stamps it into
       # all three libraries' build files; it is read here too so the release
-      # jobs below can name their files, and so a tag that doesn't match it
-      # fails immediately.
+      # jobs below can name and check their files.
       - name: Read library version from VERSION.txt
         id: version
         run: |
           version="$(tr -d '[:space:]' < VERSION.txt)"
           echo "Library version: $version"
           echo "value=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Check the release tag matches VERSION.txt
-        if: github.ref_type == 'tag'
-        run: |
-          if [ "${{ github.ref_name }}" != "v${{ steps.version.outputs.value }}" ]; then
-            echo "::error::Tag ${{ github.ref_name }} does not match VERSION.txt (${{ steps.version.outputs.value }}); expected tag v${{ steps.version.outputs.value }}." >&2
-            exit 1
-          fi
 
       # The generator process itself (not just the libraries it writes)
       # imports these: emit_python.py's own leaf_value_ok() uses jsonschema
@@ -205,7 +193,7 @@ jobs:
       # -- Commit all regenerated output together, one push --
 
       - name: Commit regenerated output if it changed
-        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && github.ref_type != 'tag'
+        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if git diff --cached --quiet; then
@@ -217,8 +205,8 @@ jobs:
             git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
           fi
 
-      - name: Fail if this fork PR's (or release tag's) committed output is stale
-        if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) || github.ref_type == 'tag'
+      - name: Fail if this fork PR's committed output is stale
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |
           git add -A -- "$TEST_GEN_OUT" "$MAIN_GEN_OUT" "$SPEC_FILE"
           if ! git diff --cached --quiet; then
@@ -456,7 +444,8 @@ jobs:
   # nothing is packaged from a build whose fixture suite failed), builds the
   # distributable for its platform from this run's fresh generated/ tree,
   # smoke-tests that artifact (not the source tree), and uploads it. Runs on
-  # every CI run; publish-release below only runs for a v* tag.
+  # every CI run. Nothing here creates or edits a GitHub release - download
+  # the release-* artifacts from the run page and attach them by hand.
   # ---------------------------------------------------------------------
 
   release-python:
@@ -522,7 +511,7 @@ jobs:
         with:
           name: release-python
           path: dist/*.whl
-          retention-days: 7
+          retention-days: 30
 
   release-java:
     name: Release - Java jar
@@ -564,7 +553,7 @@ jobs:
         with:
           name: release-java
           path: dist/*
-          retention-days: 7
+          retention-days: 30
 
   release-cpp:
     name: Release - C++ source package
@@ -645,31 +634,4 @@ jobs:
           path: |
             dist/*.tar.gz
             dist/*.zip
-          retention-days: 7
-
-  publish-release:
-    name: Publish GitHub release
-    needs: [regenerate, release-python, release-java, release-cpp]
-    # Only for a pushed v* tag (regenerate has already failed the run if the
-    # tag does not equal v<VERSION.txt>).
-    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
-    runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ needs.regenerate.outputs.version }}
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - uses: actions/download-artifact@main
-        with:
-          pattern: release-*
-          merge-multiple: true
-          path: release
-      - name: Create the GitHub release
-        run: |
-          set -eu
-          (cd release && sha256sum * > SHA256SUMS.txt)
-          ls -l release
-          gh release create "${{ github.ref_name }}" release/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "libsed2 ${VERSION}" \
-            --generate-notes \
-            --verify-tag
+          retention-days: 30
