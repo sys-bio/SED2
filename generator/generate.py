@@ -4,7 +4,11 @@
 Usage:
     python3 generator/generate.py --spec-root test-specsheets \
         --out test-specsheets/generated --doc-class TestDocument --base-mixin TestBase \
-        --lang python,java,cpp
+        --lang python,java,cpp,js
+
+The js target (the C++ library compiled to WebAssembly with Emscripten, see
+generator/emit_js.py) is built on the cpp target, so asking for js always
+generates cpp too.
 """
 import argparse
 import json
@@ -23,7 +27,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--doc-class", required=True)
     ap.add_argument("--base-mixin", required=True)
-    ap.add_argument("--lang", default="python,java,cpp")
+    ap.add_argument("--lang", default="python,java,cpp,js",
+                     help="Comma-separated targets: python, java, cpp, js. js is built on cpp and implies it.")
     ap.add_argument("--rules-version", default="v1.0.0")
     ap.add_argument("--python-package", default="libsed2test",
                      help="Python distribution/import package name (default: libsed2test, the Phase-1 test-tree name)")
@@ -42,6 +47,10 @@ def main():
     ap.add_argument("--version", default=None,
                      help="Library version stamped into pyproject.toml, pom.xml and CMakeLists.txt "
                           "(MAJOR.MINOR.PATCH). Defaults to the contents of VERSION.txt at the repository root.")
+    ap.add_argument("--js-package", default="libsed2test-js",
+                     help="npm package name of the JavaScript target (default: libsed2test-js, the Phase-1 test-tree name)")
+    ap.add_argument("--js-description", default=None,
+                     help="package.json description; defaults to a generic one")
     ap.add_argument("--no-gen-fixtures", action="store_true",
                      help="Skip schema-derivable fixture generation (fixtures/generated/ next to --out's parent) - "
                           "on by default whenever Python is in --lang, since verification needs the Python library")
@@ -71,6 +80,11 @@ def main():
         f.write("\n")
 
     langs = args.lang.split(",")
+    unknown = sorted(set(langs) - {"python", "java", "cpp", "js"})
+    if unknown:
+        ap.error(f"unknown --lang target(s): {', '.join(unknown)}")
+    if "js" in langs and "cpp" not in langs:
+        langs.append("cpp")  # js is compiled from the cpp tree
     if "python" in langs:
         from generator.emit_python import emit_python_package
         emit_python_package(
@@ -111,6 +125,17 @@ def main():
             version=version,
         )
         print(f"[generate] wrote C++ package '{args.cpp_namespace}' to {os.path.join(args.out, 'cpp')}")
+
+    if "js" in langs:
+        from generator.emit_js import emit_js_package
+        emit_js_package(
+            model, os.path.join(args.out, "js"),
+            cpp_namespace=args.cpp_namespace,
+            js_package=args.js_package,
+            description=args.js_description,
+            version=version,
+        )
+        print(f"[generate] wrote JavaScript package '{args.js_package}' to {os.path.join(args.out, 'js')}")
 
     print(f"[generate] library version: {version}")
     print(f"[generate] classes: {sorted(model.generatable_classes())}")

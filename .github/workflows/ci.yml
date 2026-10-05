@@ -70,6 +70,15 @@
 # three take their version from VERSION.txt at the repository root (via
 # generator/generate.py, which stamps it into pyproject.toml, pom.xml and
 # CMakeLists.txt), so the file names carry that version.
+#
+# JavaScript: generated/js is a fourth generated tree, compiled FROM the C++
+# library with Emscripten (see generator/emit_js.py; the pattern is
+# sys-bio/libantimonyjs). It is generated together with cpp - the same
+# generate.py run, the same regenerate/self-heal commit - so it can't drift
+# from the C++ it wraps. test-js-main builds it with emsdk and runs the same
+# fixture suite under Node; release-js packs an npm tarball plus the
+# single-file module. Only the real spec (specsheets/) gets a js tree: the
+# synthetic test-specsheets/ tree stays python,java,cpp.
 
 name: CI
 
@@ -93,6 +102,9 @@ env:
   MAIN_SPEC_ROOT: specsheets
   MAIN_GEN_OUT: generated
   SPEC_FILE: SPECIFICATION.md
+  # Emscripten SDK version used by the JavaScript jobs (installed from the
+  # official emsdk repository; bump deliberately, like the ANTLR pin).
+  EMSCRIPTEN_VERSION: "4.0.10"
 
 jobs:
   # ---------------------------------------------------------------------
@@ -156,7 +168,8 @@ jobs:
             --base-mixin TestBase \
             --lang python,java,cpp
 
-      # -- specsheets/ -> generated/  (Phase 2: all three targets) --
+      # -- specsheets/ -> generated/  (Phase 2: all four targets, js being
+      #    the C++ library compiled to WebAssembly) --
       # A failure here is a real regression and fails the job, like the
       # test-specsheets/ half.
 
@@ -171,14 +184,16 @@ jobs:
             --out "$MAIN_GEN_OUT" \
             --doc-class SEDDocument \
             --base-mixin SEDBase \
-            --lang python,java,cpp \
+            --lang python,java,cpp,js \
             --python-package libsed2 \
             --python-description "Generated SED2 library (Python target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
             --java-package org.sedml.libsed2 \
             --java-group-id org.sed-ml \
             --java-artifact-id libsed2j \
             --java-description "Generated SED2 library (Java target) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py." \
-            --cpp-namespace libsed2
+            --cpp-namespace libsed2 \
+            --js-package libsed2js \
+            --js-description "Generated SED2 library (JavaScript/WebAssembly target, the C++ library compiled with Emscripten) - see Design.md's Code Generation section. GENERATED - do not hand-edit; regenerate via generator/generate.py."
 
       # -- core-spec.md + specsheets/ -> SPECIFICATION.md --
       # Stdlib-only script, so no extra pip install. A failure here fails
@@ -423,9 +438,10 @@ jobs:
   # specsheets/ -> generated/   (Phase 2, see Design.md)
   #
   # specsheets/ is the real, 51-class spec (doc-class SEDDocument, base
-  # mixin SEDBase). All three targets' *-main jobs (test-python-main,
+  # mixin SEDBase). All four targets' *-main jobs (test-python-main,
   # test-java-main, test-cpp-main - each placed next to its test-specsheets/
-  # counterpart above) run generated/<lang>'s own fixture suite against
+  # counterpart above - and test-js-main, the C++ library compiled with
+  # Emscripten, which has no test-specsheets/ counterpart) run generated/<lang>'s own fixture suite against
   # fixtures/generated/ (schema-derivable, regenerated every run by
   # gen_fixtures.py) the same way the test-specsheets/ jobs do.
   # fixtures/handwritten/ (hand-authored semantic fixtures for the real
@@ -438,6 +454,60 @@ jobs:
   # the run: a failing test-python-main, test-java-main, or test-cpp-main
   # fails CI.
   # ---------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------
+  # JavaScript (Emscripten) build of the real spec's C++ library, tested with
+  # the same fixture suite under Node. Same graceful-degradation shape as the
+  # other *-main jobs.
+  # ---------------------------------------------------------------------
+
+  test-js-main:
+    name: JavaScript target (specsheets/, C++ compiled with Emscripten)
+    needs: regenerate
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Emscripten
+        # Official emsdk, pinned by EMSCRIPTEN_VERSION above.
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install "$EMSCRIPTEN_VERSION"
+          "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSCRIPTEN_VERSION"
+      - name: Configure and build (emcmake; jsoncons and the ANTLR4 runtime are built for WebAssembly too)
+        working-directory: ${{ github.workspace }}/generated/js
+        env:
+          # jsoncons' own CMakeLists still declares a pre-3.5 minimum, which
+          # CMake 4 refuses without this; harmless on older CMake.
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j"$(nproc)"
+          ls -l build/libsed2.js
+      - name: Run fixture suite (Node)
+        # test/fixtures.test.js is generator/emit_js.py's own copy of
+        # templates/js/tests/fixtures.test.js - the JavaScript analog of
+        # FixtureTest.cpp. It drives the built module through index.js.
+        env:
+          SED2_FIXTURES_DIR: ${{ github.workspace }}/fixtures
+          LIBSED2_MODULE: ${{ github.workspace }}/generated/js/build/libsed2.js
+        working-directory: ${{ github.workspace }}/generated/js
+        run: node --test test/fixtures.test.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: js-module
+          path: generated/js/build/libsed2.js
+          retention-days: 7
 
   # ---------------------------------------------------------------------
   # Releases. Each release-* job needs the matching main-spec test job (so
@@ -634,4 +704,75 @@ jobs:
           path: |
             dist/*.tar.gz
             dist/*.zip
+          retention-days: 30
+
+  release-js:
+    name: Release - JavaScript (npm tarball + single-file module)
+    needs: [regenerate, test-js-main]
+    if: needs.regenerate.outputs.regen_main_outcome == 'success'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.regenerate.outputs.version }}
+    steps:
+      # Checkout supplies LICENSE.
+      - uses: actions/checkout@v4
+      - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
+        run: rm -rf "$MAIN_GEN_OUT" fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: main-generated
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: js-module
+          path: js-module
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pack the npm tarball
+        # The package is the generated wrapper (index.js, index.d.ts,
+        # package.json, README.md) plus the module test-js-main built, which
+        # is a single self-contained file (WebAssembly embedded). The
+        # single-file module is also released on its own, like
+        # libantimonyjs's libantimony.js, for use from a <script> tag.
+        run: |
+          set -eu
+          mkdir stage dist
+          cp generated/js/index.js generated/js/index.d.ts generated/js/package.json generated/js/README.md stage/
+          cp js-module/libsed2.js LICENSE stage/
+          (cd stage && npm pack --pack-destination ../dist)
+          cp js-module/libsed2.js "dist/libsed2js-${VERSION}.js"
+          [ -f "dist/libsed2js-${VERSION}.tgz" ] || { echo "::error::expected dist/libsed2js-${VERSION}.tgz"; ls dist; exit 1; }
+          ls -l dist
+      - name: Smoke-test the tarball in a clean project
+        # Installs only the tarball, then, from there, reports the installed
+        # version and validates every pass fixture through the package.
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          npm init -y > /dev/null
+          npm install --silent "${{ github.workspace }}/dist/libsed2js-${VERSION}.tgz"
+          FIXTURES="${{ github.workspace }}/fixtures/handwritten" node - <<'JS'
+          const fs = require('fs'), path = require('path');
+          (async () => {
+            const { load } = require('libsed2js');
+            const sed2 = await load();
+            if (sed2.version() !== process.env.VERSION) throw new Error(`version ${sed2.version()}, expected ${process.env.VERSION}`);
+            const files = fs.readdirSync(process.env.FIXTURES).filter((f) => /^pass-.*\.sed2\.json$/.test(f)).sort();
+            if (!files.length) throw new Error('no pass-*.sed2.json fixtures found');
+            let bad = 0;
+            for (const f of files) {
+              const r = sed2.validate(fs.readFileSync(path.join(process.env.FIXTURES, f), 'utf8'));
+              console.log(f, '->', r.ok ? r.problems.length + ' problem(s)' : 'ERROR ' + r.error);
+              if (!r.ok || r.problems.length) bad++;
+            }
+            if (!sed2.checkMath('a + 2*b').ok) throw new Error('math check failed');
+            process.exit(bad ? 1 : 0);
+          })().catch((e) => { console.error(e); process.exit(1); });
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-js
+          path: dist/*
           retention-days: 30
