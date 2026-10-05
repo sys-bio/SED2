@@ -1559,6 +1559,14 @@
     "status": "active",
     "check": "schema"
   },
+  "FluxBalanceAnalysis-0009": {
+    "class": "FluxBalanceAnalysis",
+    "rule": "The workingAlgorithms attribute of a FluxBalanceAnalysis, if present, must be an array of WorkingAlgorithm objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of WorkingAlgorithm objects.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
   "JacobianFull-0000": {
     "class": "JacobianFull",
     "rule": "The element fails a JSON Schema constraint attributable to JacobianFull that does not match any other numbered rule.",
@@ -1659,6 +1667,22 @@
     "class": "Loop",
     "rule": "The _type attribute of a Loop must be \"loop\".",
     "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0006": {
+    "class": "Loop",
+    "rule": "The range attribute of a Loop is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Loop-0007": {
+    "class": "Loop",
+    "rule": "The range attribute of a Loop must be a RangeInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a RangeInline object.",
     "severity": "error",
     "status": "active",
     "check": "schema"
@@ -2303,6 +2327,14 @@
     "status": "active",
     "check": "schema"
   },
+  "ParameterScan-0007": {
+    "class": "ParameterScan",
+    "rule": "The entries of a ParameterScan's parameterRanges must have pairwise distinct modelElement values.",
+    "message": "ParameterScan '{id}' has more than one entry in parameterRanges with modelElement '{value}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "handwritten"
+  },
   "Plot-0000": {
     "class": "Plot",
     "rule": "The element fails a JSON Schema constraint attributable to Plot that does not match any other numbered rule.",
@@ -2935,6 +2967,22 @@
     "status": "active",
     "check": "schema"
   },
+  "Scatter-0004": {
+    "class": "Scatter",
+    "rule": "The range attribute of a Scatter is required.",
+    "message": "Required attribute '{attr}' is missing from {class} '{id}'.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "Scatter-0005": {
+    "class": "Scatter",
+    "rule": "The range attribute of a Scatter must be a RangeInline object.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a RangeInline object.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
   "Span-0000": {
     "class": "Span",
     "rule": "The element fails a JSON Schema constraint attributable to Span that does not match any other numbered rule.",
@@ -3035,6 +3083,14 @@
     "class": "SteadyState",
     "rule": "The independentVariable attribute of a SteadyState, if present, must be a string.",
     "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.",
+    "severity": "error",
+    "status": "active",
+    "check": "schema"
+  },
+  "SteadyState-0007": {
+    "class": "SteadyState",
+    "rule": "The workingAlgorithms attribute of a SteadyState, if present, must be an array of WorkingAlgorithm objects.",
+    "message": "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not an array of WorkingAlgorithm objects.",
     "severity": "error",
     "status": "active",
     "check": "schema"

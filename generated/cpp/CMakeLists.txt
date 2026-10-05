@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libsed2 CXX)
+project(libsed2 VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -63,10 +63,21 @@ target_link_libraries(libsed2_math PUBLIC antlr4_static)
 # include paths and its jsoncons/libsed2_math dependencies to propagate to
 # consumers.
 add_library(libsed2 INTERFACE)
+add_library(libsed2::libsed2 ALIAS libsed2)
 target_include_directories(libsed2 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(libsed2 INTERFACE jsoncons libsed2_math)
 
-option(LIBSED2_BUILD_TESTS "Build the fixture test suite" ON)
+# The fixture test suite (and the googletest fetch it needs) is on by default
+# only when this is the top-level project. Pulled in as a dependency via
+# add_subdirectory()/FetchContent - which is how a released source package is
+# consumed - it is off unless the consumer opts in. Also, the test target's
+# fixtures/ directory (see below) is not part of a release package.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(libsed2_is_top_level ON)
+else()
+  set(libsed2_is_top_level OFF)
+endif()
+option(LIBSED2_BUILD_TESTS "Build the fixture test suite" ${libsed2_is_top_level})
 if(LIBSED2_BUILD_TESTS)
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

@@ -204,12 +204,90 @@ specsheets/
 Each `<Category>/<ClassName>/<version>/` folder normally contains exactly:
 
 - **`schema.json`** - a standalone JSON Schema (2020-12) for that one class, with its own `$id`. Shared primitives and base-class fields are pulled in via `$ref` to the relevant `core/`/`tasks/`/`outputs/`/`auxiliary/` schema file rather than duplicated, so the file stays small; it can still be dropped into another JSON Schema document and resolved as long as the relative folder layout above is preserved (or the `$id` is used with a schema-aware `$ref` resolver/registry).
-- **`description.md`** - a link to the class's UML diagram (or a note that one doesn't exist yet), what the class does, a table of its child attributes (name, type, required/optional), and a description of what referencing the class's id produces as output.
-- **`<ClassName>.png`** - the UML class diagram, when one exists (see Section 10 for gaps).
+- **`description.md`** - A description of the class, including a link to the class's UML diagram (or a note that one doesn't exist yet), what the class does, a table of its child attributes (name, type, required/optional), and a description of what referencing the class's id produces as output.
+- **`<ClassName>.png`** - the UML class diagram, when one exists.
+- **`outputs.json`** - A formal JSON description of the valid outputs for the class.
 
-Every `schema.json`'s `required` array carries a sibling `x-required-rule-ids` object mapping each required field's name to the numbered validation rule that documents its presence requirement, and any property whose own constraint - a `_type` discriminator `const`, or a type/shape check beyond bare presence - has a matching numbered rule carries a sibling `x-rule-id` alongside that constraint (as a sibling of `$ref` where the property is declared that way); `x-rule-id` is a single rule-ID string, or an array of them when more than one rule governs the same property (most commonly an `OrRef` field's separate direct-value and reference-form rules, e.g. `AbstractODESimulation.forcePhysicalCorrectness`). A bare `SIdRef` property that must resolve to a particular kind of thing also carries `"x-ref-target": "model"` (SEDBase-0016) or `"x-ref-target": "annotatedData"` (SEDBase-0017). All of these are inert to any JSON Schema validator (unknown keywords are ignored) and exist purely as generator-only metadata - see Design.md's Validation section - so the generator can wire each hand-written `validate()` check straight to the schema location it corresponds to rather than re-deriving that mapping itself. Not every numbered rule has a schema-visible home this way: most are semantic (cross-reference resolution, math well-formedness, tolerance interactions, and the like) with no single JSON Schema keyword to attach to; only presence, discriminator, and simple type/shape constraints get one. A class whose own requiredness is disjunctive rather than a flat list - so far, only `Repeat`, whose subclasses need at least one of `outputVariableMap` or `aggregateOutputVariables` rather than a fixed set - expresses that as an `anyOf` of single-field `required` objects at the class's own top level (sibling to `properties`), with a sibling `x-anyof-required-rule-id` naming the one rule documenting the whole disjunction, rather than forcing it into `x-required-rule-ids`'s per-field mapping. A `oneOf` discriminator built via `x-generated-oneOf` (see Design.md's Classes section) can similarly carry a sibling `x-missing-type-rule-id`, naming a rule for the narrower case where `_type` is absent from the instance entirely, rather than present but unrecognized - a more specific error than the discriminator's own catch-all, for whichever discriminators want to distinguish it (e.g. `AbstractTask-0002`).
+The `schema.json` file should contain special elements to assist with library validation.  They are:
+* *`x-required-rule-ids`*: A sibling of the `required` array, mapping each required field's name to the numbered validation rule that documents its presence requirement.
+* *`x-rule-id`*: A sibling to any `_type` discriminator `const`, or a type/shape check beyond bare presence.  It is a single rule-ID string, or an array of them when more than one rule governs the same property (most commonly an `OrRef` field's separate direct-value and reference-form rules, e.g. `AbstractODESimulation.forcePhysicalCorrectness`). 
+* *`x-ref-target`*: Any bare `SIdRef` property that must resolve to a particular kind of thing also carries `"x-ref-target": "model"` (SEDBase-0016) or `"x-ref-target": "annotatedData"` (SEDBase-0017).
+* *`x-anyof-required-rule-id`*: For classes the require at least one of multiple attribute children (thus far, only `Repeat`, whose subclasses need at least one of `outputVariableMap` or `aggregateOutputVariables`) rather than a fixed set - expresses that as an `anyOf` of single-field `required` objects at the class's own top level (sibling to `properties`), with a sibling `x-anyof-required-rule-id` naming the one rule documenting the whole disjunction, rather than forcing it into `x-required-rule-ids`'s per-field mapping.
+* *`x-missing-type-rule-id`*: A `oneOf` discriminator built via `x-generated-oneOf` (see Design.md's Classes section) can similarly carry a sibling `x-missing-type-rule-id`, naming a rule for the narrower case where `_type` is absent from the instance entirely, rather than present but unrecognized - a more specific error than the discriminator's own catch-all, for whichever discriminators want to distinguish it (e.g. `AbstractTask-0002`).
 
-**Task output shapes (`outputs.json`).** Every concrete `tasks/` class (one with its own `_type`) additionally carries an `outputs.json`, machine-describing what each output suffix (`[id]`, `[id].model`, `[id].strings`, and any class-specific suffix like `Loop`'s `[id].aggregates`/`[id].range`/`[id].index`) resolves to - replacing the free-text "Valid"/"Invalid"/"Dimensions:" bullets that used to be the only record of this. A suffix that is listed is valid, and a suffix that is not listed is not valid. A listed entry may carry an optional `valid` field meaning "valid if": a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`; with no `valid` field the entry is always valid. Each entry has a `type` (`annotatedData`/`model`/`stringList`), and for `annotatedData` a `dimensions` list. Every place a size, a label set, or a whole shape needs stating, it's tagged with where that knowledge actually comes from - `"static"` (an `expr` computed from the task's own fields: `len(outputVariables)`, `independentVariableRange.numberOfSteps`, `keys(data)`, `[independentVariable] + outputVariables` as an array-literal-plus-concatenation, `shapeOf(input)` to inherit another reference's whole shape, optionally minus a dropped dimension via `- dim(...)`), `"input-file"` (knowable only by reading whatever external resource a field like `model` or `location` points to - `JacobianFull`'s species count, `CsvImport`'s column headers - tagged with `from`/`extract`/`note` rather than a formula, since the actual parsing is format-specific generator work, not something this file does itself), or `"runtime"` (genuinely not derivable without executing the simulation, e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count - always paired with a `note` explaining why). A `"runtime"` size may also carry an optional `min`, a guaranteed lower bound when one is actually known (e.g. "at least 2 rows"); an index or range that requires more entries than `min` guarantees is flagged by `SEDBase-0014` as a warning rather than an error, since it may still be valid once the simulation actually runs. `dimensions` itself is either a fixed array of per-dimension entries - an ordinary entry, or a `repeat` entry that expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan`'s one dimension per entry of `parameterRanges`) - when the shape is decomposable dimension-by-dimension, or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (`shapeOf(x)` whole-shape inheritance, or a `"runtime"`/`"input-file"` source where the dimension count itself isn't knowable ahead of time). `schema/outputs-meta.schema.json` validates every class's `outputs.json` envelope (the object shapes above); it does not parse `expr`/`note` string contents, which stay documentation for whoever implements the generator's shape-inference step. Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
+All of these are inert to any JSON Schema validator (unknown keywords are ignored) and exist purely as generator-only metadata so the generator can wire each hand-written `validate()` check straight to the schema location it corresponds to rather than re-deriving that mapping itself. 
+
+Not every numbered rule has a schema-visible home this way: most are semantic (cross-reference resolution, math well-formedness, tolerance interactions, and the like) with no single JSON Schema keyword to attach to; only presence, discriminator, and simple type/shape constraints get one.
+
+
+**Task outputs (`outputs.json`).** Every concrete (non-abstract) `Task` class additionally carries an `outputs.json`. The top level element of this file is 'outputs', and the children of this element is a dictionary of output descriptions, with the key being each valid output `[id]` and `[id].[suffix]` for that class. Any listed id or id/suffix combination is valid, and anything not listed (including a bare `[id]`) is not valid. 
+
+The value for these id keys are another dictionary.  `type` is required, and lists the type of that output: `annotatedData`, `model`, or `stringList`.
+
+If the `type` is `annotatedData`, a second child `dimensions` must be included to describe the dimensions of the outputted data, whether known or unknown.  There are two forms available:
+   - **A single sourced object describing the whole shape** Used when the shape is not fully determined by the task, and is instead determined from a different input reference, or determined at runtime.
+   - **An array of per-dimension entries.** Used whenever the shape can always be described one dimension at a time (the usual case: rows by columns, one column per output variable, and so on). An empty array, `[]`, means the output has no dimensions - it is a single value (e.g. `Loop`'s `[id].range`).
+
+The characteristics of individual dimensions can also be determined by other objects. These 'sourced objects' take this form:
+
+3. **Write each `size` as a sourced object.** A sourced object always has a `source` field saying where the knowledge comes from. Use the first of these that applies:
+   - `"static"` - computable from the task's own attribute values alone. Fields: `expr` (required; an expression in the notation defined below, e.g. `len(outputVariables)`, `1 + len(outputVariables)`, `independentVariableRange.numberOfSteps`) and `note` (optional).
+   - `"input-file"` - knowable only by reading the external resource that one of the task's fields points to (e.g. `JacobianFull`'s species count comes from its `model`; `CsvImport`'s column headers come from its `location`). Fields, all required: `from` (the name of the task field that points to the resource), `extract` (what to read from it, e.g. `rowCount`, `columnHeaders`) and `note`. There is no formula here, because the actual parsing is format-specific generator work, not something this file does itself.
+   - `"runtime"` - genuinely not derivable without executing the simulation (e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Loop`'s iteration count). Fields: `note` (required; always explain why it cannot be known earlier) and `min` (optional; an integer >= 0 giving a guaranteed lower bound, only if one is actually known, e.g. 2 for "at least 2 rows"). When `min` is given, `SEDBase-0014` flags an index or range that needs more entries than `min` guarantees as a warning rather than an error, since it may still be valid once the simulation actually runs.
+
+
+
+
+**If you chose the array, write each element as one of two kinds of entry.** The array lists the dimensions in order, and the two kinds may be mixed.
+   - **An ordinary entry** describes one dimension. Its requied fields are `size` and `labels`, and it may have an optional `note` with free text.
+   - **A `repeat` entry** expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan` has one dimension per entry of `parameterRanges`). Its only field is `repeat`, an object with `over` (required; the name of the array-valued attribute), `size` and `labels` (both required, written as for an ordinary entry), and `note` (optional). Inside a `repeat` entry's `size` and `labels`, a bare identifier refers to a field of the *current entry* of `over` (not of the task), and `self` refers to that entry as a whole.
+
+3. **Write each `size` as a sourced object.** A sourced object always has a `source` field saying where the knowledge comes from. Use the first of these that applies:
+   - `"static"` - computable from the task's own attribute values alone. Fields: `expr` (required; an expression in the notation defined below, e.g. `len(outputVariables)`, `1 + len(outputVariables)`, `independentVariableRange.numberOfSteps`) and `note` (optional).
+   - `"input-file"` - knowable only by reading the external resource that one of the task's fields points to (e.g. `JacobianFull`'s species count comes from its `model`; `CsvImport`'s column headers come from its `location`). Fields, all required: `from` (the name of the task field that points to the resource), `extract` (what to read from it, e.g. `rowCount`, `columnHeaders`) and `note`. There is no formula here, because the actual parsing is format-specific generator work, not something this file does itself.
+   - `"runtime"` - genuinely not derivable without executing the simulation (e.g. `BoundedODESimulation`'s solver-chosen row count under variable step size, or `Calculation`'s result shape, which depends on evaluating its math against the operands' actual values). Fields: `note` (required; always explain why it cannot be known earlier) and `min` (optional; an integer >= 0 giving a guaranteed lower bound, only if one is actually known, e.g. 2 for "at least 2 rows"). When `min` is given, `SEDBase-0014` flags an index or range that needs more entries than `min` guarantees as a warning rather than an error, since it may still be valid once the simulation actually runs.
+
+4. **Write each `labels` value** (ordinary and `repeat` entries only). It is one of:
+   - `null` - the dimension has no labels.
+   - An array of literal strings - fixed labels.
+   - A sourced object, written as in step 3 - e.g. `{ "source": "static", "expr": "[independentVariable] + outputVariables" }`.
+
+5. **If you chose the whole-shape form,** write one sourced object (step 3) that describes the entire shape; it has no separate `size` or `labels`. The usual cases are:
+   - `static` with `shapeOf(input)` - the same shape as another reference's output (`RelabelData`).
+   - `static` with `shapeOf(input) - dim(...)` - that shape with one or more dimensions removed (`AggregationCalculation`).
+   - `input-file` - the shape is whatever an external file has (`DataImport`).
+   - `runtime` - the shape depends on values only known during execution (`Calculation`, `StringFormation`).
+
+6. **Check your work.** `schema/outputs-meta.schema.json` validates the structure described above (which fields are present, which `source` values are allowed), but it does not parse the contents of `expr` or `note` strings; `expr` is defined by the notation paragraph below, and a generator's shape-inference step implements it by hand.
+
+Examples (the `dimensions` part of an entry; `ExplicitODESimulation`'s `[id]`, then `ParameterScan`'s `[id]`, then `RelabelData`'s `[id]`):
+
+```json
+"dimensions": [
+  { "size":   { "source": "static", "expr": "len(independentVariableRange)" },
+    "labels": null },
+  { "size":   { "source": "static", "expr": "1 + len(outputVariables)" },
+    "labels": { "source": "static", "expr": "[independentVariable] + outputVariables" } }
+]
+```
+
+```json
+"dimensions": [
+  { "repeat": { "over": "parameterRanges",
+                "size":   { "source": "static", "expr": "len(self)" },
+                "labels": { "source": "static", "expr": "modelElement" } } },
+  { "size":   { "source": "static", "expr": "len(outputVariableMap)" },
+    "labels": null }
+]
+```
+
+```json
+"dimensions": { "source": "static", "expr": "shapeOf(input)" }
+```
+
+Abstract/mixin classes (`AbstractSimulation` and friends, `Repeat`) carry no `outputs.json` of their own, the same reasoning as why they carry no `_type` - nothing is ever instantiated as one directly, so "what does referencing this task's output produce" has no meaning until a concrete leaf class answers it, flatly, the same way those classes already flatten every other inherited constraint into their own `schema.json`.
+
+A listed entry may carry an optional `valid` field meaning "valid if": a boolean expression string over the task's own fields, e.g. `"outputModel == true"`, `"provided(range)"`; with no `valid` field the entry is always valid. 
 
 **The `expr`/`valid` notation.** Both fields reuse one small expression language, evaluated against the task's own attribute values at generate/validate time - never against runtime data, and not the SED2 math grammar `Types-0001` through `Types-0004` validate (see this section's `x-rule-id` paragraph above and `Design.md`'s Math section for that separate grammar): `outputs.json` describes shape, `math` describes computation. A bare identifier names one of the task's own attributes and evaluates to its value (`outputVariables`); a dotted path reaches into a nested attribute the same way (`independentVariableRange.numberOfSteps`). `[x]` is an array literal (`[independentVariable]`); JSON numbers and `true`/`false` are literals too. Five functions: `len(x)` - the length of an array-valued `x`; or, when `x` is a Range-family value (a `RangeInline`/`NumericRangeInline`/`ParameterRangeInline`-typed field, or the reserved identifier `self` inside a `repeat` entry - see below), the number of points it resolves to, dispatched on `x`'s own discriminated type: `len(x.values) if provided(x.values) else x.numberOfSteps + 1` for `NumericRange`/`ParameterRange`, or just `len(x.values)` for a bare `Range` (which has no `numberOfSteps` alternative); `keys(x)` - the keys of an object-valued `x`, as an array; `shapeOf(x)` - the whole `dimensions` shape of a referenced AnnotatedData value; `dim(x)` - the dimension(s) named by `x` (a single name or a list of names) within a shape, meaningful only as the right operand of `-`; `provided(x)` - `true` iff attribute `x` was given a value in the document. Operators, at ordinary precedence: `!x` (boolean negation); `x == y` (equality); `x + y` (numeric addition when both operands are numbers, array concatenation when both are arrays - `1 + len(outputVariables)` vs. `[independentVariable] + outputVariables`); `shapeOf(x) - dim(y)` (a shape with the named dimension(s) removed - the only place `-` appears); `x or y` (`x`'s value when `provided(x)` holds, else the literal `y` - used for a field with a documented default, e.g. `dim(appliedDimensions or outermost)`, where `outermost` is a sentinel meaning the shape's own first dimension); and a conditional `x if provided(y) else z` for a value with two different derivations depending on whether an alternate field was given instead (e.g. `NumericRange`'s `len(values) if provided(values) else numberOfSteps + 1`). This is the only formal definition of the notation - `schema/outputs-meta.schema.json` does not parse it, as noted above - so a generator's shape-inference step implements it by hand. Inside a `dimensions` array's `repeat` entry (see above), this same notation applies to that entry's own `size`/`labels`, with two scoping additions: a bare identifier there resolves against the current array entry's own fields, not the task's top-level attributes; and the reserved identifier `self` refers to the current entry as a whole (for taking its `len()`, per above) rather than one of its fields. `ParameterScan`'s `repeat` over `parameterRanges` uses `size: len(self)`, letting each entry's own type (`Range`/`NumericRange`/`ParameterRange`) determine its own length the same way `Scatter`'s `len(range)` and `ExplicitODESimulation`'s `len(independentVariableRange)` do for their own named Range-family fields.
 
@@ -248,14 +326,14 @@ Any future changes to a class creates a sibling `v#.#.#/` folder alongside `v1.0
 
 ### 9. Validating a document against these schemas
 
-*Source: [core-spec.md, line 142](core-spec.md#L142)*
+*Source: [core-spec.md, line 220](core-spec.md#L220)*
 
 
 To validate a whole SED2 document, `$ref` the appropriate `specsheets/core/SEDDocument/v1.0.0/schema.json` (which itself only needs `AbstractTask`/`AbstractOutput`, which in turn enumerate the concrete task/output classes) with a schema registry that can resolve relative file `$ref`s - e.g. Python's `referencing`/`jsonschema` packages, pointed at the `specsheets/` root. To validate or compose against just one class (e.g. embedding `ExplicitODESimulation`'s schema inside a larger tool-specific document), `$ref` that class's own `specsheets/tasks/ExplicitODESimulation/v1.0.0/schema.json` directly - its external refs resolve the same way.
 
 ### 10. Known gaps and inconsistencies (flagged, not fixed here)
 
-*Source: [core-spec.md, line 146](core-spec.md#L146)*
+*Source: [core-spec.md, line 224](core-spec.md#L224)*
 
 
 Per the project's own working rule, this split is descriptive - it surfaces inconsistencies for you to resolve rather than silently deciding them:
@@ -273,7 +351,7 @@ Per the project's own working rule, this split is descriptive - it surfaces inco
 
 ### 11. Multi-target consistency reminder
 
-*Source: [core-spec.md, line 161](core-spec.md#L161)*
+*Source: [core-spec.md, line 239](core-spec.md#L239)*
 
 
 Per this project's own working rules: any future design change to the SED2 class model, cross-reference/math syntax, or validation rules must be reflected in **all three** generated libraries (C++, Java, Python) in the same change - this document split does not touch code generation, but any content change that follows from resolving Section 10's open items will.
@@ -1294,7 +1372,7 @@ There is no output rule for `AbstractStochasticSimulation` itself - see `Explici
 
 Every concrete subclass of `AbstractTask` must define what its output (or outputs) are. In particular, a task's own id (`#tasks:id`) - when the task defines it - always resolves to an `AnnotatedData` value (dimensions vary by task). A task's id suffixed with `.model` (`#tasks:id.model`) is used whenever the task exports a model; suffixed with `.strings` (`#tasks:id.strings`) whenever it exports a list of strings. Other output suffixes may be used when needed, but common suffixes should stay standardized across tasks.
 
-**Two schema files in this folder.** `schema.json` defines `AbstractTask` itself - the `oneOf` discriminator listing all 26 concrete task types. `common.schema.json` defines `AbstractTaskCommon` - a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own) contributing the fields every concrete task picks up beyond `SEDBase`: `taskParameters` (a list of `TaskParameter` objects further configuring the algorithm).
+**Two schema files in this folder.** `schema.json` defines `AbstractTask` itself. `common.schema.json` defines `AbstractTaskCommon` - a schema-only mixin (composed via `allOf`, not instantiated directly, no `_type` or diagram box of its own) contributing the fields every concrete task picks up beyond `SEDBase`: `taskParameters` (a list of `TaskParameter` objects further configuring the algorithm).
 
 ##### Attributes
 
@@ -2472,6 +2550,10 @@ A dictionary of model variables (usually fluxes) to their final values, accessib
 
 > `_type` is the discriminator field. For `FluxBalanceAnalysis` it must always equal `"fluxBalanceAnalysis"`.
 
+**`FluxBalanceAnalysis-0009`** (error) - The workingAlgorithms attribute of a FluxBalanceAnalysis, if present, must be an array of WorkingAlgorithm objects. ([source](specsheets/tasks/FluxBalanceAnalysis/v1.0.0/validation/FluxBalanceAnalysis-0009.md))
+
+> `workingAlgorithms` is optional; when present, each entry must be a `WorkingAlgorithm` object.
+
 #### JacobianFull
 
 *Source: [specsheets/tasks/JacobianFull/v1.0.0/description.md](specsheets/tasks/JacobianFull/v1.0.0/description.md)*
@@ -2680,6 +2762,14 @@ Additional possible outputs beyond the three standard ones:
 **`Loop-0005`** (error) - The _type attribute of a Loop must be "loop". ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0005.md))
 
 > `_type` is the discriminator field. For `Loop` it must always equal `"loop"`.
+
+**`Loop-0006`** (error) - The range attribute of a Loop is required. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0006.md))
+
+> `range` is required.
+
+**`Loop-0007`** (error) - The range attribute of a Loop must be a RangeInline object. ([source](specsheets/tasks/Loop/v1.0.0/validation/Loop-0007.md))
+
+> `range` must be a `Range`/`NumericRange`/`ParameterRange` object in its embedded `RangeInline` form.
 
 #### ModelChange
 
@@ -3557,6 +3647,14 @@ Additional possible outputs beyond the three standard ones:
 
 > `_type` is the discriminator field. For `ParameterScan` it must always equal `"parameterScan"`.
 
+**`ParameterScan-0007`** (error) - The entries of a ParameterScan's parameterRanges must have pairwise distinct modelElement values. ([source](specsheets/tasks/ParameterScan/v1.0.0/validation/ParameterScan-0007.md))
+
+> Stated in ParameterScan's description.md. Each ParameterRange scans one model
+> element, and its modelElement also labels its entry in [id].ranges and
+> [id].indexes, so two entries with the same modelElement would be both
+> ambiguous to address and redundant to scan. When modelElement is given as a
+> reference, entries are compared by the string it resolves to.
+
 #### Range
 
 *Source: [specsheets/tasks/Range/v1.0.0/description.md](specsheets/tasks/Range/v1.0.0/description.md)*
@@ -3876,6 +3974,14 @@ Additional possible outputs beyond the three standard ones:
 
 > `_type` is the discriminator field. For `Scatter` it must always equal `"scatter"`.
 
+**`Scatter-0004`** (error) - The range attribute of a Scatter is required. ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0004.md))
+
+> `range` is required.
+
+**`Scatter-0005`** (error) - The range attribute of a Scatter must be a RangeInline object. ([source](specsheets/tasks/Scatter/v1.0.0/validation/Scatter-0005.md))
+
+> `range` must be a `Range`/`NumericRange`/`ParameterRange` object in its embedded `RangeInline` form.
+
 #### SteadyState
 
 *Source: [specsheets/tasks/SteadyState/v1.0.0/description.md](specsheets/tasks/SteadyState/v1.0.0/description.md)*
@@ -3950,6 +4056,10 @@ The steady-state values of `outputVariables`, accessible as `[id]`. The resultin
 **`SteadyState-0004`** (error) - The independentVariable attribute of a SteadyState, if present, must be a string. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0004.md))
 
 > `independentVariable` is `StringOrRef`, which resolves to a plain string type; when present, it must be a string.
+
+**`SteadyState-0007`** (error) - The workingAlgorithms attribute of a SteadyState, if present, must be an array of WorkingAlgorithm objects. ([source](specsheets/tasks/SteadyState/v1.0.0/validation/SteadyState-0007.md))
+
+> `workingAlgorithms` is optional; when present, each entry must be a `WorkingAlgorithm` object.
 
 #### StringFormation
 
