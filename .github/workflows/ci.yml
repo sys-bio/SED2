@@ -467,14 +467,14 @@ jobs:
     if: needs.regenerate.outputs.regen_main_outcome == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
         run: rm -rf "$MAIN_GEN_OUT" fixtures
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@main
         with:
           name: main-generated
           path: .
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@main
         with:
           node-version: "22"
       - name: Install Emscripten
@@ -503,7 +503,7 @@ jobs:
           LIBSED2_MODULE: ${{ github.workspace }}/generated/js/build/libsed2.js
         working-directory: ${{ github.workspace }}/generated/js
         run: node --test test/fixtures.test.js
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         with:
           name: js-module
           path: generated/js/build/libsed2.js
@@ -715,18 +715,18 @@ jobs:
       VERSION: ${{ needs.regenerate.outputs.version }}
     steps:
       # Checkout supplies LICENSE.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Replace checked-out generated/ and fixtures/ with this run's fresh copies
         run: rm -rf "$MAIN_GEN_OUT" fixtures
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@main
         with:
           name: main-generated
           path: .
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@main
         with:
           name: js-module
           path: js-module
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@main
         with:
           node-version: "22"
       - name: Pack the npm tarball
@@ -771,7 +771,7 @@ jobs:
             process.exit(bad ? 1 : 0);
           })().catch((e) => { console.error(e); process.exit(1); });
           JS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         with:
           name: release-js
           path: dist/*
