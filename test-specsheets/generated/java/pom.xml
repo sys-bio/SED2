@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sed2test</groupId>
   <artifactId>libsed2test</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <packaging>jar</packaging>
   <description>Generated SED2 test-fixture library (Java target) - exercises the SED2 generator against test-specsheets/, see Design.md's Testing section.</description>
 

@@ -19,6 +19,7 @@ public final class Handwritten {
     public static final boolean HAS_TASK_ORDER_RULE = false;   // AbstractTask-0003
     public static final boolean HAS_REPEAT_OWN_RULES = false;   // Repeat-0008, Repeat-0009, Repeat-0010
     public static final boolean HAS_LOOPVAR_RULE = false;   // LoopVariable-0004
+    public static final boolean HAS_PARAMETER_SCAN_RULE = false;   // ParameterScan-0007
     public static final boolean HAS_NAMESPACE_RULES = false;   // SEDDocument-0009, SEDDocument-0010, SEDDocument-0011
     public static final boolean HAS_CONSTANTS_ORDER_RULE = false;   // SEDDocument-0013
 
@@ -129,6 +130,11 @@ public final class Handwritten {
 
     /** LoopVariable-0004. */
     public static List<ValidationProblem> loopVariable0004(boolean ok, Object value, String idValue, String location) {
+        return new ArrayList<>();
+    }
+
+    /** ParameterScan-0007. */
+    public static List<ValidationProblem> parameterScan0007(List<String> modelElements, String className, String idValue, String location) {
         return new ArrayList<>();
     }
 

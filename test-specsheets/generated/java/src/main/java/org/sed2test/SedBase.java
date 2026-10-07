@@ -434,20 +434,23 @@ public abstract class SedBase {
         // here, the same as every other per-instance handwritten check above.
         problems.addAll(References.checkRepeatOwnChildren(this));
         problems.addAll(References.checkLoopVariableScope(this));
+        problems.addAll(References.checkParameterScanRanges(this));
         return problems;
     }
 
-    /** This element's own SId, for a validation message's {id} placeholder -
-     * Design.md's Classes section: id is implicit, the key under which an
-     * element is stored in its owning collection, never a field on the
-     * element itself. So this walks up to the parent and searches every
-     * id-keyed collection IT declares for whichever key maps to `this`.
-     * Falls back to "?" for anything genuinely id-less: the document root, an
-     * array-item class stored positionally rather than by id, or an
+    /** This element's own id, or null when it has none - Design.md's Classes
+     * section: id is implicit, the key under which an element is stored in
+     * its owning collection, never a field on the element itself. So this
+     * walks up to the parent and searches every id-keyed collection IT
+     * declares for whichever key maps to `this`. Looked up on every call
+     * rather than cached, so a rename (setIdOn&lt;Collection&gt;) is always
+     * reflected. Null for anything genuinely id-less: the document root, an
+     * array-item class stored positionally rather than by id, a single
+     * embedded child (e.g. a simulation's independent-variable range), or an
      * unattached/standalone instance no parent has claimed yet. */
-    public String ownIdForMessage() {
+    private String findOwnId() {
         SedBase parent = getParent();
-        if (parent == null) return "?";
+        if (parent == null) return null;
         for (String name : parent.idCollectionNames()) {
             IdCollection coll = parent.getIdCollection(name);
             if (coll == null) continue;
@@ -455,7 +458,36 @@ public abstract class SedBase {
                 if (coll.getObject(iid) == this) return iid;
             }
         }
-        return "?";
+        return null;
+    }
+
+    /** True when this element currently has an id, i.e. it is stored under a
+     * key in an id-keyed collection of its parent (tasks, outputs, styles, a
+     * Repeat's subTasks, ...). False for the document itself, array items,
+     * embedded single children, and elements not (yet) added to any
+     * collection. */
+    public boolean isSetId() { return findOwnId() != null; }
+
+    /** This element's own id: the key it has in the id-keyed collection that
+     * holds it (e.g. the task id for an entry of the document's tasks, the
+     * sub-task id for an entry of a Loop's subTasks). Follows renames. Throws
+     * ApiError when the element has no id (see isSetId) - the same as
+     * getXxx() on an unset attribute. Note getParent() is the owning element
+     * (the document for a top-level task), not the collection. */
+    public String getId() {
+        String iid = findOwnId();
+        if (iid == null) {
+            throw new ApiError("this element has no id: it is not stored under a key in an "
+                    + "id-keyed collection of its parent");
+        }
+        return iid;
+    }
+
+    /** This element's own id for a validation message's {id} placeholder:
+     * getId()'s value, or "?" for an element with none. */
+    public String ownIdForMessage() {
+        String iid = findOwnId();
+        return iid == null ? "?" : iid;
     }
 
     public abstract ObjectNode ownJsonValue();

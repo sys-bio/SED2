@@ -69,8 +69,8 @@ public final class Dispatch {
             case "modelElementList": obj = new ModelElementList(); break;
             case "modelImport": obj = new ModelImport(); break;
             case "numericRange": obj = new NumericRange(); break;
-            case "oneStepODE": obj = new OneStepODESimulation(); break;
-            case "oneStepStochastic": obj = new OneStepStochasticSimulation(); break;
+            case "oneStepODESimulation": obj = new OneStepODESimulation(); break;
+            case "oneStepStochasticSimulation": obj = new OneStepStochasticSimulation(); break;
             case "parameterRange": obj = new ParameterRange(); break;
             case "parameterScan": obj = new ParameterScan(); break;
             case "range": obj = new Range(); break;

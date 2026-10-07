@@ -7,7 +7,7 @@
 // before an unrecognized key is dropped, so it is the only reliable place
 // to detect them (see Design.md's Schema-Pass Errors section - mirrors
 // generator/emit_python.py's _load_fields()). GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from specsheets/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -54,8 +54,8 @@ inline DispatchResult parse_AbstractTask(const Json& raw) {
     else if (tv_is_str && tv == "modelElementList") obj = std::make_unique<ModelElementList>();
     else if (tv_is_str && tv == "modelImport") obj = std::make_unique<ModelImport>();
     else if (tv_is_str && tv == "numericRange") obj = std::make_unique<NumericRange>();
-    else if (tv_is_str && tv == "oneStepODE") obj = std::make_unique<OneStepODESimulation>();
-    else if (tv_is_str && tv == "oneStepStochastic") obj = std::make_unique<OneStepStochasticSimulation>();
+    else if (tv_is_str && tv == "oneStepODESimulation") obj = std::make_unique<OneStepODESimulation>();
+    else if (tv_is_str && tv == "oneStepStochasticSimulation") obj = std::make_unique<OneStepStochasticSimulation>();
     else if (tv_is_str && tv == "parameterRange") obj = std::make_unique<ParameterRange>();
     else if (tv_is_str && tv == "parameterScan") obj = std::make_unique<ParameterScan>();
     else if (tv_is_str && tv == "range") obj = std::make_unique<Range>();

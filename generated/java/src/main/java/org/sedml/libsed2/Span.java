@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Generated from test-specsheets/auxiliary/Span/. GENERATED - do not
+/** Generated from specsheets/auxiliary/Span/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class Span extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(

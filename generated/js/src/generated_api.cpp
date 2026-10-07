@@ -7,7 +7,7 @@
 extern "C" {
 
 /// Library version (VERSION.txt at generate time).
-EMSCRIPTEN_KEEPALIVE const char* sed2_library_version() { return "0.1.0"; }
+EMSCRIPTEN_KEEPALIVE const char* sed2_library_version() { return "0.1.1"; }
 
 /// Newest SED2 document-format version this library knows.
 EMSCRIPTEN_KEEPALIVE const char* sed2_document_version() { return "v1.0.0"; }

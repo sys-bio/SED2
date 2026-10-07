@@ -60,7 +60,7 @@ struct GetRef {
 /// Walks parsed.path's containment tree against `document` one colon-segment
 /// at a time (SEDBase-0006). Returns the target plus the '#...'-prefixed string
 /// of everything walked (the longest resolved prefix, on failure).
-inline GetRef get_sed_reference(SedBase* document, const ParsedReference& parsed) {
+inline GetRef resolve_target(SedBase* document, const ParsedReference& parsed) {
     GetRef out;
     if (document == nullptr || !parsed.collection) return out;
     const std::string& cname = *parsed.collection;
@@ -318,7 +318,7 @@ inline std::vector<ValidationProblem> check_constant_accessor(const ParsedRefere
         // SEDBase-0012.md: "A constant whose value is itself a reference is
         // followed first." One hop only.
         ParsedReference inner_parsed = parse_reference(raw.as<std::string>());
-        GetRef inner = get_sed_reference(document, inner_parsed);
+        GetRef inner = resolve_target(document, inner_parsed);
         if (inner.resolved.raw) {
             lit.j = *inner.resolved.raw;
         } else if (inner.resolved.elem) {
@@ -368,7 +368,7 @@ inline std::vector<ValidationProblem> check_output_shape_and_ref_type(const Pars
         depth++;
         if (depth > 25) throw oshape::NotStatic("shapeOf() recursion too deep");
         ParsedReference parsed2 = parse_reference(ref_string);
-        GetRef g2 = get_sed_reference(document, parsed2);
+        GetRef g2 = resolve_target(document, parsed2);
         SedBase* inner = g2.resolved.elem;
         const Json* inner_oj = inner ? inner->outputs_json() : nullptr;
         if (inner_oj == nullptr) throw oshape::NotStatic("shapeOf() target has no outputs.json");
@@ -451,7 +451,7 @@ inline std::vector<ValidationProblem> RefRules::check_reference_field(
     problems = rules::sedbase_0005::check(parsed, ctx);
     if (!problems.empty()) return problems;   // unknown collection - nothing further can resolve
     append(problems, rules::sedbase_0007::check(parsed, ctx));
-    GetRef g = get_sed_reference(document, parsed);
+    GetRef g = resolve_target(document, parsed);
     append(problems, rules::sedbase_0006::check(parsed, g.resolved.ok(), g.prefix, ctx));
     if (!g.resolved.ok() || *parsed.collection == "outputs") return problems;
 
@@ -504,7 +504,7 @@ namespace refdetail {
 inline bool resolves_to_own_child(SedBase* self, SedBase* document, const std::string& ref_value) {
     if (document == nullptr) return false;
     ParsedReference parsed = parse_reference(ref_value);
-    GetRef g = get_sed_reference(document, parsed);
+    GetRef g = resolve_target(document, parsed);
     return g.resolved.elem != nullptr && g.resolved.elem->get_parent() == self;
 }
 
@@ -580,7 +580,7 @@ inline std::vector<ValidationProblem> RefRules::check_loop_variable_scope(SedBas
     std::string value = it->second.as<std::string>();
     bool ok = false;
     if (document != nullptr) {
-        GetRef g = get_sed_reference(document, parse_reference(value));
+        GetRef g = resolve_target(document, parse_reference(value));
         ok = g.resolved.elem != nullptr && g.resolved.elem->get_parent() == enclosing;
     }
     if (ok) return problems;
@@ -677,6 +677,200 @@ inline std::vector<ValidationProblem> RefRules::check_math_reference_root(
     (void)reference_text; (void)class_name; (void)id_value; (void)attr; (void)location;
     return {};
 #endif
+}
+
+// ---- public API: reference resolution ------------------------------------
+// (parse_reference() / ParsedReference / RefIndex, in Reference.hpp, are the
+// other half of the public reference API.)
+
+/// What get_sed_reference() found. For a "#tasks:", "#outputs:" or "#styles:"
+/// reference `element` points at the target element; for a "#constants:"
+/// reference `value` points at the constant's raw JSON value. Both pointers
+/// are non-owning and point into the document, so they are valid only while
+/// the document is alive and unmodified. Both are null when the reference did
+/// not resolve (a constant holding JSON null counts as not resolved, too).
+struct ReferenceTarget {
+    SedBase* element = nullptr;
+    const Json* value = nullptr;
+    /// The "#..."-prefixed text of everything walked (on failure, the longest
+    /// prefix that resolved); nullopt when there was no document to walk or the
+    /// collection name itself is unrecognized.
+    std::optional<std::string> resolved_prefix;
+
+    /// True when the reference resolved to an element or to a non-null constant.
+    bool is_resolved() const { return element != nullptr || (value != nullptr && !value->is_null()); }
+};
+
+/// Resolves a reference to its target by walking its containment path
+/// (everything before the first '.' or '[') against `document` one
+/// colon-segment at a time (SEDBase-0006). The trailing accessor chain is
+/// parsed (see ParsedReference::accessors) but never applied. Never throws for
+/// an unresolvable reference; check is_resolved(). Public API.
+inline ReferenceTarget get_sed_reference(SedBase* document, const ParsedReference& parsed) {
+    refdetail::GetRef g = refdetail::resolve_target(document, parsed);
+    ReferenceTarget out;
+    out.element = g.resolved.elem;
+    out.value = (g.resolved.raw != nullptr && !g.resolved.raw->is_null()) ? g.resolved.raw : nullptr;
+    out.resolved_prefix = g.prefix;
+    return out;
+}
+
+/// Resolves a reference given as text: parse_reference(reference), then
+/// get_sed_reference(document, parsed). Public API.
+inline ReferenceTarget get_sed_reference(SedBase* document, const std::string& reference) {
+    return get_sed_reference(document, parse_reference(reference));
+}
+
+// ---- public API: values of constants and literals -------------------------
+
+namespace refdetail {
+
+/// A RefIndex as it is written in a reference: [3], ['S1'], [2:5].
+inline std::string format_index(const RefIndex& idx) {
+    if (idx.is_label()) return "['" + idx.sval + "']";
+    if (idx.is_range()) {
+        return "[" + (idx.a ? std::to_string(*idx.a) : std::string()) + ":" +
+               (idx.b ? std::to_string(*idx.b) : std::string()) + "]";
+    }
+    return "[" + std::to_string(idx.ival) + "]";
+}
+
+}  // namespace refdetail
+
+/// Applies bracket indices to a literal JSON value - a constant's value, or
+/// any other literal (a number, string, array or object) - and returns a copy
+/// of the selected part. Indices follow the reference grammar (Design.md,
+/// Cross-references): an int ([3], or [-1] counting from the end) indexes an
+/// array; a label (['S1']) indexes an object by key; a range ([2:5], either
+/// end optional) slices an array, end-exclusive, clamped to the array like a
+/// Python slice, and keeps the dimension, while an int or label drops it. The
+/// same rules back SEDBase-0012, so a reference that validates cleanly always
+/// applies cleanly. Throws ApiError when an index does not fit the value (an
+/// int or range into anything but an array, a label into anything but an
+/// object that has the key, an int outside -n..n-1, any index into a
+/// scalar). Public API.
+inline Json apply_indices(const Json& value, const std::vector<RefIndex>& indices) {
+    oshape::Literal lit;
+    lit.kind = oshape::Literal::JSON;
+    lit.j = value;
+    for (const auto& idx : indices) {
+        oshape::IndexResult ir = oshape::index_into_literal(lit, {idx});
+        if (!ir.ok) {
+            throw ApiError("cannot apply index " + refdetail::format_index(idx) +
+                           ": the value does not contain it (SEDBase-0012)");
+        }
+        lit = ir.value;
+    }
+    return lit.j;
+}
+
+/// Applies the bracket indices of `accessors` (its containment path is
+/// ignored) to a literal JSON value; see the vector overload. Throws ApiError
+/// when `accessors` contains a dot-accessor, since a constant or literal has
+/// no named outputs (SEDBase-0008). Public API.
+inline Json apply_indices(const Json& value, const ParsedReference& accessors) {
+    for (const auto& acc : accessors.accessors) {
+        if (acc.is_dot) {
+            throw ApiError("cannot apply dot-accessor '." + acc.name + "' to a constant or literal value: "
+                           "only bracket indices apply to one (SEDBase-0008)");
+        }
+    }
+    return apply_indices(value, accessors.indices());
+}
+
+/// apply_indices(value, parse_reference(accessors)); `accessors` is the
+/// accessor text ("[2]['S1']") or a whole reference. Public API.
+inline Json apply_indices(const Json& value, const std::string& accessors) {
+    return apply_indices(value, parse_reference(accessors));
+}
+
+namespace refdetail {
+
+inline Json get_reference_value_impl(SedBase* document, const ParsedReference& parsed, std::set<std::string> seen) {
+    if (!parsed.collection || *parsed.collection != "constants") {
+        throw ApiError("reference '" + parsed.raw + "' does not name a constant, so it has no value "
+                       "before the experiment runs");
+    }
+    const AnyDictCollection* coll = document ? document->find_any_dict_collection("constants") : nullptr;
+    const Json* stored = (coll && parsed.path.size() == 1) ? coll->find(parsed.path[0]) : nullptr;
+    if (!stored) {
+        throw ApiError("reference '" + parsed.raw + "' does not resolve: no such constant (SEDBase-0006)");
+    }
+    const std::string& key = parsed.path[0];
+    if (seen.count(key)) {
+        throw ApiError("reference '" + parsed.raw + "' is circular: constant '" + key +
+                       "' refers back to itself");
+    }
+    seen.insert(key);
+    Json value = *stored;
+    if (is_ref_string(value)) {
+        value = get_reference_value_impl(document, parse_reference(value.as<std::string>()), seen);
+    }
+    return apply_indices(value, parsed);
+}
+
+}  // namespace refdetail
+
+/// Evaluates a reference that has a value before any experiment runs: a
+/// "#constants:" reference, with any bracket indices applied to the
+/// constant's literal value (see apply_indices). A constant whose value is
+/// itself a reference string is followed first (SEDBase-0012), through any
+/// number of constants; a chain that loops throws ApiError. A constant
+/// holding JSON null evaluates to a null Json. Throws ApiError when the
+/// constant does not exist (SEDBase-0006), when the reference targets
+/// anything but a constant (a task, output or style has a value only when the
+/// experiment runs), when it carries a dot-accessor, or when an index does
+/// not fit the value. Returns a copy. Public API.
+inline Json get_reference_value(SedBase* document, const ParsedReference& parsed) {
+    return refdetail::get_reference_value_impl(document, parsed, {});
+}
+
+/// get_reference_value(document, parse_reference(reference)). Public API.
+inline Json get_reference_value(SedBase* document, const std::string& reference) {
+    return get_reference_value(document, parse_reference(reference));
+}
+
+/// ParameterScan-0007: the modelElement values of a ParameterScan's
+/// parameterRanges are pairwise distinct; a modelElement given as a reference
+/// is compared by the string it resolves to. Detected by class SHAPE (has a
+/// parameterRanges list), not by name. Defined here, after
+/// get_reference_value(), which it uses.
+inline std::vector<ValidationProblem> RefRules::check_parameter_scan_ranges(SedBase* self) {
+    std::vector<ValidationProblem> problems;
+#ifdef SED2_REFRULES_PARAMSCAN
+    std::vector<SedBase*> entries;
+    try {
+        entries = self->get_list_collection("parameterRanges").items();
+    } catch (const ApiError&) {
+        return problems;   // not a class with a parameterRanges list
+    }
+    SedBase* document = self->get_document();
+    std::vector<std::optional<std::string>> elements;
+    for (SedBase* entry : entries) {
+        Json entry_json = entry->own_json_value();
+        std::optional<std::string> element;
+        if (entry_json.contains("modelElement")) {
+            const Json& raw = entry_json.at("modelElement");
+            if (refdetail::is_ref_string(raw)) {
+                // compared by the string it resolves to; anything that does not
+                // resolve to a string is some other rule's concern
+                try {
+                    Json resolved = get_reference_value(document, raw.as<std::string>());
+                    if (resolved.is_string()) element = resolved.as<std::string>();
+                } catch (const ApiError&) {
+                }
+            } else if (raw.is_string()) {
+                element = raw.as<std::string>();
+            }
+        }
+        elements.push_back(element);
+    }
+    RuleCtx ctx{self->class_name(), self->own_id_for_message(), "parameterRanges", "/parameterRanges", ""};
+    refdetail::append(problems, rules::parameterscan_0007::check(elements, ctx));
+#else
+    (void)self;
+#endif
+    return problems;
 }
 
 }  // namespace libsed2

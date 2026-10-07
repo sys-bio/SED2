@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Generated from test-specsheets/tasks/DrawFromDistribution/. GENERATED - do not
+/** Generated from specsheets/tasks/DrawFromDistribution/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class DrawFromDistribution extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(

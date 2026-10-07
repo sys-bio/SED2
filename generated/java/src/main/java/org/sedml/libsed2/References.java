@@ -33,10 +33,13 @@ public final class References {
 
     private static final Pattern DOT_ACCESSOR = Pattern.compile("^\\.([A-Za-z_][A-Za-z0-9_]*)");
 
+    /** True when `value` is a JSON string that starts with "#", i.e. is a
+     * reference. Public API. */
     public static boolean isReference(JsonNode value) {
         return value != null && value.isTextual() && value.textValue().startsWith("#");
     }
 
+    /** True when `value` starts with "#", i.e. is a reference. Public API. */
     public static boolean isReference(String value) {
         return value != null && value.startsWith("#");
     }
@@ -100,9 +103,16 @@ public final class References {
         return RefIndex.ofLabel(part);   // bare unquoted label - lenient fallback
     }
 
-    /** '#' + a colon-delimited containment path + an optional chain of
-     * dot-accessors / bracket indices. Pure syntax, never touches a
-     * document. */
+    /** Parses a reference string into its parts: '#' + a colon-delimited
+     * containment path + an optional chain of dot-accessors / bracket
+     * indices, e.g. "#tasks:loop1:subTasks:sim1.model['S1']" gives collection
+     * "tasks", path [loop1, subTasks, sim1] and accessors [.model, ['S1']].
+     * Pure syntax: never touches a document and never throws. A leading '#'
+     * is stripped when present, and parsing is lenient - text after the point
+     * where an accessor stops parsing (an unterminated '[', a '.' not followed
+     * by a name) is ignored, so use isReference() and validate() to decide
+     * whether a string is a well-formed reference at all. The accessor chain
+     * is parsed and carried, never applied to a value. Public API. */
     public static ParsedReference parse(String text) {
         String body = text.startsWith("#") ? text.substring(1) : text;
         int split = -1;
@@ -148,8 +158,10 @@ public final class References {
      * JsonNode for a constants target) - null on failure - and the
      * '#...'-prefixed string of everything walked (on failure: the longest
      * prefix that resolved). prefix is null when there was no document to
-     * walk, or the collection name itself is unrecognized. */
+     * walk, or the collection name itself is unrecognized. Public API. */
     public static final class Resolved {
+        /** A SedBase (tasks/outputs/styles target), a JsonNode (constants
+         * target), or null when the reference did not resolve. */
         public final Object element;
         public final String prefix;
 
@@ -159,8 +171,22 @@ public final class References {
         }
     }
 
-    /** Walks parsed.path's containment tree against `document` one
-     * colon-segment at a time (SEDBase-0006). */
+    /** Resolves a reference given as text: parse(reference), then
+     * getSedReference(document, parsed). Public API. */
+    public static Resolved getSedReference(SedBase document, String reference) {
+        return getSedReference(document, parse(reference));
+    }
+
+    /** Resolves a reference to its target by walking its containment path
+     * (everything before the first '.' or '[') against `document` one
+     * colon-segment at a time (SEDBase-0006). The result's element is the
+     * SedBase element for a "#tasks:", "#outputs:" or "#styles:" reference,
+     * or the constant's raw JsonNode for a "#constants:" reference, and null
+     * when the reference does not resolve (or the constant is JSON null);
+     * its prefix is the "#..."-prefixed string of everything walked (on
+     * failure, the longest prefix that resolved) - null when there was no
+     * document to walk or the collection name is unrecognized. The
+     * accessor chain is not applied. Public API. */
     public static Resolved getSedReference(SedBase document, ParsedReference parsed) {
         if (document == null || parsed.collection == null || !REF_COLLECTIONS.contains(parsed.collection)) {
             return new Resolved(null, null);
@@ -192,6 +218,108 @@ public final class References {
         // unresolved reference (so SEDBase-0006 reports it).
         if (current instanceof JsonNode && ((JsonNode) current).isNull()) current = null;
         return new Resolved(current, prefix);
+    }
+
+    // ---- values of constants and literals -----------------------------------
+
+    /** A RefIndex as it is written in a reference: [3], ['S1'], [2:5]. */
+    private static String formatIndex(RefIndex idx) {
+        switch (idx.kind) {
+            case "label": return "['" + idx.label + "']";
+            case "range":
+                return "[" + (idx.rangeStartText == null ? "" : idx.rangeStartText) + ":"
+                        + (idx.rangeEndText == null ? "" : idx.rangeEndText) + "]";
+            default: return "[" + idx.intText + "]";
+        }
+    }
+
+    /** applyIndices(value, parse(accessors)). `accessors` is the accessor
+     * text ("[2]['S1']") or a whole reference. Public API. */
+    public static JsonNode applyIndices(JsonNode value, String accessors) {
+        return applyIndices(value, parse(accessors));
+    }
+
+    /** Applies the bracket indices of `accessors` (its containment path is
+     * ignored) to a literal JSON value; see applyIndices(JsonNode, List).
+     * Throws ApiError when `accessors` contains a dot-accessor, since a
+     * constant or literal has no named outputs (SEDBase-0008). Public API. */
+    public static JsonNode applyIndices(JsonNode value, ParsedReference accessors) {
+        List<RefIndex> indices = new ArrayList<>();
+        for (ParsedReference.Accessor acc : accessors.accessors) {
+            if (acc.isDot()) {
+                throw new ApiError("cannot apply dot-accessor '." + acc.dotName + "' to a constant or literal value: "
+                        + "only bracket indices apply to one (SEDBase-0008)");
+            }
+            indices.add(acc.index);
+        }
+        return applyIndices(value, indices);
+    }
+
+    /** Applies bracket indices to a literal JSON value - a constant's value,
+     * or any other literal (a number, string, array or object) - and returns
+     * the selected part. Indices follow the reference grammar (Design.md,
+     * Cross-references): an int ([3], or [-1] counting from the end) indexes
+     * an array; a label (['S1']) indexes an object by key; a range ([2:5],
+     * either end optional) slices an array, end-exclusive, clamped to the
+     * array like a Python slice, and keeps the dimension, while an int or
+     * label drops it. The same rules back SEDBase-0012, so a reference that
+     * validates cleanly always applies cleanly. Throws ApiError when an index
+     * does not fit the value (an int or range into anything but an array, a
+     * label into anything but an object that has the key, an int outside
+     * -n..n-1, any index into a scalar). The result is part of `value`
+     * itself, not a copy. Public API. */
+    public static JsonNode applyIndices(JsonNode value, List<RefIndex> indices) {
+        Object current = value;
+        for (RefIndex idx : indices) {
+            try {
+                current = OutputsShape.indexIntoLiteral(current, java.util.Collections.singletonList(idx));
+            } catch (OutputsShape.NotIndexable e) {
+                throw new ApiError("cannot apply index " + formatIndex(idx)
+                        + ": the value does not contain it (SEDBase-0012)");
+            }
+        }
+        return (JsonNode) current;
+    }
+
+    /** getReferenceValue(document, parse(reference)). Public API. */
+    public static JsonNode getReferenceValue(SedBase document, String reference) {
+        return getReferenceValue(document, parse(reference));
+    }
+
+    /** Evaluates a reference that has a value before any experiment runs: a
+     * "#constants:" reference, with any bracket indices applied to the
+     * constant's literal value (see applyIndices). A constant whose value is
+     * itself a reference string is followed first (SEDBase-0012), through any
+     * number of constants; a chain that loops throws ApiError. A constant
+     * holding JSON null evaluates to a NullNode. Throws ApiError when the
+     * constant does not exist (SEDBase-0006), when the reference targets
+     * anything but a constant (a task, output or style has a value only when
+     * the experiment runs), when it carries a dot-accessor, or when an index
+     * does not fit the value. The result is part of the stored value, not a
+     * copy. Public API. */
+    public static JsonNode getReferenceValue(SedBase document, ParsedReference parsed) {
+        return getReferenceValue(document, parsed, new java.util.HashSet<String>());
+    }
+
+    private static JsonNode getReferenceValue(SedBase document, ParsedReference parsed, Set<String> seen) {
+        if (!"constants".equals(parsed.collection)) {
+            throw new ApiError("reference '" + parsed.raw + "' does not name a constant, so it has no value "
+                    + "before the experiment runs");
+        }
+        IdCollection coll = document == null ? null : document.getIdCollection("constants");
+        if (coll == null || parsed.path.size() != 1 || !coll.has(parsed.path.get(0))) {
+            throw new ApiError("reference '" + parsed.raw + "' does not resolve: no such constant (SEDBase-0006)");
+        }
+        String key = parsed.path.get(0);
+        if (seen.contains(key)) {
+            throw new ApiError("reference '" + parsed.raw + "' is circular: constant '" + key
+                    + "' refers back to itself");
+        }
+        Set<String> next = new java.util.HashSet<>(seen);
+        next.add(key);
+        JsonNode value = (JsonNode) coll.getObject(key);
+        if (isReference(value)) value = getReferenceValue(document, parse(value.textValue()), next);
+        return applyIndices(value, parsed);
     }
 
     /** The parent of a resolved reference target, or null when the target is
@@ -471,6 +599,37 @@ public final class References {
         if (document == null) return false;
         Resolved r = getSedReference(document, parse(refValue));
         return r.element != null && elementParent(r.element) == self;
+    }
+
+    // ---- ParameterScan-0007: the modelElement values of a ParameterScan's ---
+    // parameterRanges are pairwise distinct. Detected by class SHAPE (has a
+    // parameterRanges list), not by name.
+
+    static List<ValidationProblem> checkParameterScanRanges(SedBase self) {
+        if (!Handwritten.HAS_PARAMETER_SCAN_RULE) return new ArrayList<>();
+        ListCollection<SedBase> ranges;
+        try {
+            ranges = self.getListCollection("parameterRanges");
+        } catch (ApiError e) {
+            return new ArrayList<>();
+        }
+        SedBase document = self.getDocument();
+        List<String> elements = new ArrayList<>();
+        for (SedBase entry : ranges.items()) {
+            JsonNode element = entry.ownJsonValue().get("modelElement");
+            if (element != null && isReference(element)) {
+                // compared by the string it resolves to; anything that does
+                // not resolve to a string is some other rule's concern
+                try {
+                    element = getReferenceValue(document, parse(element.textValue()));
+                } catch (ApiError e) {
+                    element = null;
+                }
+            }
+            elements.add(element != null && element.isTextual() ? element.textValue() : null);
+        }
+        return Handwritten.parameterScan0007(elements, self.getClass().getSimpleName(), self.ownIdForMessage(),
+                "/parameterRanges");
     }
 
     // ---- LoopVariable-0004: subsequentValues stays scoped to the enclosing --

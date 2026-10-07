@@ -23,6 +23,8 @@ namespace sed2test {
 
 class SedBase;
 
+/// One bracket index of a reference: [n] / [-n] (INT), ['label'] (LABEL) or
+/// [a:b] (RANGE, either end optional). Public API.
 struct RefIndex {
     enum Kind { INT, LABEL, RANGE };
     Kind kind = INT;
@@ -44,12 +46,18 @@ struct RefIndex {
     }
 };
 
+/// One accessor of a reference: a dot-accessor (is_dot, name) or a bracket
+/// index (!is_dot, index). Public API.
 struct Accessor {
     bool is_dot = false;
     std::string name;      // dot accessor name
     RefIndex index;        // bracket index
 };
 
+/// The syntax of one reference string, as returned by parse_reference(). For
+/// "#tasks:loop1:subTasks:sim1.model['S1']": raw is that text, collection is
+/// "tasks", path is {"loop1", "subTasks", "sim1"} and accessors is
+/// {.model, ['S1']}. Public API.
 struct ParsedReference {
     std::string raw;
     std::optional<std::string> collection;   // segment right after '#', or nullopt if empty
@@ -153,6 +161,13 @@ inline std::vector<std::string> split_colon(const std::string& s) {
 
 }  // namespace refparse
 
+/// Parses a reference string into its parts. Pure syntax: never touches a
+/// document and never throws. A leading '#' is stripped when present, and
+/// parsing is lenient - text after the point where an accessor stops parsing
+/// (an unterminated '[', a '.' not followed by a name) is ignored, so use
+/// is_reference() and validate() to decide whether a string is a well-formed
+/// reference at all. The accessor chain is parsed and carried, never applied
+/// to a value. Public API.
 inline ParsedReference parse_reference(const std::string& text) {
     ParsedReference pr;
     pr.raw = text;

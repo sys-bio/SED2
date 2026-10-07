@@ -1,5 +1,5 @@
 // Generated concrete SED2 classes. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from specsheets/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -21,7 +21,7 @@
 
 namespace libsed2 {
 
-/// Generated from test-specsheets/core/SEDDocument/.
+/// Generated from specsheets/core/SEDDocument/.
 class SEDDocument : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -162,7 +162,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/core/Style/.
+/// Generated from specsheets/core/Style/.
 class Style : public SedBase {
 public:
     std::optional<std::string> type_const() const override { return std::nullopt; }
@@ -182,7 +182,7 @@ public:
     }
 };
 
-/// Generated from test-specsheets/tasks/AggregationCalculation/.
+/// Generated from specsheets/tasks/AggregationCalculation/.
 class AggregationCalculation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -281,7 +281,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/BoundedODESimulation/.
+/// Generated from specsheets/tasks/BoundedODESimulation/.
 class BoundedODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -606,7 +606,7 @@ private:
     std::unique_ptr<SedBase> independentVariableSpan_;
 };
 
-/// Generated from test-specsheets/tasks/BoundedStochasticSimulation/.
+/// Generated from specsheets/tasks/BoundedStochasticSimulation/.
 class BoundedStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -831,7 +831,7 @@ private:
     std::unique_ptr<SedBase> independentVariableSpan_;
 };
 
-/// Generated from test-specsheets/tasks/Calculation/.
+/// Generated from specsheets/tasks/Calculation/.
 class Calculation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -923,7 +923,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/CreateDataBlock/.
+/// Generated from specsheets/tasks/CreateDataBlock/.
 class CreateDataBlock : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1015,7 +1015,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/CsvImport/.
+/// Generated from specsheets/tasks/CsvImport/.
 class CsvImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1177,7 +1177,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/DataImport/.
+/// Generated from specsheets/tasks/DataImport/.
 class DataImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1279,7 +1279,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/DrawFromDistribution/.
+/// Generated from specsheets/tasks/DrawFromDistribution/.
 class DrawFromDistribution : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1391,7 +1391,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/ExplicitODESimulation/.
+/// Generated from specsheets/tasks/ExplicitODESimulation/.
 class ExplicitODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1716,7 +1716,7 @@ private:
     std::unique_ptr<SedBase> independentVariableRange_;
 };
 
-/// Generated from test-specsheets/tasks/ExplicitStochasticSimulation/.
+/// Generated from specsheets/tasks/ExplicitStochasticSimulation/.
 class ExplicitStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -1941,7 +1941,7 @@ private:
     std::unique_ptr<SedBase> independentVariableRange_;
 };
 
-/// Generated from test-specsheets/tasks/FluxBalanceAnalysis/.
+/// Generated from specsheets/tasks/FluxBalanceAnalysis/.
 class FluxBalanceAnalysis : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2051,7 +2051,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/JacobianFull/.
+/// Generated from specsheets/tasks/JacobianFull/.
 class JacobianFull : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2140,7 +2140,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/JacobianReduced/.
+/// Generated from specsheets/tasks/JacobianReduced/.
 class JacobianReduced : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2229,7 +2229,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/Loop/.
+/// Generated from specsheets/tasks/Loop/.
 class Loop : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2386,7 +2386,7 @@ private:
     std::unique_ptr<SedBase> range_;
 };
 
-/// Generated from test-specsheets/tasks/ModelChange/.
+/// Generated from specsheets/tasks/ModelChange/.
 class ModelChange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2515,7 +2515,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/ModelElementList/.
+/// Generated from specsheets/tasks/ModelElementList/.
 class ModelElementList : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2644,7 +2644,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/ModelImport/.
+/// Generated from specsheets/tasks/ModelImport/.
 class ModelImport : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2746,7 +2746,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/NumericRange/.
+/// Generated from specsheets/tasks/NumericRange/.
 class NumericRange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2885,7 +2885,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/OneStepODESimulation/.
+/// Generated from specsheets/tasks/OneStepODESimulation/.
 class OneStepODESimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -2924,7 +2924,7 @@ public:
         static const std::set<std::string> names = {"independentStep"};
         return names;
     }
-    std::optional<std::string> type_const() const override { return std::string("oneStepODE"); }
+    std::optional<std::string> type_const() const override { return std::string("oneStepODESimulation"); }
     std::optional<std::string> type_rule_id() const override { return std::string("OneStepODESimulation-0007"); }
     std::string own_catchall() const override { return "OneStepODESimulation-0000"; }
     std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
@@ -2936,8 +2936,8 @@ public:
             "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
-    std::optional<std::string> get_type_value() const override { return std::string("oneStepODE"); }
-    std::string get_type() const { return "oneStepODE"; }
+    std::optional<std::string> get_type_value() const override { return std::string("oneStepODESimulation"); }
+    std::string get_type() const { return "oneStepODESimulation"; }
 
     double get_independentStep_value() const { return get_or_ref_value_node("independentStep").as<double>(); }
     std::string get_independentStep_ref() const { return get_or_ref_ref_node("independentStep").as<std::string>(); }
@@ -3167,7 +3167,7 @@ public:
         Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("oneStepODE");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("oneStepODESimulation");
         if (values_.count("independentStep")) d["independentStep"] = values_.at("independentStep");
         if (values_.count("relativeTolerance")) d["relativeTolerance"] = values_.at("relativeTolerance");
         if (values_.count("absoluteTolerance")) d["absoluteTolerance"] = values_.at("absoluteTolerance");
@@ -3205,7 +3205,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/OneStepStochasticSimulation/.
+/// Generated from specsheets/tasks/OneStepStochasticSimulation/.
 class OneStepStochasticSimulation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -3230,7 +3230,7 @@ public:
         };
         return specs;
     }
-    std::optional<std::string> type_const() const override { return std::string("oneStepStochastic"); }
+    std::optional<std::string> type_const() const override { return std::string("oneStepStochasticSimulation"); }
     std::optional<std::string> type_rule_id() const override { return std::string("OneStepStochasticSimulation-0006"); }
     std::string own_catchall() const override { return "OneStepStochasticSimulation-0000"; }
     std::optional<std::string> name_rule_id() const override { return std::string("SEDBase-0001"); }
@@ -3242,8 +3242,8 @@ public:
             "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariables)\"},\"labels\":{\"source\":\"static\",\"expr\":\"outputVariables\"}}]},\"[id].model\":{\"type\":\"model\"},\"[id].independentStep\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"1\"},\"labels\":null}]}}}");
         return &j;
     }
-    std::optional<std::string> get_type_value() const override { return std::string("oneStepStochastic"); }
-    std::string get_type() const { return "oneStepStochastic"; }
+    std::optional<std::string> get_type_value() const override { return std::string("oneStepStochasticSimulation"); }
+    std::string get_type() const { return "oneStepStochasticSimulation"; }
 
     double get_independentStep_value() const { return get_or_ref_value_node("independentStep").as<double>(); }
     std::string get_independentStep_ref() const { return get_or_ref_ref_node("independentStep").as<std::string>(); }
@@ -3393,7 +3393,7 @@ public:
         Json d = Json::object();
         if (name_node_) d["name"] = *name_node_;
         if (description_node_) d["description"] = *description_node_;
-        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("oneStepStochastic");
+        d["_type"] = values_.count("_type") ? values_.at("_type") : Json("oneStepStochasticSimulation");
         if (values_.count("independentStep")) d["independentStep"] = values_.at("independentStep");
         if (values_.count("seed")) d["seed"] = values_.at("seed");
         if (values_.count("timeDependentRelativeTolerance")) d["timeDependentRelativeTolerance"] = values_.at("timeDependentRelativeTolerance");
@@ -3421,7 +3421,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/ParameterRange/.
+/// Generated from specsheets/tasks/ParameterRange/.
 class ParameterRange : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -3574,7 +3574,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/ParameterScan/.
+/// Generated from specsheets/tasks/ParameterScan/.
 class ParameterScan : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -3720,7 +3720,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/Range/.
+/// Generated from specsheets/tasks/Range/.
 class Range : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -3808,7 +3808,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/RelabelData/.
+/// Generated from specsheets/tasks/RelabelData/.
 class RelabelData : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -3907,7 +3907,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/Scatter/.
+/// Generated from specsheets/tasks/Scatter/.
 class Scatter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4050,7 +4050,7 @@ private:
     std::unique_ptr<SedBase> range_;
 };
 
-/// Generated from test-specsheets/tasks/SteadyState/.
+/// Generated from specsheets/tasks/SteadyState/.
 class SteadyState : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4170,7 +4170,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/tasks/StringFormation/.
+/// Generated from specsheets/tasks/StringFormation/.
 class StringFormation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4262,7 +4262,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/outputs/Plot2D/.
+/// Generated from specsheets/outputs/Plot2D/.
 class Plot2D : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4428,7 +4428,7 @@ private:
     std::unique_ptr<SedBase> yAxis_;
 };
 
-/// Generated from test-specsheets/outputs/Plot3D/.
+/// Generated from specsheets/outputs/Plot3D/.
 class Plot3D : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4594,7 +4594,7 @@ private:
     std::unique_ptr<SedBase> yAxis_;
 };
 
-/// Generated from test-specsheets/outputs/Report/.
+/// Generated from specsheets/outputs/Report/.
 class Report : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4678,7 +4678,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/outputs/Surface/.
+/// Generated from specsheets/outputs/Surface/.
 class Surface : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4789,7 +4789,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/Annotation/.
+/// Generated from specsheets/auxiliary/Annotation/.
 class Annotation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4832,7 +4832,7 @@ public:
     }
 };
 
-/// Generated from test-specsheets/auxiliary/Axis/.
+/// Generated from specsheets/auxiliary/Axis/.
 class Axis : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -4948,7 +4948,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/Curve/.
+/// Generated from specsheets/auxiliary/Curve/.
 class Curve : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -5107,7 +5107,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/LoopVariable/.
+/// Generated from specsheets/auxiliary/LoopVariable/.
 class LoopVariable : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -5184,7 +5184,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/OutputParameter/.
+/// Generated from specsheets/auxiliary/OutputParameter/.
 class OutputParameter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -5254,7 +5254,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/Span/.
+/// Generated from specsheets/auxiliary/Span/.
 class Span : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -5340,7 +5340,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/TaskParameter/.
+/// Generated from specsheets/auxiliary/TaskParameter/.
 class TaskParameter : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
@@ -5410,7 +5410,7 @@ private:
     ListCollection annotations_;
 };
 
-/// Generated from test-specsheets/auxiliary/WorkingAlgorithm/.
+/// Generated from specsheets/auxiliary/WorkingAlgorithm/.
 class WorkingAlgorithm : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {

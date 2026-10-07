@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Generated from test-specsheets/outputs/Plot3D/. GENERATED - do not
+/** Generated from specsheets/outputs/Plot3D/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class Plot3D extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(

@@ -1,11 +1,14 @@
 // Top-level read/write entry points. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from specsheets/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
 #include "GeneratedModel.hpp"
 #include "Dispatch.hpp"
 #include "RulesData.hpp"
+// The public reference API (parse_reference, get_sed_reference,
+// apply_indices, get_reference_value) comes with this entry point header.
+#include "RefRules.hpp"
 
 #include <fstream>
 #include <memory>

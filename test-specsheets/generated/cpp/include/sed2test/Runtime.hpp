@@ -157,6 +157,7 @@ public:
             const RefFieldInfo& info);
     static std::vector<ValidationProblem> check_repeat_own_children(SedBase* self);
     static std::vector<ValidationProblem> check_loop_variable_scope(SedBase* self);
+    static std::vector<ValidationProblem> check_parameter_scan_ranges(SedBase* self);
     static std::vector<ValidationProblem> check_namespace_usage_and_version(SedBase* document);
     static std::vector<ValidationProblem> check_constants_ordering(SedBase* document);
     /// SEDBase-0005 applied to a REFERENCE token embedded in a math string
@@ -500,11 +501,41 @@ public:
     /// Default: none.
     virtual std::vector<ChildLoc> children_with_locations() { return {}; }
 
-    /// This element's own SId, for a validation message's {id} placeholder:
-    /// id is implicit (the key under which an element is stored in its owning
-    /// collection), so this searches the parent's ID-keyed collections for
-    /// self; "?" for anything genuinely id-less (the document root, an
-    /// array-item class, an unattached instance).
+    /// This element's own id, or nullopt when it has none: id is implicit
+    /// (the key under which an element is stored in its owning collection),
+    /// so this searches the parent's ID-keyed collections for self. Looked up
+    /// on every call rather than cached, so a rename (set_id_on_<collection>)
+    /// is always reflected. Nullopt for anything genuinely id-less: the
+    /// document root, an array-item class stored positionally rather than by
+    /// id, a single embedded child (e.g. a simulation's independent-variable
+    /// range), or an unattached/standalone instance no parent has claimed yet.
+    std::optional<std::string> find_own_id() const;
+
+    /// True when this element currently has an id, i.e. it is stored under a
+    /// key in an id-keyed collection of its parent (tasks, outputs, styles, a
+    /// Repeat's subTasks, ...). False for the document itself, array items,
+    /// embedded single children, and elements not (yet) added to any
+    /// collection. Public API.
+    bool is_set_id() const { return find_own_id().has_value(); }
+
+    /// This element's own id: the key it has in the id-keyed collection that
+    /// holds it (e.g. the task id for an entry of the document's tasks, the
+    /// sub-task id for an entry of a Loop's subTasks). Follows renames. Throws
+    /// ApiError when the element has no id (see is_set_id) - the same as
+    /// get_<attr>() on an unset attribute. Note get_parent() is the owning
+    /// element (the document for a top-level task), not the collection.
+    /// Public API.
+    std::string get_id() const {
+        std::optional<std::string> iid = find_own_id();
+        if (!iid) {
+            throw ApiError("this element has no id: it is not stored under a key in an "
+                           "id-keyed collection of its parent");
+        }
+        return *iid;
+    }
+
+    /// This element's own id for a validation message's {id} placeholder:
+    /// get_id()'s value, or "?" for an element with none.
     virtual std::string own_id_for_message() const;
     virtual Json own_json_value() const = 0;
 
@@ -717,6 +748,8 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
     problems.insert(problems.end(), rep.begin(), rep.end());
     auto lv = RefRules::check_loop_variable_scope(this);
     problems.insert(problems.end(), lv.begin(), lv.end());
+    auto ps = RefRules::check_parameter_scan_ranges(this);
+    problems.insert(problems.end(), ps.begin(), ps.end());
     return problems;
 }
 
@@ -834,9 +867,9 @@ private:
     std::vector<std::unique_ptr<SedBase>> items_;
 };
 
-inline std::string SedBase::own_id_for_message() const {
+inline std::optional<std::string> SedBase::find_own_id() const {
     SedBase* parent = get_parent();
-    if (parent == nullptr) return "?";
+    if (parent == nullptr) return std::nullopt;
     for (const auto& name : parent->id_collection_names()) {
         const IdKeyedCollection* coll = parent->find_dict_collection(name);
         if (coll == nullptr) continue;
@@ -844,7 +877,12 @@ inline std::string SedBase::own_id_for_message() const {
             if (coll->find(iid) == this) return iid;
         }
     }
-    return "?";
+    return std::nullopt;
+}
+
+inline std::string SedBase::own_id_for_message() const {
+    std::optional<std::string> iid = find_own_id();
+    return iid ? *iid : std::string("?");
 }
 
 inline IdKeyedCollection& SedBase::get_dict_collection(const std::string& field_name) {

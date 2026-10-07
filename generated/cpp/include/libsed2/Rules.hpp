@@ -26,6 +26,7 @@
 #include "rules/Repeat-0009.hpp"
 #include "rules/Repeat-0010.hpp"
 #include "rules/LoopVariable-0004.hpp"
+#include "rules/ParameterScan-0007.hpp"
 
 #define SED2_REFRULES_BASIC 1
 #define SED2_REFRULES_SCOPE 1
@@ -34,5 +35,6 @@
 #define SED2_REFRULES_TARGET 1
 #define SED2_REFRULES_REPEAT 1
 #define SED2_REFRULES_LOOPVAR 1
+#define SED2_REFRULES_PARAMSCAN 1
 #define SED2_REFRULES_NS 1
 #define SED2_REFRULES_CONSTORDER 1

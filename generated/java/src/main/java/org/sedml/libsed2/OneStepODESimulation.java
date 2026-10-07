@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Generated from test-specsheets/tasks/OneStepODESimulation/. GENERATED - do not
+/** Generated from specsheets/tasks/OneStepODESimulation/. GENERATED - do not
  * hand-edit; regenerate via generator/generate.py. */
 public final class OneStepODESimulation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
@@ -54,13 +54,13 @@ public final class OneStepODESimulation extends SedBase {
 
     @Override public List<FieldSpec> fieldSpecs() { return FIELD_SPECS; }
     @Override public Set<String> requiredNames() { return REQUIRED_NAMES; }
-    @Override public String typeConst() { return "oneStepODE"; }
+    @Override public String typeConst() { return "oneStepODESimulation"; }
     @Override public String typeRuleId() { return "OneStepODESimulation-0007"; }
     @Override public String ownCatchall() { return "OneStepODESimulation-0000"; }
     @Override public String nameRuleId() { return "SEDBase-0001"; }
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
-    public String getType() { return "oneStepODE"; }
+    public String getType() { return "oneStepODESimulation"; }
     private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(outputVariables)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"outputVariables\"}, \"note\": \"a single point, not a series\"}]}, \"[id].model\": {\"type\": \"model\"}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
@@ -298,7 +298,7 @@ public final class OneStepODESimulation extends SedBase {
         ObjectNode d = JsonNodeFactory.instance.objectNode();
         if (nameNode != null) d.set("name", nameNode);
         if (descriptionNode != null) d.set("description", descriptionNode);
-        d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("oneStepODE"));
+        d.set("_type", values.containsKey("_type") ? values.get("_type") : TextNode.valueOf("oneStepODESimulation"));
         if (values.containsKey("independentStep")) d.set("independentStep", values.get("independentStep"));
         if (values.containsKey("relativeTolerance")) d.set("relativeTolerance", values.get("relativeTolerance"));
         if (values.containsKey("absoluteTolerance")) d.set("absoluteTolerance", values.get("absoluteTolerance"));

@@ -9,7 +9,7 @@
 # test target stays off); its own FetchContent dependencies (jsoncons, the
 # ANTLR4 C++ runtime) are built for WebAssembly along with it.
 cmake_minimum_required(VERSION 3.16)
-project(libsed2_js VERSION 0.1.0 LANGUAGES CXX)
+project(libsed2_js VERSION 0.1.1 LANGUAGES CXX)
 
 if(NOT EMSCRIPTEN)
   message(FATAL_ERROR "Build this project with Emscripten: emcmake cmake -S . -B build")

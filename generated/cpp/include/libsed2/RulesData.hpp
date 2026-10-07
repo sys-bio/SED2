@@ -1,5 +1,5 @@
 // Generated rule catalogue. GENERATED - do not hand-edit;
-// regenerate from test-specsheets/ via generator/generate.py.
+// regenerate from specsheets/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -279,14 +279,14 @@ inline void register_rules() {
     RuleCatalog::catalog()["OneStepODESimulation-0004"] = RuleCatalog::Entry{"The independentStep attribute of an OneStepODESimulation is required.", "Required attribute '{attr}' is missing from {class} '{id}'.", "error"};
     RuleCatalog::catalog()["OneStepODESimulation-0005"] = RuleCatalog::Entry{"When the value of independentStep of an OneStepODESimulation is provided directly, it must be a number.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.", "error"};
     RuleCatalog::catalog()["OneStepODESimulation-0006"] = RuleCatalog::Entry{"When the value of independentStep of an OneStepODESimulation is a reference, it must be a reference to a number.", "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.", "error"};
-    RuleCatalog::catalog()["OneStepODESimulation-0007"] = RuleCatalog::Entry{"The _type attribute of an OneStepODESimulation must be \"oneStepODE\".", "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.", "error"};
+    RuleCatalog::catalog()["OneStepODESimulation-0007"] = RuleCatalog::Entry{"The _type attribute of an OneStepODESimulation must be \"oneStepODESimulation\".", "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0000"] = RuleCatalog::Entry{"The element fails a JSON Schema constraint attributable to OneStepStochasticSimulation that does not match any other numbered rule.", "{schema-message} (at {location})", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0001"] = RuleCatalog::Entry{"The model attribute of an OneStepStochasticSimulation is required.", "Required attribute '{attr}' is missing from {class} '{id}'.", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0002"] = RuleCatalog::Entry{"The independentVariable attribute of an OneStepStochasticSimulation is required.", "Required attribute '{attr}' is missing from {class} '{id}'.", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0003"] = RuleCatalog::Entry{"The outputVariables attribute of an OneStepStochasticSimulation is required.", "Required attribute '{attr}' is missing from {class} '{id}'.", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0004"] = RuleCatalog::Entry{"When the value of independentStep of an OneStepStochasticSimulation is provided directly, it must be a number.", "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a number.", "error"};
     RuleCatalog::catalog()["OneStepStochasticSimulation-0005"] = RuleCatalog::Entry{"When the value of independentStep of an OneStepStochasticSimulation is a reference, it must be a reference to a number.", "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a number.", "error"};
-    RuleCatalog::catalog()["OneStepStochasticSimulation-0006"] = RuleCatalog::Entry{"The _type attribute of an OneStepStochasticSimulation must be \"oneStepStochastic\".", "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.", "error"};
+    RuleCatalog::catalog()["OneStepStochasticSimulation-0006"] = RuleCatalog::Entry{"The _type attribute of an OneStepStochasticSimulation must be \"oneStepStochasticSimulation\".", "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.", "error"};
     RuleCatalog::catalog()["OutputParameter-0000"] = RuleCatalog::Entry{"The element fails a JSON Schema constraint attributable to OutputParameter that does not match any other numbered rule.", "{schema-message} (at {location})", "error"};
     RuleCatalog::catalog()["OutputParameter-0001"] = RuleCatalog::Entry{"The value attribute of an OutputParameter is required.", "Required attribute '{attr}' is missing from {class} '{id}'.", "error"};
     RuleCatalog::catalog()["ParameterRange-0000"] = RuleCatalog::Entry{"The element fails a JSON Schema constraint attributable to ParameterRange that does not match any other numbered rule.", "{schema-message} (at {location})", "error"};

@@ -3206,7 +3206,7 @@ Only valid when `NumericRange` is used directly as a `tasks` dictionary entry. A
 **Category:** tasks  
 **Version:** v1  
 **Schema:** [`schema.json`](specsheets/tasks/OneStepODESimulation/v1.0.0/schema.json)  
-**`_type` discriminator:** `"oneStepODE"`  
+**`_type` discriminator:** `"oneStepODESimulation"`  
 
 ##### What it does
 
@@ -3344,9 +3344,9 @@ The final values of `outputVariables` after stepping by `independentStep`, acces
 
 > `independentStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`OneStepODESimulation-0007`** (error) - The _type attribute of an OneStepODESimulation must be "oneStepODE". ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0007.md))
+**`OneStepODESimulation-0007`** (error) - The _type attribute of an OneStepODESimulation must be "oneStepODESimulation". ([source](specsheets/tasks/OneStepODESimulation/v1.0.0/validation/OneStepODESimulation-0007.md))
 
-> `_type` is the discriminator field. For `OneStepODESimulation` it must always equal `"oneStepODE"`.
+> `_type` is the discriminator field. For `OneStepODESimulation` it must always equal `"oneStepODESimulation"`.
 
 #### OneStepStochasticSimulation
 
@@ -3357,7 +3357,7 @@ The final values of `outputVariables` after stepping by `independentStep`, acces
 **Category:** tasks  
 **Version:** v1  
 **Schema:** [`schema.json`](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/schema.json)  
-**`_type` discriminator:** `"oneStepStochastic"`  
+**`_type` discriminator:** `"oneStepStochasticSimulation"`  
 
 ##### What it does
 
@@ -3462,9 +3462,9 @@ Additional possible outputs beyond the three standard ones:
 
 > `independentStep` is `NumberOrRef`: when the value is a reference, it must resolve to a number.
 
-**`OneStepStochasticSimulation-0006`** (error) - The _type attribute of an OneStepStochasticSimulation must be "oneStepStochastic". ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0006.md))
+**`OneStepStochasticSimulation-0006`** (error) - The _type attribute of an OneStepStochasticSimulation must be "oneStepStochasticSimulation". ([source](specsheets/tasks/OneStepStochasticSimulation/v1.0.0/validation/OneStepStochasticSimulation-0006.md))
 
-> `_type` is the discriminator field. For `OneStepStochasticSimulation` it must always equal `"oneStepStochastic"`.
+> `_type` is the discriminator field. For `OneStepStochasticSimulation` it must always equal `"oneStepStochasticSimulation"`.
 
 #### ParameterRange
 

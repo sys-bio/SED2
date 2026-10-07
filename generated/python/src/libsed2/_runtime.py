@@ -1,5 +1,5 @@
 """Shared runtime for the generated libsed2 package. GENERATED - do not
-hand-edit; regenerate from test-specsheets/ via generator/generate.py."""
+hand-edit; regenerate from specsheets/ via generator/generate.py."""
 from __future__ import annotations
 
 import json
@@ -70,25 +70,37 @@ def is_reference(value: Any) -> bool:
 # core-spec.md Section 4 / core/Types/v1.0.0/description.md's "References"
 # paragraph). A reference is '#' + a colon-delimited containment path + an
 # optional chain of dot-accessors/bracket-indices, e.g.
-# "#tasks:loop1:subTasks:sim1.model['S1']". _parse_reference is pure syntax
-# (never touches a document); get_sed_reference walks a parsed reference's
-# containment path against an actual document (SEDBase-0006) to the target
-# SedBase element, the getSEDReference() Design.md names. Neither one
-# resolves the trailing dot-accessor/index chain against outputs.json -
-# that's SEDBase-0008 through -0015's concern (hasSubvalue()-style
-# plausibility, not yet implemented - see Task #10's tracked scope), so
-# .accessors is parsed and carried but not yet interpreted here.
+# "#tasks:loop1:subTasks:sim1.model['S1']". parse_reference() is pure syntax
+# (never touches a document); get_sed_reference() walks a parsed reference's
+# containment path against an actual document (SEDBase-0006) to the target -
+# the getSEDReference() Design.md names. Both are public API (exported from
+# the package; see their docstrings). Neither applies the trailing
+# dot-accessor/index chain: it is parsed and carried in .accessors, and
+# SEDBase-0008 through -0015 (all implemented - see
+# _check_output_shape_and_ref_type below and outputs_shape.py) check it for
+# plausibility against the target's outputs.json. Applying it to a value is
+# done only for values that exist before an experiment runs - constants and
+# literals - by apply_indices() and get_reference_value() below (bracket
+# indices only; a dot-accessor names a task output, which only exists once
+# the experiment runs, so nothing evaluates one).
 _REF_COLLECTIONS = ("tasks", "constants", "outputs", "styles")
 
 
 @dataclass
 class RefIndex:
+    """One bracket index of a reference. kind is 'int' (value: an int, may
+    be negative), 'label' (value: the label text, quotes removed) or 'range'
+    (value: a (start, end) tuple of int-or-None, None meaning open)."""
     kind: str            # 'int' | 'label' | 'range'
     value: Any            # int | str | (int_or_None, int_or_None)
 
 
 @dataclass
 class ParsedReference:
+    """The syntax of one reference string, as returned by parse_reference().
+    For "#tasks:loop1:subTasks:sim1.model['S1']": raw is that text,
+    collection is 'tasks', path is ['loop1', 'subTasks', 'sim1'], and
+    accessors is [('dot', 'model'), ('index', RefIndex('label', 'S1'))]."""
     raw: str
     collection: Optional[str]      # the segment right after '#', or None if empty
     path: list                     # colon-segments after the collection
@@ -110,7 +122,13 @@ def _parse_ref_index(part: str) -> RefIndex:
         return RefIndex("label", part)  # bare unquoted label - lenient fallback
 
 
-def _parse_reference(text: str) -> ParsedReference:
+def parse_reference(text: str) -> ParsedReference:
+    """Parses a reference string into its parts. Pure syntax: never touches a
+    document and never raises. A leading '#' is stripped when present, and
+    parsing is lenient - text after the point where an accessor stops
+    parsing (an unterminated '[', a '.' not followed by a name) is ignored,
+    so use is_reference() and validate() to decide whether a string is a
+    well-formed reference at all. Public API."""
     body = text[1:] if text.startswith("#") else text
     m = re.search(r"[.\[]", body)
     path_part = body[: m.start()] if m else body
@@ -142,15 +160,26 @@ def _parse_reference(text: str) -> ParsedReference:
     return ParsedReference(raw=text, collection=collection, path=path, accessors=accessors)
 
 
-def get_sed_reference(document, parsed: ParsedReference):
-    """Walks parsed.path's containment tree against `document` one
-    colon-segment at a time (SEDBase-0006). Returns (element, resolved_path)
-    on success - resolved_path is the '#...'-prefixed string of everything
-    walked - or (None, longest_resolved_prefix) on failure, per SEDBase-0006's
-    own spec ("the longest prefix that failed to resolve"). Returns
-    (None, None) outright when there's no document to walk (e.g. a class
+_parse_reference = parse_reference   # the name the handwritten rules and RUNTIME predate
+
+
+def get_sed_reference(document, parsed):
+    """Resolves a reference to its target by walking its containment path
+    (everything before the first '.' or '[') against `document` one
+    colon-segment at a time (SEDBase-0006). `parsed` is a ParsedReference
+    (from parse_reference) or the reference text itself. Returns
+    (target, resolved_path): target is the SedBase element for a '#tasks:',
+    '#outputs:' or '#styles:' reference, or the constant's raw JSON value for
+    a '#constants:' reference, and resolved_path is the '#...'-prefixed string
+    of everything walked. On failure it returns (None, longest_resolved_prefix),
+    per SEDBase-0006's own spec ("the longest prefix that failed to resolve"),
+    and (None, None) outright when there's no document to walk (e.g. a class
     validated directly, never attached to one) or the collection name itself
-    is unrecognized (SEDBase-0005's own concern, not this rule's)."""
+    is unrecognized (SEDBase-0005's own concern, not this rule's). A constant
+    whose value is JSON null also comes back as target None. The trailing
+    accessor chain is not applied (see the note above). Public API."""
+    if isinstance(parsed, str):
+        parsed = parse_reference(parsed)
     if document is None or parsed.collection not in _REF_COLLECTIONS:
         return None, None
     coll = document._get_id_collection(parsed.collection)
@@ -170,12 +199,99 @@ def get_sed_reference(document, parsed: ParsedReference):
             # plain attribute... does not resolve".
             return None, prefix
         subcoll_name, item_id = remaining.pop(0), remaining.pop(0)
+        if not isinstance(current, SedBase):
+            # A constants target is a raw JSON value: it has no child collections.
+            return None, prefix
         subcoll = current._get_id_collection(subcoll_name)
         if subcoll is None or item_id not in subcoll.ids():
             return None, prefix
         current = subcoll.get(item_id)
         prefix = prefix + ":" + subcoll_name + ":" + item_id
     return current, prefix
+
+
+def _format_index(idx) -> str:
+    """A RefIndex as it is written in a reference: [3], ['S1'], [2:5]."""
+    if idx.kind == "label":
+        return "['%s']" % idx.value
+    if idx.kind == "range":
+        a, b = idx.value
+        return "[%s:%s]" % ("" if a is None else a, "" if b is None else b)
+    return "[%s]" % idx.value
+
+
+def apply_indices(value, accessors):
+    """Applies bracket indices to a literal JSON value - a constant's value,
+    or any other literal (a number, string, list or dict) - and returns the
+    selected part. `accessors` is the accessor text ("[2]['S1']", or a whole
+    reference such as "#constants:k[0]", whose containment path is ignored),
+    a ParsedReference, or a list of RefIndex objects. Indices follow the
+    reference grammar (Design.md, Cross-references): an int ([3], or [-1]
+    counting from the end) indexes a list; a label (['S1']) indexes a dict by
+    key; a range ([2:5], either end optional) slices a list, end-exclusive,
+    clamped to the list like a Python slice, and keeps the dimension, while an
+    int or label drops it. The same rules back SEDBase-0012, so a reference
+    that validates cleanly always applies cleanly. Raises ApiError when an
+    index does not fit the value (an int or range into anything but a list, a
+    label into anything but a dict that has the key, an int outside
+    -n..n-1, any index into a scalar) and when `accessors` contains a
+    dot-accessor, since a constant or literal has no named outputs
+    (SEDBase-0008). The returned value is the stored value itself, not a
+    copy. Public API."""
+    from . import outputs_shape as _oshape
+    if isinstance(accessors, str):
+        accessors = parse_reference(accessors)
+    items = accessors.accessors if isinstance(accessors, ParsedReference) else list(accessors)
+    indices = []
+    for acc in items:
+        if isinstance(acc, RefIndex):
+            indices.append(acc)
+        elif isinstance(acc, tuple) and len(acc) == 2 and acc[0] == "index":
+            indices.append(acc[1])
+        elif isinstance(acc, tuple) and len(acc) == 2 and acc[0] == "dot":
+            raise ApiError("cannot apply dot-accessor '.%s' to a constant or literal value: "
+                           "only bracket indices apply to one (SEDBase-0008)" % acc[1])
+        else:
+            raise ApiError("not an accessor: %r" % (acc,))
+    current = value
+    for idx in indices:
+        try:
+            current = _oshape.index_into_literal(current, [idx])
+        except _oshape.NotIndexable:
+            raise ApiError("cannot apply index %s: the value does not contain it (SEDBase-0012)"
+                           % _format_index(idx)) from None
+    return current
+
+
+def get_reference_value(document, reference, _seen=None):
+    """Evaluates a reference that has a value before any experiment runs: a
+    '#constants:' reference, with any bracket indices applied to the
+    constant's literal value (see apply_indices). `reference` is the
+    reference text or a ParsedReference. A constant whose value is itself a
+    reference string is followed first (SEDBase-0012), through any number of
+    constants; a chain that loops raises ApiError. A constant holding JSON
+    null evaluates to None. Raises ApiError when the constant does not exist
+    (SEDBase-0006), when the reference targets anything but a constant (a
+    task, output or style has a value only when the experiment runs), when it
+    carries a dot-accessor, or when an index does not fit the value. The
+    returned value is the stored value itself, not a copy. Public API."""
+    parsed = parse_reference(reference) if isinstance(reference, str) else reference
+    text = parsed.raw
+    if parsed.collection != "constants":
+        raise ApiError("reference '%s' does not name a constant, so it has no value before the "
+                       "experiment runs" % text)
+    coll = document._get_id_collection("constants") if document is not None else None
+    if coll is None or len(parsed.path) != 1 or parsed.path[0] not in coll.ids():
+        raise ApiError("reference '%s' does not resolve: no such constant (SEDBase-0006)" % text)
+    key = parsed.path[0]
+    seen = set() if _seen is None else _seen
+    if key in seen:
+        raise ApiError("reference '%s' is circular: constant '%s' refers back to itself" % (text, key))
+    seen = seen | {key}
+    value = coll.get(key)
+    if isinstance(value, str) and is_reference(value):
+        value = get_reference_value(document, value, seen)
+    return apply_indices(value, parsed)
 
 
 def _check_reference_field(value, *, document, class_name, id_value, attr, location,
@@ -459,6 +575,35 @@ def _check_repeat_own_children(self) -> list:
                     id_value=self._own_id_for_message(), attr="input",
                     location=f"/aggregateOutputVariables/{entry_id}/input", make_problem=make_problem))
     return problems
+
+
+# ---- ParameterScan-0007: the modelElement values of a ParameterScan's -----
+# parameterRanges are pairwise distinct. Detected by class SHAPE (has a
+# parameterRanges list), not by name.
+
+def _check_parameter_scan_ranges(self) -> list:
+    try:
+        from ._rules import parameterscan_0007
+    except ImportError:
+        return []
+    ranges = getattr(self, "_parameter_ranges", None)
+    if ranges is None:
+        return []
+    document = self.get_document()
+    elements = []
+    for entry in ranges.items():
+        element = entry._own_json_value().get("modelElement")
+        if isinstance(element, str) and is_reference(element):
+            # compared by the string it resolves to; anything that does not
+            # resolve to a string is some other rule's concern
+            try:
+                element = get_reference_value(document, element)
+            except ApiError:
+                element = None
+        elements.append(element if isinstance(element, str) else None)
+    return parameterscan_0007.check(
+        elements, class_name=self.__class__.__name__, id_value=self._own_id_for_message(),
+        location="/parameterRanges", make_problem=make_problem)
 
 
 # ---- LoopVariable-0004: subsequentValues stays scoped to the enclosing ---
@@ -1360,6 +1505,7 @@ class SedBase:
         # other per-instance handwritten check above.
         problems.extend(_check_repeat_own_children(self))
         problems.extend(_check_loop_variable_scope(self))
+        problems.extend(_check_parameter_scan_ranges(self))
         return problems
 
     def _id_collection_names(self) -> list:
@@ -1373,22 +1519,24 @@ class SedBase:
         name is in hand, this just enumerates the names to try."""
         return []
 
-    def _own_id_for_message(self) -> str:
-        """This element's own SId, for a validation message's {id}
-        placeholder - Design.md's Classes section: id is implicit, the key
-        under which an element is stored in its owning collection, never a
-        field on the element itself (see spec.py's own field-flattening,
-        which never produces an 'id' FieldSpec). So this walks up to the
-        parent and searches every id-keyed collection IT declares for
-        whichever key maps to self - generic over every concrete class,
-        with no per-class override needed. Falls back to '?' for anything
-        genuinely id-less: the document root (no parent at all), an
-        array-item class (TaskParameter, WorkingAlgorithm, ...) stored
-        positionally rather than by id, or an unattached/standalone
-        instance no parent has claimed yet."""
+    def _find_own_id(self) -> Optional[str]:
+        """This element's own SId - Design.md's Classes section: id is
+        implicit, the key under which an element is stored in its owning
+        collection, never a field on the element itself (see spec.py's own
+        field-flattening, which never produces an 'id' FieldSpec). So this
+        walks up to the parent and searches every id-keyed collection IT
+        declares for whichever key maps to self - generic over every
+        concrete class, with no per-class override needed. Looked up on
+        every call rather than cached, so a rename (set_id_on_<collection>)
+        is always reflected. None for anything genuinely id-less: the
+        document root (no parent at all), an array-item class
+        (TaskParameter, WorkingAlgorithm, ...) stored positionally rather
+        than by id, a single embedded child (e.g. a simulation's
+        independent-variable range), or an unattached/standalone instance
+        no parent has claimed yet."""
         parent = self.get_parent()
         if parent is None:
-            return "?"
+            return None
         for name in parent._id_collection_names():
             coll = parent._get_id_collection(name)
             if coll is None:
@@ -1396,7 +1544,35 @@ class SedBase:
             for iid in coll.ids():
                 if coll.get(iid) is self:
                     return iid
-        return "?"
+        return None
+
+    def is_set_id(self) -> bool:
+        """True when this element currently has an id, i.e. it is stored
+        under a key in an id-keyed collection of its parent (tasks, outputs,
+        styles, a Repeat's subTasks, ...). False for the document itself,
+        array items, embedded single children, and elements not (yet) added
+        to any collection."""
+        return self._find_own_id() is not None
+
+    def get_id(self) -> str:
+        """This element's own id: the key it has in the id-keyed collection
+        that holds it (e.g. the task id for an entry of the document's
+        tasks, the sub-task id for an entry of a Loop's subTasks). Follows
+        renames (set_id_on_<collection>). Raises ApiError when the element
+        has no id (see is_set_id) - the same as get_<attr>() on an unset
+        attribute. Note get_parent() is the owning element (the document for
+        a top-level task), not the collection."""
+        iid = self._find_own_id()
+        if iid is None:
+            raise ApiError("this element has no id: it is not stored under a key in an "
+                           "id-keyed collection of its parent")
+        return iid
+
+    def _own_id_for_message(self) -> str:
+        """This element's own id for a validation message's {id}
+        placeholder: get_id()'s value, or '?' for an element with none."""
+        iid = self._find_own_id()
+        return "?" if iid is None else iid
 
     def _own_json_value(self) -> dict:
         raise NotImplementedError

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(libsed2 VERSION 0.1.0 LANGUAGES CXX)
+project(libsed2 VERSION 0.1.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -89,7 +89,7 @@ if(LIBSED2_BUILD_TESTS)
   FetchContent_MakeAvailable(googletest)
 
   enable_testing()
-  add_executable(fixture_tests tests/FixtureTest.cpp)
+  add_executable(fixture_tests tests/FixtureTest.cpp tests/ApiTest.cpp)
   target_link_libraries(fixture_tests PRIVATE libsed2 GTest::gtest_main)
   # fixtures/ always lives two levels up from this file's own directory
   # (see generate.py: fixtures/ is written under dirname(--out), and cpp

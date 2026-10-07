@@ -1,4 +1,4 @@
-# libsed2js 0.1.0
+# libsed2js 0.1.1
 
 The libsed2 C++ library (reading and validating SED2 documents), compiled to
 WebAssembly with Emscripten. One self-contained module: the WebAssembly is
