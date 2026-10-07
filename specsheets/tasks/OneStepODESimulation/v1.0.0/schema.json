@@ -13,7 +13,7 @@
       ],
       "properties": {
         "_type": {
-          "const": "oneStepODE",
+          "const": "oneStepODESimulation",
           "x-rule-id": "OneStepODESimulation-0007"
         },
         "independentStep": {

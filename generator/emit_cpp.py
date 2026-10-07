@@ -265,6 +265,7 @@ public:
             const RefFieldInfo& info);
     static std::vector<ValidationProblem> check_repeat_own_children(SedBase* self);
     static std::vector<ValidationProblem> check_loop_variable_scope(SedBase* self);
+    static std::vector<ValidationProblem> check_parameter_scan_ranges(SedBase* self);
     static std::vector<ValidationProblem> check_namespace_usage_and_version(SedBase* document);
     static std::vector<ValidationProblem> check_constants_ordering(SedBase* document);
     /// SEDBase-0005 applied to a REFERENCE token embedded in a math string
@@ -608,11 +609,41 @@ public:
     /// Default: none.
     virtual std::vector<ChildLoc> children_with_locations() {{ return {{}}; }}
 
-    /// This element's own SId, for a validation message's {{id}} placeholder:
-    /// id is implicit (the key under which an element is stored in its owning
-    /// collection), so this searches the parent's ID-keyed collections for
-    /// self; "?" for anything genuinely id-less (the document root, an
-    /// array-item class, an unattached instance).
+    /// This element's own id, or nullopt when it has none: id is implicit
+    /// (the key under which an element is stored in its owning collection),
+    /// so this searches the parent's ID-keyed collections for self. Looked up
+    /// on every call rather than cached, so a rename (set_id_on_<collection>)
+    /// is always reflected. Nullopt for anything genuinely id-less: the
+    /// document root, an array-item class stored positionally rather than by
+    /// id, a single embedded child (e.g. a simulation's independent-variable
+    /// range), or an unattached/standalone instance no parent has claimed yet.
+    std::optional<std::string> find_own_id() const;
+
+    /// True when this element currently has an id, i.e. it is stored under a
+    /// key in an id-keyed collection of its parent (tasks, outputs, styles, a
+    /// Repeat's subTasks, ...). False for the document itself, array items,
+    /// embedded single children, and elements not (yet) added to any
+    /// collection. Public API.
+    bool is_set_id() const {{ return find_own_id().has_value(); }}
+
+    /// This element's own id: the key it has in the id-keyed collection that
+    /// holds it (e.g. the task id for an entry of the document's tasks, the
+    /// sub-task id for an entry of a Loop's subTasks). Follows renames. Throws
+    /// ApiError when the element has no id (see is_set_id) - the same as
+    /// get_<attr>() on an unset attribute. Note get_parent() is the owning
+    /// element (the document for a top-level task), not the collection.
+    /// Public API.
+    std::string get_id() const {{
+        std::optional<std::string> iid = find_own_id();
+        if (!iid) {{
+            throw ApiError("this element has no id: it is not stored under a key in an "
+                           "id-keyed collection of its parent");
+        }}
+        return *iid;
+    }}
+
+    /// This element's own id for a validation message's {{id}} placeholder:
+    /// get_id()'s value, or "?" for an element with none.
     virtual std::string own_id_for_message() const;
     virtual Json own_json_value() const = 0;
 
@@ -825,6 +856,8 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {{
     problems.insert(problems.end(), rep.begin(), rep.end());
     auto lv = RefRules::check_loop_variable_scope(this);
     problems.insert(problems.end(), lv.begin(), lv.end());
+    auto ps = RefRules::check_parameter_scan_ranges(this);
+    problems.insert(problems.end(), ps.begin(), ps.end());
     return problems;
 }}
 
@@ -942,9 +975,9 @@ private:
     std::vector<std::unique_ptr<SedBase>> items_;
 }};
 
-inline std::string SedBase::own_id_for_message() const {{
+inline std::optional<std::string> SedBase::find_own_id() const {{
     SedBase* parent = get_parent();
-    if (parent == nullptr) return "?";
+    if (parent == nullptr) return std::nullopt;
     for (const auto& name : parent->id_collection_names()) {{
         const IdKeyedCollection* coll = parent->find_dict_collection(name);
         if (coll == nullptr) continue;
@@ -952,7 +985,12 @@ inline std::string SedBase::own_id_for_message() const {{
             if (coll->find(iid) == this) return iid;
         }}
     }}
-    return "?";
+    return std::nullopt;
+}}
+
+inline std::string SedBase::own_id_for_message() const {{
+    std::optional<std::string> iid = find_own_id();
+    return iid ? *iid : std::string("?");
 }}
 
 inline IdKeyedCollection& SedBase::get_dict_collection(const std::string& field_name) {{
@@ -1835,7 +1873,7 @@ def emit_model_hpp(model: SpecModel) -> str:
     base_catchall = model.classes[base].own_catchall if base in model.classes else ""
 
     out = [f'''// Generated concrete SED2 classes. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from {model.spec_root_label()}/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -1906,7 +1944,7 @@ namespace {NS} {{
         any_dict_fields = [f for f in collection_fields if f.type.kind == "any-dict"]
         has_ns = bool(c.namespace_updates)
 
-        out.append(f"/// Generated from test-specsheets/{c.category}/{name}/.\n")
+        out.append(f"/// Generated from {model.spec_root_label()}/{c.category}/{name}/.\n")
         out.append(f"class {name} : public SedBase {{\npublic:\n")
 
         field_specs = leaf_fields_all + collection_fields_all + child_fields_all
@@ -2128,7 +2166,7 @@ def emit_dispatch_hpp(model: SpecModel) -> str:
 // before an unrecognized key is dropped, so it is the only reliable place
 // to detect them (see Design.md's Schema-Pass Errors section - mirrors
 // generator/emit_python.py's _load_fields()). GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from {model.spec_root_label()}/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -2447,7 +2485,7 @@ inline const std::map<std::string, std::function<std::unique_ptr<SedBase>()>>& d
 
 def emit_rules_data_hpp(model: SpecModel) -> str:
     out = [f'''// Generated rule catalogue. GENERATED - do not hand-edit;
-// regenerate from test-specsheets/ via generator/generate.py.
+// regenerate from {model.spec_root_label()}/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
@@ -2470,13 +2508,16 @@ inline void register_rules() {{
 def emit_io_hpp(model: SpecModel) -> str:
     doc_name = model.document_class
     return f'''// Top-level read/write entry points. GENERATED - do not
-// hand-edit; regenerate from test-specsheets/ via generator/generate.py.
+// hand-edit; regenerate from {model.spec_root_label()}/ via generator/generate.py.
 #pragma once
 
 #include "Runtime.hpp"
 #include "GeneratedModel.hpp"
 #include "Dispatch.hpp"
 #include "RulesData.hpp"
+// The public reference API (parse_reference, get_sed_reference,
+// apply_indices, get_reference_value) comes with this entry point header.
+#include "RefRules.hpp"
 
 #include <fstream>
 #include <memory>
@@ -2550,8 +2591,30 @@ def _copy_fixture_test_cpp(out_dir: str, ns: str) -> None:
         f.write(content)
 
 
-def _cmake_lists(name: str, version: str) -> str:
+def _copy_api_test_cpp(out_dir: str, ns: str, model: SpecModel) -> None:
+    """Copies templates/cpp/tests/ApiTest.cpp -> <out_dir>/tests/ApiTest.cpp,
+    rewriting its #include prefix and using-namespace declaration to match ns
+    (as _copy_fixture_test_cpp does), and only for a spec tree with the real
+    SED2 document classes (see SpecModel.has_api_tests): the tests use them
+    directly. _cmake_lists builds it into the fixture_tests executable. Its
+    documents are read from fixtures/api/."""
+    if not model.has_api_tests():
+        return
+    src = os.path.join(_repo_root(), "templates", "cpp", "tests", "ApiTest.cpp")
+    with open(src) as f:
+        content = f.read()
+    assert "using namespace sed2test;" in content, "templates/cpp/tests/ApiTest.cpp must contain 'using namespace sed2test;'"
+    content = content.replace("<sed2test/", f"<{ns}/")
+    content = content.replace("using namespace sed2test;", f"using namespace {ns};")
+    tests_dir = os.path.join(out_dir, "tests")
+    os.makedirs(tests_dir, exist_ok=True)
+    with open(os.path.join(tests_dir, "ApiTest.cpp"), "w") as f:
+        f.write(content)
+
+
+def _cmake_lists(name: str, version: str, has_api_tests: bool = False) -> str:
     build_tests_opt = f"{name.upper()}_BUILD_TESTS"
+    test_sources = "tests/FixtureTest.cpp" + (" tests/ApiTest.cpp" if has_api_tests else "")
     return f'''cmake_minimum_required(VERSION 3.16)
 project({name} VERSION {version} LANGUAGES CXX)
 
@@ -2643,7 +2706,7 @@ if({build_tests_opt})
   FetchContent_MakeAvailable(googletest)
 
   enable_testing()
-  add_executable(fixture_tests tests/FixtureTest.cpp)
+  add_executable(fixture_tests {test_sources})
   target_link_libraries(fixture_tests PRIVATE {name} GTest::gtest_main)
   # fixtures/ always lives two levels up from this file's own directory
   # (see generate.py: fixtures/ is written under dirname(--out), and cpp
@@ -2672,6 +2735,7 @@ _IMPLEMENTED_HANDWRITTEN_RULE_IDS_CPP = (
     "SEDBase-0013", "SEDBase-0014", "SEDBase-0015", "SEDBase-0016", "SEDBase-0017",
     "SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011", "SEDDocument-0013",
     "AbstractTask-0003", "Repeat-0008", "Repeat-0009", "Repeat-0010", "LoopVariable-0004",
+    "ParameterScan-0007",
 )
 
 # Rule groups whose dispatch code in RefRules.hpp is compiled in only when
@@ -2687,6 +2751,7 @@ _RULE_GROUP_MACROS = {
     "SED2_REFRULES_TARGET": ("SEDBase-0016", "SEDBase-0017"),
     "SED2_REFRULES_REPEAT": ("Repeat-0008", "Repeat-0009", "Repeat-0010"),
     "SED2_REFRULES_LOOPVAR": ("LoopVariable-0004",),
+    "SED2_REFRULES_PARAMSCAN": ("ParameterScan-0007",),
     "SED2_REFRULES_NS": ("SEDDocument-0009", "SEDDocument-0010", "SEDDocument-0011"),
     "SED2_REFRULES_CONSTORDER": ("SEDDocument-0013",),
 }
@@ -2806,6 +2871,7 @@ def emit_cpp_package(model: SpecModel, out_dir: str, cpp_namespace: str = "sed2t
         )
 
     with open(os.path.join(out_dir, "CMakeLists.txt"), "w") as f:
-        f.write(_cmake_lists(NS, version))
+        f.write(_cmake_lists(NS, version, model.has_api_tests()))
 
     _copy_fixture_test_cpp(out_dir, NS)
+    _copy_api_test_cpp(out_dir, NS, model)

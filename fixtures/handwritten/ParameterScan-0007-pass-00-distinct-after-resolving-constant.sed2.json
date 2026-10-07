@@ -1,0 +1,34 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_name": "k2"
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "scan1": {
+      "_type": "parameterScan",
+      "model": "#tasks:m1.model",
+      "parameterRanges": [
+        {
+          "_type": "parameterRange",
+          "modelElement": "k1"
+        },
+        {
+          "_type": "parameterRange",
+          "modelElement": "#constants:k_name"
+        }
+      ],
+      "subTasks": {
+        "s1": {
+          "_type": "modelImport",
+          "location": "model.xml",
+          "language": "urn:sedml:language:sbml"
+        }
+      }
+    }
+  }
+}

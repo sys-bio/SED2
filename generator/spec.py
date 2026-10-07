@@ -187,6 +187,31 @@ class SpecModel:
     # than anything this library was generated to understand.
     document_version: Optional[str] = None
 
+    def spec_root_label(self) -> str:
+        """The spec tree this model was loaded from, as a short label for the
+        'generated from <label>/' text in generated file headers (e.g.
+        "specsheets" or "test-specsheets"): the path relative to the
+        repository root when the tree lives inside it, otherwise just the
+        directory's own name. Always forward slashes, never a trailing one."""
+        root = os.path.normpath(self.spec_root)
+        repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        rel = os.path.relpath(root, repo).replace(os.sep, "/")
+        if rel.startswith("..") or os.path.isabs(rel):
+            rel = os.path.basename(root)
+        return rel
+
+    def has_api_tests(self) -> bool:
+        """True when this spec tree has the real SED2 document classes the
+        hand-written API tests (templates/<lang>/tests/ApiTest.*, driven by
+        fixtures/api/) use directly: a document root with tasks, outputs and
+        constants collections. The synthetic test-specsheets/ tree does not,
+        so those tests are only copied into a tree for which this is true."""
+        doc = self.classes.get(self.document_class)
+        if doc is None:
+            return False
+        names = {f.name for f in doc.fields}
+        return {"tasks", "outputs", "constants"} <= names
+
     def generatable_classes(self) -> list:
         """Names of classes that should get a standalone generated type:
         the document root, every discriminated concrete/branch class, and

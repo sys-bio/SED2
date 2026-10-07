@@ -1,0 +1,113 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_num": 1.5,
+    "k_strings": [
+      "a",
+      "b"
+    ],
+    "k_list": [
+      10,
+      20,
+      30,
+      40
+    ],
+    "k_table": {
+      "S1": [
+        1,
+        2,
+        3
+      ],
+      "S2": [
+        4,
+        5,
+        6
+      ]
+    },
+    "k_alias": "#constants:k_table['S2']",
+    "k_alias2": "#constants:k_alias",
+    "k_none": null
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "loop1": {
+      "_type": "loop",
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
+      },
+      "loopVariables": {
+        "lv1": {
+          "initialValue": 0,
+          "subsequentValues": "#tasks:loop1:subTasks:s1"
+        }
+      },
+      "subTasks": {
+        "s1": {
+          "_type": "explicitODESimulation",
+          "model": "#tasks:m1.model",
+          "independentVariable": "time",
+          "outputVariables": [
+            "S1",
+            "S2"
+          ],
+          "independentVariableRange": {
+            "_type": "numericRange",
+            "values": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        "s2": {
+          "_type": "relabelData",
+          "input": "#tasks:loop1.index",
+          "labels": "#constants:k_strings"
+        }
+      },
+      "outputVariableMap": {
+        "col": "#tasks:loop1:subTasks:s1[0][1]"
+      },
+      "aggregateOutputVariables": {
+        "a1": {
+          "_type": "aggregationCalculation",
+          "input": "#tasks:loop1:subTasks:s1"
+        }
+      }
+    }
+  },
+  "outputs": {
+    "rep1": {
+      "_type": "report",
+      "data": "#tasks:sim1"
+    }
+  }
+}

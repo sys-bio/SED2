@@ -5,7 +5,7 @@
 **Category:** tasks  
 **Version:** v1  
 **Schema:** [`schema.json`](./schema.json)  
-**`_type` discriminator:** `"oneStepStochastic"`  
+**`_type` discriminator:** `"oneStepStochasticSimulation"`  
 
 ## What it does
 

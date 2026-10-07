@@ -317,7 +317,7 @@ jobs:
         # fixtures/generated/ (and fixtures/handwritten/, once Task 12's
         # deferred hand-authored fixtures exist - see Design.md's Testing
         # section) on its own, no per-spec configuration here.
-        run: pytest "$MAIN_GEN_OUT/python/test_fixtures.py" -q
+        run: pytest "$MAIN_GEN_OUT/python/test_fixtures.py" "$MAIN_GEN_OUT/python/test_api.py" -q
 
   test-java:
     name: Java target (test-specsheets/)
