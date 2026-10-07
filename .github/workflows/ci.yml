@@ -63,7 +63,8 @@
 # package (.tar.gz and .zip) - and smoke-test the packaged artifact itself
 # (wheel installed into a clean virtualenv; jar contents checked; C++ package
 # consumed through add_subdirectory()), then upload each as a workflow
-# artifact (release-python / release-java / release-cpp) on every run. CI does
+# artifact (release-<version>-python / -java / -cpp / -js, so downloading one
+# gives release-<version>-<platform>.zip) on every run. CI does
 # not create or touch any GitHub release: to release, download the artifacts
 # from a run's summary page and attach them to a release by hand, and to
 # update a release, replace its files with the ones from a newer run. All
@@ -515,7 +516,8 @@ jobs:
   # distributable for its platform from this run's fresh generated/ tree,
   # smoke-tests that artifact (not the source tree), and uploads it. Runs on
   # every CI run. Nothing here creates or edits a GitHub release - download
-  # the release-* artifacts from the run page and attach them by hand.
+  # the release-<version>-<platform> artifacts from the run page and attach
+  # them by hand.
   # ---------------------------------------------------------------------
 
   release-python:
@@ -579,7 +581,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@main
         with:
-          name: release-python
+          name: release-${{ needs.regenerate.outputs.version }}-python
           path: dist/*.whl
           retention-days: 30
 
@@ -621,7 +623,7 @@ jobs:
           ls -l dist
       - uses: actions/upload-artifact@main
         with:
-          name: release-java
+          name: release-${{ needs.regenerate.outputs.version }}-java
           path: dist/*
           retention-days: 30
 
@@ -700,7 +702,7 @@ jobs:
           for f in "$@"; do "$RUNNER_TEMP/smoke-build/smoke" "$f"; done
       - uses: actions/upload-artifact@main
         with:
-          name: release-cpp
+          name: release-${{ needs.regenerate.outputs.version }}-cpp
           path: |
             dist/*.tar.gz
             dist/*.zip
@@ -773,6 +775,6 @@ jobs:
           JS
       - uses: actions/upload-artifact@main
         with:
-          name: release-js
+          name: release-${{ needs.regenerate.outputs.version }}-js
           path: dist/*
           retention-days: 30
