@@ -119,7 +119,6 @@ RULE_CATALOG.update({
     'Calculation-0000': ('The element fails a JSON Schema constraint attributable to Calculation that does not match any other numbered rule.', '{schema-message} (at {location})', 'error'),
     'Calculation-0001': ('The math attribute of a Calculation is required.', "Required attribute '{attr}' is missing from {class} '{id}'.", 'error'),
     'Calculation-0002': ('When the value of math of a Calculation is provided directly, it must be a string.', "Attribute '{attr}' of {class} '{id}' has value '{value}', which is not a string.", 'error'),
-    'Calculation-0003': ('When the value of math of a Calculation is a reference, it must be a reference to a string.', "Attribute '{attr}' of {class} '{id}' is the reference '{value}', which resolves to '{resolved-value}', not a string.", 'error'),
     'Calculation-0004': ('The _type attribute of a Calculation must be "calculation".', "Attribute '{attr}' of {class} '{id}' has value '{value}', which does not match the required value '{allowed}'.", 'error'),
     'CreateDataBlock-0000': ('The element fails a JSON Schema constraint attributable to CreateDataBlock that does not match any other numbered rule.', '{schema-message} (at {location})', 'error'),
     'CreateDataBlock-0001': ('The data attribute of a CreateDataBlock is required.', "Required attribute '{attr}' is missing from {class} '{id}'.", 'error'),

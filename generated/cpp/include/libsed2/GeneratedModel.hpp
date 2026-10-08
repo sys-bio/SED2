@@ -836,7 +836,7 @@ class Calculation : public SedBase {
 public:
     const std::vector<FieldSpec>& field_specs() const override {
         static const std::vector<FieldSpec> specs = {
-            FieldSpec{"math", "StringOrRef", true, std::string("Calculation-0002"), std::string("Calculation-0001"), "Calculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true, std::nullopt, std::nullopt, std::string("Calculation-0003"), std::nullopt, std::nullopt},
+            FieldSpec{"math", "StringOrRef", true, std::string("Calculation-0002"), std::string("Calculation-0001"), "Calculation-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, true, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"notes", "any", false, std::string("SEDBase-0003"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"taskParameters", "array", false, std::string("AbstractTask-0001"), std::nullopt, "AbstractTask-0000", std::nullopt, std::nullopt, std::nullopt, std::string("TaskParameter"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt},
             FieldSpec{"annotations", "array", false, std::string("SEDBase-0004"), std::nullopt, "SEDBase-0000", std::nullopt, std::nullopt, std::nullopt, std::string("Annotation"), std::nullopt, false, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt}
@@ -948,7 +948,7 @@ public:
     std::string class_name() const override { return "CreateDataBlock"; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(data)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(data)\"}}]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(data)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(data)\"}},{\"trailing\":{\"of\":\"data\"}}]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("createDataBlock"); }
@@ -2265,7 +2265,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"loopVariables", "subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":{\"source\":\"runtime\"}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(outputVariableMap)\"}},{\"trailing\":{\"of\":\"outputVariableMap\"}}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null},{\"trailing\":{\"of\":\"aggregateOutputVariables\"}}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("loop"); }
@@ -3609,7 +3609,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":{\"source\":\"static\",\"expr\":\"modelElement\"}}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].ranges\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].indexes\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"repeat\":{\"over\":\"parameterRanges\",\"size\":{\"source\":\"static\",\"expr\":\"len(self)\"},\"labels\":{\"source\":\"runtime\"}}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(outputVariableMap)\"}},{\"trailing\":{\"of\":\"outputVariableMap\"}}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null},{\"trailing\":{\"of\":\"aggregateOutputVariables\"}}]},\"[id].ranges\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].indexes\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(parameterRanges)\"},\"labels\":{\"source\":\"static\",\"expr\":\"parameterRanges.modelElement\"}}]},\"[id].model\":{\"type\":\"model\"}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("parameterScan"); }
@@ -3941,7 +3941,7 @@ public:
     std::vector<std::string> id_collection_names() const override { return {"subTasks", "aggregateOutputVariables"}; }
     const Json* outputs_json() const override {
         static const Json j = Json::parse(
-            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":null},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":null}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
+            "{\"outputs\":{\"[id]\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(range)\"},\"labels\":{\"source\":\"runtime\"}},{\"size\":{\"source\":\"static\",\"expr\":\"len(outputVariableMap)\"},\"labels\":{\"source\":\"static\",\"expr\":\"keys(outputVariableMap)\"}},{\"trailing\":{\"of\":\"outputVariableMap\"}}]},\"[id].aggregates\":{\"type\":\"annotatedData\",\"dimensions\":[{\"size\":{\"source\":\"static\",\"expr\":\"len(aggregateOutputVariables)\"},\"labels\":null},{\"trailing\":{\"of\":\"aggregateOutputVariables\"}}]},\"[id].range\":{\"type\":\"annotatedData\",\"dimensions\":[]},\"[id].index\":{\"type\":\"annotatedData\",\"dimensions\":[]}}}");
         return &j;
     }
     std::optional<std::string> get_type_value() const override { return std::string("scatter"); }

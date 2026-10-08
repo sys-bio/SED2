@@ -33,7 +33,10 @@ public final class SedBase0015 {
                                                 String className, String idValue, String attr, String location) {
         List<ValidationProblem> out = new ArrayList<>();
         if (dimsAfter == null) return out;
-        int count = dimsAfter.size();
+        // A trailing placeholder (source "open") stands for dimensions of an
+        // unknown number: it never makes the shape definitely non-scalar.
+        int count = 0;
+        for (Dim d : dimsAfter) if (!"open".equals(d.source)) count++;
         if (count == 0) return out;
         out.add(RuleCatalog.problem("SEDBase-0015", location, "attr", attr, "value", value,
                 "class", className, "id", idValue, "expected-type", expectedType, "count", count));

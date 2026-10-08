@@ -270,9 +270,12 @@ inline std::pair<std::optional<std::string>, std::string> constant_target_kind(c
     return {std::nullopt, ""};
 }
 
-inline std::pair<std::optional<std::string>, std::string> output_target_kind(const Json* entry) {
+// `indexed`: the reference applies bracket indices, so a model is the current
+// value of the element it names (core Types, "Elements of models"), a number.
+inline std::pair<std::optional<std::string>, std::string> output_target_kind(const Json* entry, bool indexed = false) {
     if (entry && entry->is_object() && entry->contains("type") && entry->at("type").is_string()) {
         std::string declared = entry->at("type").as<std::string>();
+        if (declared == "model" && indexed) return {std::string("annotatedData"), "a model element's value"};
         if (declared == "model") return {std::string("model"), "a model"};
         if (declared == "annotatedData") return {std::string("annotatedData"), "an annotatedData value"};
         if (declared == "stringList") return {std::string("annotatedData"), "a stringList value"};
@@ -451,7 +454,7 @@ inline std::vector<ValidationProblem> check_output_shape_and_ref_type(const Pars
     append(problems, rules::sedbase_0014::check(seen_dims, res.index_accessors, ctx));
 
     if (info.ref_target) {
-        auto kd = output_target_kind(res.entry);
+        auto kd = output_target_kind(res.entry, !res.index_accessors.empty());
         append(problems, check_ref_target(info.ref_target, kd.first, kd.second, ctx));
     }
     if (info.ref_type_rule_id && is_ref_type_kind(info.field_kind)) {
@@ -460,6 +463,8 @@ inline std::vector<ValidationProblem> check_output_shape_and_ref_type(const Pars
         if (res.entry && res.entry->is_object() && res.entry->contains("type") && res.entry->at("type").is_string()) {
             actual_declared = res.entry->at("type").as<std::string>();
             has_declared = true;
+            // An indexed model is the value of one of its elements: a number.
+            if (actual_declared == "model" && !res.index_accessors.empty()) actual_declared = "annotatedData";
         }
         if (has_declared && actual_declared == "model") {
             // A model is a type of its own: never a number, string, boolean,

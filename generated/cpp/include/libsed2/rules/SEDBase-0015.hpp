@@ -26,7 +26,10 @@ namespace sedbase_0015 {
 inline std::vector<ValidationProblem> check(const oshape::OptDims& dims_after, const std::string& expected_type,
                                             const RuleCtx& ctx) {
     if (!dims_after) return {};
-    size_t count = dims_after->size();
+    // A trailing placeholder (source "open") stands for dimensions of an unknown
+    // number: it never makes the shape definitely non-scalar.
+    size_t count = 0;
+    for (const auto& d : *dims_after) if (!oshape::is_open(d)) count++;
     if (count == 0) return {};
     return {RuleCatalog::make_problem("SEDBase-0015", ctx.location,
         {{"attr", ctx.attr}, {"value", ctx.value}, {"expected-type", expected_type}, {"count", std::to_string(count)}, {"class", ctx.class_name}, {"id", ctx.id_value}})};

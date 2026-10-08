@@ -360,7 +360,7 @@ public abstract class SedBase {
                         ph.put("allowed", String.join(", ", reprs));
                     }
                     problems.add(RuleCatalog.makeProblem(rid, "/" + spec.name, ph));
-                } else if (REFERENCE_CAPABLE_KINDS.contains(spec.kind) && References.isReference(value)) {
+                } else if (REFERENCE_CAPABLE_KINDS.contains(spec.kind) && References.isReference(value) && !spec.isMath) {
                     problems.addAll(References.checkReferenceField(
                             value.textValue(), getDocument(), className, ownId, spec.name, "/" + spec.name,
                             this, References.FieldInfo.of(spec)));

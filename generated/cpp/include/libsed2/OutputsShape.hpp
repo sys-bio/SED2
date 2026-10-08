@@ -45,6 +45,13 @@ struct Dim {
 using Dims = std::vector<Dim>;
 using OptDims = std::optional<Dims>;
 
+/// The `source` of the placeholder dimension a "trailing" entry in outputs.json
+/// resolves to: zero or more further dimensions (those of the output's own
+/// entries), of unknown number, size and labels. Indices that reach it are not
+/// judged (it takes any number of them); on its own it never makes the result
+/// "still shaped" (SEDBase-0015).
+inline bool is_open(const Dim& d) { return d.source && *d.source == "open"; }
+
 // ---- lexer ------------------------------------------------------------
 
 struct Tok {
@@ -375,6 +382,23 @@ inline Val apply_dim_minus(const Val& left, const Val& right) {
     else if (right.kind == Val::JSON && right.j.is_array()) count = right.j.size();
     Val out;
     out.kind = Val::DIMS;
+    {
+        size_t known = 0;
+        bool any_open = false;
+        for (const auto& d : dims) { if (is_open(d)) any_open = true; else known++; }
+        if (any_open) {
+            // Whatever is removed, the unknown trailing dimensions may remain.
+            if (outermost_only && known > 0) {
+                out.dims.assign(dims.begin() + 1, dims.end());
+                return out;
+            }
+            Dim unknown;
+            unknown.source = std::string("runtime");
+            out.dims.assign(known > count ? known - count : 0, unknown);
+            for (const auto& d : dims) if (is_open(d)) out.dims.push_back(d);
+            return out;
+        }
+    }
     if (count >= dims.size()) return out;
     if (outermost_only) {
         out.dims.assign(dims.begin() + 1, dims.end());
@@ -561,7 +585,11 @@ inline OptDims resolve_dims(const Json* dims_spec, const Scope& scope, const Sha
     if (dims_spec->is_array()) {
         Dims result;
         for (const auto& d : dims_spec->array_range()) {
-            if (d.contains("repeat")) {
+            if (d.contains("trailing")) {
+                Dim open;
+                open.source = std::string("open");
+                result.push_back(open);
+            } else if (d.contains("repeat")) {
                 const Json& rep = d.at("repeat");
                 const Json* over_val = nullptr;
                 try { over_val = scope.lookup(rep.at("over").as<std::string>()); }
@@ -663,13 +691,16 @@ inline BoundIndices bind_indices(const OptDims& dims, const std::vector<RefIndex
     Dims view = *dims;
     Dims seen;
     for (const auto& group : index_groups(index_accessors)) {
-        size_t k = std::min(group.size(), view.size());
-        seen.insert(seen.end(), view.begin(), view.begin() + k);
+        // An open placeholder (the last dimension) takes any number of indices.
+        bool has_open = !view.empty() && is_open(view.back());
+        size_t k = has_open ? group.size() : std::min(group.size(), view.size());
+        for (size_t j = 0; j < k; j++) seen.push_back(j < view.size() ? view[j] : view.back());
         if (k < group.size()) break;
         Dims next;
         for (size_t j = 0; j < view.size(); j++) {
             if (j < k) {
-                if (group[j].is_range()) next.push_back(sliced_dim(view[j], group[j]));
+                if (is_open(view[j])) next.push_back(view[j]);
+                else if (group[j].is_range()) next.push_back(sliced_dim(view[j], group[j]));
             } else {
                 next.push_back(view[j]);
             }

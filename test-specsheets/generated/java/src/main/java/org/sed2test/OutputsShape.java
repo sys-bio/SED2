@@ -564,6 +564,22 @@ public final class OutputsShape {
         if (!(dims instanceof List)) throw new NotStatic("- needs a dimensions list on the left");
         List<?> d = (List<?>) dims;
         int count = selectors instanceof List ? ((List<?>) selectors).size() : 1;
+        boolean anyOpen = false;
+        int known = 0;
+        for (Object o : d) {
+            if (o instanceof Dim && isOpen((Dim) o)) anyOpen = true; else known++;
+        }
+        if (anyOpen) {
+            // Whatever is removed, the unknown trailing dimensions may remain.
+            if (selectors instanceof List && ((List<?>) selectors).size() == 1
+                    && ((List<?>) selectors).get(0) == OUTERMOST && known > 0) {
+                return new ArrayList<Object>(d.subList(1, d.size()));
+            }
+            List<Object> out = new ArrayList<>();
+            for (int i = 0; i < Math.max(known - count, 0); i++) out.add(new Dim(null, null, "runtime", null));
+            for (Object o : d) if (o instanceof Dim && isOpen((Dim) o)) out.add(o);
+            return out;
+        }
         if (count >= d.size()) return new ArrayList<Object>();
         if (selectors instanceof List && ((List<?>) selectors).size() == 1
                 && ((List<?>) selectors).get(0) == OUTERMOST) {
@@ -639,6 +655,17 @@ public final class OutputsShape {
         return null;
     }
 
+    /** The `source` of the placeholder dimension a "trailing" entry in
+     * outputs.json resolves to: zero or more further dimensions (those of the
+     * output's own entries), of unknown number, size and labels. Indices that
+     * reach it are not judged (it takes any number of them); on its own it
+     * never makes the result "still shaped" (SEDBase-0015). */
+    public static final String OPEN_SOURCE = "open";
+
+    public static boolean isOpen(Dim d) {
+        return OPEN_SOURCE.equals(d.source);
+    }
+
     /** dimsSpec is outputs.json's own "dimensions" value for one suffix entry
      * - either a fixed-length array of per-dimension entries, or a single
      * "sourced" object describing the whole shape. Returns one Dim per
@@ -650,7 +677,11 @@ public final class OutputsShape {
         if (dimsSpec.isArray()) {
             List<Dim> result = new ArrayList<>();
             for (JsonNode d : dimsSpec) {
-                if (d.has("repeat")) {
+                if (d.has("trailing")) {
+                    // The entries' own dimensions follow the listed ones: how
+                    // many there are is not statically known (see OPEN_SOURCE).
+                    result.add(new Dim(null, null, OPEN_SOURCE, null));
+                } else if (d.has("repeat")) {
                     JsonNode rep = d.get("repeat");
                     Object overVal;
                     try {
@@ -762,13 +793,16 @@ public final class OutputsShape {
         List<Dim> view = new ArrayList<>(dims);
         List<Dim> seen = new ArrayList<>();
         for (List<RefIndex> group : indexGroups(indexAccessors)) {
-            int k = Math.min(group.size(), view.size());
-            seen.addAll(view.subList(0, k));
+            // An open placeholder (the last dimension) takes any number of indices.
+            boolean hasOpen = !view.isEmpty() && isOpen(view.get(view.size() - 1));
+            int k = hasOpen ? group.size() : Math.min(group.size(), view.size());
+            for (int j = 0; j < k; j++) seen.add(j < view.size() ? view.get(j) : view.get(view.size() - 1));
             if (k < group.size()) break;
             List<Dim> next = new ArrayList<>();
             for (int j = 0; j < view.size(); j++) {
                 if (j < k) {
-                    if (group.get(j).kind.equals("range")) next.add(slicedDim(view.get(j), group.get(j)));
+                    if (isOpen(view.get(j))) next.add(view.get(j));
+                    else if (group.get(j).kind.equals("range")) next.add(slicedDim(view.get(j), group.get(j)));
                 } else {
                     next.add(view.get(j));
                 }

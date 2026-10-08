@@ -666,7 +666,7 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
                     ph["allowed"] = allowed;
                 }
                 problems.push_back(RuleCatalog::make_problem(rid, loc, ph));
-            } else if (reference_capable.count(spec.kind) && is_ref_value(value)) {
+            } else if (reference_capable.count(spec.kind) && is_ref_value(value) && !spec.is_math) {
                 RefFieldInfo info;
                 info.field_kind = spec.kind;
                 info.ref_type_rule_id = spec.ref_type_rule_id;
@@ -717,7 +717,7 @@ inline std::vector<ValidationProblem> SedBase::validate_own() {
             } else if (spec.is_math && value.is_string()) {
                 // Types-0001..0004 (Design.md's Math section) - only for a
                 // literal string value that already passed its own leaf schema
-                // check above; a reference form of a math field is skipped.
+                // check above; a math field is always math, even if it is just one reference.
                 auto math_problems = MathRules::check_math_field(value.as<std::string>(), cls, self_id, spec.name, loc);
                 problems.insert(problems.end(), math_problems.begin(), math_problems.end());
             }

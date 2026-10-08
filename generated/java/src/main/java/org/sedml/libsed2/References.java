@@ -760,9 +760,12 @@ public final class References {
 
     /** (kind, description) of a task-output suffix entry, from its
      * outputs.json "type", for SEDBase-0016/-0017. */
-    private static String[] outputTargetKind(JsonNode entry) {
+    private static String[] outputTargetKind(JsonNode entry, boolean indexed) {
         String declared = entry != null && entry.has("type") && entry.get("type").isTextual()
                 ? entry.get("type").textValue() : null;
+        // An indexed model is the current value of the element it names
+        // (core Types, "Elements of models"): a number, so AnnotatedData.
+        if ("model".equals(declared) && indexed) return new String[]{"annotatedData", "a model element's value"};
         if ("model".equals(declared)) return new String[]{"model", "a model"};
         if ("annotatedData".equals(declared)) return new String[]{"annotatedData", "an annotatedData value"};
         if ("stringList".equals(declared)) return new String[]{"annotatedData", "a stringList value"};
@@ -942,12 +945,13 @@ public final class References {
         problems.addAll(Handwritten.sedBase0014(seenDims, r.indexAccessors, value, className, idValue, attr, location));
 
         if (info.refTarget != null) {
-            String[] k = outputTargetKind(r.entry);
+            String[] k = outputTargetKind(r.entry, !r.indexAccessors.isEmpty());
             problems.addAll(checkRefTarget(info.refTarget, k[0], k[1], value, className, idValue, attr, location));
         }
         if (info.refTypeRuleId != null && REF_TYPE_KINDS.contains(info.fieldKind)) {
             String actualDeclared = r.entry != null && r.entry.has("type") && r.entry.get("type").isTextual()
                     ? r.entry.get("type").textValue() : null;
+            if ("model".equals(actualDeclared) && !r.indexAccessors.isEmpty()) actualDeclared = "annotatedData";
             if ("model".equals(actualDeclared)) {
                 // A model is a type of its own: never a number, string,
                 // boolean, array, or dictionary (ProposedRules.md).

@@ -19,7 +19,7 @@ import java.util.Set;
  * hand-edit; regenerate via generator/generate.py. */
 public final class Calculation extends SedBase {
     private static final List<FieldSpec> FIELD_SPECS = List.of(
-        new FieldSpec("math", "StringOrRef", true, "Calculation-0002", "Calculation-0001", "Calculation-0000", null, null, null, null, null, true, null, null, "Calculation-0003", null, null),
+        new FieldSpec("math", "StringOrRef", true, "Calculation-0002", "Calculation-0001", "Calculation-0000", null, null, null, null, null, true, null, null, null, null, null),
         new FieldSpec("notes", "any", false, "SEDBase-0003", null, "SEDBase-0000", null, null, null, null, null, false, null, null, null, null, null),
         new FieldSpec("taskParameters", "array", false, "AbstractTask-0001", null, "AbstractTask-0000", null, null, null, "TaskParameter", null, false, null, null, null, null, null),
         new FieldSpec("annotations", "array", false, "SEDBase-0004", null, "SEDBase-0000", null, null, null, "Annotation", null, false, null, null, null, null, null)

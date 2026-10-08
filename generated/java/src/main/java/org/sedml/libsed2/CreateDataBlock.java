@@ -37,7 +37,7 @@ public final class CreateDataBlock extends SedBase {
     @Override public String descRuleId() { return "SEDBase-0002"; }
     @Override public String baseCatchall() { return "SEDBase-0000"; }
     public String getType() { return "createDataBlock"; }
-    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(data)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"keys(data)\"}, \"note\": \"base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case\"}]}}}");
+    private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": [{\"size\": {\"source\": \"static\", \"expr\": \"len(data)\"}, \"labels\": {\"source\": \"static\", \"expr\": \"keys(data)\"}, \"note\": \"dimension 0 has one entry per key in the data dictionary, labeled by those keys\"}, {\"trailing\": {\"of\": \"data\", \"note\": \"if the values in data are themselves multi-dimensional (a list or AnnotatedData), their dimensions follow dimension 0; all entries must have the same shape, since they are stacked into one array; how many dimensions that is is not known ahead of time\"}}]}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
     public JsonNode getDataValue() { return getOrRefValueNode("data"); }

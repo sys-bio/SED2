@@ -81,11 +81,15 @@ title: SED2 Specification
     - [setValues (CellML)](#setvalues-cellml)
     - [ModelChange (CellML)](#modelchange-cellml)
     - [Element types (CellML)](#element-types-cellml)
+    - [Jacobian (CellML)](#jacobian-cellml)
+    - [SteadyState (CellML)](#steadystate-cellml)
 - [Appendix B: SBML](#appendix-b-sbml)
     - [Labels (SBML)](#labels-sbml)
     - [setValues (SBML)](#setvalues-sbml)
     - [ModelChange (SBML)](#modelchange-sbml)
     - [Element types (SBML)](#element-types-sbml)
+    - [Jacobian (SBML)](#jacobian-sbml)
+    - [SteadyState (SBML)](#steadystate-sbml)
 
 ---
 
@@ -248,9 +252,10 @@ The characteristics of individual dimensions can also be determined by other obj
 
 
 
-**If you chose the array, write each element as one of two kinds of entry.** The array lists the dimensions in order, and the two kinds may be mixed.
+**If you chose the array, write each element as one of two kinds of entry.** The array lists the dimensions in order, and the three kinds may be mixed.
    - **An ordinary entry** describes one dimension. Its requied fields are `size` and `labels`, and it may have an optional `note` with free text.
    - **A `repeat` entry** expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan` has one dimension per entry of `parameterRanges`). Its only field is `repeat`, an object with `over` (required; the name of the array-valued attribute), `size` and `labels` (both required, written as for an ordinary entry), and `note` (optional). Inside a `repeat` entry's `size` and `labels`, a bare identifier refers to a field of the *current entry* of `over` (not of the task), and `self` refers to that entry as a whole.
+  - **A `trailing` entry** (must be last) marks that the dimensions of the output's own entries follow the listed ones, as when a `Loop`'s [id] holds one entry per `outputVariableMap` key and each entry may itself have dimensions. Its only field is `trailing`, an object with an required `of` child pointing to the name of the attribute whose entries supply those dimensions, e.g. `outputVariableMap` or `data`, and an optional `note`. The number, sizes and labels of these dimensions must be derived from other attributes and elements in the document, so simple validators might not judge indices that reach them, but full validators should follow the `of`, and determine the full dimensionality of the element.
 
 3. **Write each `size` as a sourced object.** A sourced object always has a `source` field saying where the knowledge comes from. Use the first of these that applies:
    - `"static"` - computable from the task's own attribute values alone. Fields: `expr` (required; an expression in the notation defined below, e.g. `len(outputVariables)`, `1 + len(outputVariables)`, `independentVariableRange.numberOfSteps`) and `note` (optional).
@@ -336,14 +341,14 @@ Any future changes to a class creates a sibling `v#.#.#/` folder alongside `v1.0
 
 ### 9. Validating a document against these schemas
 
-*Source: [core-spec.md, line 220](core-spec.md#L220)*
+*Source: [core-spec.md, line 221](core-spec.md#L221)*
 
 
 To validate a whole SED2 document, `$ref` the appropriate `specsheets/core/SEDDocument/v1.0.0/schema.json` (which itself only needs `AbstractTask`/`AbstractOutput`, which in turn enumerate the concrete task/output classes) with a schema registry that can resolve relative file `$ref`s - e.g. Python's `referencing`/`jsonschema` packages, pointed at the `specsheets/` root. To validate or compose against just one class (e.g. embedding `ExplicitODESimulation`'s schema inside a larger tool-specific document), `$ref` that class's own `specsheets/tasks/ExplicitODESimulation/v1.0.0/schema.json` directly - its external refs resolve the same way.
 
 ### 10. Known gaps and inconsistencies (flagged, not fixed here)
 
-*Source: [core-spec.md, line 224](core-spec.md#L224)*
+*Source: [core-spec.md, line 225](core-spec.md#L225)*
 
 
 Per the project's own working rule, this split is descriptive - it surfaces inconsistencies for you to resolve rather than silently deciding them:
@@ -361,7 +366,7 @@ Per the project's own working rule, this split is descriptive - it surfaces inco
 
 ### 11. Multi-target consistency reminder
 
-*Source: [core-spec.md, line 239](core-spec.md#L239)*
+*Source: [core-spec.md, line 240](core-spec.md#L240)*
 
 
 Per this project's own working rules: any future design change to the SED2 class model, cross-reference/math syntax, or validation rules must be reflected in **all three** generated libraries (C++, Java, Python) in the same change - this document split does not touch code generation, but any content change that follows from resolving Section 10's open items will.
@@ -1803,7 +1808,7 @@ A 2D matrix of numbers, accessible as `[id]`, with solver-chosen row spacing. Th
 
 Performs a calculation written in infix as the `math` attribute; its id may then be used as that calculation's result elsewhere in the document.
 
-References to `AnnotatedData` may appear within `math`, evaluated element-by-element: combining a lower-dimension value with a higher-dimension one broadcasts the lower one across the higher (e.g. `5 + [list]` adds 5 to every element; `[1D] * [2D]` multiplies each row); combining two same-dimension values requires matching keys (dictionaries) or matching lengths (lists). Allowed operations are `+ - * / ^`, parentheses, standard PEMDAS ordering, the functions allowed in SBML, and the constants allowed in SBML (`pi`, `exponentiale`, etc.).
+References to `AnnotatedData` may appear within `math`, evaluated element-by-element: combining a lower-dimension value with a higher-dimension one broadcasts the lower one across the higher (e.g. `5 + [list]` adds 5 to every element; `[1D] * [2D]` multiplies each row); combining two same-dimension values requires matching keys (dictionaries) or matching lengths (lists). A `math` string is always an expression, never a reference to a string: a `math` of just `#constants:v` is the expression consisting of that one reference (so it is that value, not the text of `v`), and `#constants:v * 2` is an expression that happens to start with one. Allowed operations are `+ - * / ^`, parentheses, standard PEMDAS ordering, the functions allowed in SBML, and the constants allowed in SBML (`pi`, `exponentiale`, etc.).
 
 ##### Attributes
 
@@ -1846,10 +1851,6 @@ The result of evaluating `math`, accessible as `[id]`.
 
 > `math` is `StringOrRef`: the value, when not a reference, must be a string.
 
-**`Calculation-0003`** (error) - When the value of math of a Calculation is a reference, it must be a reference to a string. ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0003.md))
-
-> `math` is `StringOrRef`: when the value is a reference, it must resolve to a string.
-
 **`Calculation-0004`** (error) - The _type attribute of a Calculation must be "calculation". ([source](specsheets/tasks/Calculation/v1.0.0/validation/Calculation-0004.md))
 
 > `_type` is the discriminator field. For `Calculation` it must always equal `"calculation"`.
@@ -1890,7 +1891,7 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 A new `AnnotatedData` object whose labels are the `data` dictionary's keys and whose content is the corresponding values, accessible as `[id]`.
 
 - `[id]`: **Valid**
-    - Dimensions: 1D, length = number of keys in the `data` dictionary, labeled by those keys - unless a value in `data` is itself multi-dimensional (a list or `AnnotatedData`), in which case that value's own dimensions carry through for that entry. _(Whether/how mixed-dimension entries combine into one overall shape is open - placeholder.)_
+    - Dimensions: dimension 0 has one entry per key in the `data` dictionary, labeled by those keys. If the values in `data` are themselves multi-dimensional (a list or `AnnotatedData`), their own dimensions follow dimension 0, so a block of vectors is a matrix: with a vector entry `r2`, `#tasks:blk['r2'][1]` (equivalently `#tasks:blk['r2', 1]`) is the second element of `r2`. All entries must have the same shape, since they are stacked into one array; entries of different shapes are an error when the document runs.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
@@ -2723,7 +2724,7 @@ The reduced Jacobian as a list of lists, accessible as `[id]`, with axis labels 
 
 ##### What it does
 
-A `Repeat` whose iterations are chained: each depends on the output of the previous one, with one iteration per element of its required `range` (a `Range`/`NumericRange`/`ParameterRange`), taken in order; a `Loop` always runs all of them and cannot end early. The chaining is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`.
+A `Repeat` whose iterations are chained: each depends on the output of the previous one, with one iteration per element of its required `range` (a `Range`/`NumericRange`/`ParameterRange`), taken in order; a `Loop` always runs all of them and cannot end early. The chaining is expressed with `loopVariables` - named `LoopVariable` entries whose value equals `initialValue` on the first iteration and thereafter equals `subsequentValues` (an output of one of the loop's `subTasks`). A subTask references a loop variable as `#tasks:[loop_id]:loopVariables:[loopvar_id]`, which is its value at the current iteration (it has the shape of `initialValue`).
 
 ##### Attributes
 
@@ -2755,17 +2756,17 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 ##### Outputs
 
-`[id]`: an `AnnotatedData` whose first column is the range values and whose subsequent columns follow `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
+`[id]`: an `AnnotatedData` with one row per iteration (dimension 0, labeled by the range values) and one entry per `outputVariableMap` key (dimension 1, labeled by the keys); the range values themselves are not a column. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: 2D (or more): first dimension = one row per value in `range`; remaining dimension(s) = one column per entry of `outputVariableMap` (or just the range-values column alone, if `outputVariableMap` is empty). As with `Scatter`, the row count is known in advance from `range`. A column whose subTask output is itself multi-dimensional would add further dimensions - not pinned down further here.
+    - Dimensions: 2D (or more). Dimension 0 is the iteration: one row per value in `range`, labeled by those values. Dimension 1 holds the `outputVariableMap` entries, one per key, labeled by the keys (length 0 if `outputVariableMap` is empty). If an entry's own value is not a scalar, its dimensions (with their labels) follow, so a scalar-valued map gives a plain iterations-by-entries table. All entries must have the same shape, since they are stacked into one array; entries of different shapes are an error when the document runs. As with `Scatter`, the row count is known in advance from `range`. Labels are text: the range values are written the way numbers appear in formed strings (see `StringFormation`): an integral value without a decimal point (`1`, not `1.0`), otherwise as the shortest decimal that reads back as the same number (`0.5`, `0.25`).
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
 Additional possible outputs beyond the three standard ones:
 
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`.  If that attribute is not defined, the `AnnotatedData` is empty.
-    - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
+    - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping, each collapsing the iteration dimension of `[id]` down to a single value (per `Repeat`, the applied dimension defaults to the Repeat's own iterations) - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry (further dimensions follow the first).
 - `[id].range`: Within the loop, the current value of `range`.
     - Dimensions: Scalar (0-D) per iteration.
 - `[id].index`: Within the loop, the current index into `range`.
@@ -3122,6 +3123,8 @@ A restricted `Range` (its subclass) whose values are numeric, definable several 
 - **`start`, `numberOfSteps`, `interval`**: `numberOfSteps` points collected every `interval` after `start`, with an implied end.
 - **`end`, `numberOfSteps`, `interval`**: `numberOfSteps` points collected every `interval` up to `end`, with an implied start.
 - **`start`, `interval`, `end`**: points collected every `interval` past `start` until `end` is reached; `end` is always included as the final point even when it doesn't fall exactly on an interval boundary. Whether a separately-calculated near-`end` point is *also* included depends on a tolerance of `interval * 1e-6`: if the nearest calculated point is within that tolerance of `end`, only `end` is kept; otherwise both are kept. For example, `start=0, end=10, interval=3` yields `[0, 3, 6, 9, 10]`; `start=0, end=10, interval=3.333` yields `[0, 3.333, 6.666, 9.999, 10]` (9.999 is far enough from 10); `interval=3.333333` instead yields `[0, 3.333333, 6.666666, 10]` (9.999999 is within tolerance of 10, so it's dropped in favor of the exact endpoint).
+
+Every `NumericRange` with a defined `numberOfSteps` attribute has `numberOfSteps + 1` entries.
 
 The spec explicitly warns that relying on readers to work out this tolerance to know what values a range produces is not best practice - output end times should generally be a simple multiple of the interval, plus the start.
 
@@ -3631,10 +3634,10 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 ##### Outputs
 
-`[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges`, plus one further dimension sized by the number of entries in `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
+`[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges` (in order, each named by its `modelElement` and labeled by that range's values), followed by one dimension holding the `outputVariableMap` entries (labeled by their keys), followed by the dimensions of the entries' own values, if any. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps, and each labeled with that range's `modelElement`), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
+    - Dimensions: N-D: one dimension per entry in `parameterRanges`, in order (each sized by that range's own number of steps, named by that range's `modelElement`, and labeled by that range's values), then one dimension holding the `outputVariableMap` entries, one per key, labeled by the keys (length 0 if `outputVariableMap` is empty), then the dimensions of the entries' own values if they are not scalars - dimensionality grows with the number of ranges scanned. All entries must have the same shape, since they are stacked into one array. A dimension's name is for the reader; entries are addressed by position or label. Labels are text: the range values are written the way numbers appear in formed strings (see `StringFormation`): an integral value without a decimal point (`1`, not `1.0`), otherwise as the shortest decimal that reads back as the same number (`0.5`, `0.25`).
 - `[id].model`: **Valid**, within the loop only: the scan's `model` as modified for the current iteration, i.e. initialized with the current value of each of the `parameterRanges`. A reference to it from outside the scan's own `subTasks` breaks SEDBase-0013.
 - `[id].strings`: **Invalid**
 
@@ -3850,7 +3853,7 @@ The relabeled `AnnotatedData`, accessible as `[id]`.
 
 Like SED-ML Level 1's RepeatedTask, SED2 needs to repeat a group of tasks multiple times. `Repeat` is the set of fields shared by all three concrete subclasses (`Scatter`, `Loop`, `ParameterScan`), composed via `allOf` rather than instantiated on its own - the prose spec calls this abstract concept simply "Repeat".
 
-The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own per-iteration outputs (the current iteration's range value and position: `[id].range`/`[id].index` for `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` for `ParameterScan` - see those classes). `outputVariableMap` (optional) defines the columns of the repeat's own `[id]` output: each named entry maps an output column name to a value produced by a subTask. `Scatter` and `Loop` additionally make the first column the range values, so for them `[id]` contains only the range values if `outputVariableMap` is omitted; see each subclass for its exact `[id]` shape. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
+The repeat's `subTasks` are true children (not references) of the parent, and may depend on each other, on outputs of tasks outside the repeat, or on the repeat's own per-iteration outputs (the current iteration's range value and position: `[id].range`/`[id].index` for `Scatter` and `Loop`, `[id].ranges`/`[id].indexes` for `ParameterScan` - see those classes). `outputVariableMap` (optional) defines the entries of the repeat's own `[id]` output: each named entry maps an output name to a value produced by a subTask, and the names label that dimension. For `Scatter` and `Loop`, dimension 0 of `[id]` is the iteration (labeled by the range values) and dimension 1 holds the `outputVariableMap` entries; for `ParameterScan` there is one dimension per parameter range, followed by the `outputVariableMap` entries; see each subclass for its exact `[id]` shape. All entries of one `outputVariableMap` must have the same shape, since they are stacked into one array. `aggregateOutputVariables` defines the columns of `[id].aggregates` - used to efficiently collect running summary statistics (e.g. mean/stdev) across a very large number of repeats without keeping every individual run's output; entries here may not define their own `appliedDimensions` (the applied dimension is always 'the Repeat' itself), and each `input` must reference a subTask's output.
 
 A `Repeat`-derived task must define at least one of `outputVariableMap` or `aggregateOutputVariables`.
 
@@ -3973,17 +3976,17 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 ##### Outputs
 
-`[id]`: an `AnnotatedData` whose first column is the range values and whose subsequent columns follow `outputVariableMap` (or which contains only the range values, if `outputVariableMap` is empty). `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
+`[id]`: an `AnnotatedData` with one row per iteration (dimension 0, labeled by the range values) and one entry per `outputVariableMap` key (dimension 1, labeled by the keys); the range values themselves are not a column. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: 2D (or more): first dimension = one row per value in `range`; remaining dimension(s) = one column per entry of `outputVariableMap` (or just the range-values column alone, if `outputVariableMap` is empty). A column whose subTask output is itself multi-dimensional would add further dimensions - not pinned down further here.
+    - Dimensions: 2D (or more). Dimension 0 is the iteration: one row per value in `range`, labeled by those values. Dimension 1 holds the `outputVariableMap` entries, one per key, labeled by the keys (length 0 if `outputVariableMap` is empty). If an entry's own value is not a scalar, its dimensions (with their labels) follow, so a scalar-valued map gives a plain iterations-by-entries table. All entries must have the same shape, since they are stacked into one array; entries of different shapes are an error when the document runs. Labels are text: the range values are written the way numbers appear in formed strings (see `StringFormation`): an integral value without a decimal point (`1`, not `1.0`), otherwise as the shortest decimal that reads back as the same number (`0.5`, `0.25`).
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**
 
 Additional possible outputs beyond the three standard ones:
 
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`, when that attribute is defined.
-    - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation function collapses the `range` dimension of `[id]` (per `Repeat`, the applied dimension defaults to 'the Repeat' itself, i.e. this one) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
+    - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation function collapses the `range` dimension of `[id]` (per `Repeat`, the applied dimension defaults to 'the Repeat' itself, i.e. this one) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry (further dimensions follow the first).
 
 - `[id].range`: Within each iteration, the current value of `range`. Always valid, since `range` is required.
     - Dimensions: Scalar (0-D) per iteration.
@@ -5094,7 +5097,7 @@ Not independently referenceable outside its parent `Loop` - see `Loop` for how i
 Additional possible outputs beyond the three standard ones:
 
 - `#tasks:[loop_id]:loopVariables:[loopvar_id]`: A `LoopVariable`'s current value, addressed this way from within a subTask - not via the `[id]`/`[id].model`/`[id].strings` scheme, since a `LoopVariable` is not itself a `tasks` dictionary entry.
-    - Dimensions: One dimension more than `initialValue` itself, with the added dimension being the parent `Loop`'s `range` - i.e. this holds one `initialValue`-shaped value per iteration, indexed by the loop's range. (`initialValue` is typed `anyType` in the schema, so its own shape is otherwise open/unconstrained.)
+    - Dimensions: The same as `initialValue` itself: the value at the current iteration (`initialValue` on the first, then `subsequentValues` from the previous one), not one value per iteration. (`initialValue` is typed `anyType` in the schema, so its own shape is otherwise open/unconstrained.)
 
 Not independently referenceable outside its parent `Loop`.
 
@@ -5383,6 +5386,8 @@ generic specification cannot say.  One file per topic:
 | `setValues.md` | The keys accepted in a ModelChange's `setValues` |
 | `modelChange.md` | `addElements`, `removeElements` and `replaceElements` |
 | `elementTypes.md` | The `includeTypes` / `excludeTypes` vocabulary of ModelElementList |
+| `jacobian.md` | What `JacobianFull` and `JacobianReduced` compute |
+| `steadyState.md` | What `SteadyState` computes |
 | `validation/` | Rules (`CellML-NNNN`), all `proposed` for now |
 
 Anything marked "To be determined" has not been decided yet.  Until a topic
@@ -5498,6 +5503,24 @@ the model's language is CellML.
 
 To be determined.
 
+### Jacobian (CellML)
+
+*Source: [model_formats/CellML/jacobian.md](model_formats/CellML/jacobian.md)*
+
+What the `Jacobian` task does when the model's language is CellML.
+
+To be determined.  The SBML rules (see `model_formats/SBML/jacobian.md`) do not
+carry over: they are stated in terms of SBML species and compartments.
+
+### SteadyState (CellML)
+
+*Source: [model_formats/CellML/steadyState.md](model_formats/CellML/steadyState.md)*
+
+What the `SteadyState` task does when the model's language is CellML.
+
+To be determined.  The SBML rules (see `model_formats/SBML/steadyState.md`) do not
+carry over: they are stated in terms of SBML species and compartments.
+
 ### Validation Rules (CellML)
 
 **`CellML-0001`** (error) - When the model's language is CellML, a label on its '.model' output must be the name of a variable of the top-level component. ([source](model_formats/CellML/validation/CellML-0001.md))
@@ -5534,6 +5557,8 @@ generic specification cannot say.  One file per topic:
 | `setValues.md` | The keys accepted in a ModelChange's `setValues` |
 | `modelChange.md` | `addElements`, `removeElements` and `replaceElements` |
 | `elementTypes.md` | The `includeTypes` / `excludeTypes` vocabulary of ModelElementList |
+| `jacobian.md` | What `JacobianFull` and `JacobianReduced` compute |
+| `steadyState.md` | What `SteadyState` computes |
 | `validation/` | Rules (`SBML-NNNN`), all `proposed` for now |
 
 Anything marked "To be determined" has not been decided yet.  Until a topic
@@ -5659,6 +5684,97 @@ The vocabulary for ModelElementList's `includeTypes` and `excludeTypes` when
 the model's language is SBML.
 
 To be determined.  The generic description uses `"species"` as an example.
+
+### Jacobian (SBML)
+
+*Source: [model_formats/SBML/jacobian.md](model_formats/SBML/jacobian.md)*
+
+What `JacobianFull` and `JacobianReduced` compute when the model's language is
+SBML (KiSAO:0000812).  These rules are for SBML models; other modeling
+languages need rules of their own (see the same file in their folders).
+
+#### What the matrix holds
+
+*Source: [model_formats/SBML/jacobian.md, line 7](model_formats/SBML/model_formats/SBML/jacobian.md#L7)*
+
+
+* The Jacobian is d(dx_i/dt)/dx_j, evaluated at the model's state as given:
+  its initial values, or the end state of an earlier task that produced it.
+* x is the value of a species by its SBML id: its concentration, or its amount
+  if the species has `hasOnlySubstanceUnits="true"`.  With different
+  compartment sizes, concentration-based and amount-based Jacobians differ, so
+  this choice is part of the definition.
+* Compartment sizes must be constant; a model whose compartments change size
+  (by a rule or an event) has no well-defined Jacobian in this sense.
+
+#### Which species, in which order
+
+*Source: [model_formats/SBML/jacobian.md, line 18](model_formats/SBML/model_formats/SBML/jacobian.md#L18)*
+
+
+* "Species" means the non-boundary species (those with
+  `boundaryCondition="false"`), in the order of the SBML `listOfSpecies`.
+* `JacobianFull` is species x species in that order, with the species ids as
+  the labels of both dimensions.
+
+#### JacobianReduced
+
+*Source: [model_formats/SBML/jacobian.md, line 25](model_formats/SBML/model_formats/SBML/jacobian.md#L25)*
+
+
+* The reduced matrix is taken over the independent species only; the species
+  that a conservation relation makes dependent are dropped.
+* Which species of a conservation relation is dropped is a choice of the
+  simulator, so the labels of the reduced matrix can differ between simulators
+  for the same model.
+* To be determined: define the independent set (for example, the last species
+  of each relation is the dependent one), or leave it open.  Until then, a
+  consumer must read the labels, not assume an order.
+
+#### Open questions
+
+*Source: [model_formats/SBML/jacobian.md, line 36](model_formats/SBML/model_formats/SBML/jacobian.md#L36)*
+
+
+* Whether concentration or amount is the stated choice above for every
+  simulator, or an option of the task.
+* How a model with algebraic rules or events is treated.
+
+### SteadyState (SBML)
+
+*Source: [model_formats/SBML/steadyState.md](model_formats/SBML/steadyState.md)*
+
+What a `SteadyState` task finds when the model's language is SBML.
+
+#### Result
+
+*Source: [model_formats/SBML/steadyState.md, line 5](model_formats/SBML/model_formats/SBML/steadyState.md#L5)*
+
+
+* The task finds a state in which dx_i/dt = 0 for the non-boundary species
+  (see `jacobian.md` for which species, and in which order).
+* The search starts from the model's state as given (its initial values, or
+  the end state of an earlier task).
+* When there is more than one steady state, which one is found is
+  simulator-dependent: it is the one the simulator's root finder reaches from
+  the starting state.
+
+#### Output variables
+
+*Source: [model_formats/SBML/steadyState.md, line 15](model_formats/SBML/model_formats/SBML/steadyState.md#L15)*
+
+
+* `time` is not a valid output variable of a steady state: it has no value
+  there.
+* To be determined: the other legal output variables (species, global
+  parameters and reactions by SBML id, as for `labels.md`).
+
+#### When there is none
+
+*Source: [model_formats/SBML/steadyState.md, line 22](model_formats/SBML/model_formats/SBML/steadyState.md#L22)*
+
+
+* When no steady state is found, the task fails.  There is no partial result.
 
 ### Validation Rules (SBML)
 

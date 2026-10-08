@@ -415,6 +415,13 @@ def _apply_dim_minus(dims, selectors):
     if dims is None:
         return None
     count = len(selectors) if isinstance(selectors, list) else 1
+    if any(is_open(d) for d in dims):
+        # Whatever is removed, the unknown trailing dimensions may remain.
+        known = [d for d in dims if not is_open(d)]
+        if selectors == [OUTERMOST] and known:
+            return dims[1:]
+        return [{"size": None, "labels": None, "source": "runtime", "min": None}
+                for _ in range(max(len(known) - count, 0))] + [d for d in dims if is_open(d)]
     if count >= len(dims):
         return []
     if selectors == [OUTERMOST]:
@@ -460,6 +467,18 @@ def _eval_sourced_labels(labels_spec, scope, shape_of):
     return None
 
 
+# The `source` of the placeholder dimension a "trailing" entry in outputs.json
+# resolves to: zero or more further dimensions (those of the output's own
+# entries), of unknown number, size and labels. Indices that reach it are not
+# judged (it can take any number of them); it never makes the result "still
+# shaped" (SEDBase-0015) on its own.
+OPEN_SOURCE = "open"
+
+
+def is_open(dim):
+    return dim.get("source") == OPEN_SOURCE
+
+
 def resolve_dims(dims_spec, scope, shape_of):
     """dims_spec is outputs.json's own "dimensions" value for one suffix
     entry (see schema/outputs-meta.schema.json's $defs/dimensions) - either
@@ -474,7 +493,11 @@ def resolve_dims(dims_spec, scope, shape_of):
     if isinstance(dims_spec, list):
         result = []
         for d in dims_spec:
-            if "repeat" in d:
+            if "trailing" in d:
+                # The entries' own dimensions follow the listed ones: how many
+                # there are is not statically known (see OPEN_SOURCE).
+                result.append({"size": None, "labels": None, "source": OPEN_SOURCE, "min": None})
+            elif "repeat" in d:
                 rep = d["repeat"]
                 try:
                     over_val = scope.lookup(rep["over"])
@@ -572,14 +595,18 @@ def bind_indices(dims, index_accessors):
     view = list(dims)
     seen = []
     for group in index_groups(index_accessors):
-        k = min(len(group), len(view))
-        seen.extend(view[:k])
+        # An open placeholder (the last dimension) takes any number of indices.
+        has_open = bool(view) and is_open(view[-1])
+        k = len(group) if has_open else min(len(group), len(view))
+        seen.extend(view[j] if j < len(view) else view[-1] for j in range(k))
         if k < len(group):
             break
         new = []
         for j, d in enumerate(view):
             if j < k:
-                if group[j].kind == "range":
+                if is_open(d):
+                    new.append(d)
+                elif group[j].kind == "range":
                     new.append(_sliced_dim(d, group[j]))
             else:
                 new.append(d)

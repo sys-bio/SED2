@@ -777,11 +777,26 @@ def _constant_target_kind(final_value):
     return None, ""
 
 
-def _output_target_kind(entry):
+def _effective_output_type(entry, index_accessors):
+    """The type a reference to a task-output suffix entry has once its own
+    bracket indices are applied: an indexed model is the current value of
+    the element it names (core Types, "Elements of models"), a number, so
+    AnnotatedData; everything else keeps the type outputs.json declares."""
+    declared = entry.get("type") if entry else None
+    if declared == "model" and index_accessors:
+        return "annotatedData"
+    return declared
+
+
+def _output_target_kind(entry, declared=None):
     """(kind, description) of a task-output suffix entry, from its
     outputs.json "type" (model/annotatedData/stringList), for
-    SEDBase-0016/-0017; (None, "") when the entry declares no type."""
-    declared = entry.get("type") if entry else None
+    SEDBase-0016/-0017; (None, "") when the entry declares no type.
+    `declared` overrides the entry's own type (see _effective_output_type)."""
+    if declared is None:
+        declared = entry.get("type") if entry else None
+    if declared == "annotatedData" and entry and entry.get("type") == "model":
+        return "annotatedData", "a model element's value"
     if declared == "model":
         return "model", "a model"
     if declared == "annotatedData":
@@ -951,11 +966,12 @@ def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, 
     problems += sedbase_0011.check(seen_dims, index_accessors, **kwargs)
     problems += sedbase_0014.check(seen_dims, index_accessors, **kwargs)
 
+    effective_type = _effective_output_type(entry, index_accessors)
     if ref_target is not None:
-        kind, description = _output_target_kind(entry)
+        kind, description = _output_target_kind(entry, effective_type)
         problems += _check_ref_target(ref_target, kind, description, **kwargs)
     if ref_type_rule_id is not None and field_kind in _REF_TYPE_KINDS:
-        actual_declared = entry.get("type") if entry else None
+        actual_declared = effective_type
         if actual_declared == "model":
             # A model is a type of its own: never a number, string, boolean,
             # array, or dictionary (ProposedRules.md).
@@ -988,12 +1004,9 @@ def _check_math_field(value, *, class_name, id_value, attr, location) -> list:
     declared type occurs... is called from a shared per-type helper that
     every class's generated validate() invokes automatically for each of
     its own fields of that type"). Called only for a FieldSpec with
-    is_math=True, and only when its value is a literal string - never a
-    reference: per Types-0001.md, "When the math attribute is itself a
-    reference, this and the following math rules... apply only if the
-    reference resolves statically to a string constant", which is out of
-    scope until reference resolution exists (Design.md's Cross-references
-    section), so a referenced math field is silently skipped here.
+    is_math=True, and for any string value: a math string is always math,
+    even when it is just "#constants:v", which is a legal expression made of
+    one reference token (it is not read as a reference to a string).
 
     The four templates/python/rules/Types-000N.py files (copied verbatim
     into ._rules/ at generate time - see Design.md's "fixed function-name
@@ -1482,7 +1495,9 @@ class SedBase:
                         # template actually names.
                         extra["allowed"] = ", ".join(repr(v) for v in spec.enum)
                     problems.append(make_problem(rid, "/" + spec.name, attr=spec.name, **extra))
-                elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value):
+                elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value) and not spec.is_math:
+                    # (A math field is always math, even when the whole string
+                    # is a single reference: see the is_math branch below.)
                     problems.extend(_check_reference_field(
                         value, document=self.get_document(), class_name=self.__class__.__name__,
                         id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
