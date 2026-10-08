@@ -6,6 +6,9 @@ script instead. It reads:
   - core-spec.md           (the document overview, sections 1-N)
   - specsheets/<category>/<ClassName>/<version>/description.md   (one per class)
   - specsheets/<category>/<ClassName>/<version>/validation/*.md   (numbered rules)
+  - model_formats/<Format>/description.md, its topic files (labels.md, setValues.md,
+    modelChange.md, elementTypes.md, ...) and validation/*.md; each model format
+    becomes its own Appendix after the Class Reference
 and writes a single self-contained SPECIFICATION.md at the repo root, with
 relative image links rewritten to resolve from the repo root and
 description-to-description cross-references rewritten to in-document anchors,
@@ -34,6 +37,16 @@ CATEGORY_TITLES = {
     "outputs": "Output Classes",
     "auxiliary": "Auxiliary Classes",
 }
+
+# Topic files of a model format, in the order they appear in its Appendix, with the
+# title each gets. Any other .md file in a format's folder (except description.md)
+# is appended afterwards, alphabetically, titled after its file name.
+FORMAT_TOPICS = [
+    ("labels.md", "Labels"),
+    ("setValues.md", "setValues"),
+    ("modelChange.md", "ModelChange"),
+    ("elementTypes.md", "Element types"),
+]
 
 
 def find_latest_version_dir(class_dir):
@@ -66,6 +79,42 @@ def discover_classes(specsheets_root):
                 classes.append((class_name, os.path.join(class_dir, version)))
         result[category] = classes
     return result
+
+
+def discover_model_formats(model_formats_root):
+    """Return [(format_name, format_dir), ...] sorted alphabetically (case-insensitive).
+
+    A model format is any subdirectory of model_formats/ holding a description.md."""
+    formats = []
+    if os.path.isdir(model_formats_root):
+        for name in sorted(os.listdir(model_formats_root), key=str.lower):
+            d = os.path.join(model_formats_root, name)
+            if os.path.isdir(d) and os.path.isfile(os.path.join(d, "description.md")):
+                formats.append((name, d))
+    return formats
+
+
+def format_topics(format_dir):
+    """Return [(filename, title), ...] for a model format's topic files, in order."""
+    known = [(fn, title) for fn, title in FORMAT_TOPICS if os.path.isfile(os.path.join(format_dir, fn))]
+    known_names = {fn for fn, _ in known}
+    extra = sorted(
+        f for f in os.listdir(format_dir)
+        if f.endswith(".md") and f != "description.md" and f not in known_names
+        and os.path.isfile(os.path.join(format_dir, f))
+    )
+    return known + [(fn, os.path.splitext(fn)[0]) for fn in extra]
+
+
+def appendix_letter(index):
+    """0 -> A, 1 -> B, ... (past Z: AA, AB, ...)."""
+    letters = ""
+    n = index
+    while True:
+        letters = chr(ord("A") + n % 26) + letters
+        n = n // 26 - 1
+        if n < 0:
+            return letters
 
 
 _slug_used = {}
@@ -161,7 +210,7 @@ def add_heading_breadcrumbs(md_text, rel_path):
     return "\n".join(out)
 
 
-def render_validation(validation_dir, rel_dir, rewrite):
+def render_validation(validation_dir, rel_dir, rewrite, heading="##### Validation Rules"):
     """Render a class's numbered rules. rel_dir is the version dir relative to the repo root
     (for the bread crumbs); rewrite is applied to rule text/bodies to fix up their links."""
     if not os.path.isdir(validation_dir):
@@ -169,7 +218,7 @@ def render_validation(validation_dir, rel_dir, rewrite):
     files = sorted(f for f in os.listdir(validation_dir) if f.endswith(".md"))
     if not files:
         return ""
-    parts = ["##### Validation Rules\n"]
+    parts = [heading + "\n"]
     for fn in files:
         with open(os.path.join(validation_dir, fn), encoding="utf-8") as f:
             text = f.read()
@@ -207,6 +256,7 @@ def main():
         sys.exit(1)
 
     classes_by_category = discover_classes(specsheets_root)
+    model_formats = discover_model_formats(os.path.join(root, "model_formats"))
 
     reset_slugs()
     # Pre-register anchors for every class so cross-references can resolve
@@ -220,6 +270,16 @@ def main():
             anchor = slugify(class_name)
             anchor_by_class_relpath[desc_relpath] = anchor
             class_anchor[(category, class_name)] = anchor
+
+    # Appendix headings (one per model format) and their topic headings.
+    appendix_title = {}
+    appendix_anchor = {}
+    topic_anchor = {}
+    for i, (fmt_name, fmt_dir) in enumerate(model_formats):
+        appendix_title[fmt_name] = f"Appendix {appendix_letter(i)}: {fmt_name}"
+        appendix_anchor[fmt_name] = slugify(appendix_title[fmt_name])
+        for fn, title in format_topics(fmt_dir):
+            topic_anchor[(fmt_name, fn)] = slugify(f"{title} ({fmt_name})")
 
     with open(core_spec_path, encoding="utf-8") as f:
         core_spec_text = f.read()
@@ -260,6 +320,10 @@ def main():
         out.append(f"    - [{cat_title}](#{slugify(cat_title)})")
         for class_name, _ in classes_by_category[category]:
             out.append(f"        - [{class_name}](#{class_anchor[(category, class_name)]})")
+    for fmt_name, fmt_dir in model_formats:
+        out.append(f"- [{appendix_title[fmt_name]}](#{appendix_anchor[fmt_name]})")
+        for fn, title in format_topics(fmt_dir):
+            out.append(f"    - [{title} ({fmt_name})](#{topic_anchor[(fmt_name, fn)]})")
     out.append("")
     out.append("---")
     out.append("")
@@ -310,11 +374,54 @@ def main():
         out.append("---")
         out.append("")
 
+    # --- Appendices: one per model format ---
+    for fmt_name, fmt_dir in model_formats:
+        rel_dir = os.path.relpath(fmt_dir, root).replace(os.sep, "/")
+        rewrite = lambda text, rel_dir=rel_dir: rewrite_links(text, rel_dir, anchor_by_class_relpath)
+
+        out.append(f"## {appendix_title[fmt_name]}")
+        out.append("")
+        out.append(source_link(f"{rel_dir}/description.md"))
+        out.append("")
+        with open(os.path.join(fmt_dir, "description.md"), encoding="utf-8") as f:
+            desc_text = f.read()
+        desc_text = add_heading_breadcrumbs(desc_text, f"{rel_dir}/description.md")
+        desc_text = drop_first_heading(desc_text)
+        desc_text = shift_headings(desc_text, 2)
+        out.append(rewrite(desc_text.strip()))
+        out.append("")
+
+        for fn, title in format_topics(fmt_dir):
+            with open(os.path.join(fmt_dir, fn), encoding="utf-8") as f:
+                topic_text = f.read()
+            topic_text = add_heading_breadcrumbs(topic_text, f"{rel_dir}/{fn}")
+            topic_text = drop_first_heading(topic_text)
+            topic_text = shift_headings(topic_text, 2)  # "## X" -> "#### X"
+            out.append(f"### {title} ({fmt_name})")
+            out.append("")
+            out.append(source_link(f"{rel_dir}/{fn}"))
+            out.append("")
+            out.append(rewrite(topic_text.strip()))
+            out.append("")
+
+        validation_md = render_validation(
+            os.path.join(fmt_dir, "validation"),
+            rel_dir,
+            rewrite,
+            heading=f"### Validation Rules ({fmt_name})",
+        )
+        if validation_md:
+            out.append(validation_md.strip())
+            out.append("")
+        out.append("---")
+        out.append("")
+
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(out).rstrip() + "\n")
 
     print(f"Wrote {out_path}")
     print(f"  {len(sum(classes_by_category.values(), []))} classes across {len(CATEGORIES)} categories")
+    print(f"  {len(model_formats)} model format appendices")
     print("")
     print("To convert with pandoc (from the repo root, so relative image paths resolve):")
     print("  pandoc SPECIFICATION.md -o SPECIFICATION.html --standalone --toc --resource-path=.")

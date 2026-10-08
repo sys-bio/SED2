@@ -1,0 +1,57 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_num": 1.5,
+    "k_strings": [
+      "a",
+      "b"
+    ],
+    "k_array": [
+      10,
+      20,
+      30
+    ],
+    "k_obj": {
+      "a": 1,
+      "b": 2
+    },
+    "k_str": "hello",
+    "vec": [
+      1,
+      2,
+      3
+    ],
+    "al": "#constants:vec",
+    "al2": "#constants:al"
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "r1": {
+      "_type": "relabelData",
+      "input": "#constants:al2[1]",
+      "labels": "#constants:k_strings"
+    }
+  }
+}

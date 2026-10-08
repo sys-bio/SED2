@@ -76,6 +76,16 @@ title: SED2 Specification
         - [Span](#span)
         - [TaskParameter](#taskparameter)
         - [WorkingAlgorithm](#workingalgorithm)
+- [Appendix A: CellML](#appendix-a-cellml)
+    - [Labels (CellML)](#labels-cellml)
+    - [setValues (CellML)](#setvalues-cellml)
+    - [ModelChange (CellML)](#modelchange-cellml)
+    - [Element types (CellML)](#element-types-cellml)
+- [Appendix B: SBML](#appendix-b-sbml)
+    - [Labels (SBML)](#labels-sbml)
+    - [setValues (SBML)](#setvalues-sbml)
+    - [ModelChange (SBML)](#modelchange-sbml)
+    - [Element types (SBML)](#element-types-sbml)
 
 ---
 
@@ -795,7 +805,7 @@ Every value in a SED2 document is either a literal value or a *reference* to a v
 Any indexing must select at least one entry.  Whitespace is allowed.
 
 **Elements of models.**
-The current numerical value of an element of a model may be obtained by label, i.e. `#tasks:mod1.model["S1"]`.  Every model format (i.e. SBML, CellML) must define its own set of legal labels to access its internal elements, but it will generally be true that `"S1"` will mean "The element with the id "S1" in the model," regardless of format.
+The current numerical value of an element of a model may be obtained by label, i.e. `#tasks:mod1.model["S1"]`.  Every model format (e.g. SBML, CellML) must define its own set of legal labels to access its internal elements, but it will generally be true that `"S1"` will mean "The element with the id "S1" in the model," regardless of format.
 
 A format-aware library will be able to validate these references, checking (for example) whether "S1" is indeed the id of an element in the referenced model.
 
@@ -5354,5 +5364,320 @@ Not independently referenceable - only exists as an entry in its parent task's `
 **`WorkingAlgorithm-0001`** (error) - The algorithm attribute of a WorkingAlgorithm is required. ([source](specsheets/auxiliary/WorkingAlgorithm/v1.0.0/validation/WorkingAlgorithm-0001.md))
 
 > `algorithm` is required. Its type is `StringOrRef` - a string value or a reference to one.
+
+---
+
+## Appendix A: CellML
+
+*Source: [model_formats/CellML/description.md](model_formats/CellML/description.md)*
+
+Language URN: `urn:sedml:language:cellml`.  (Whether version-specific URNs
+are also accepted is not decided here.)
+
+This folder records what SED2 needs to know about CellML models that the
+generic specification cannot say.  One file per topic:
+
+| File | Topic |
+|---|---|
+| `labels.md` | The top-level component's namespace, and what a label or index on `.model` may refer to |
+| `setValues.md` | The keys accepted in a ModelChange's `setValues` |
+| `modelChange.md` | `addElements`, `removeElements` and `replaceElements` |
+| `elementTypes.md` | The `includeTypes` / `excludeTypes` vocabulary of ModelElementList |
+| `validation/` | Rules (`CellML-NNNN`), all `proposed` for now |
+
+Anything marked "To be determined" has not been decided yet.  Until a topic
+is filled in, validation must assume that anything is potentially valid.
+
+### Labels (CellML)
+
+*Source: [model_formats/CellML/labels.md](model_formats/CellML/labels.md)*
+
+How a label on a model's `.model` output (e.g. `#tasks:mod1.model["V"]`) is
+interpreted when the model's language is CellML.  See also
+`specsheets/core/Types/v1.0.0/description.md`, "Elements of models".
+
+#### Namespaces
+
+*Source: [model_formats/CellML/labels.md, line 7](model_formats/CellML/model_formats/CellML/labels.md#L7)*
+
+
+CellML has a single namespace for the top-level component.  The variables of
+that component are the elements a SED2 label can name.
+
+Elements of subcomponents (components nested by encapsulation, or imported
+components) are officially inaccessible: the CellML specification treats a
+component's encapsulated children as internal, so SED2 does not give them a
+label, and no qualified form such as `"sub.x"` is defined.  To expose a value
+from a subcomponent, the model itself must connect it to a variable of the
+top-level component.
+
+#### Labels on `.model`
+
+*Source: [model_formats/CellML/labels.md, line 19](model_formats/CellML/model_formats/CellML/labels.md#L19)*
+
+
+`#tasks:mod1.model["V"]` means the current value of the variable named `V`
+in the top-level component.  The label must be a valid CellML identifier that
+names such a variable.
+
+#### Numerical indexing
+
+*Source: [model_formats/CellML/labels.md, line 25](model_formats/CellML/model_formats/CellML/labels.md#L25)*
+
+
+CellML variables are identified by name, not by position, so numerical
+indexing of `.model` (e.g. `.model[0]`) is not defined.
+
+#### Open questions
+
+*Source: [model_formats/CellML/labels.md, line 30](model_formats/CellML/model_formats/CellML/labels.md#L30)*
+
+
+* Whether and how a variable's value should be reachable when it is only
+  exposed through an interface connection to a subcomponent is not decided.
+* Variables that are constant versus computed (state, algebraic) are both
+  addressable by label; whether a computed value is available at a given
+  simulation point is the simulator's concern, not a validation rule.
+
+Rules: CellML-0001, CellML-0002, CellML-0003 (in `validation/`).
+
+### setValues (CellML)
+
+*Source: [model_formats/CellML/setValues.md](model_formats/CellML/setValues.md)*
+
+Keys accepted in a ModelChange's `setValues` when the model's language is CellML.
+
+To be determined.
+
+Notes for whoever fills this in:
+
+* Plain variable-name keys presumably follow `labels.md`.
+* Whether any format-specific keys (qualified names, attributes of a variable)
+  exist is not decided.
+
+### ModelChange (CellML)
+
+*Source: [model_formats/CellML/modelChange.md](model_formats/CellML/modelChange.md)*
+
+How `addElements`, `removeElements` and `replaceElements` behave when the
+model's language is CellML.
+
+To be determined.
+
+#### addElements
+
+*Source: [model_formats/CellML/modelChange.md, line 8](model_formats/CellML/model_formats/CellML/modelChange.md#L8)*
+
+
+To be determined.  Open: the syntax of the added string, and which element
+kinds may be added.
+
+#### removeElements
+
+*Source: [model_formats/CellML/modelChange.md, line 13](model_formats/CellML/model_formats/CellML/modelChange.md#L13)*
+
+
+To be determined.  Open: which element kinds may be removed, and what happens
+to elements that still refer to a removed one (for example a variable that is
+connected to another component's variable).
+
+#### replaceElements
+
+*Source: [model_formats/CellML/modelChange.md, line 19](model_formats/CellML/model_formats/CellML/modelChange.md#L19)*
+
+
+To be determined.  The generic specification flags `replaceElements` as a
+candidate for removal from SED2; fill this in only if it is kept.
+
+### Element types (CellML)
+
+*Source: [model_formats/CellML/elementTypes.md](model_formats/CellML/elementTypes.md)*
+
+The vocabulary for ModelElementList's `includeTypes` and `excludeTypes` when
+the model's language is CellML.
+
+To be determined.
+
+### Validation Rules (CellML)
+
+**`CellML-0001`** (error) - When the model's language is CellML, a label on its '.model' output must be the name of a variable of the top-level component. ([source](model_formats/CellML/validation/CellML-0001.md))
+
+> Checked by a format-aware library only.  Without one, validation assumes the
+> label is potentially valid.
+
+**`CellML-0002`** (error) - When the model's language is CellML, a label on its '.model' output must not name a variable that exists only in a subcomponent. ([source](model_formats/CellML/validation/CellML-0002.md))
+
+> Elements of subcomponents are officially inaccessible in CellML (see
+> labels.md).  If the top-level component has a variable of the same name,
+> the label names that variable and this rule does not fire.
+
+**`CellML-0003`** (error) - When the model's language is CellML, a numerical index on its '.model' output is not valid. ([source](model_formats/CellML/validation/CellML-0003.md))
+
+> CellML variables are identified by name only (see labels.md).  Labels
+> are the only supported form.
+
+---
+
+## Appendix B: SBML
+
+*Source: [model_formats/SBML/description.md](model_formats/SBML/description.md)*
+
+Language URN: `urn:sedml:language:sbml`.  (Whether level/version-specific
+URNs are also accepted is not decided here.)
+
+This folder records what SED2 needs to know about SBML models that the
+generic specification cannot say.  One file per topic:
+
+| File | Topic |
+|---|---|
+| `labels.md` | The SId namespace, and what a label or index on `.model` may refer to |
+| `setValues.md` | The keys accepted in a ModelChange's `setValues` |
+| `modelChange.md` | `addElements`, `removeElements` and `replaceElements` |
+| `elementTypes.md` | The `includeTypes` / `excludeTypes` vocabulary of ModelElementList |
+| `validation/` | Rules (`SBML-NNNN`), all `proposed` for now |
+
+Anything marked "To be determined" has not been decided yet.  Until a topic
+is filled in, validation must assume that anything is potentially valid.
+
+### Labels (SBML)
+
+*Source: [model_formats/SBML/labels.md](model_formats/SBML/labels.md)*
+
+How a label on a model's `.model` output (e.g. `#tasks:mod1.model["S1"]`) is
+interpreted when the model's language is SBML.  See also
+`specsheets/core/Types/v1.0.0/description.md`, "Elements of models".
+
+#### Namespaces
+
+*Source: [model_formats/SBML/labels.md, line 7](model_formats/SBML/model_formats/SBML/labels.md#L7)*
+
+
+SBML uses an `SId` namespace for most mathematically relevant elements.  In
+SBML Level 3 that namespace covers, within one model, the `id` of: the
+function definitions, unit definitions, compartments, species, global
+parameters, reactions, rules' targets (by variable), and the elements of
+packages that declare ids in the same namespace.  Ids in this namespace are
+unique within the model, which is what makes a bare label unambiguous.
+
+The main exception is the local parameters of reactions (`localParameter`, or
+`parameter` in a kinetic law before Level 3).  Their ids are scoped to the
+reaction that holds them: two reactions may each have a local parameter named
+`k`, and a local parameter may share an id with a global element.  A local
+parameter is therefore not reachable through a bare label.
+
+#### Labels on `.model`
+
+*Source: [model_formats/SBML/labels.md, line 22](model_formats/SBML/model_formats/SBML/labels.md#L22)*
+
+
+`#tasks:mod1.model["S1"]` means the current value of the element whose `SId`
+is `S1`, for example:
+
+* a species: its amount or concentration, as the model defines it;
+* a compartment: its size;
+* a global parameter: its value;
+* a reaction: its current flux.
+
+The label must be a valid `SId` that exists in the model's `SId` namespace.
+
+#### Numerical indexing
+
+*Source: [model_formats/SBML/labels.md, line 34](model_formats/SBML/model_formats/SBML/labels.md#L34)*
+
+
+SBML has no ordered, numbered collection of such elements that is part of the
+format, so numerical indexing of `.model` (e.g. `.model[0]`) is not defined.
+
+#### Open questions
+
+*Source: [model_formats/SBML/labels.md, line 39](model_formats/SBML/model_formats/SBML/labels.md#L39)*
+
+
+* How to address a reaction's local parameters (for example a qualified label
+  `"reaction1.k"`) is not decided; until it is, such references are not valid.
+* Which element kinds beyond species, compartments, global parameters and
+  reactions are meaningful targets (for example stoichiometries given by
+  rules) is not decided.
+
+Rules: SBML-0001, SBML-0002, SBML-0003 (in `validation/`).
+
+### setValues (SBML)
+
+*Source: [model_formats/SBML/setValues.md](model_formats/SBML/setValues.md)*
+
+Keys accepted in a ModelChange's `setValues` when the model's language is SBML.
+
+To be determined.
+
+Notes for whoever fills this in:
+
+* Plain `SId` keys such as `"S1"` presumably follow `labels.md`.
+* The generic ModelChange description mentions model-format-specific keys such
+  as `"S1.boundary"`; the grammar of those keys (which attributes may be set,
+  how they are spelled) is not yet written down.
+
+### ModelChange (SBML)
+
+*Source: [model_formats/SBML/modelChange.md](model_formats/SBML/modelChange.md)*
+
+How `addElements`, `removeElements` and `replaceElements` behave when the
+model's language is SBML.
+
+To be determined.
+
+#### addElements
+
+*Source: [model_formats/SBML/modelChange.md, line 8](model_formats/SBML/model_formats/SBML/modelChange.md#L8)*
+
+
+To be determined.  Open: the syntax of the added string (the generic
+description mentions an Antimony-formatted string; whether SBML fragments are
+also allowed is not decided), and which element kinds may be added.
+
+#### removeElements
+
+*Source: [model_formats/SBML/modelChange.md, line 14](model_formats/SBML/model_formats/SBML/modelChange.md#L14)*
+
+
+To be determined.  Open: which element kinds may be removed, and what happens
+to elements that still refer to a removed one (for example a species used by
+a reaction).
+
+#### replaceElements
+
+*Source: [model_formats/SBML/modelChange.md, line 20](model_formats/SBML/model_formats/SBML/modelChange.md#L20)*
+
+
+To be determined.  The generic specification flags `replaceElements` as a
+candidate for removal from SED2; fill this in only if it is kept.
+
+### Element types (SBML)
+
+*Source: [model_formats/SBML/elementTypes.md](model_formats/SBML/elementTypes.md)*
+
+The vocabulary for ModelElementList's `includeTypes` and `excludeTypes` when
+the model's language is SBML.
+
+To be determined.  The generic description uses `"species"` as an example.
+
+### Validation Rules (SBML)
+
+**`SBML-0001`** (error) - When the model's language is SBML, a label on its '.model' output must be the SId of an element in the model's SId namespace that has a numerical value. ([source](model_formats/SBML/validation/SBML-0001.md))
+
+> Checked by a format-aware library only.  Without one, validation assumes the
+> label is potentially valid.  Elements with a numerical value include species,
+> compartments, global parameters and reactions (see labels.md).
+
+**`SBML-0002`** (error) - When the model's language is SBML, a label on its '.model' output must not name a reaction's local parameter. ([source](model_formats/SBML/validation/SBML-0002.md))
+
+> Local parameters are scoped to their reaction (see labels.md), so a bare
+> label cannot refer to them unambiguously.  This applies even when a local
+> parameter happens to share its id with a global element: the label then names
+> the global element, and this rule does not fire.
+
+**`SBML-0003`** (error) - When the model's language is SBML, a numerical index on its '.model' output is not valid. ([source](model_formats/SBML/validation/SBML-0003.md))
+
+> SBML defines no numbered collection of value-bearing elements for `.model` to
+> index into (see labels.md).  Labels are the only supported form.
 
 ---

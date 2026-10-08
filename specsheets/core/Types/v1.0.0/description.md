@@ -29,7 +29,7 @@ Every value in a SED2 document is either a literal value or a *reference* to a v
 Any indexing must select at least one entry.  Whitespace is allowed.
 
 **Elements of models.**
-The current numerical value of an element of a model may be obtained by label, i.e. `#tasks:mod1.model["S1"]`.  Every model format (i.e. SBML, CellML) must define its own set of legal labels to access its internal elements, but it will generally be true that `"S1"` will mean "The element with the id "S1" in the model," regardless of format.
+The current numerical value of an element of a model may be obtained by label, i.e. `#tasks:mod1.model["S1"]`.  Every model format (e.g. SBML, CellML) must define its own set of legal labels to access its internal elements, but it will generally be true that `"S1"` will mean "The element with the id "S1" in the model," regardless of format.
 
 A format-aware library will be able to validate these references, checking (for example) whether "S1" is indeed the id of an element in the referenced model.
 
