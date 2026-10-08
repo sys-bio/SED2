@@ -364,6 +364,19 @@ TEST(ApiTest, ApplyIndicesOnLiterals) {
         {"[[1,2],[3,4]]", "[1][0]", "3"},
         {"[[1,2],[3,4]]", "[0:2][1]", "[3,4]"},
         {"[[1,2],[3,4]]", "[0:2][0:1]", "[[1,2]]"},
+        {"[[1,2],[3,4],[5,6]]", "[0:2][1]", "[3,4]"},
+        {"[[1,2],[3,4],[5,6]]", "[0:2, 1]", "[2,4]"},
+        {"[[1,2],[3,4],[5,6]]", "[1:3, 0]", "[3,5]"},
+        {"[[1,2],[3,4],[5,6]]", "[:, 1]", "[2,4,6]"},
+        {"[[1,2],[3,4],[5,6]]", "[1, 0]", "3"},
+        {"[[1,2],[3,4],[5,6]]", "[1, :]", "[3,4]"},
+        {"[[1,2],[3,4],[5,6]]", "[0:2, 0:1]", "[[1],[3]]"},
+        {"[[1,2],[3,4],[5,6]]", "[0:2, 1][0]", "2"},
+        {"[[1,2],[3,4],[5,6]]", "[0:2][1, 0]", "3"},
+        {"[[1,2],[3,4],[5,6]]", "[0:3][1:3][1]", "[5,6]"},
+        {R"({"S1":[1,2,3],"S2":[4,5,6]})", "['S2', 1:]", "[5,6]"},
+        {R"([{"a":1},{"a":2}])", "[0:2, 'a']", "[1,2]"},
+        {"[[1,2],[3,4]]", "[2:2, 9]", "[]"},
         {R"({"x":null})", "['x']", "null"},
         {"5", "", "5"},
         {R"("abc")", "", R"("abc")"},
@@ -401,12 +414,30 @@ TEST(ApiTest, ApplyIndicesRejectsAnIndexThatDoesNotFit) {
         {R"("abc")", "[0]"},
         {"null", "[0]"},
         {"[1,2,3]", "[0][0]"},
+        {"[[1,2],[3,4]]", "[0:2][2]"},
+        {"[[1,2],[3,4]]", "[0:2, 2]"},
+        {"[[1,2],[3,4]]", "[0:2]['S1']"},
+        {"[1,2,3]", "[0, 0]"},
+        {"[[1,2],[3,4]]", "[0:2, 0, 0]"},
     };
     for (const auto& c : cases) {
         SCOPED_TRACE(std::string(c.first) + " " + c.second);
         std::string msg = error_of([&] { apply_indices(J(c.first), std::string(c.second)); });
         EXPECT_TRUE(contains(msg, "SEDBase-0012")) << msg;
     }
+}
+
+TEST(ApiTest, ParseMarksTheIndicesOfOneBracket) {
+    ParsedReference p = parse_reference("#tasks:sim1[0:2, 'S1'][1]");
+    ASSERT_EQ(p.accessors.size(), 3u);
+    EXPECT_FALSE(p.accessors[0].index.same_bracket);
+    EXPECT_TRUE(p.accessors[1].index.same_bracket);
+    EXPECT_FALSE(p.accessors[2].index.same_bracket);
+    EXPECT_TRUE(p.accessors[0].index.is_range());
+    EXPECT_TRUE(p.accessors[1].index.is_label());
+    EXPECT_TRUE(p.accessors[2].index.is_int());
+    ParsedReference q = parse_reference("#tasks:sim1[0][1]");
+    EXPECT_FALSE(q.accessors[1].index.same_bracket);
 }
 
 TEST(ApiTest, ApplyIndicesRejectsDotAccessors) {

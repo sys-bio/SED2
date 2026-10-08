@@ -176,7 +176,7 @@ def test_parse_reference_path_and_dot_and_label():
     ("#tasks:sim1[:3]", [("index", t.RefIndex("range", (None, 3)))]),
     ("#tasks:sim1[2:]", [("index", t.RefIndex("range", (2, None)))]),
     ("#tasks:sim1[0][1]", [("index", t.RefIndex("int", 0)), ("index", t.RefIndex("int", 1))]),
-    ("#tasks:sim1[0,1]", [("index", t.RefIndex("int", 0)), ("index", t.RefIndex("int", 1))]),
+    ("#tasks:sim1[0,1]", [("index", t.RefIndex("int", 0)), ("index", t.RefIndex("int", 1, same_bracket=True))]),
     ('#tasks:sim1["S1"]', [("index", t.RefIndex("label", "S1"))]),
     ("#tasks:sim1.range", [("dot", "range")]),
     ("#tasks:sim1.model[0]", [("dot", "model"), ("index", t.RefIndex("int", 0))]),
@@ -273,6 +273,21 @@ def test_get_sed_reference_unrecognized_collection_or_no_document(doc):
     ([[1, 2], [3, 4]], "[1][0]", 3),
     ([[1, 2], [3, 4]], "[0:2][1]", [3, 4]),                 # a range keeps its dimension; [1] then indexes it
     ([[1, 2], [3, 4]], "[0:2][0:1]", [[1, 2]]),
+    # separate brackets chain (Python's x[a:b][c]); indices inside ONE bracket
+    # apply to consecutive dimensions (numpy's x[a:b, c])
+    ([[1, 2], [3, 4], [5, 6]], "[0:2][1]", [3, 4]),
+    ([[1, 2], [3, 4], [5, 6]], "[0:2, 1]", [2, 4]),
+    ([[1, 2], [3, 4], [5, 6]], "[1:3, 0]", [3, 5]),
+    ([[1, 2], [3, 4], [5, 6]], "[:, 1]", [2, 4, 6]),
+    ([[1, 2], [3, 4], [5, 6]], "[1, 0]", 3),
+    ([[1, 2], [3, 4], [5, 6]], "[1, :]", [3, 4]),
+    ([[1, 2], [3, 4], [5, 6]], "[0:2, 0:1]", [[1], [3]]),
+    ([[1, 2], [3, 4], [5, 6]], "[0:2, 1][0]", 2),
+    ([[1, 2], [3, 4], [5, 6]], "[0:2][1, 0]", 3),
+    ([[1, 2], [3, 4], [5, 6]], "[0:3][1:3][1]", [5, 6]),
+    ({"S1": [1, 2, 3], "S2": [4, 5, 6]}, "['S2', 1:]", [5, 6]),
+    ([{"a": 1}, {"a": 2}], "[0:2, 'a']", [1, 2]),
+    ([[1, 2], [3, 4]], "[2:2, 9]", []),                   # nothing selected: nothing to check further in
     ({"x": None}, "['x']", None),
     (5, "", 5),                                             # no indices: the value itself
     ("abc", "", "abc"),
@@ -301,10 +316,24 @@ def test_apply_indices_accepts_text_parsed_reference_or_index_objects():
     ("abc", "[0]"),                      # strings are scalars
     (None, "[0]"),
     ([1, 2, 3], "[0][0]"),               # the second index hits a scalar
+    ([[1, 2], [3, 4]], "[0:2][2]"),      # chained: row 2 of a two-row slice
+    ([[1, 2], [3, 4]], "[0:2, 2]"),      # comma: column 2 of two-column rows
+    ([[1, 2], [3, 4]], "[0:2]['S1']"),   # a label into the slice, which is a list
+    ([1, 2, 3], "[0, 0]"),               # the second index of a bracket hits a scalar
+    ([[1, 2], [3, 4]], "[0:2, 0, 0]"),
 ])
 def test_apply_indices_rejects_an_index_that_does_not_fit(value, accessors):
     with pytest.raises(t.ApiError, match="SEDBase-0012"):
         t.apply_indices(value, accessors)
+
+
+def test_parse_reference_marks_the_indices_of_one_bracket():
+    p = t.parse_reference("#tasks:sim1[0:2, 'S1'][1]")
+    assert [(kind, idx.same_bracket) for kind, idx in p.accessors] == [
+        ("index", False), ("index", True), ("index", False)]
+    assert [idx.kind for _, idx in p.accessors] == ["range", "label", "int"]
+    q = t.parse_reference("#tasks:sim1[0][1]")
+    assert [idx.same_bracket for _, idx in q.accessors] == [False, False]
 
 
 def test_apply_indices_rejects_dot_accessors():

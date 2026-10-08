@@ -16,7 +16,8 @@ For a subTask of a Repeat R, a reference may additionally target:
 - any earlier sibling subTask of R;
 - anything that R itself was allowed to reference;
 - R itself, or any Repeat enclosing R, but only through .range/.index
-  or a loopVariables child (see SEDBase-0013).
+  (for a ParameterScan: .ranges/.indexes/.model) or a loopVariables child
+  (see SEDBase-0013).
 
 A task never references itself. Since everything must be earlier, cycles are
 impossible, and the document is always a DAG executable in file order.

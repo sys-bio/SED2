@@ -1,6 +1,6 @@
 ---
 id: SEDBase-0013
-rule: "A reference to a Repeat's subTasks, its .range/.index outputs, or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat)."
+rule: "A reference to a Repeat's subTasks, its .range/.index outputs (or a ParameterScan's .ranges, .indexes or .model output), or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat)."
 message: "{class} '{id}' references '{value}', which lies inside Repeat '{resolved-value}'; only that Repeat's own subTasks may reference into it."
 severity: error
 status: active
@@ -10,8 +10,9 @@ check: handwritten
 Consolidates three rules that were drafted separately (AbstractTask-0004,
 Repeat-0007, Loop-0006) into one, moved to SEDBase rather than AbstractTask
 so the same restriction reaches Plots and Reports too, not just other tasks.
-A subTask runs once per iteration, and a Repeat's .range/.index and loop
-variables only have a value during one, so a reference from outside that
+A subTask runs once per iteration, and a Repeat's .range/.index, a
+ParameterScan's .ranges, .indexes and .model (the model as modified for the
+current iteration) and loop variables only have a value during one, so a reference from outside that
 Repeat's own subTasks has no single well-defined value.
 
 This never blocks a Repeat's own outputVariableMap (Repeat-0008),

@@ -305,31 +305,83 @@ inline std::string element_repr(SedBase* elem) {
 
 #ifdef SED2_REFRULES_SHAPE
 
+/// follow_constant_alias()'s result: the followed value, or why it could not be
+/// followed ("unresolved": the chain leads nowhere that can be evaluated here -
+/// a missing constant, a cycle, a dot-accessor; some other rule reports those -
+/// or "index": an index in the chain does not fit the value it is applied to,
+/// with bad the index as SEDBase-0012's {subvalue} prints it and literal_text
+/// the value indexed).
+struct Followed {
+    oshape::Literal value;
+    std::string failure;   // "", "unresolved" or "index"
+    std::string bad;
+    std::string literal_text;
+};
+
+/// A constant's value once it has been followed through every reference it is
+/// made of (SEDBase-0012.md: "A constant whose value is itself a reference is
+/// followed first"): for a value that is a reference string to another
+/// constant, that constant's value, itself followed, with the reference's own
+/// bracket indices applied - so an alias such as "#constants:table['S2']" is its
+/// row, not the whole table, and an alias of an alias is followed to the end. A
+/// reference to a task, output or style is returned as the element (its indices
+/// are not applied).
+inline Followed follow_constant_alias(SedBase* document, const Json& value, const std::set<std::string>& seen) {
+    Followed out;
+    out.value.kind = oshape::Literal::JSON;
+    out.value.j = value;
+    if (!is_ref_string(value)) return out;
+    ParsedReference inner = parse_reference(value.as<std::string>());
+    if (!inner.collection || *inner.collection != "constants") {
+        GetRef g = resolve_target(document, inner);
+        if (g.resolved.raw) {
+            out.value.j = *g.resolved.raw;
+        } else if (g.resolved.elem) {
+            out.value.kind = oshape::Literal::ELEMENT;
+            out.value.j = Json();
+            out.value.element_repr = element_repr(g.resolved.elem);
+        } else {
+            out.value.kind = oshape::Literal::NONE;
+            out.value.j = Json();
+        }
+        return out;
+    }
+    const AnyDictCollection* coll = document ? document->find_any_dict_collection("constants") : nullptr;
+    const Json* stored = (coll && inner.path.size() == 1) ? coll->find(inner.path[0]) : nullptr;
+    if (!stored || seen.count(inner.path[0]) || inner.first_dot()) {
+        out.failure = "unresolved";
+        return out;
+    }
+    std::set<std::string> next = seen;
+    next.insert(inner.path[0]);
+    Followed base = follow_constant_alias(document, *stored, next);
+    if (!base.failure.empty()) return base;
+    oshape::IndexResult ir = oshape::index_into_literal(base.value, inner.indices());
+    if (!ir.ok) {
+        out.failure = "index";
+        out.bad = ir.bad_subvalue;
+        out.literal_text = fmt_literal(base.value);
+        return out;
+    }
+    out.value = ir.value;
+    return out;
+}
+
 inline std::vector<ValidationProblem> check_constant_accessor(const ParsedReference& parsed, const Json& raw,
                                                               SedBase* document, const RuleCtx& ctx,
                                                               const RefFieldInfo& info) {
     auto dot = parsed.first_dot();
     if (dot) return rules::sedbase_0008::check(std::optional<bool>(false), dot, ctx);
     std::vector<RefIndex> index_accessors = parsed.indices();
-    oshape::Literal lit;
-    lit.kind = oshape::Literal::JSON;
-    lit.j = raw;
-    if (is_ref_string(raw)) {
-        // SEDBase-0012.md: "A constant whose value is itself a reference is
-        // followed first." One hop only.
-        ParsedReference inner_parsed = parse_reference(raw.as<std::string>());
-        GetRef inner = resolve_target(document, inner_parsed);
-        if (inner.resolved.raw) {
-            lit.j = *inner.resolved.raw;
-        } else if (inner.resolved.elem) {
-            lit.kind = oshape::Literal::ELEMENT;
-            lit.j = Json();
-            lit.element_repr = element_repr(inner.resolved.elem);
-        } else {
-            lit.kind = oshape::Literal::NONE;
-            lit.j = Json();
-        }
+    // SEDBase-0012.md: "A constant whose value is itself a reference is
+    // followed first" - through a chain of constants and with each alias's own
+    // indices applied (follow_constant_alias).
+    Followed followed = follow_constant_alias(document, raw, {});
+    if (!followed.failure.empty()) {
+        if (followed.failure == "index") return rules::sedbase_0012::check(false, followed.bad, followed.literal_text, ctx);
+        return {};
     }
+    oshape::Literal lit = followed.value;
     oshape::IndexResult ir = oshape::index_into_literal(lit, index_accessors);
     if (!ir.ok) return rules::sedbase_0012::check(false, ir.bad_subvalue, fmt_literal(lit), ctx);
     if (info.ref_target) {
@@ -390,10 +442,13 @@ inline std::vector<ValidationProblem> check_output_shape_and_ref_type(const Pars
 
     std::vector<ValidationProblem> problems = rules::sedbase_0008::check(res.ok, res.dot_name, ctx);
     if (res.ok != std::optional<bool>(true)) return problems;
-    append(problems, rules::sedbase_0009::check(res.dims_before, res.index_accessors, ctx));
-    append(problems, rules::sedbase_0010::check(res.dims_before, res.index_accessors, ctx));
-    append(problems, rules::sedbase_0011::check(res.dims_before, res.index_accessors, ctx));
-    append(problems, rules::sedbase_0014::check(res.dims_before, res.index_accessors, ctx));
+    // Each rule judges an index against the dimension that index is applied
+    // to (chained brackets: the dimension as the earlier ranges left it).
+    oshape::OptDims seen_dims = oshape::bind_indices(res.dims_before, res.index_accessors).seen;
+    append(problems, rules::sedbase_0009::check(seen_dims, res.index_accessors, ctx));
+    append(problems, rules::sedbase_0010::check(seen_dims, res.index_accessors, ctx));
+    append(problems, rules::sedbase_0011::check(seen_dims, res.index_accessors, ctx));
+    append(problems, rules::sedbase_0014::check(seen_dims, res.index_accessors, ctx));
 
     if (info.ref_target) {
         auto kd = output_target_kind(res.entry);
@@ -458,16 +513,22 @@ inline std::vector<ValidationProblem> RefRules::check_reference_field(
 #ifdef SED2_REFRULES_SCOPE
     if (*parsed.collection != "constants" && g.resolved.elem && referrer) {
         // Pure containment-tree ancestry (SEDBase-0013): a Repeat's subTasks,
-        // its .range/.index outputs and its loop variables are only legal from
-        // inside that Repeat. A constants target is a raw JSON value with no
+        // its .range/.index outputs (and a ParameterScan's .ranges/.indexes/.model) and its loop
+        // variables are only legal from inside that Repeat. A constants target is a raw JSON value with no
         // containment ancestry, so the concept doesn't apply to it at all.
         SedBase* resolved = g.resolved.elem;
         auto dot_name = parsed.first_dot();
         SedBase* target_repeat = nullptr;
         if (resolved->find_dict_collection("subTasks") != nullptr) {
             // A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
-            // is never scoped; only its .range/.index outputs are.
-            if (dot_name && (*dot_name == "range" || *dot_name == "index")) target_repeat = resolved;
+            // is never scoped; only its per-iteration outputs are:
+            // .range/.index, and a ParameterScan's .ranges/.indexes and
+            // .model (the model as modified for the current iteration).
+            if (dot_name && (*dot_name == "range" || *dot_name == "index" ||
+                             ((*dot_name == "model" || *dot_name == "ranges" || *dot_name == "indexes") &&
+                              resolved->class_name() == "ParameterScan"))) {
+                target_repeat = resolved;
+            }
         } else {
             SedBase* parent = resolved->get_parent();
             if (parent) target_repeat = nearest_repeat_ancestor(parent);
@@ -753,15 +814,12 @@ inline Json apply_indices(const Json& value, const std::vector<RefIndex>& indice
     oshape::Literal lit;
     lit.kind = oshape::Literal::JSON;
     lit.j = value;
-    for (const auto& idx : indices) {
-        oshape::IndexResult ir = oshape::index_into_literal(lit, {idx});
-        if (!ir.ok) {
-            throw ApiError("cannot apply index " + refdetail::format_index(idx) +
-                           ": the value does not contain it (SEDBase-0012)");
-        }
-        lit = ir.value;
+    oshape::IndexResult ir = oshape::index_into_literal(lit, indices);
+    if (!ir.ok) {
+        throw ApiError("cannot apply index " + refdetail::format_index(ir.bad_index) +
+                       ": the value does not contain it (SEDBase-0012)");
     }
-    return lit.j;
+    return ir.value.j;
 }
 
 /// Applies the bracket indices of `accessors` (its containment path is

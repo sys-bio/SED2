@@ -71,6 +71,10 @@
         }
       ],
       "note": "the current index into each entry of parameterRanges, within the loop only"
+    },
+    "[id].model": {
+      "type": "model",
+      "note": "the model as modified for the current iteration, within the loop only"
     }
   }
 }

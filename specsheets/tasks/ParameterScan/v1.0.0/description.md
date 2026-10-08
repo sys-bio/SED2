@@ -9,7 +9,7 @@
 
 ## What it does
 
-Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement` (ParameterScan-0007), which must be an id within the child `model`; the `modelElement` also serves as the entry's name in `[id].ranges` and `[id].indexes`. One of the `subTasks` must reference the scan's `model` child (`#tasks:[scanid]:model`) as its own input; the model is initialized with every combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks. Within the loop, the current value and index of each range are available as `[id].ranges` and `[id].indexes` (see Outputs below).
+Runs simulations/analyses over several systematically-varied versions of a model: a `Repeat` subclass that adds a `model` child (the model to scan) and one or more `ParameterRange` children (`parameterRanges`) - each scanned element adds a dimension to the output. Each `ParameterRange` must target a distinct `modelElement` (ParameterScan-0007), which must be an id within the child `model`; the `modelElement` also serves as the entry's name in `[id].ranges` and `[id].indexes`. One of the `subTasks` must reference `[id].model` (`#tasks:[scanid].model`) as its own input: within the loop, that is the scan's `model`, initialized with the current combination of values across all the ranges. Mechanically it's otherwise identical to `Scatter`, and could in principle be reproduced with nested `Scatter`s plus careful `ModelChange` tasks. Within the loop, the current value and index of each range are available as `[id].ranges` and `[id].indexes`, and the modified model as `[id].model` (see Outputs below).
 
 ## Attributes
 
@@ -45,14 +45,14 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 - `[id]`: **Valid**
     - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps, and each labeled with that range's `modelElement`), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
-- `[id].model`: **Invalid**
+- `[id].model`: **Valid**, within the loop only: the scan's `model` as modified for the current iteration, i.e. initialized with the current value of each of the `parameterRanges`. A reference to it from outside the scan's own `subTasks` breaks SEDBase-0013.
 - `[id].strings`: **Invalid**
 
 Additional possible outputs beyond the three standard ones:
 
 - `[id].aggregates`: An `AnnotatedData` following `aggregateOutputVariables`.  If that attribute is not defined, the `AnnotatedData` is empty.
     - Dimensions: 1D: one entry per `aggregateOutputVariables` mapping. Each entry's aggregation collapses *all* of `[id]`'s scanned-range dimensions together (per `Repeat`, the applied dimension defaults to 'the Repeat' itself - here, the whole combined scan) down to a single value - unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry.
-- `[id].ranges`: Within the loop only, the current value of each of the scan's `parameterRanges`.
+- `[id].ranges`: Within the loop only, the current value of each of the scan's `parameterRanges`. A reference to it from outside the scan's own `subTasks` breaks SEDBase-0013.
     - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement`. For example, with children whose `modelElement`s are `calc`, `phos`, and `ant`, it holds the current values of `calc`, `phos`, and `ant`, in that order, labeled accordingly.
-- `[id].indexes`: Within the loop only, the current index into each of the scan's `parameterRanges`.
+- `[id].indexes`: Within the loop only, the current index into each of the scan's `parameterRanges`. A reference to it from outside the scan's own `subTasks` breaks SEDBase-0013.
     - Dimensions: 1D `AnnotatedData`: one entry per `ParameterRange` child, in order, labeled with that child's `modelElement` - the current index of `calc`, `phos`, and `ant`, in that order, in the example above.

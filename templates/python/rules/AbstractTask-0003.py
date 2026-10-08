@@ -9,7 +9,8 @@ constants; or a task appearing earlier in SEDDocument.tasks.
 For a subTask of a Repeat R, a reference may additionally target: an
 earlier sibling subTask of R; anything R itself was allowed to reference
 (recursively); or R itself, or any Repeat enclosing R, but only through
-.range/.index or a loopVariables child (SEDBase-0013's own scoping still
+.range/.index (for a ParameterScan: .ranges/.indexes/.model) or a
+loopVariables child (SEDBase-0013's own scoping still
 separately governs THAT).
 
 A task never references itself. Only ever checked for a `#tasks:...`

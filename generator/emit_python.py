@@ -153,6 +153,13 @@ class RefIndex:
     (value: a (start, end) tuple of int-or-None, None meaning open)."""
     kind: str            # 'int' | 'label' | 'range'
     value: Any            # int | str | (int_or_None, int_or_None)
+    # True when this index was written after a comma inside the same pair of
+    # brackets as the previous index: "[0:2, 1]" is two indices, the second
+    # flagged same_bracket. Separate brackets ("[0:2][1]") chain - each
+    # bracket indexes the result of the one before - while the indices of one
+    # bracket apply to consecutive dimensions of the value they start from,
+    # like numpy's x[0:2, 1].
+    same_bracket: bool = False
 
 
 @dataclass
@@ -211,9 +218,13 @@ def parse_reference(text: str) -> ParsedReference:
             if close == -1:
                 break
             inner = accessor_part[i + 1 : close]
+            first_in_bracket = True
             for part in inner.split(","):
                 if part.strip():
-                    accessors.append(("index", _parse_ref_index(part)))
+                    idx = _parse_ref_index(part)
+                    idx.same_bracket = not first_in_bracket
+                    first_in_bracket = False
+                    accessors.append(("index", idx))
             i = close + 1
         else:
             break
@@ -290,8 +301,13 @@ def apply_indices(value, accessors):
     counting from the end) indexes a list; a label (['S1']) indexes a dict by
     key; a range ([2:5], either end optional) slices a list, end-exclusive,
     clamped to the list like a Python slice, and keeps the dimension, while an
-    int or label drops it. The same rules back SEDBase-0012, so a reference
-    that validates cleanly always applies cleanly. Raises ApiError when an
+    int or label drops it. Separate brackets chain, like Python's x[a:b][c]:
+    each applies to the result of the one before, so "[0:2][1]" is the
+    second element of the two-element slice. Indices written inside one
+    bracket, separated by commas, apply to consecutive dimensions of the
+    value they start from, like numpy's x[0:2, 1]: "[0:2, 1]" is element 1
+    of each of the first two elements. The same rules back SEDBase-0012, so a
+    reference that validates cleanly always applies cleanly. Raises ApiError when an
     index does not fit the value (an int or range into anything but a list, a
     label into anything but a dict that has the key, an int outside
     -n..n-1, any index into a scalar) and when `accessors` contains a
@@ -313,14 +329,11 @@ def apply_indices(value, accessors):
                            "only bracket indices apply to one (SEDBase-0008)" % acc[1])
         else:
             raise ApiError("not an accessor: %r" % (acc,))
-    current = value
-    for idx in indices:
-        try:
-            current = _oshape.index_into_literal(current, [idx])
-        except _oshape.NotIndexable:
-            raise ApiError("cannot apply index %s: the value does not contain it (SEDBase-0012)"
-                           % _format_index(idx)) from None
-    return current
+    try:
+        return _oshape.index_into_literal(value, indices)
+    except _oshape.NotIndexable as e:
+        raise ApiError("cannot apply index %s: the value does not contain it (SEDBase-0012)"
+                       % _format_index(e.index)) from None
 
 
 def get_reference_value(document, reference, _seen=None):
@@ -457,9 +470,13 @@ def _check_repeat_scoping(referrer, resolved, parsed, *, class_name, id_value, l
         # A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
         # is never scoped (SEDBase-0013.md's own clarifying paragraph -
         # "#tasks:loop1 or #tasks:loop1.aggregates ... from anywhere");
-        # only its .range/.index outputs are, since those only have a
-        # value during one iteration.
-        target_repeat = resolved if dot_name in ("range", "index") else None
+        # only its per-iteration outputs are, since those only have a value
+        # during one iteration: .range/.index, and a ParameterScan's
+        # .ranges/.indexes and .model (the model as modified for the
+        # current iteration).
+        loop_only = dot_name in ("range", "index") or (
+            dot_name in ("model", "ranges", "indexes") and resolved.__class__.__name__ == "ParameterScan")
+        target_repeat = resolved if loop_only else None
     else:
         parent = resolved.get_parent()
         target_repeat = _nearest_repeat_ancestor(parent) if parent is not None else None
@@ -854,6 +871,41 @@ def _ref_type_problem(ref_type_rule_id, location, attr, value, class_name, id_va
         **{"class": class_name, "id": id_value, "resolved-value": resolved_desc})
 
 
+def _follow_constant_alias(document, value, _seen=frozenset()):
+    """A constant's value once it has been followed through every reference
+    it is made of (SEDBase-0012.md: "A constant whose value is itself a
+    reference is followed first"): for a value that is a reference string to
+    another constant, that constant's value, itself followed, with the
+    reference's own bracket indices applied - so an alias such as
+    "#constants:table['S2']" is its row, not the whole table, and an alias of
+    an alias is followed to the end. Returns (value, failure): failure is
+    None, ('unresolved',) when the chain leads nowhere that can be
+    evaluated here (a missing constant, a cycle, a dot-accessor; some other
+    rule reports those), or ('index', bad, literal) when an index in the
+    chain does not fit the value it is applied to (bad is the index as
+    SEDBase-0012's {subvalue} prints it, literal the value indexed). A
+    reference to a task, output or style is returned as the element, as
+    before (its indices are not applied)."""
+    if not (isinstance(value, str) and is_reference(value)):
+        return value, None
+    from . import outputs_shape as _oshape
+    inner = _parse_reference(value)
+    if inner.collection != "constants":
+        target, _ = get_sed_reference(document, inner)
+        return target, None
+    coll = document._get_id_collection("constants") if document is not None else None
+    if (coll is None or len(inner.path) != 1 or inner.path[0] not in coll.ids()
+            or inner.path[0] in _seen or any(k == "dot" for k, _ in inner.accessors)):
+        return None, ("unresolved",)
+    base, failure = _follow_constant_alias(document, coll.get(inner.path[0]), _seen | {inner.path[0]})
+    if failure is not None:
+        return None, failure
+    try:
+        return _oshape.index_into_literal(base, [v for k, v in inner.accessors if k == "index"]), None
+    except _oshape.NotIndexable as e:
+        return None, ("index", e.args[0] if e.args else "", _fmt_literal(base))
+
+
 def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0012, *,
                               class_name, id_value, attr, location, value,
                               field_kind, ref_type_rule_id, expected_enum, constraints=None,
@@ -867,14 +919,14 @@ def _check_constant_accessor(parsed, resolved, document, sedbase_0008, sedbase_0
         return list(sedbase_0008.check(False, dot_name, **kwargs))
     from . import outputs_shape as _oshape
     index_accessors = [v for k, v in parsed.accessors if k == "index"]
-    const_value = resolved
-    if isinstance(const_value, str) and is_reference(const_value):
-        # SEDBase-0012.md: "A constant whose value is itself a reference is
-        # followed first." One hop only - a constant-of-a-constant chain
-        # deeper than that isn't a documented case.
-        inner_parsed = _parse_reference(const_value)
-        inner_resolved, _ = get_sed_reference(document, inner_parsed)
-        const_value = inner_resolved
+    # SEDBase-0012.md: "A constant whose value is itself a reference is
+    # followed first" - through a chain of constants and with each alias's own
+    # indices applied (_follow_constant_alias).
+    const_value, failure = _follow_constant_alias(document, resolved)
+    if failure is not None:
+        if failure[0] == "index":
+            return list(sedbase_0012.check(False, failure[1], failure[2], **kwargs))
+        return []
     try:
         final_value = _oshape.index_into_literal(const_value, index_accessors)
     except _oshape.NotIndexable as e:
@@ -951,10 +1003,13 @@ def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, 
     problems = list(sedbase_0008.check(ok, dot_name, **kwargs))
     if ok is not True:
         return problems
-    problems += sedbase_0009.check(dims_before, index_accessors, **kwargs)
-    problems += sedbase_0010.check(dims_before, index_accessors, **kwargs)
-    problems += sedbase_0011.check(dims_before, index_accessors, **kwargs)
-    problems += sedbase_0014.check(dims_before, index_accessors, **kwargs)
+    # Each rule judges an index against the dimension that index is applied
+    # to (chained brackets: the dimension as the earlier ranges left it).
+    seen_dims, _after = _oshape.bind_indices(dims_before, index_accessors)
+    problems += sedbase_0009.check(seen_dims, index_accessors, **kwargs)
+    problems += sedbase_0010.check(seen_dims, index_accessors, **kwargs)
+    problems += sedbase_0011.check(seen_dims, index_accessors, **kwargs)
+    problems += sedbase_0014.check(seen_dims, index_accessors, **kwargs)
 
     if ref_target is not None:
         kind, description = _output_target_kind(entry)
@@ -2566,25 +2621,87 @@ def resolve_dims(dims_spec, scope, shape_of):
     return value if isinstance(value, list) else None
 
 
-def _apply_index_chain(dims, index_accessors):
-    """Applies a reference's own bracket-index chain to a resolved dims
-    list, left-to-right, each index against the CORRESPONDING original
-    dimension position (a range at position 0 doesn't renumber position 1 -
-    ordinary multi-axis indexing semantics). A positional/label index drops
-    its dimension from the result; a range keeps it (core-spec.md's
-    Grammar); a dimension beyond the index chain's own length passes
-    through untouched."""
-    if dims is None:
-        return None
-    result = []
-    for i, d in enumerate(dims):
-        if i < len(index_accessors):
-            if index_accessors[i].kind == "range":
-                result.append(d)
-            # positional/label -> dimension dropped
+def index_groups(index_accessors):
+    """Splits a reference's index list into its brackets: "[0:2, 1][3]" is
+    two groups, [0:2, 1] and [3] (RefIndex.same_bracket marks an index that
+    continues the previous one's bracket)."""
+    groups = []
+    for idx in index_accessors:
+        if getattr(idx, "same_bracket", False) and groups:
+            groups[-1].append(idx)
         else:
-            result.append(d)
-    return result
+            groups.append([idx])
+    return groups
+
+
+def _sliced_dim(dim, idx):
+    """The dimension a range index leaves behind: as many entries as the
+    range selects, with the matching labels. Whatever can't be told
+    statically (a runtime size, an out-of-bounds or empty range - the
+    latter is SEDBase-0011's to report) becomes unknown, so later indices
+    are not judged against a guess."""
+    n = dim["size"]
+    a, b = idx.value
+    out = dict(dim)
+    out["min"] = None
+    ok = n is not None and not (a is not None and not -n <= a <= n) and not (b is not None and not -n <= b <= n)
+    if ok:
+        ea = 0 if a is None else a
+        eb = n if b is None else b
+        if ea < 0:
+            ea += n
+        if eb < 0:
+            eb += n
+        ok = ea < eb
+    if not ok:
+        out["size"] = None
+        out["labels"] = None
+        return out
+    out["size"] = eb - ea
+    # An unlabeled dimension is stored as an empty label list and stays that
+    # way; otherwise the labels of the selected entries are kept.
+    labels = dim["labels"]
+    if labels is not None and (not labels or len(labels) == n):
+        out["labels"] = list(labels[ea:eb])
+    else:
+        out["labels"] = None
+    return out
+
+
+def bind_indices(dims, index_accessors):
+    """Applies a reference's own bracket indices to a resolved dims list.
+    Separate brackets chain (each applies to the result of the one before:
+    "[0:2][1]" indexes the first dimension twice); the indices inside one
+    bracket apply to consecutive dimensions ("[0:2, 1]" - numpy style). A
+    positional/label index drops its dimension from the result; a range
+    keeps it, narrowed to the entries it selects (core-spec.md's Grammar);
+    dimensions no index reaches pass through untouched. Returns
+    (seen, after): `seen` has one entry per index, in order - the dimension
+    that index is applied to, as the earlier indices left it - and stops
+    short when an index finds no dimension left (SEDBase-0009); `after` is
+    the dimensions of the result. (None, None) when dims is None."""
+    if dims is None:
+        return None, None
+    view = list(dims)
+    seen = []
+    for group in index_groups(index_accessors):
+        k = min(len(group), len(view))
+        seen.extend(view[:k])
+        if k < len(group):
+            break
+        new = []
+        for j, d in enumerate(view):
+            if j < k:
+                if group[j].kind == "range":
+                    new.append(_sliced_dim(d, group[j]))
+            else:
+                new.append(d)
+        view = new
+    return seen, view
+
+
+def _apply_index_chain(dims, index_accessors):
+    return bind_indices(dims, index_accessors)[1]
 
 
 def eval_valid(entry, scope, shape_of):
@@ -2656,46 +2773,65 @@ def resolve_output(outputs_json, fields, accessors, shape_of):
 class NotIndexable(Exception):
     """Raised by index_into_literal when the index chain can't be applied
     to the constant's own literal structure - the signal SEDBase-0012
-    fires on."""
+    fires on. args[0] is the failing index's value; .index is the RefIndex."""
+
+    index = None
+
+
+def _not_indexable(idx):
+    err = NotIndexable(idx.value)
+    err.index = idx
+    return err
+
+
+def _apply_bracket(cur, group):
+    """One bracket's indices against a literal: the first applies to cur
+    itself, the rest to the corresponding dimension of what it selects (a
+    range selects several entries, so the rest applies inside each)."""
+    if not group:
+        return cur
+    idx, rest = group[0], group[1:]
+    if idx.kind == "label":
+        if not isinstance(cur, dict) or idx.value not in cur:
+            raise _not_indexable(idx)
+        return _apply_bracket(cur[idx.value], rest)
+    if idx.kind == "int":
+        if not isinstance(cur, list):
+            raise _not_indexable(idx)
+        n = len(cur)
+        i = idx.value
+        if i < -n or i >= n:
+            raise _not_indexable(idx)
+        return _apply_bracket(cur[i], rest)
+    if idx.kind == "range":
+        if not isinstance(cur, list):
+            raise _not_indexable(idx)
+        a, b = idx.value
+        n = len(cur)
+        ea = a if a is not None else 0
+        eb = b if b is not None else n
+        if ea < 0: ea += n
+        if eb < 0: eb += n
+        part = cur[max(ea, 0):max(eb, 0)]
+        if not rest:
+            return part
+        return [_apply_bracket(el, rest) for el in part]
+    raise _not_indexable(idx)
 
 
 def index_into_literal(value, index_accessors):
     """core-spec.md / SEDBase-0012.md: constants have no outputs.json,
     their "shape" is just their own literal JSON value. Applies an index
-    chain directly against it, following one level of reference first if
-    the constant's own value is itself a reference string (SEDBase-0012.md:
-    "A constant whose value is itself a reference is followed first") -
-    callers pass an already-dereferenced `value` (see the RUNTIME dispatcher
-    for the one-hop-then-stop resolution, mirroring how deeply nested
-    constants-of-constants aren't a documented case). Raises NotIndexable
-    the moment an index can't apply; returns the fully-indexed literal value
-    otherwise (used by the ref-type check too, once indexing succeeds)."""
+    chain directly against it: separate brackets chain (each applies to the
+    result of the one before), the indices inside one bracket apply to
+    consecutive dimensions (see index_groups). Callers pass an
+    already-dereferenced `value` (the RUNTIME dispatcher follows alias
+    constants first). Raises NotIndexable the moment an index can't apply;
+    returns the fully-indexed literal value otherwise (used by the ref-type
+    check too, once indexing succeeds)."""
     cur = value
-    for idx in index_accessors:
-        if idx.kind == "label":
-            if not isinstance(cur, dict) or idx.value not in cur:
-                raise NotIndexable(idx.value)
-            cur = cur[idx.value]
-        elif idx.kind == "int":
-            if not isinstance(cur, list):
-                raise NotIndexable(idx.value)
-            n = len(cur)
-            i = idx.value
-            if i < -n or i >= n:
-                raise NotIndexable(idx.value)
-            cur = cur[i]
-        elif idx.kind == "range":
-            if not isinstance(cur, list):
-                raise NotIndexable(idx.value)
-            a, b = idx.value
-            n = len(cur)
-            ea = a if a is not None else 0
-            eb = b if b is not None else n
-            if ea < 0: ea += n
-            if eb < 0: eb += n
-            cur = cur[max(ea, 0):max(eb, 0)]
-        else:
-            raise NotIndexable(idx.value)
+    for group in index_groups(index_accessors):
+        cur = _apply_bracket(cur, group)
     return cur
 '''
 

@@ -1723,10 +1723,16 @@ public final class OutputsShape {
      * constant's own literal structure - the signal SEDBase-0012 fires on. */
     public static final class NotIndexable extends RuntimeException {
         public final String bad;   // the failing index as Python would print it
+        public final RefIndex index;   // the failing index, or null
 
         public NotIndexable(String bad) {
+            this(bad, null);
+        }
+
+        public NotIndexable(String bad, RefIndex index) {
             super(bad, null, false, false);
             this.bad = bad;
+            this.index = index;
         }
     }
 
@@ -2356,22 +2362,94 @@ public final class OutputsShape {
         return out;
     }
 
-    /** Applies a reference's own bracket-index chain to a resolved dims
-     * list, left-to-right, each index against the CORRESPONDING original
-     * dimension position. A positional/label index drops its dimension from
-     * the result; a range keeps it; a dimension beyond the index chain's own
-     * length passes through untouched. */
-    static List<Dim> applyIndexChain(List<Dim> dims, List<RefIndex> indexAccessors) {
-        if (dims == null) return null;
-        List<Dim> result = new ArrayList<>();
-        for (int i = 0; i < dims.size(); i++) {
-            if (i < indexAccessors.size()) {
-                if (indexAccessors.get(i).kind.equals("range")) result.add(dims.get(i));
+    /** Splits a reference's index list into its brackets: "[0:2, 1][3]" is
+     * two groups, [0:2, 1] and [3] (RefIndex.sameBracket marks an index that
+     * continues the previous one's bracket). */
+    public static List<List<RefIndex>> indexGroups(List<RefIndex> indexAccessors) {
+        List<List<RefIndex>> groups = new ArrayList<>();
+        for (RefIndex idx : indexAccessors) {
+            if (idx.sameBracket && !groups.isEmpty()) {
+                groups.get(groups.size() - 1).add(idx);
             } else {
-                result.add(dims.get(i));
+                List<RefIndex> g = new ArrayList<>();
+                g.add(idx);
+                groups.add(g);
             }
         }
-        return result;
+        return groups;
+    }
+
+    /** The dimension a range index leaves behind: as many entries as the
+     * range selects, with the matching labels. Whatever can't be told
+     * statically (a runtime size, an out-of-bounds or empty range - the
+     * latter is SEDBase-0011's to report) becomes unknown, so later indices
+     * are not judged against a guess. */
+    private static Dim slicedDim(Dim dim, RefIndex idx) {
+        Long n = dim.size;
+        Long a = idx.rangeStart, b = idx.rangeEnd;
+        boolean ok = n != null && !(a != null && !(-n <= a && a <= n)) && !(b != null && !(-n <= b && b <= n));
+        long ea = 0, eb = 0;
+        if (ok) {
+            ea = a != null ? a : 0;
+            eb = b != null ? b : n;
+            if (ea < 0) ea += n;
+            if (eb < 0) eb += n;
+            ok = ea < eb;
+        }
+        if (!ok) return new Dim(null, null, dim.source, null);
+        List<String> labels = null;
+        // An unlabeled dimension is stored as an empty label list and stays that
+        // way; otherwise the labels of the selected entries are kept.
+        if (dim.labels != null && dim.labels.isEmpty()) labels = new ArrayList<>();
+        else if (dim.labels != null && dim.labels.size() == n) labels = new ArrayList<>(dim.labels.subList((int) ea, (int) eb));
+        return new Dim(eb - ea, labels, dim.source, null);
+    }
+
+    /** The result of bindIndices: see that method. */
+    public static final class Bound {
+        public final List<Dim> seen;
+        public final List<Dim> after;
+
+        Bound(List<Dim> seen, List<Dim> after) {
+            this.seen = seen;
+            this.after = after;
+        }
+    }
+
+    /** Applies a reference's own bracket indices to a resolved dims list.
+     * Separate brackets chain (each applies to the result of the one before:
+     * "[0:2][1]" indexes the first dimension twice); the indices inside one
+     * bracket apply to consecutive dimensions ("[0:2, 1]" - numpy style). A
+     * positional/label index drops its dimension from the result; a range
+     * keeps it, narrowed to the entries it selects; dimensions no index
+     * reaches pass through untouched. `seen` has one entry per index, in
+     * order - the dimension that index is applied to, as the earlier indices
+     * left it - and stops short when an index finds no dimension left
+     * (SEDBase-0009); `after` is the dimensions of the result. Both null when
+     * dims is null. */
+    public static Bound bindIndices(List<Dim> dims, List<RefIndex> indexAccessors) {
+        if (dims == null) return new Bound(null, null);
+        List<Dim> view = new ArrayList<>(dims);
+        List<Dim> seen = new ArrayList<>();
+        for (List<RefIndex> group : indexGroups(indexAccessors)) {
+            int k = Math.min(group.size(), view.size());
+            seen.addAll(view.subList(0, k));
+            if (k < group.size()) break;
+            List<Dim> next = new ArrayList<>();
+            for (int j = 0; j < view.size(); j++) {
+                if (j < k) {
+                    if (group.get(j).kind.equals("range")) next.add(slicedDim(view.get(j), group.get(j)));
+                } else {
+                    next.add(view.get(j));
+                }
+            }
+            view = next;
+        }
+        return new Bound(seen, view);
+    }
+
+    static List<Dim> applyIndexChain(List<Dim> dims, List<RefIndex> indexAccessors) {
+        return bindIndices(dims, indexAccessors).after;
     }
 
     /** A suffix entry that is listed in outputs.json is valid; one that isn't
@@ -2452,42 +2530,61 @@ public final class OutputsShape {
      * returns the fully-indexed value otherwise. */
     public static Object indexIntoLiteral(Object value, List<RefIndex> indexAccessors) {
         Object cur = value;
-        for (RefIndex idx : indexAccessors) {
-            JsonNode node = cur instanceof JsonNode ? (JsonNode) cur : null;
-            switch (idx.kind) {
-                case "label":
-                    if (node == null || !node.isObject() || !node.has(idx.label)) throw new NotIndexable(idx.label);
-                    cur = node.get(idx.label);
-                    break;
-                case "int": {
-                    if (node == null || !node.isArray()) throw new NotIndexable(idx.intText);
-                    long n = node.size();
-                    long i = idx.intValue;
-                    if (i < -n || i >= n) throw new NotIndexable(idx.intText);
-                    cur = node.get((int) (i < 0 ? i + n : i));
-                    break;
-                }
-                case "range": {
-                    String bad = "(" + (idx.rangeStartText == null ? "None" : idx.rangeStartText) + ", "
-                            + (idx.rangeEndText == null ? "None" : idx.rangeEndText) + ")";
-                    if (node == null || !node.isArray()) throw new NotIndexable(bad);
-                    long n = node.size();
-                    long ea = idx.rangeStart != null ? idx.rangeStart : 0;
-                    long eb = idx.rangeEnd != null ? idx.rangeEnd : n;
-                    if (ea < 0) ea += n;
-                    if (eb < 0) eb += n;
-                    ea = Math.max(ea, 0);
-                    eb = Math.max(eb, 0);
-                    ArrayNode out = JsonNodeFactory.instance.arrayNode();
-                    for (long k = ea; k < Math.min(eb, n); k++) out.add(node.get((int) k));
-                    cur = out;
-                    break;
-                }
-                default:
-                    throw new NotIndexable(idx.valueText());
-            }
-        }
+        for (List<RefIndex> group : indexGroups(indexAccessors)) cur = applyBracket(cur, group, 0);
         return cur;
+    }
+
+    private static NotIndexable notIndexable(RefIndex idx) {
+        String bad;
+        switch (idx.kind) {
+            case "label": bad = idx.label; break;
+            case "int": bad = idx.intText; break;
+            case "range":
+                bad = "(" + (idx.rangeStartText == null ? "None" : idx.rangeStartText) + ", "
+                        + (idx.rangeEndText == null ? "None" : idx.rangeEndText) + ")";
+                break;
+            default: bad = idx.valueText();
+        }
+        return new NotIndexable(bad, idx);
+    }
+
+    /** One bracket's indices against a literal: the first applies to cur
+     * itself, the rest to the corresponding dimension of what it selects (a
+     * range selects several entries, so the rest applies inside each). */
+    private static Object applyBracket(Object cur, List<RefIndex> group, int from) {
+        if (from >= group.size()) return cur;
+        RefIndex idx = group.get(from);
+        JsonNode node = cur instanceof JsonNode ? (JsonNode) cur : null;
+        switch (idx.kind) {
+            case "label":
+                if (node == null || !node.isObject() || !node.has(idx.label)) throw notIndexable(idx);
+                return applyBracket(node.get(idx.label), group, from + 1);
+            case "int": {
+                if (node == null || !node.isArray()) throw notIndexable(idx);
+                long n = node.size();
+                long i = idx.intValue;
+                if (i < -n || i >= n) throw notIndexable(idx);
+                return applyBracket(node.get((int) (i < 0 ? i + n : i)), group, from + 1);
+            }
+            case "range": {
+                if (node == null || !node.isArray()) throw notIndexable(idx);
+                long n = node.size();
+                long ea = idx.rangeStart != null ? idx.rangeStart : 0;
+                long eb = idx.rangeEnd != null ? idx.rangeEnd : n;
+                if (ea < 0) ea += n;
+                if (eb < 0) eb += n;
+                ea = Math.max(ea, 0);
+                eb = Math.max(eb, 0);
+                ArrayNode out = JsonNodeFactory.instance.arrayNode();
+                for (long k = ea; k < Math.min(eb, n); k++) {
+                    JsonNode el = node.get((int) k);
+                    out.add(from + 1 >= group.size() ? el : (JsonNode) applyBracket(el, group, from + 1));
+                }
+                return out;
+            }
+            default:
+                throw notIndexable(idx);
+        }
     }
 }
 ''',
@@ -2756,6 +2853,30 @@ public final class RefIndex {
     public final Long rangeEnd;     // "range": end (saturated to the long range), or null when open
     public final String rangeStartText;   // "range": the start as Python would print it, or null when open
     public final String rangeEndText;     // "range": the end as Python would print it, or null when open
+    /** True when this index was written after a comma inside the same pair of
+     * brackets as the previous index: "[0:2, 1]" is two indices, the second
+     * flagged sameBracket. Separate brackets ("[0:2][1]") chain - each
+     * bracket indexes the result of the one before - while the indices of one
+     * bracket apply to consecutive dimensions of the value they start from,
+     * like numpy's x[0:2, 1]. */
+    public final boolean sameBracket;
+
+    private RefIndex(RefIndex o, boolean sameBracket) {
+        this.kind = o.kind;
+        this.intValue = o.intValue;
+        this.intText = o.intText;
+        this.label = o.label;
+        this.rangeStart = o.rangeStart;
+        this.rangeEnd = o.rangeEnd;
+        this.rangeStartText = o.rangeStartText;
+        this.rangeEndText = o.rangeEndText;
+        this.sameBracket = sameBracket;
+    }
+
+    /** A copy of this index with its sameBracket flag set as given. */
+    public RefIndex withSameBracket(boolean sameBracket) {
+        return new RefIndex(this, sameBracket);
+    }
 
     private RefIndex(String kind, long intValue, String intText, String label, BigInteger rangeStart,
                      BigInteger rangeEnd) {
@@ -2767,6 +2888,7 @@ public final class RefIndex {
         this.rangeEnd = rangeEnd == null ? null : Long.valueOf(saturate(rangeEnd));
         this.rangeStartText = rangeStart == null ? null : rangeStart.toString();
         this.rangeEndText = rangeEnd == null ? null : rangeEnd.toString();
+        this.sameBracket = false;
     }
 
     public static RefIndex ofInt(BigInteger v) {
@@ -2944,8 +3066,14 @@ public final class References {
                 int close = accessorPart.indexOf(']', i);
                 if (close == -1) break;
                 String inner = accessorPart.substring(i + 1, close);
+                boolean firstInBracket = true;
                 for (String part : inner.split(",", -1)) {
-                    if (!part.strip().isEmpty()) accessors.add(new ParsedReference.Accessor(null, parseRefIndex(part)));
+                    if (!part.strip().isEmpty()) {
+                        RefIndex ri = parseRefIndex(part);
+                        if (!firstInBracket) ri = ri.withSameBracket(true);
+                        firstInBracket = false;
+                        accessors.add(new ParsedReference.Accessor(null, ri));
+                    }
                 }
                 i = close + 1;
             } else {
@@ -3072,16 +3200,12 @@ public final class References {
      * -n..n-1, any index into a scalar). The result is part of `value`
      * itself, not a copy. Public API. */
     public static JsonNode applyIndices(JsonNode value, List<RefIndex> indices) {
-        Object current = value;
-        for (RefIndex idx : indices) {
-            try {
-                current = OutputsShape.indexIntoLiteral(current, java.util.Collections.singletonList(idx));
-            } catch (OutputsShape.NotIndexable e) {
-                throw new ApiError("cannot apply index " + formatIndex(idx)
-                        + ": the value does not contain it (SEDBase-0012)");
-            }
+        try {
+            return (JsonNode) OutputsShape.indexIntoLiteral(value, indices);
+        } catch (OutputsShape.NotIndexable e) {
+            throw new ApiError("cannot apply index " + formatIndex(e.index)
+                    + ": the value does not contain it (SEDBase-0012)");
         }
-        return (JsonNode) current;
     }
 
     /** getReferenceValue(document, parse(reference)). Public API. */
@@ -3244,9 +3368,14 @@ public final class References {
         SedBase targetRepeat;
         if (isRepeatItself) {
             // A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
-            // is never scoped; only its .range/.index outputs are, since those
-            // only have a value during one iteration.
-            targetRepeat = ("range".equals(dotName) || "index".equals(dotName)) ? resolved : null;
+            // is never scoped; only its per-iteration outputs are, since those
+            // only have a value during one iteration: .range/.index, and a
+            // ParameterScan's .ranges/.indexes and .model (the model as
+            // modified for the current iteration).
+            boolean loopOnly = "range".equals(dotName) || "index".equals(dotName)
+                    || (("model".equals(dotName) || "ranges".equals(dotName) || "indexes".equals(dotName))
+                        && "ParameterScan".equals(resolved.getClass().getSimpleName()));
+            targetRepeat = loopOnly ? resolved : null;
         } else {
             SedBase parent = resolved.getParent();
             targetRepeat = parent != null ? nearestRepeatAncestor(parent) : null;
@@ -3584,6 +3713,56 @@ public final class References {
                 "class", className, "id", idValue, "resolved-value", resolvedDesc);
     }
 
+    /** followConstantAlias()'s result: the followed value, or why it could
+     * not be followed ("unresolved": the chain leads nowhere that can be
+     * evaluated here - a missing constant, a cycle, a dot-accessor; some
+     * other rule reports those - or "index": an index in the chain does not
+     * fit the value it is applied to, with bad the index as SEDBase-0012's
+     * {subvalue} prints it and literal the value indexed). */
+    private static final class Followed {
+        final Object value;
+        final String failure;   // null, "unresolved" or "index"
+        final String bad;
+        final String literal;
+
+        Followed(Object value, String failure, String bad, String literal) {
+            this.value = value;
+            this.failure = failure;
+            this.bad = bad;
+            this.literal = literal;
+        }
+    }
+
+    /** A constant's value once it has been followed through every reference
+     * it is made of (SEDBase-0012.md: "A constant whose value is itself a
+     * reference is followed first"): for a value that is a reference string
+     * to another constant, that constant's value, itself followed, with the
+     * reference's own bracket indices applied - so an alias such as
+     * "#constants:table['S2']" is its row, not the whole table, and an alias
+     * of an alias is followed to the end. A reference to a task, output or
+     * style is returned as the element (its indices are not applied). */
+    private static Followed followConstantAlias(SedBase document, Object value, Set<String> seen) {
+        if (!(value instanceof JsonNode && isReference((JsonNode) value))) return new Followed(value, null, null, null);
+        ParsedReference inner = parse(((JsonNode) value).textValue());
+        if (!"constants".equals(inner.collection)) {
+            return new Followed(getSedReference(document, inner).element, null, null, null);
+        }
+        IdCollection coll = document == null ? null : document.getIdCollection("constants");
+        if (coll == null || inner.path.size() != 1 || !coll.has(inner.path.get(0)) || seen.contains(inner.path.get(0))
+                || inner.firstDotName() != null) {
+            return new Followed(null, "unresolved", null, null);
+        }
+        Set<String> next = new java.util.HashSet<>(seen);
+        next.add(inner.path.get(0));
+        Followed base = followConstantAlias(document, coll.getObject(inner.path.get(0)), next);
+        if (base.failure != null) return base;
+        try {
+            return new Followed(OutputsShape.indexIntoLiteral(base.value, inner.indexAccessors()), null, null, null);
+        } catch (OutputsShape.NotIndexable e) {
+            return new Followed(null, "index", e.bad, fmtLiteral(base.value));
+        }
+    }
+
     private static List<ValidationProblem> checkConstantAccessor(ParsedReference parsed, Object resolved,
             SedBase document, String className, String idValue, String attr, String location, String value,
             FieldInfo info) {
@@ -3593,12 +3772,18 @@ public final class References {
             return new ArrayList<>(Handwritten.sedBase0008(false, dotName, value, className, idValue, attr, location));
         }
         List<RefIndex> indexAccessors = parsed.indexAccessors();
-        Object constValue = resolved;
-        if (constValue instanceof JsonNode && isReference((JsonNode) constValue)) {
-            // SEDBase-0012.md: "A constant whose value is itself a reference is
-            // followed first." One hop only.
-            constValue = getSedReference(document, parse(((JsonNode) constValue).textValue())).element;
+        // SEDBase-0012.md: "A constant whose value is itself a reference is
+        // followed first" - through a chain of constants and with each alias's
+        // own indices applied (followConstantAlias).
+        Followed followed = followConstantAlias(document, resolved, new java.util.HashSet<String>());
+        if (followed.failure != null) {
+            if ("index".equals(followed.failure)) {
+                return new ArrayList<>(Handwritten.sedBase0012(false, followed.bad, followed.literal, value,
+                        className, idValue, attr, location));
+            }
+            return new ArrayList<>();
         }
+        Object constValue = followed.value;
         Object finalValue;
         try {
             finalValue = OutputsShape.indexIntoLiteral(constValue, indexAccessors);
@@ -3673,10 +3858,13 @@ public final class References {
         List<ValidationProblem> problems = new ArrayList<>(
                 Handwritten.sedBase0008(r.ok, r.dotName, value, className, idValue, attr, location));
         if (!Boolean.TRUE.equals(r.ok)) return problems;
-        problems.addAll(Handwritten.sedBase0009(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0010(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0011(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0014(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+        // Each rule judges an index against the dimension that index is applied
+        // to (chained brackets: the dimension as the earlier ranges left it).
+        List<Dim> seenDims = OutputsShape.bindIndices(r.dimsBefore, r.indexAccessors).seen;
+        problems.addAll(Handwritten.sedBase0009(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0010(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0011(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0014(seenDims, r.indexAccessors, value, className, idValue, attr, location));
 
         if (info.refTarget != null) {
             String[] k = outputTargetKind(r.entry);

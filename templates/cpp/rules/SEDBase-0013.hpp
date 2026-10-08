@@ -1,5 +1,5 @@
 // SEDBase-0013 (specsheets/core/SEDBase/v1.0.0/validation/SEDBase-0013.md):
-// "A reference to a Repeat's subTasks, its .range/.index outputs, or one of
+// "A reference to a Repeat's subTasks, its .range/.index outputs (or a ParameterScan's .ranges, .indexes or .model output), or one of
 // its loop variables is only legal when the element holding the reference is
 // that Repeat itself, or lies within that Repeat's own subTasks (at any depth,
 // including through a nested Repeat)."
