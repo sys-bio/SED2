@@ -3119,7 +3119,7 @@ The bare id (`#tasks:model1`) has no meaning and must not be used.
 A restricted `Range` (its subclass) whose values are numeric, definable several ways. Explicitly listing every value in `values` (in which case no other attribute may be set) is one option. The other five options each use a subset of `start`, `end`, `numberOfSteps`, and `interval`:
 
 - **`numberOfSteps` alone**: a range from 0 to `numberOfSteps` with an interval of 1.
-- **`start`, `end`, `numberOfSteps` (+ required `scale`)**: the start-end interval is divided into `numberOfSteps` equal sub-intervals on a `"linear"` or `"log10"` scale, with data collected at the start and end of each sub-interval. `scale` may only (and must) be set for this combination.
+- **`start`, `end`, `numberOfSteps` (+ required `scale`)**: the start-end interval is divided into `numberOfSteps` equal sub-intervals on a `"linear"` or `"log10"` scale, with data collected at the start and end of each sub-interval. On the `"log10"` scale, `start` and `end` are the first and last values themselves (not their exponents), so the range holds `numberOfSteps` + 1 logarithmically spaced points. `scale` may only (and must) be set for this combination.
 - **`start`, `numberOfSteps`, `interval`**: `numberOfSteps` points collected every `interval` after `start`, with an implied end.
 - **`end`, `numberOfSteps`, `interval`**: `numberOfSteps` points collected every `interval` up to `end`, with an implied start.
 - **`start`, `interval`, `end`**: points collected every `interval` past `start` until `end` is reached; `end` is always included as the final point even when it doesn't fall exactly on an interval boundary. Whether a separately-calculated near-`end` point is *also* included depends on a tolerance of `interval * 1e-6`: if the nearest calculated point is within that tolerance of `end`, only `end` is kept; otherwise both are kept. For example, `start=0, end=10, interval=3` yields `[0, 3, 6, 9, 10]`; `start=0, end=10, interval=3.333` yields `[0, 3.333, 6.666, 9.999, 10]` (9.999 is far enough from 10); `interval=3.333333` instead yields `[0, 3.333333, 6.666666, 10]` (9.999999 is within tolerance of 10, so it's dropped in favor of the exact endpoint).
@@ -4110,6 +4110,8 @@ The steady-state values of `outputVariables`, accessible as `[id]`. The resultin
 ##### What it does
 
 `StringFormation` takes the `concatenate` list, converts every element to a string, and concatenates them. If an element of the list is itself a list, each of its members is concatenated into a separate output string, so the overall result becomes a list of strings matching that dimension - e.g. `["n = ", [1, 2, 3]]` yields `["n = 1", "n = 2", "n = 3"]`. If multiple elements of `concatenate` are themselves lists, their corresponding elements are combined pairwise, and all such lists must have identical lengths; multi-dimensional lists produce multi-dimensional string results the same way.
+
+Elements are converted to strings as follows. A number that is integral is written without a decimal point (`3`, not `3.0`); any other number is written as the shortest decimal that reads back as the same number (`2.5`). A literal boolean is written `true` or `false`; a reference to a boolean constant is a number, so it is written `1` or `0`. A string is used as it is. These are also the rules for the way numbers appear in the strings formed by `Loop`, `Scatter` and `ParameterScan` labels.
 
 ##### Attributes
 

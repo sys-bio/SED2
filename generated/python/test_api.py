@@ -55,6 +55,30 @@ def test_api_document_is_valid(doc):
     assert doc.validate() == []
 
 
+# ---- G-005: a math field is text, with value accessors only ----------------
+
+def test_math_field_has_value_accessors_and_no_reference_accessors():
+    calc = t.Calculation()
+    assert not calc.is_set_math()
+    with pytest.raises(t.ApiError):
+        calc.get_math_value()
+    calc.set_math_value("#constants:k_num * 2")
+    assert calc.is_set_math()
+    assert calc.get_math_value() == "#constants:k_num * 2"
+    for name in ("get_math_ref", "set_math_ref", "is_math_ref"):
+        assert not hasattr(calc, name)
+    calc.unset_math()
+    assert not calc.is_set_math()
+
+
+def test_math_field_that_is_only_a_reference_is_still_math(doc):
+    calc = t.Calculation()
+    calc.set_math_value("#constants:k_num")
+    doc.add_tasks("calc1", calc)
+    assert calc.get_math_value() == "#constants:k_num"
+    assert doc.validate() == []
+
+
 # ---- G-001: an element's own id --------------------------------------------
 
 def test_id_of_top_level_tasks_and_outputs(doc):

@@ -376,19 +376,12 @@ class MathWidget(SedBase):
         return 'mathWidget'
 
     def get_math_value(self):
-        return self._get_orref_value('math')
-
-    def get_math_ref(self):
-        return self._get_orref_ref('math')
+        if 'math' not in self._values: raise ApiError('math is not set')
+        return self._values['math']
 
     def set_math_value(self, value):
-        self._set_orref_value('math', value)
-
-    def set_math_ref(self, ref):
-        self._set_orref_ref('math', ref)
-
-    def is_math_ref(self):
-        return self._is_orref_ref('math')
+        self._values['math'] = value
+        self._orref_is_ref.pop('math', None)
 
     def is_set_math(self):
         return 'math' in self._values

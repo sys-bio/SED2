@@ -862,11 +862,8 @@ public:
     std::optional<std::string> get_type_value() const override { return std::string("calculation"); }
     std::string get_type() const { return "calculation"; }
 
-    std::string get_math_value() const { return get_or_ref_value_node("math").as<std::string>(); }
-    std::string get_math_ref() const { return get_or_ref_ref_node("math").as<std::string>(); }
-    void set_math_value(const std::string& value) { set_or_ref_value_node("math", Json(value)); }
-    void set_math_ref(const std::string& ref) { set_or_ref_ref_node("math", ref); }
-    bool is_math_ref() const { return is_or_ref_ref("math"); }
+    std::string get_math_value() const { auto it = values_.find("math"); if (it == values_.end()) throw ApiError(std::string("math") + " is not set"); return it->second.as<std::string>(); }
+    void set_math_value(const std::string& value) { values_["math"] = Json(value); or_ref_is_ref_.erase("math"); }
     bool is_set_math() const { return values_.count("math") > 0; }
     void unset_math() { values_.erase("math"); or_ref_is_ref_.erase("math"); }
 

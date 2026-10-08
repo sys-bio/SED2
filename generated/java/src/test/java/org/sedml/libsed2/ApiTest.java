@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,6 +56,34 @@ public class ApiTest {
 
     @Test
     void apiDocumentIsValid() {
+        assertEquals(0, doc.validate().size());
+    }
+
+    // ---- G-005: a math field is text, with value accessors only -----------
+
+    @Test
+    void mathFieldHasValueAccessorsAndNoReferenceAccessors() {
+        Calculation calc = new Calculation();
+        assertFalse(calc.isSetMath());
+        assertThrows(ApiError.class, calc::getMathValue);
+        calc.setMathValue("#constants:k_num * 2");
+        assertTrue(calc.isSetMath());
+        assertEquals("#constants:k_num * 2", calc.getMathValue());
+        for (String name : List.of("getMathRef", "setMathRef", "isMathRef")) {
+            for (java.lang.reflect.Method m : Calculation.class.getMethods()) {
+                assertNotEquals(name, m.getName());
+            }
+        }
+        calc.unsetMath();
+        assertFalse(calc.isSetMath());
+    }
+
+    @Test
+    void mathFieldThatIsOnlyAReferenceIsStillMath() {
+        Calculation calc = new Calculation();
+        calc.setMathValue("#constants:k_num");
+        doc.addTasks("calc1", calc);
+        assertEquals("#constants:k_num", calc.getMathValue());
         assertEquals(0, doc.validate().size());
     }
 

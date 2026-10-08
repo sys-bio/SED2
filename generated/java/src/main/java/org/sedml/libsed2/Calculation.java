@@ -40,11 +40,8 @@ public final class Calculation extends SedBase {
     private static final JsonNode OUTPUTS_JSON = OutputsShape.parseJson("{\"outputs\": {\"[id]\": {\"type\": \"annotatedData\", \"dimensions\": {\"source\": \"runtime\", \"note\": \"shape matches the evaluated math expression: scalar if every operand is scalar, otherwise broadcasts across the shape of any AnnotatedData operand(s); not derivable without evaluating math against the operands' actual values\"}}}}");
     @Override public JsonNode outputsJson() { return OUTPUTS_JSON; }
 
-    public String getMathValue() { return getOrRefValueNode("math").asText(); }
-    public String getMathRef() { return getOrRefRefNode("math").asText(); }
-    public void setMathValue(String value) { setOrRefValueNode("math", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public void setMathRef(String ref) { setOrRefRefNode("math", ref); }
-    public boolean isMathRef() { return isOrRefRef("math"); }
+    public String getMathValue() { if (!values.containsKey("math")) throw new ApiError("math" + " is not set"); return values.get("math").asText(); }
+    public void setMathValue(String value) { values.put("math", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); orRefIsRef.remove("math"); }
     public boolean isSetMath() { return values.containsKey("math"); }
     public void unsetMath() { values.remove("math"); orRefIsRef.remove("math"); }
 

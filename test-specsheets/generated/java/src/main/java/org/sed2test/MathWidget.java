@@ -34,11 +34,8 @@ public final class MathWidget extends SedBase {
     @Override public String baseCatchall() { return "TestBase-0000"; }
     public String getType() { return "mathWidget"; }
 
-    public String getMathValue() { return getOrRefValueNode("math").asText(); }
-    public String getMathRef() { return getOrRefRefNode("math").asText(); }
-    public void setMathValue(String value) { setOrRefValueNode("math", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); }
-    public void setMathRef(String ref) { setOrRefRefNode("math", ref); }
-    public boolean isMathRef() { return isOrRefRef("math"); }
+    public String getMathValue() { if (!values.containsKey("math")) throw new ApiError("math" + " is not set"); return values.get("math").asText(); }
+    public void setMathValue(String value) { values.put("math", value == null ? NullNode.getInstance() : TextNode.valueOf(value)); orRefIsRef.remove("math"); }
     public boolean isSetMath() { return values.containsKey("math"); }
     public void unsetMath() { values.remove("math"); orRefIsRef.remove("math"); }
 
