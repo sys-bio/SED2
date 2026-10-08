@@ -14,6 +14,30 @@ public final class RefIndex {
     public final Long rangeEnd;     // "range": end (saturated to the long range), or null when open
     public final String rangeStartText;   // "range": the start as Python would print it, or null when open
     public final String rangeEndText;     // "range": the end as Python would print it, or null when open
+    /** True when this index was written after a comma inside the same pair of
+     * brackets as the previous index: "[0:2, 1]" is two indices, the second
+     * flagged sameBracket. Separate brackets ("[0:2][1]") chain - each
+     * bracket indexes the result of the one before - while the indices of one
+     * bracket apply to consecutive dimensions of the value they start from,
+     * like numpy's x[0:2, 1]. */
+    public final boolean sameBracket;
+
+    private RefIndex(RefIndex o, boolean sameBracket) {
+        this.kind = o.kind;
+        this.intValue = o.intValue;
+        this.intText = o.intText;
+        this.label = o.label;
+        this.rangeStart = o.rangeStart;
+        this.rangeEnd = o.rangeEnd;
+        this.rangeStartText = o.rangeStartText;
+        this.rangeEndText = o.rangeEndText;
+        this.sameBracket = sameBracket;
+    }
+
+    /** A copy of this index with its sameBracket flag set as given. */
+    public RefIndex withSameBracket(boolean sameBracket) {
+        return new RefIndex(this, sameBracket);
+    }
 
     private RefIndex(String kind, long intValue, String intText, String label, BigInteger rangeStart,
                      BigInteger rangeEnd) {
@@ -25,6 +49,7 @@ public final class RefIndex {
         this.rangeEnd = rangeEnd == null ? null : Long.valueOf(saturate(rangeEnd));
         this.rangeStartText = rangeStart == null ? null : rangeStart.toString();
         this.rangeEndText = rangeEnd == null ? null : rangeEnd.toString();
+        this.sameBracket = false;
     }
 
     public static RefIndex ofInt(BigInteger v) {

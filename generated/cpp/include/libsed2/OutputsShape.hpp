@@ -14,6 +14,7 @@
 // namespace name "libsed2" rewritten to --cpp-namespace. ASCII only.
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include <map>
 #include <memory>
@@ -598,21 +599,90 @@ inline OptDims resolve_dims(const Json* dims_spec, const Scope& scope, const Sha
     return std::nullopt;
 }
 
-/// Applies a reference's own bracket-index chain to a resolved dims list,
-/// left-to-right, each index against the CORRESPONDING original dimension
-/// position: a positional/label index drops its dimension; a range keeps it;
-/// a dimension beyond the chain passes through untouched.
-inline OptDims apply_index_chain(const OptDims& dims, const std::vector<RefIndex>& index_accessors) {
-    if (!dims) return std::nullopt;
-    Dims result;
-    for (size_t i = 0; i < dims->size(); i++) {
-        if (i < index_accessors.size()) {
-            if (index_accessors[i].is_range()) result.push_back((*dims)[i]);
-        } else {
-            result.push_back((*dims)[i]);
-        }
+/// Splits a reference's index list into its brackets: "[0:2, 1][3]" is two
+/// groups, [0:2, 1] and [3] (RefIndex::same_bracket marks an index that
+/// continues the previous one's bracket).
+inline std::vector<std::vector<RefIndex>> index_groups(const std::vector<RefIndex>& index_accessors) {
+    std::vector<std::vector<RefIndex>> groups;
+    for (const auto& idx : index_accessors) {
+        if (idx.same_bracket && !groups.empty()) groups.back().push_back(idx);
+        else groups.push_back({idx});
     }
-    return result;
+    return groups;
+}
+
+/// The dimension a range index leaves behind: as many entries as the range
+/// selects, with the matching labels. Whatever can't be told statically (a
+/// runtime size, an out-of-bounds or empty range - the latter is
+/// SEDBase-0011's to report) becomes unknown, so later indices are not
+/// judged against a guess.
+inline Dim sliced_dim(const Dim& dim, const RefIndex& idx) {
+    Dim out;
+    out.source = dim.source;
+    if (!dim.size) return out;
+    long long n = *dim.size;
+    bool ok = !(idx.a && !(-n <= *idx.a && *idx.a <= n)) && !(idx.b && !(-n <= *idx.b && *idx.b <= n));
+    long long ea = 0, eb = 0;
+    if (ok) {
+        ea = idx.a ? *idx.a : 0;
+        eb = idx.b ? *idx.b : n;
+        if (ea < 0) ea += n;
+        if (eb < 0) eb += n;
+        ok = ea < eb;
+    }
+    if (!ok) return out;
+    out.size = eb - ea;
+    // An unlabeled dimension is stored as an empty label list and stays that
+    // way; otherwise the labels of the selected entries are kept.
+    if (dim.labels && dim.labels->empty()) {
+        out.labels = std::vector<std::string>();
+    } else if (dim.labels && static_cast<long long>(dim.labels->size()) == n) {
+        out.labels = std::vector<std::string>(dim.labels->begin() + ea, dim.labels->begin() + eb);
+    }
+    return out;
+}
+
+struct BoundIndices {
+    OptDims seen;
+    OptDims after;
+};
+
+/// Applies a reference's own bracket indices to a resolved dims list.
+/// Separate brackets chain (each applies to the result of the one before:
+/// "[0:2][1]" indexes the first dimension twice); the indices inside one
+/// bracket apply to consecutive dimensions ("[0:2, 1]" - numpy style). A
+/// positional/label index drops its dimension from the result; a range keeps
+/// it, narrowed to the entries it selects; dimensions no index reaches pass
+/// through untouched. `seen` has one entry per index, in order - the
+/// dimension that index is applied to, as the earlier indices left it - and
+/// stops short when an index finds no dimension left (SEDBase-0009); `after`
+/// is the dimensions of the result. Both nullopt when dims is nullopt.
+inline BoundIndices bind_indices(const OptDims& dims, const std::vector<RefIndex>& index_accessors) {
+    BoundIndices out;
+    if (!dims) return out;
+    Dims view = *dims;
+    Dims seen;
+    for (const auto& group : index_groups(index_accessors)) {
+        size_t k = std::min(group.size(), view.size());
+        seen.insert(seen.end(), view.begin(), view.begin() + k);
+        if (k < group.size()) break;
+        Dims next;
+        for (size_t j = 0; j < view.size(); j++) {
+            if (j < k) {
+                if (group[j].is_range()) next.push_back(sliced_dim(view[j], group[j]));
+            } else {
+                next.push_back(view[j]);
+            }
+        }
+        view = next;
+    }
+    out.seen = seen;
+    out.after = view;
+    return out;
+}
+
+inline OptDims apply_index_chain(const OptDims& dims, const std::vector<RefIndex>& index_accessors) {
+    return bind_indices(dims, index_accessors).after;
 }
 
 /// A suffix entry that is listed in outputs.json is valid; one that isn't
@@ -686,8 +756,65 @@ struct Literal {
 struct IndexResult {
     bool ok = true;
     std::string bad_subvalue;   // when !ok: str() of the failing index's value
+    RefIndex bad_index;         // when !ok and the failure was an index: that index
     Literal value;
 };
+
+namespace detail {
+
+inline bool fail(IndexResult& res, const RefIndex& idx) {
+    res.ok = false;
+    res.bad_subvalue = idx.value_str();
+    res.bad_index = idx;
+    return false;
+}
+
+/// One bracket's indices against a literal: the first applies to cur
+/// itself, the rest to the corresponding dimension of what it selects (a
+/// range selects several entries, so the rest applies inside each).
+inline bool apply_bracket(const Json& cur, const std::vector<RefIndex>& group, size_t from, Json& out,
+                          IndexResult& res) {
+    if (from >= group.size()) { out = cur; return true; }
+    const RefIndex& idx = group[from];
+    if (idx.is_label()) {
+        if (!cur.is_object() || !cur.contains(idx.sval)) return fail(res, idx);
+        Json next = cur.at(idx.sval);
+        return apply_bracket(next, group, from + 1, out, res);
+    }
+    if (idx.is_int()) {
+        if (!cur.is_array()) return fail(res, idx);
+        long long n = static_cast<long long>(cur.size());
+        long long i = idx.ival;
+        if (i < -n || i >= n) return fail(res, idx);
+        if (i < 0) i += n;
+        Json next = cur[static_cast<size_t>(i)];
+        return apply_bracket(next, group, from + 1, out, res);
+    }
+    if (!cur.is_array()) return fail(res, idx);
+    long long n = static_cast<long long>(cur.size());
+    long long ea = idx.a ? *idx.a : 0;
+    long long eb = idx.b ? *idx.b : n;
+    if (ea < 0) ea += n;
+    if (eb < 0) eb += n;
+    if (ea < 0) ea = 0;
+    if (eb < 0) eb = 0;
+    if (eb > n) eb = n;
+    Json arr = Json::array();
+    for (long long k = ea; k < eb; k++) {
+        Json el = cur[static_cast<size_t>(k)];
+        if (from + 1 >= group.size()) {
+            arr.push_back(el);
+        } else {
+            Json inner;
+            if (!apply_bracket(el, group, from + 1, inner, res)) return false;
+            arr.push_back(inner);
+        }
+    }
+    out = arr;
+    return true;
+}
+
+}  // namespace detail
 
 inline IndexResult index_into_literal(const Literal& value, const std::vector<RefIndex>& index_accessors) {
     IndexResult res;
@@ -696,37 +823,15 @@ inline IndexResult index_into_literal(const Literal& value, const std::vector<Re
         if (!index_accessors.empty()) {
             res.ok = false;
             res.bad_subvalue = index_accessors[0].value_str();
+            res.bad_index = index_accessors[0];
         }
         return res;
     }
     Json cur = value.j;
-    for (const auto& idx : index_accessors) {
-        if (idx.is_label()) {
-            if (!cur.is_object() || !cur.contains(idx.sval)) { res.ok = false; res.bad_subvalue = idx.value_str(); return res; }
-            Json next = cur.at(idx.sval);
-            cur = next;
-        } else if (idx.is_int()) {
-            if (!cur.is_array()) { res.ok = false; res.bad_subvalue = idx.value_str(); return res; }
-            long long n = static_cast<long long>(cur.size());
-            long long i = idx.ival;
-            if (i < -n || i >= n) { res.ok = false; res.bad_subvalue = idx.value_str(); return res; }
-            if (i < 0) i += n;
-            Json next = cur[static_cast<size_t>(i)];
-            cur = next;
-        } else {
-            if (!cur.is_array()) { res.ok = false; res.bad_subvalue = idx.value_str(); return res; }
-            long long n = static_cast<long long>(cur.size());
-            long long ea = idx.a ? *idx.a : 0;
-            long long eb = idx.b ? *idx.b : n;
-            if (ea < 0) ea += n;
-            if (eb < 0) eb += n;
-            if (ea < 0) ea = 0;
-            if (eb < 0) eb = 0;
-            if (eb > n) eb = n;
-            Json arr = Json::array();
-            for (long long k = ea; k < eb; k++) arr.push_back(cur[static_cast<size_t>(k)]);
-            cur = arr;
-        }
+    for (const auto& group : index_groups(index_accessors)) {
+        Json next;
+        if (!detail::apply_bracket(cur, group, 0, next, res)) return res;
+        cur = next;
     }
     res.value.j = cur;
     return res;

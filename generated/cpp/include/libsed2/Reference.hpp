@@ -31,6 +31,13 @@ struct RefIndex {
     long long ival = 0;                 // INT
     std::string sval;                   // LABEL
     std::optional<long long> a, b;      // RANGE ends (nullopt = open)
+    /// True when this index was written after a comma inside the same pair
+    /// of brackets as the previous index: "[0:2, 1]" is two indices, the
+    /// second flagged same_bracket. Separate brackets ("[0:2][1]") chain -
+    /// each bracket indexes the result of the one before - while the indices
+    /// of one bracket apply to consecutive dimensions of the value they
+    /// start from, like numpy's x[0:2, 1].
+    bool same_bracket = false;
 
     bool is_int() const { return kind == INT; }
     bool is_label() const { return kind == LABEL; }
@@ -198,6 +205,7 @@ inline ParsedReference parse_reference(const std::string& text) {
             if (close == std::string::npos) break;
             std::string inner = accessor_part.substr(i + 1, close - i - 1);
             size_t start = 0;
+            bool first_in_bracket = true;
             while (true) {
                 size_t comma = inner.find(',', start);
                 std::string part = inner.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
@@ -205,6 +213,8 @@ inline ParsedReference parse_reference(const std::string& text) {
                     Accessor acc;
                     acc.is_dot = false;
                     acc.index = refparse::parse_index(part);
+                    acc.index.same_bracket = !first_in_bracket;
+                    first_in_bracket = false;
                     pr.accessors.push_back(acc);
                 }
                 if (comma == std::string::npos) break;

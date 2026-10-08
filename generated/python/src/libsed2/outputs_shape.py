@@ -508,25 +508,87 @@ def resolve_dims(dims_spec, scope, shape_of):
     return value if isinstance(value, list) else None
 
 
-def _apply_index_chain(dims, index_accessors):
-    """Applies a reference's own bracket-index chain to a resolved dims
-    list, left-to-right, each index against the CORRESPONDING original
-    dimension position (a range at position 0 doesn't renumber position 1 -
-    ordinary multi-axis indexing semantics). A positional/label index drops
-    its dimension from the result; a range keeps it (core-spec.md's
-    Grammar); a dimension beyond the index chain's own length passes
-    through untouched."""
-    if dims is None:
-        return None
-    result = []
-    for i, d in enumerate(dims):
-        if i < len(index_accessors):
-            if index_accessors[i].kind == "range":
-                result.append(d)
-            # positional/label -> dimension dropped
+def index_groups(index_accessors):
+    """Splits a reference's index list into its brackets: "[0:2, 1][3]" is
+    two groups, [0:2, 1] and [3] (RefIndex.same_bracket marks an index that
+    continues the previous one's bracket)."""
+    groups = []
+    for idx in index_accessors:
+        if getattr(idx, "same_bracket", False) and groups:
+            groups[-1].append(idx)
         else:
-            result.append(d)
-    return result
+            groups.append([idx])
+    return groups
+
+
+def _sliced_dim(dim, idx):
+    """The dimension a range index leaves behind: as many entries as the
+    range selects, with the matching labels. Whatever can't be told
+    statically (a runtime size, an out-of-bounds or empty range - the
+    latter is SEDBase-0011's to report) becomes unknown, so later indices
+    are not judged against a guess."""
+    n = dim["size"]
+    a, b = idx.value
+    out = dict(dim)
+    out["min"] = None
+    ok = n is not None and not (a is not None and not -n <= a <= n) and not (b is not None and not -n <= b <= n)
+    if ok:
+        ea = 0 if a is None else a
+        eb = n if b is None else b
+        if ea < 0:
+            ea += n
+        if eb < 0:
+            eb += n
+        ok = ea < eb
+    if not ok:
+        out["size"] = None
+        out["labels"] = None
+        return out
+    out["size"] = eb - ea
+    # An unlabeled dimension is stored as an empty label list and stays that
+    # way; otherwise the labels of the selected entries are kept.
+    labels = dim["labels"]
+    if labels is not None and (not labels or len(labels) == n):
+        out["labels"] = list(labels[ea:eb])
+    else:
+        out["labels"] = None
+    return out
+
+
+def bind_indices(dims, index_accessors):
+    """Applies a reference's own bracket indices to a resolved dims list.
+    Separate brackets chain (each applies to the result of the one before:
+    "[0:2][1]" indexes the first dimension twice); the indices inside one
+    bracket apply to consecutive dimensions ("[0:2, 1]" - numpy style). A
+    positional/label index drops its dimension from the result; a range
+    keeps it, narrowed to the entries it selects (core-spec.md's Grammar);
+    dimensions no index reaches pass through untouched. Returns
+    (seen, after): `seen` has one entry per index, in order - the dimension
+    that index is applied to, as the earlier indices left it - and stops
+    short when an index finds no dimension left (SEDBase-0009); `after` is
+    the dimensions of the result. (None, None) when dims is None."""
+    if dims is None:
+        return None, None
+    view = list(dims)
+    seen = []
+    for group in index_groups(index_accessors):
+        k = min(len(group), len(view))
+        seen.extend(view[:k])
+        if k < len(group):
+            break
+        new = []
+        for j, d in enumerate(view):
+            if j < k:
+                if group[j].kind == "range":
+                    new.append(_sliced_dim(d, group[j]))
+            else:
+                new.append(d)
+        view = new
+    return seen, view
+
+
+def _apply_index_chain(dims, index_accessors):
+    return bind_indices(dims, index_accessors)[1]
 
 
 def eval_valid(entry, scope, shape_of):
@@ -598,44 +660,63 @@ def resolve_output(outputs_json, fields, accessors, shape_of):
 class NotIndexable(Exception):
     """Raised by index_into_literal when the index chain can't be applied
     to the constant's own literal structure - the signal SEDBase-0012
-    fires on."""
+    fires on. args[0] is the failing index's value; .index is the RefIndex."""
+
+    index = None
+
+
+def _not_indexable(idx):
+    err = NotIndexable(idx.value)
+    err.index = idx
+    return err
+
+
+def _apply_bracket(cur, group):
+    """One bracket's indices against a literal: the first applies to cur
+    itself, the rest to the corresponding dimension of what it selects (a
+    range selects several entries, so the rest applies inside each)."""
+    if not group:
+        return cur
+    idx, rest = group[0], group[1:]
+    if idx.kind == "label":
+        if not isinstance(cur, dict) or idx.value not in cur:
+            raise _not_indexable(idx)
+        return _apply_bracket(cur[idx.value], rest)
+    if idx.kind == "int":
+        if not isinstance(cur, list):
+            raise _not_indexable(idx)
+        n = len(cur)
+        i = idx.value
+        if i < -n or i >= n:
+            raise _not_indexable(idx)
+        return _apply_bracket(cur[i], rest)
+    if idx.kind == "range":
+        if not isinstance(cur, list):
+            raise _not_indexable(idx)
+        a, b = idx.value
+        n = len(cur)
+        ea = a if a is not None else 0
+        eb = b if b is not None else n
+        if ea < 0: ea += n
+        if eb < 0: eb += n
+        part = cur[max(ea, 0):max(eb, 0)]
+        if not rest:
+            return part
+        return [_apply_bracket(el, rest) for el in part]
+    raise _not_indexable(idx)
 
 
 def index_into_literal(value, index_accessors):
     """core-spec.md / SEDBase-0012.md: constants have no outputs.json,
     their "shape" is just their own literal JSON value. Applies an index
-    chain directly against it, following one level of reference first if
-    the constant's own value is itself a reference string (SEDBase-0012.md:
-    "A constant whose value is itself a reference is followed first") -
-    callers pass an already-dereferenced `value` (see the RUNTIME dispatcher
-    for the one-hop-then-stop resolution, mirroring how deeply nested
-    constants-of-constants aren't a documented case). Raises NotIndexable
-    the moment an index can't apply; returns the fully-indexed literal value
-    otherwise (used by the ref-type check too, once indexing succeeds)."""
+    chain directly against it: separate brackets chain (each applies to the
+    result of the one before), the indices inside one bracket apply to
+    consecutive dimensions (see index_groups). Callers pass an
+    already-dereferenced `value` (the RUNTIME dispatcher follows alias
+    constants first). Raises NotIndexable the moment an index can't apply;
+    returns the fully-indexed literal value otherwise (used by the ref-type
+    check too, once indexing succeeds)."""
     cur = value
-    for idx in index_accessors:
-        if idx.kind == "label":
-            if not isinstance(cur, dict) or idx.value not in cur:
-                raise NotIndexable(idx.value)
-            cur = cur[idx.value]
-        elif idx.kind == "int":
-            if not isinstance(cur, list):
-                raise NotIndexable(idx.value)
-            n = len(cur)
-            i = idx.value
-            if i < -n or i >= n:
-                raise NotIndexable(idx.value)
-            cur = cur[i]
-        elif idx.kind == "range":
-            if not isinstance(cur, list):
-                raise NotIndexable(idx.value)
-            a, b = idx.value
-            n = len(cur)
-            ea = a if a is not None else 0
-            eb = b if b is not None else n
-            if ea < 0: ea += n
-            if eb < 0: eb += n
-            cur = cur[max(ea, 0):max(eb, 0)]
-        else:
-            raise NotIndexable(idx.value)
+    for group in index_groups(index_accessors):
+        cur = _apply_bracket(cur, group)
     return cur

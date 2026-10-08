@@ -53,10 +53,16 @@ public final class OutputsShape {
      * constant's own literal structure - the signal SEDBase-0012 fires on. */
     public static final class NotIndexable extends RuntimeException {
         public final String bad;   // the failing index as Python would print it
+        public final RefIndex index;   // the failing index, or null
 
         public NotIndexable(String bad) {
+            this(bad, null);
+        }
+
+        public NotIndexable(String bad, RefIndex index) {
             super(bad, null, false, false);
             this.bad = bad;
+            this.index = index;
         }
     }
 
@@ -686,22 +692,94 @@ public final class OutputsShape {
         return out;
     }
 
-    /** Applies a reference's own bracket-index chain to a resolved dims
-     * list, left-to-right, each index against the CORRESPONDING original
-     * dimension position. A positional/label index drops its dimension from
-     * the result; a range keeps it; a dimension beyond the index chain's own
-     * length passes through untouched. */
-    static List<Dim> applyIndexChain(List<Dim> dims, List<RefIndex> indexAccessors) {
-        if (dims == null) return null;
-        List<Dim> result = new ArrayList<>();
-        for (int i = 0; i < dims.size(); i++) {
-            if (i < indexAccessors.size()) {
-                if (indexAccessors.get(i).kind.equals("range")) result.add(dims.get(i));
+    /** Splits a reference's index list into its brackets: "[0:2, 1][3]" is
+     * two groups, [0:2, 1] and [3] (RefIndex.sameBracket marks an index that
+     * continues the previous one's bracket). */
+    public static List<List<RefIndex>> indexGroups(List<RefIndex> indexAccessors) {
+        List<List<RefIndex>> groups = new ArrayList<>();
+        for (RefIndex idx : indexAccessors) {
+            if (idx.sameBracket && !groups.isEmpty()) {
+                groups.get(groups.size() - 1).add(idx);
             } else {
-                result.add(dims.get(i));
+                List<RefIndex> g = new ArrayList<>();
+                g.add(idx);
+                groups.add(g);
             }
         }
-        return result;
+        return groups;
+    }
+
+    /** The dimension a range index leaves behind: as many entries as the
+     * range selects, with the matching labels. Whatever can't be told
+     * statically (a runtime size, an out-of-bounds or empty range - the
+     * latter is SEDBase-0011's to report) becomes unknown, so later indices
+     * are not judged against a guess. */
+    private static Dim slicedDim(Dim dim, RefIndex idx) {
+        Long n = dim.size;
+        Long a = idx.rangeStart, b = idx.rangeEnd;
+        boolean ok = n != null && !(a != null && !(-n <= a && a <= n)) && !(b != null && !(-n <= b && b <= n));
+        long ea = 0, eb = 0;
+        if (ok) {
+            ea = a != null ? a : 0;
+            eb = b != null ? b : n;
+            if (ea < 0) ea += n;
+            if (eb < 0) eb += n;
+            ok = ea < eb;
+        }
+        if (!ok) return new Dim(null, null, dim.source, null);
+        List<String> labels = null;
+        // An unlabeled dimension is stored as an empty label list and stays that
+        // way; otherwise the labels of the selected entries are kept.
+        if (dim.labels != null && dim.labels.isEmpty()) labels = new ArrayList<>();
+        else if (dim.labels != null && dim.labels.size() == n) labels = new ArrayList<>(dim.labels.subList((int) ea, (int) eb));
+        return new Dim(eb - ea, labels, dim.source, null);
+    }
+
+    /** The result of bindIndices: see that method. */
+    public static final class Bound {
+        public final List<Dim> seen;
+        public final List<Dim> after;
+
+        Bound(List<Dim> seen, List<Dim> after) {
+            this.seen = seen;
+            this.after = after;
+        }
+    }
+
+    /** Applies a reference's own bracket indices to a resolved dims list.
+     * Separate brackets chain (each applies to the result of the one before:
+     * "[0:2][1]" indexes the first dimension twice); the indices inside one
+     * bracket apply to consecutive dimensions ("[0:2, 1]" - numpy style). A
+     * positional/label index drops its dimension from the result; a range
+     * keeps it, narrowed to the entries it selects; dimensions no index
+     * reaches pass through untouched. `seen` has one entry per index, in
+     * order - the dimension that index is applied to, as the earlier indices
+     * left it - and stops short when an index finds no dimension left
+     * (SEDBase-0009); `after` is the dimensions of the result. Both null when
+     * dims is null. */
+    public static Bound bindIndices(List<Dim> dims, List<RefIndex> indexAccessors) {
+        if (dims == null) return new Bound(null, null);
+        List<Dim> view = new ArrayList<>(dims);
+        List<Dim> seen = new ArrayList<>();
+        for (List<RefIndex> group : indexGroups(indexAccessors)) {
+            int k = Math.min(group.size(), view.size());
+            seen.addAll(view.subList(0, k));
+            if (k < group.size()) break;
+            List<Dim> next = new ArrayList<>();
+            for (int j = 0; j < view.size(); j++) {
+                if (j < k) {
+                    if (group.get(j).kind.equals("range")) next.add(slicedDim(view.get(j), group.get(j)));
+                } else {
+                    next.add(view.get(j));
+                }
+            }
+            view = next;
+        }
+        return new Bound(seen, view);
+    }
+
+    static List<Dim> applyIndexChain(List<Dim> dims, List<RefIndex> indexAccessors) {
+        return bindIndices(dims, indexAccessors).after;
     }
 
     /** A suffix entry that is listed in outputs.json is valid; one that isn't
@@ -782,41 +860,60 @@ public final class OutputsShape {
      * returns the fully-indexed value otherwise. */
     public static Object indexIntoLiteral(Object value, List<RefIndex> indexAccessors) {
         Object cur = value;
-        for (RefIndex idx : indexAccessors) {
-            JsonNode node = cur instanceof JsonNode ? (JsonNode) cur : null;
-            switch (idx.kind) {
-                case "label":
-                    if (node == null || !node.isObject() || !node.has(idx.label)) throw new NotIndexable(idx.label);
-                    cur = node.get(idx.label);
-                    break;
-                case "int": {
-                    if (node == null || !node.isArray()) throw new NotIndexable(idx.intText);
-                    long n = node.size();
-                    long i = idx.intValue;
-                    if (i < -n || i >= n) throw new NotIndexable(idx.intText);
-                    cur = node.get((int) (i < 0 ? i + n : i));
-                    break;
-                }
-                case "range": {
-                    String bad = "(" + (idx.rangeStartText == null ? "None" : idx.rangeStartText) + ", "
-                            + (idx.rangeEndText == null ? "None" : idx.rangeEndText) + ")";
-                    if (node == null || !node.isArray()) throw new NotIndexable(bad);
-                    long n = node.size();
-                    long ea = idx.rangeStart != null ? idx.rangeStart : 0;
-                    long eb = idx.rangeEnd != null ? idx.rangeEnd : n;
-                    if (ea < 0) ea += n;
-                    if (eb < 0) eb += n;
-                    ea = Math.max(ea, 0);
-                    eb = Math.max(eb, 0);
-                    ArrayNode out = JsonNodeFactory.instance.arrayNode();
-                    for (long k = ea; k < Math.min(eb, n); k++) out.add(node.get((int) k));
-                    cur = out;
-                    break;
-                }
-                default:
-                    throw new NotIndexable(idx.valueText());
-            }
-        }
+        for (List<RefIndex> group : indexGroups(indexAccessors)) cur = applyBracket(cur, group, 0);
         return cur;
+    }
+
+    private static NotIndexable notIndexable(RefIndex idx) {
+        String bad;
+        switch (idx.kind) {
+            case "label": bad = idx.label; break;
+            case "int": bad = idx.intText; break;
+            case "range":
+                bad = "(" + (idx.rangeStartText == null ? "None" : idx.rangeStartText) + ", "
+                        + (idx.rangeEndText == null ? "None" : idx.rangeEndText) + ")";
+                break;
+            default: bad = idx.valueText();
+        }
+        return new NotIndexable(bad, idx);
+    }
+
+    /** One bracket's indices against a literal: the first applies to cur
+     * itself, the rest to the corresponding dimension of what it selects (a
+     * range selects several entries, so the rest applies inside each). */
+    private static Object applyBracket(Object cur, List<RefIndex> group, int from) {
+        if (from >= group.size()) return cur;
+        RefIndex idx = group.get(from);
+        JsonNode node = cur instanceof JsonNode ? (JsonNode) cur : null;
+        switch (idx.kind) {
+            case "label":
+                if (node == null || !node.isObject() || !node.has(idx.label)) throw notIndexable(idx);
+                return applyBracket(node.get(idx.label), group, from + 1);
+            case "int": {
+                if (node == null || !node.isArray()) throw notIndexable(idx);
+                long n = node.size();
+                long i = idx.intValue;
+                if (i < -n || i >= n) throw notIndexable(idx);
+                return applyBracket(node.get((int) (i < 0 ? i + n : i)), group, from + 1);
+            }
+            case "range": {
+                if (node == null || !node.isArray()) throw notIndexable(idx);
+                long n = node.size();
+                long ea = idx.rangeStart != null ? idx.rangeStart : 0;
+                long eb = idx.rangeEnd != null ? idx.rangeEnd : n;
+                if (ea < 0) ea += n;
+                if (eb < 0) eb += n;
+                ea = Math.max(ea, 0);
+                eb = Math.max(eb, 0);
+                ArrayNode out = JsonNodeFactory.instance.arrayNode();
+                for (long k = ea; k < Math.min(eb, n); k++) {
+                    JsonNode el = node.get((int) k);
+                    out.add(from + 1 >= group.size() ? el : (JsonNode) applyBracket(el, group, from + 1));
+                }
+                return out;
+            }
+            default:
+                throw notIndexable(idx);
+        }
     }
 }

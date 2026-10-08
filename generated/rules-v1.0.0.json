@@ -2793,7 +2793,7 @@
   },
   "SEDBase-0013": {
     "class": "SEDBase",
-    "rule": "A reference to a Repeat's subTasks, its .range/.index outputs, or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat).",
+    "rule": "A reference to a Repeat's subTasks, its .range/.index outputs (or a ParameterScan's .ranges, .indexes or .model output), or one of its loop variables is only legal when the element holding the reference is that Repeat itself, or lies within that Repeat's own subTasks (at any depth, including through a nested Repeat).",
     "message": "{class} '{id}' references '{value}', which lies inside Repeat '{resolved-value}'; only that Repeat's own subTasks may reference into it.",
     "severity": "error",
     "status": "active",

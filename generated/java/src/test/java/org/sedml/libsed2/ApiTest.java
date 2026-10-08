@@ -346,6 +346,19 @@ public class ApiTest {
             "[[1,2],[3,4]]|[1][0]|3",
             "[[1,2],[3,4]]|[0:2][1]|[3,4]",
             "[[1,2],[3,4]]|[0:2][0:1]|[[1,2]]",
+            "[[1,2],[3,4],[5,6]]|[0:2][1]|[3,4]",
+            "[[1,2],[3,4],[5,6]]|[0:2, 1]|[2,4]",
+            "[[1,2],[3,4],[5,6]]|[1:3, 0]|[3,5]",
+            "[[1,2],[3,4],[5,6]]|[:, 1]|[2,4,6]",
+            "[[1,2],[3,4],[5,6]]|[1, 0]|3",
+            "[[1,2],[3,4],[5,6]]|[1, :]|[3,4]",
+            "[[1,2],[3,4],[5,6]]|[0:2, 0:1]|[[1],[3]]",
+            "[[1,2],[3,4],[5,6]]|[0:2, 1][0]|2",
+            "[[1,2],[3,4],[5,6]]|[0:2][1, 0]|3",
+            "[[1,2],[3,4],[5,6]]|[0:3][1:3][1]|[5,6]",
+            "{\"S1\":[1,2,3],\"S2\":[4,5,6]}|['S2', 1:]|[5,6]",
+            "[{\"a\":1},{\"a\":2}]|[0:2, 'a']|[1,2]",
+            "[[1,2],[3,4]]|[2:2, 9]|[]",
             "{\"x\":null}|['x']|null",
             "5||5",
             "\"abc\"||\"abc\"",
@@ -378,9 +391,28 @@ public class ApiTest {
             "\"abc\"|[0]",
             "null|[0]",
             "[1,2,3]|[0][0]",
+            "[[1,2],[3,4]]|[0:2][2]",
+            "[[1,2],[3,4]]|[0:2, 2]",
+            "[[1,2],[3,4]]|[0:2]['S1']",
+            "[1,2,3]|[0, 0]",
+            "[[1,2],[3,4]]|[0:2, 0, 0]",
     })
     void applyIndicesRejectsAnIndexThatDoesNotFit(String value, String accessors) {
         assertTrue(errorOf(() -> References.applyIndices(json(value), accessors)).contains("SEDBase-0012"));
+    }
+
+    @Test
+    void parseMarksTheIndicesOfOneBracket() {
+        ParsedReference p = References.parse("#tasks:sim1[0:2, 'S1'][1]");
+        assertEquals(3, p.accessors.size());
+        assertEquals(false, p.accessors.get(0).index.sameBracket);
+        assertEquals(true, p.accessors.get(1).index.sameBracket);
+        assertEquals(false, p.accessors.get(2).index.sameBracket);
+        assertEquals("range", p.accessors.get(0).index.kind);
+        assertEquals("label", p.accessors.get(1).index.kind);
+        assertEquals("int", p.accessors.get(2).index.kind);
+        ParsedReference q = References.parse("#tasks:sim1[0][1]");
+        assertEquals(false, q.accessors.get(1).index.sameBracket);
     }
 
     @Test

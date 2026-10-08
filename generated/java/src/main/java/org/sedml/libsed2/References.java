@@ -141,8 +141,14 @@ public final class References {
                 int close = accessorPart.indexOf(']', i);
                 if (close == -1) break;
                 String inner = accessorPart.substring(i + 1, close);
+                boolean firstInBracket = true;
                 for (String part : inner.split(",", -1)) {
-                    if (!part.strip().isEmpty()) accessors.add(new ParsedReference.Accessor(null, parseRefIndex(part)));
+                    if (!part.strip().isEmpty()) {
+                        RefIndex ri = parseRefIndex(part);
+                        if (!firstInBracket) ri = ri.withSameBracket(true);
+                        firstInBracket = false;
+                        accessors.add(new ParsedReference.Accessor(null, ri));
+                    }
                 }
                 i = close + 1;
             } else {
@@ -269,16 +275,12 @@ public final class References {
      * -n..n-1, any index into a scalar). The result is part of `value`
      * itself, not a copy. Public API. */
     public static JsonNode applyIndices(JsonNode value, List<RefIndex> indices) {
-        Object current = value;
-        for (RefIndex idx : indices) {
-            try {
-                current = OutputsShape.indexIntoLiteral(current, java.util.Collections.singletonList(idx));
-            } catch (OutputsShape.NotIndexable e) {
-                throw new ApiError("cannot apply index " + formatIndex(idx)
-                        + ": the value does not contain it (SEDBase-0012)");
-            }
+        try {
+            return (JsonNode) OutputsShape.indexIntoLiteral(value, indices);
+        } catch (OutputsShape.NotIndexable e) {
+            throw new ApiError("cannot apply index " + formatIndex(e.index)
+                    + ": the value does not contain it (SEDBase-0012)");
         }
-        return (JsonNode) current;
     }
 
     /** getReferenceValue(document, parse(reference)). Public API. */
@@ -441,9 +443,14 @@ public final class References {
         SedBase targetRepeat;
         if (isRepeatItself) {
             // A bare/.model/.aggregates/.strings reference to the Repeat ITSELF
-            // is never scoped; only its .range/.index outputs are, since those
-            // only have a value during one iteration.
-            targetRepeat = ("range".equals(dotName) || "index".equals(dotName)) ? resolved : null;
+            // is never scoped; only its per-iteration outputs are, since those
+            // only have a value during one iteration: .range/.index, and a
+            // ParameterScan's .ranges/.indexes and .model (the model as
+            // modified for the current iteration).
+            boolean loopOnly = "range".equals(dotName) || "index".equals(dotName)
+                    || (("model".equals(dotName) || "ranges".equals(dotName) || "indexes".equals(dotName))
+                        && "ParameterScan".equals(resolved.getClass().getSimpleName()));
+            targetRepeat = loopOnly ? resolved : null;
         } else {
             SedBase parent = resolved.getParent();
             targetRepeat = parent != null ? nearestRepeatAncestor(parent) : null;
@@ -781,6 +788,56 @@ public final class References {
                 "class", className, "id", idValue, "resolved-value", resolvedDesc);
     }
 
+    /** followConstantAlias()'s result: the followed value, or why it could
+     * not be followed ("unresolved": the chain leads nowhere that can be
+     * evaluated here - a missing constant, a cycle, a dot-accessor; some
+     * other rule reports those - or "index": an index in the chain does not
+     * fit the value it is applied to, with bad the index as SEDBase-0012's
+     * {subvalue} prints it and literal the value indexed). */
+    private static final class Followed {
+        final Object value;
+        final String failure;   // null, "unresolved" or "index"
+        final String bad;
+        final String literal;
+
+        Followed(Object value, String failure, String bad, String literal) {
+            this.value = value;
+            this.failure = failure;
+            this.bad = bad;
+            this.literal = literal;
+        }
+    }
+
+    /** A constant's value once it has been followed through every reference
+     * it is made of (SEDBase-0012.md: "A constant whose value is itself a
+     * reference is followed first"): for a value that is a reference string
+     * to another constant, that constant's value, itself followed, with the
+     * reference's own bracket indices applied - so an alias such as
+     * "#constants:table['S2']" is its row, not the whole table, and an alias
+     * of an alias is followed to the end. A reference to a task, output or
+     * style is returned as the element (its indices are not applied). */
+    private static Followed followConstantAlias(SedBase document, Object value, Set<String> seen) {
+        if (!(value instanceof JsonNode && isReference((JsonNode) value))) return new Followed(value, null, null, null);
+        ParsedReference inner = parse(((JsonNode) value).textValue());
+        if (!"constants".equals(inner.collection)) {
+            return new Followed(getSedReference(document, inner).element, null, null, null);
+        }
+        IdCollection coll = document == null ? null : document.getIdCollection("constants");
+        if (coll == null || inner.path.size() != 1 || !coll.has(inner.path.get(0)) || seen.contains(inner.path.get(0))
+                || inner.firstDotName() != null) {
+            return new Followed(null, "unresolved", null, null);
+        }
+        Set<String> next = new java.util.HashSet<>(seen);
+        next.add(inner.path.get(0));
+        Followed base = followConstantAlias(document, coll.getObject(inner.path.get(0)), next);
+        if (base.failure != null) return base;
+        try {
+            return new Followed(OutputsShape.indexIntoLiteral(base.value, inner.indexAccessors()), null, null, null);
+        } catch (OutputsShape.NotIndexable e) {
+            return new Followed(null, "index", e.bad, fmtLiteral(base.value));
+        }
+    }
+
     private static List<ValidationProblem> checkConstantAccessor(ParsedReference parsed, Object resolved,
             SedBase document, String className, String idValue, String attr, String location, String value,
             FieldInfo info) {
@@ -790,12 +847,18 @@ public final class References {
             return new ArrayList<>(Handwritten.sedBase0008(false, dotName, value, className, idValue, attr, location));
         }
         List<RefIndex> indexAccessors = parsed.indexAccessors();
-        Object constValue = resolved;
-        if (constValue instanceof JsonNode && isReference((JsonNode) constValue)) {
-            // SEDBase-0012.md: "A constant whose value is itself a reference is
-            // followed first." One hop only.
-            constValue = getSedReference(document, parse(((JsonNode) constValue).textValue())).element;
+        // SEDBase-0012.md: "A constant whose value is itself a reference is
+        // followed first" - through a chain of constants and with each alias's
+        // own indices applied (followConstantAlias).
+        Followed followed = followConstantAlias(document, resolved, new java.util.HashSet<String>());
+        if (followed.failure != null) {
+            if ("index".equals(followed.failure)) {
+                return new ArrayList<>(Handwritten.sedBase0012(false, followed.bad, followed.literal, value,
+                        className, idValue, attr, location));
+            }
+            return new ArrayList<>();
         }
+        Object constValue = followed.value;
         Object finalValue;
         try {
             finalValue = OutputsShape.indexIntoLiteral(constValue, indexAccessors);
@@ -870,10 +933,13 @@ public final class References {
         List<ValidationProblem> problems = new ArrayList<>(
                 Handwritten.sedBase0008(r.ok, r.dotName, value, className, idValue, attr, location));
         if (!Boolean.TRUE.equals(r.ok)) return problems;
-        problems.addAll(Handwritten.sedBase0009(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0010(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0011(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
-        problems.addAll(Handwritten.sedBase0014(r.dimsBefore, r.indexAccessors, value, className, idValue, attr, location));
+        // Each rule judges an index against the dimension that index is applied
+        // to (chained brackets: the dimension as the earlier ranges left it).
+        List<Dim> seenDims = OutputsShape.bindIndices(r.dimsBefore, r.indexAccessors).seen;
+        problems.addAll(Handwritten.sedBase0009(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0010(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0011(seenDims, r.indexAccessors, value, className, idValue, attr, location));
+        problems.addAll(Handwritten.sedBase0014(seenDims, r.indexAccessors, value, className, idValue, attr, location));
 
         if (info.refTarget != null) {
             String[] k = outputTargetKind(r.entry);
