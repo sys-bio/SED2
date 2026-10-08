@@ -1,0 +1,59 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_strings": [
+      "a",
+      "b"
+    ]
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "scan1": {
+      "_type": "parameterScan",
+      "model": "#tasks:m1.model",
+      "parameterRanges": [
+        {
+          "_type": "parameterRange",
+          "modelElement": "k1",
+          "values": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "subTasks": {
+        "s1": {
+          "_type": "explicitODESimulation",
+          "model": "#tasks:scan1.model",
+          "independentVariable": "time",
+          "outputVariables": [
+            "S1",
+            "S2"
+          ],
+          "independentVariableRange": {
+            "_type": "numericRange",
+            "values": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "outputVariableMap": {
+        "col": "#tasks:scan1:subTasks:s1[0][1]"
+      }
+    },
+    "h1": {
+      "_type": "relabelData",
+      "input": "#tasks:scan1[0]['col'][1]",
+      "labels": "#constants:k_strings"
+    }
+  }
+}

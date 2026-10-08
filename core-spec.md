@@ -131,9 +131,10 @@ The characteristics of individual dimensions can also be determined by other obj
 
 
 
-**If you chose the array, write each element as one of two kinds of entry.** The array lists the dimensions in order, and the two kinds may be mixed.
+**If you chose the array, write each element as one of two kinds of entry.** The array lists the dimensions in order, and the three kinds may be mixed.
    - **An ordinary entry** describes one dimension. Its requied fields are `size` and `labels`, and it may have an optional `note` with free text.
    - **A `repeat` entry** expands to one dimension per entry of a named array-valued attribute (e.g. `ParameterScan` has one dimension per entry of `parameterRanges`). Its only field is `repeat`, an object with `over` (required; the name of the array-valued attribute), `size` and `labels` (both required, written as for an ordinary entry), and `note` (optional). Inside a `repeat` entry's `size` and `labels`, a bare identifier refers to a field of the *current entry* of `over` (not of the task), and `self` refers to that entry as a whole.
+  - **A `trailing` entry** (must be last) marks that the dimensions of the output's own entries follow the listed ones, as when a `Loop`'s [id] holds one entry per `outputVariableMap` key and each entry may itself have dimensions. Its only field is `trailing`, an object with an required `of` child pointing to the name of the attribute whose entries supply those dimensions, e.g. `outputVariableMap` or `data`, and an optional `note`. The number, sizes and labels of these dimensions must be derived from other attributes and elements in the document, so simple validators might not judge indices that reach them, but full validators should follow the `of`, and determine the full dimensionality of the element.
 
 3. **Write each `size` as a sourced object.** A sourced object always has a `source` field saying where the knowledge comes from. Use the first of these that applies:
    - `"static"` - computable from the task's own attribute values alone. Fields: `expr` (required; an expression in the notation defined below, e.g. `len(outputVariables)`, `1 + len(outputVariables)`, `independentVariableRange.numberOfSteps`) and `note` (optional).

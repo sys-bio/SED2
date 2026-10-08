@@ -842,6 +842,54 @@ class _Composer:
         return None
 
 
+def check_outputs_json(classes) -> None:
+    """Checks every class's outputs.json beyond its envelope shape:
+      - against schema/outputs-meta.schema.json, when the jsonschema package
+        is available;
+      - a `trailing` entry in a `dimensions` array must be the last one, and
+        its `of` must name an attribute the class actually has (it says where
+        the dimensions that follow come from; see Design.md, Task Output
+        Shapes).
+    Raises ValueError listing every problem found."""
+    problems = []
+    meta = None
+    try:
+        import jsonschema
+        meta_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "schema",
+                                 "outputs-meta.schema.json")
+        if os.path.isfile(meta_path):
+            with open(meta_path, encoding="utf-8") as f:
+                meta = (jsonschema, json.load(f))
+    except ImportError:
+        pass
+    for cname, fc in sorted(classes.items()):
+        outputs = fc.outputs_json
+        if not outputs:
+            continue
+        if meta is not None:
+            validator = meta[0].Draft202012Validator(meta[1])
+            for err in validator.iter_errors(outputs):
+                where = "/".join(str(p) for p in err.absolute_path)
+                problems.append(f"{cname} outputs.json: {where}: {err.message}")
+        attr_names = {f.name for f in fc.fields}
+        for suffix, entry in (outputs.get("outputs") or {}).items():
+            dims = entry.get("dimensions")
+            if not isinstance(dims, list):
+                continue
+            for i, d in enumerate(dims):
+                if not (isinstance(d, dict) and "trailing" in d):
+                    continue
+                if i != len(dims) - 1:
+                    problems.append(f"{cname} outputs.json: {suffix}: a trailing entry must be the last dimension")
+                of = (d["trailing"] or {}).get("of")
+                if not of:
+                    problems.append(f"{cname} outputs.json: {suffix}: a trailing entry needs 'of' (the attribute whose values supply the dimensions)")
+                elif of not in attr_names:
+                    problems.append(f"{cname} outputs.json: {suffix}: trailing 'of' names '{of}', which is not an attribute of {cname}")
+    if problems:
+        raise ValueError("invalid outputs.json:\n  " + "\n  ".join(problems))
+
+
 def load_spec(spec_root: str, document_class_hint: Optional[str] = None) -> SpecModel:
     loader = _Loader(spec_root)
     loader.discover()
@@ -852,6 +900,7 @@ def load_spec(spec_root: str, document_class_hint: Optional[str] = None) -> Spec
     doc_class = document_class_hint or composer.document_class_guess()
     doc_entry = loader.class_dirs.get(doc_class)
     doc_version = os.path.basename(doc_entry["dir"]) if doc_entry else None
+    check_outputs_json(composer.classes)
     model = SpecModel(
         classes=composer.classes,
         discriminators=composer.discriminators,

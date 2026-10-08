@@ -1,0 +1,56 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_strings": [
+      "a",
+      "b"
+    ]
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "scatter1": {
+      "_type": "scatter",
+      "range": {
+        "_type": "numericRange",
+        "values": [
+          1,
+          2,
+          3
+        ]
+      },
+      "subTasks": {
+        "s1": {
+          "_type": "explicitODESimulation",
+          "model": "#tasks:m1.model",
+          "independentVariable": "time",
+          "outputVariables": [
+            "S1",
+            "S2"
+          ],
+          "independentVariableRange": {
+            "_type": "numericRange",
+            "values": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "outputVariableMap": {
+        "col": "#tasks:scatter1:subTasks:s1[0][1]",
+        "col2": "#tasks:scatter1:subTasks:s1[0][2]"
+      }
+    },
+    "h1": {
+      "_type": "relabelData",
+      "input": "#tasks:scatter1[0]['col']",
+      "labels": "#constants:k_strings"
+    }
+  }
+}

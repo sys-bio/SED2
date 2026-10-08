@@ -21,6 +21,8 @@ data sheets, and a model format is not a SED2 class.
         modelChange.md      addElements / removeElements / replaceElements
         elementTypes.md     ModelElementList includeTypes/excludeTypes
                             vocabulary
+        jacobian.md         what JacobianFull / JacobianReduced compute
+        steadyState.md      what SteadyState computes
         validation/         one .md file per rule, same shape as the rules in
                             specsheets/<group>/<Class>/v1.0.0/validation/
         <Version>/          optional; only when a format's rules differ between

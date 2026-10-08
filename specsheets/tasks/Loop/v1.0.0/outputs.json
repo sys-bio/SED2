@@ -8,16 +8,28 @@
             "source": "static",
             "expr": "len(range)"
           },
-          "labels": null,
-          "note": "one row per value in range; len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"
+          "labels": {
+            "source": "runtime",
+            "note": "the range's values, written as text the way numbers appear in formed strings (an integral value without a decimal point: 1, 2; otherwise 0.5, 0.25); known only once the range is expanded, so a label index here is not checked ahead of time"
+          },
+          "note": "dimension 0 is the iteration: one row per value in range, labeled by those values (there is no separate column holding the range values); len(range) dispatches on range's actual Range/NumericRange/ParameterRange type"
         },
         {
           "size": {
             "source": "static",
             "expr": "len(outputVariableMap)"
           },
-          "labels": null,
-          "note": "one column per entry of outputVariableMap, or just the range-values column alone if outputVariableMap is empty; a column whose subTask output is itself multi-dimensional would add further dimensions beyond this, not captured here"
+          "labels": {
+            "source": "static",
+            "expr": "keys(outputVariableMap)"
+          },
+          "note": "dimension 1 holds the outputVariableMap entries, one per key, labeled by the keys; length 0 if outputVariableMap is empty"
+        },
+        {
+          "trailing": {
+            "of": "outputVariableMap",
+            "note": "the dimensions of the outputVariableMap entries' own values, if they have any, follow (all entries must have the same shape, since they are stacked into one array); how many there are is not known ahead of time"
+          }
         }
       ]
     },
@@ -31,6 +43,12 @@
           },
           "labels": null,
           "note": "each entry collapses the iteration dimension of [id] to a single value (per Repeat, the applied dimension defaults to this Loop's own iterations), unless the underlying subTask output was itself multi-dimensional, in which case that dimensionality carries through per entry"
+        },
+        {
+          "trailing": {
+            "of": "aggregateOutputVariables",
+            "note": "if the underlying subTask output was itself multi-dimensional, that dimensionality carries through per entry; how many dimensions that is is not known ahead of time"
+          }
         }
       ]
     },

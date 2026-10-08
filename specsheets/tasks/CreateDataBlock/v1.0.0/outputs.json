@@ -12,7 +12,13 @@
             "source": "static",
             "expr": "keys(data)"
           },
-          "note": "base case: one entry per key in the data dictionary. If a value in data is itself multi-dimensional (a list or AnnotatedData), that entry's own dimensions carry through instead - how mixed-dimension entries combine into one overall shape is an open design question (see core-spec.md Section 10), so this formula covers only the uniform-scalar-values case"
+          "note": "dimension 0 has one entry per key in the data dictionary, labeled by those keys"
+        },
+        {
+          "trailing": {
+            "of": "data",
+            "note": "if the values in data are themselves multi-dimensional (a list or AnnotatedData), their dimensions follow dimension 0; all entries must have the same shape, since they are stacked into one array; how many dimensions that is is not known ahead of time"
+          }
         }
       ]
     }

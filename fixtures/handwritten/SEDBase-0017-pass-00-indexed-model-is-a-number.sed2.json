@@ -1,0 +1,16 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    }
+  },
+  "outputs": {
+    "rep1": {
+      "_type": "report",
+      "data": "#tasks:m1.model[\"S1\"]"
+    }
+  }
+}

@@ -27,7 +27,9 @@ def check(dims_after, expected_type, *, value, class_name, id_value, attr, locat
     "string", "integer", "boolean")."""
     if dims_after is None:
         return []
-    count = len(dims_after)
+    # A trailing placeholder ("source": "open") stands for dimensions of an
+    # unknown number: it never makes the shape definitely non-scalar.
+    count = len([d for d in dims_after if d.get("source") != "open"])
     if count == 0:
         return []
     return [make_problem(

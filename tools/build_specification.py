@@ -7,7 +7,7 @@ script instead. It reads:
   - specsheets/<category>/<ClassName>/<version>/description.md   (one per class)
   - specsheets/<category>/<ClassName>/<version>/validation/*.md   (numbered rules)
   - model_formats/<Format>/description.md, its topic files (labels.md, setValues.md,
-    modelChange.md, elementTypes.md, ...) and validation/*.md; each model format
+    modelChange.md, elementTypes.md, jacobian.md, steadyState.md, ...) and validation/*.md; each model format
     becomes its own Appendix after the Class Reference
 and writes a single self-contained SPECIFICATION.md at the repo root, with
 relative image links rewritten to resolve from the repo root and
@@ -46,6 +46,8 @@ FORMAT_TOPICS = [
     ("setValues.md", "setValues"),
     ("modelChange.md", "ModelChange"),
     ("elementTypes.md", "Element types"),
+    ("jacobian.md", "Jacobian"),
+    ("steadyState.md", "SteadyState"),
 ]
 
 

@@ -1,0 +1,62 @@
+{
+  "version": "v1.0.0",
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "sim1": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "blk": {
+      "_type": "createDataBlock",
+      "data": {
+        "r1": [
+          1,
+          2,
+          3
+        ],
+        "r2": [
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    "s2": {
+      "_type": "explicitODESimulation",
+      "model": "#tasks:m1.model",
+      "independentVariable": "time",
+      "outputVariables": [
+        "S1",
+        "S2"
+      ],
+      "independentVariableRange": {
+        "_type": "numericRange",
+        "values": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "relativeTolerance": "#tasks:blk['r1'][2]"
+    }
+  }
+}

@@ -12,6 +12,8 @@ generic specification cannot say.  One file per topic:
 | `setValues.md` | The keys accepted in a ModelChange's `setValues` |
 | `modelChange.md` | `addElements`, `removeElements` and `replaceElements` |
 | `elementTypes.md` | The `includeTypes` / `excludeTypes` vocabulary of ModelElementList |
+| `jacobian.md` | What `JacobianFull` and `JacobianReduced` compute |
+| `steadyState.md` | What `SteadyState` computes |
 | `validation/` | Rules (`CellML-NNNN`), all `proposed` for now |
 
 Anything marked "To be determined" has not been decided yet.  Until a topic

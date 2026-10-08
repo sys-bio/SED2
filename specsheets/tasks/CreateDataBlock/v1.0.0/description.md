@@ -32,6 +32,6 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 A new `AnnotatedData` object whose labels are the `data` dictionary's keys and whose content is the corresponding values, accessible as `[id]`.
 
 - `[id]`: **Valid**
-    - Dimensions: 1D, length = number of keys in the `data` dictionary, labeled by those keys - unless a value in `data` is itself multi-dimensional (a list or `AnnotatedData`), in which case that value's own dimensions carry through for that entry. _(Whether/how mixed-dimension entries combine into one overall shape is open - placeholder.)_
+    - Dimensions: dimension 0 has one entry per key in the `data` dictionary, labeled by those keys. If the values in `data` are themselves multi-dimensional (a list or `AnnotatedData`), their own dimensions follow dimension 0, so a block of vectors is a matrix: with a vector entry `r2`, `#tasks:blk['r2'][1]` (equivalently `#tasks:blk['r2', 1]`) is the second element of `r2`. All entries must have the same shape, since they are stacked into one array; entries of different shapes are an error when the document runs.
 - `[id].model`: **Invalid**
 - `[id].strings`: **Invalid**

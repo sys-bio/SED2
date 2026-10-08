@@ -1,0 +1,36 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_strings": [
+      "a",
+      "b"
+    ]
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "blk": {
+      "_type": "createDataBlock",
+      "data": {
+        "r1": [
+          1,
+          2,
+          3
+        ],
+        "r2": [
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    "h1": {
+      "_type": "relabelData",
+      "input": "#tasks:blk['r2', 1]",
+      "labels": "#constants:k_strings"
+    }
+  }
+}

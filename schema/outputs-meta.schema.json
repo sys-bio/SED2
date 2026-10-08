@@ -76,10 +76,31 @@
       "required": ["repeat"],
       "additionalProperties": false
     },
+    "trailingDimensionEntry": {
+      "description": "Marks that the dimensions of the output's own entries follow the listed ones (a loop's results hold whatever each subTask output holds, a data block holds whatever its entries hold). How many there are, and their sizes and labels, are not statically known, so indices that reach them are not judged and they never make a reference 'still shaped'. Must be the last entry.",
+      "type": "object",
+      "properties": {
+        "trailing": {
+          "type": "object",
+          "properties": {
+            "of": {
+              "description": "Required. Names the attribute of the task whose values supply the trailing dimensions (for example outputVariableMap, or data): the dimensions of each of its entries, following references to other outputs, are the ones that follow. Not used yet - validators currently treat the trailing dimensions as unknown - but it says where a future validator should look so that it can track the dimensions down.",
+              "type": "string",
+              "minLength": 1
+            },
+            "note": { "type": "string" }
+          },
+          "required": ["of"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["trailing"],
+      "additionalProperties": false
+    },
     "dimensions": {
       "description": "Either a fixed-length array of per-dimension entries (dimensionEntry, or repeatDimensionEntry to expand one dimension per entry of a named array-valued attribute) - when the shape is decomposable dimension-by-dimension - or a single sourced object describing the whole shape's derivation, for the genuinely non-decomposable cases (shapeOf(x) whole-shape inheritance, or a runtime/input-file source where the dimension count itself isn't knowable ahead of time).",
       "anyOf": [
-        { "type": "array", "items": { "anyOf": [ { "$ref": "#/$defs/dimensionEntry" }, { "$ref": "#/$defs/repeatDimensionEntry" } ] } },
+        { "type": "array", "items": { "anyOf": [ { "$ref": "#/$defs/dimensionEntry" }, { "$ref": "#/$defs/repeatDimensionEntry" }, { "$ref": "#/$defs/trailingDimensionEntry" } ] } },
         { "$ref": "#/$defs/sourced" }
       ]
     },

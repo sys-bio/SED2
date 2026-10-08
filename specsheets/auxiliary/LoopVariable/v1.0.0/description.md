@@ -37,6 +37,6 @@ Not independently referenceable outside its parent `Loop` - see `Loop` for how i
 Additional possible outputs beyond the three standard ones:
 
 - `#tasks:[loop_id]:loopVariables:[loopvar_id]`: A `LoopVariable`'s current value, addressed this way from within a subTask - not via the `[id]`/`[id].model`/`[id].strings` scheme, since a `LoopVariable` is not itself a `tasks` dictionary entry.
-    - Dimensions: One dimension more than `initialValue` itself, with the added dimension being the parent `Loop`'s `range` - i.e. this holds one `initialValue`-shaped value per iteration, indexed by the loop's range. (`initialValue` is typed `anyType` in the schema, so its own shape is otherwise open/unconstrained.)
+    - Dimensions: The same as `initialValue` itself: the value at the current iteration (`initialValue` on the first, then `subsequentValues` from the previous one), not one value per iteration. (`initialValue` is typed `anyType` in the schema, so its own shape is otherwise open/unconstrained.)
 
 Not independently referenceable outside its parent `Loop`.

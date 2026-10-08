@@ -837,11 +837,26 @@ def _constant_target_kind(final_value):
     return None, ""
 
 
-def _output_target_kind(entry):
+def _effective_output_type(entry, index_accessors):
+    """The type a reference to a task-output suffix entry has once its own
+    bracket indices are applied: an indexed model is the current value of
+    the element it names (core Types, "Elements of models"), a number, so
+    AnnotatedData; everything else keeps the type outputs.json declares."""
+    declared = entry.get("type") if entry else None
+    if declared == "model" and index_accessors:
+        return "annotatedData"
+    return declared
+
+
+def _output_target_kind(entry, declared=None):
     """(kind, description) of a task-output suffix entry, from its
     outputs.json "type" (model/annotatedData/stringList), for
-    SEDBase-0016/-0017; (None, "") when the entry declares no type."""
-    declared = entry.get("type") if entry else None
+    SEDBase-0016/-0017; (None, "") when the entry declares no type.
+    `declared` overrides the entry's own type (see _effective_output_type)."""
+    if declared is None:
+        declared = entry.get("type") if entry else None
+    if declared == "annotatedData" and entry and entry.get("type") == "model":
+        return "annotatedData", "a model element's value"
     if declared == "model":
         return "model", "a model"
     if declared == "annotatedData":
@@ -1011,11 +1026,12 @@ def _check_output_shape_and_ref_type(parsed, resolved, document, *, class_name, 
     problems += sedbase_0011.check(seen_dims, index_accessors, **kwargs)
     problems += sedbase_0014.check(seen_dims, index_accessors, **kwargs)
 
+    effective_type = _effective_output_type(entry, index_accessors)
     if ref_target is not None:
-        kind, description = _output_target_kind(entry)
+        kind, description = _output_target_kind(entry, effective_type)
         problems += _check_ref_target(ref_target, kind, description, **kwargs)
     if ref_type_rule_id is not None and field_kind in _REF_TYPE_KINDS:
-        actual_declared = entry.get("type") if entry else None
+        actual_declared = effective_type
         if actual_declared == "model":
             # A model is a type of its own: never a number, string, boolean,
             # array, or dictionary (ProposedRules.md).
@@ -1048,12 +1064,9 @@ def _check_math_field(value, *, class_name, id_value, attr, location) -> list:
     declared type occurs... is called from a shared per-type helper that
     every class's generated validate() invokes automatically for each of
     its own fields of that type"). Called only for a FieldSpec with
-    is_math=True, and only when its value is a literal string - never a
-    reference: per Types-0001.md, "When the math attribute is itself a
-    reference, this and the following math rules... apply only if the
-    reference resolves statically to a string constant", which is out of
-    scope until reference resolution exists (Design.md's Cross-references
-    section), so a referenced math field is silently skipped here.
+    is_math=True, and for any string value: a math string is always math,
+    even when it is just "#constants:v", which is a legal expression made of
+    one reference token (it is not read as a reference to a string).
 
     The four templates/python/rules/Types-000N.py files (copied verbatim
     into ._rules/ at generate time - see Design.md's "fixed function-name
@@ -1542,7 +1555,9 @@ class SedBase:
                         # template actually names.
                         extra["allowed"] = ", ".join(repr(v) for v in spec.enum)
                     problems.append(make_problem(rid, "/" + spec.name, attr=spec.name, **extra))
-                elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value):
+                elif spec.kind in _REFERENCE_CAPABLE_KINDS and is_reference(value) and not spec.is_math:
+                    # (A math field is always math, even when the whole string
+                    # is a single reference: see the is_math branch below.)
                     problems.extend(_check_reference_field(
                         value, document=self.get_document(), class_name=self.__class__.__name__,
                         id_value=self._own_id_for_message(), attr=spec.name, location="/" + spec.name,
@@ -2528,6 +2543,13 @@ def _apply_dim_minus(dims, selectors):
     if dims is None:
         return None
     count = len(selectors) if isinstance(selectors, list) else 1
+    if any(is_open(d) for d in dims):
+        # Whatever is removed, the unknown trailing dimensions may remain.
+        known = [d for d in dims if not is_open(d)]
+        if selectors == [OUTERMOST] and known:
+            return dims[1:]
+        return [{"size": None, "labels": None, "source": "runtime", "min": None}
+                for _ in range(max(len(known) - count, 0))] + [d for d in dims if is_open(d)]
     if count >= len(dims):
         return []
     if selectors == [OUTERMOST]:
@@ -2573,6 +2595,18 @@ def _eval_sourced_labels(labels_spec, scope, shape_of):
     return None
 
 
+# The `source` of the placeholder dimension a "trailing" entry in outputs.json
+# resolves to: zero or more further dimensions (those of the output's own
+# entries), of unknown number, size and labels. Indices that reach it are not
+# judged (it can take any number of them); it never makes the result "still
+# shaped" (SEDBase-0015) on its own.
+OPEN_SOURCE = "open"
+
+
+def is_open(dim):
+    return dim.get("source") == OPEN_SOURCE
+
+
 def resolve_dims(dims_spec, scope, shape_of):
     """dims_spec is outputs.json's own "dimensions" value for one suffix
     entry (see schema/outputs-meta.schema.json's $defs/dimensions) - either
@@ -2587,7 +2621,11 @@ def resolve_dims(dims_spec, scope, shape_of):
     if isinstance(dims_spec, list):
         result = []
         for d in dims_spec:
-            if "repeat" in d:
+            if "trailing" in d:
+                # The entries' own dimensions follow the listed ones: how many
+                # there are is not statically known (see OPEN_SOURCE).
+                result.append({"size": None, "labels": None, "source": OPEN_SOURCE, "min": None})
+            elif "repeat" in d:
                 rep = d["repeat"]
                 try:
                     over_val = scope.lookup(rep["over"])
@@ -2685,14 +2723,18 @@ def bind_indices(dims, index_accessors):
     view = list(dims)
     seen = []
     for group in index_groups(index_accessors):
-        k = min(len(group), len(view))
-        seen.extend(view[:k])
+        # An open placeholder (the last dimension) takes any number of indices.
+        has_open = bool(view) and is_open(view[-1])
+        k = len(group) if has_open else min(len(group), len(view))
+        seen.extend(view[j] if j < len(view) else view[-1] for j in range(k))
         if k < len(group):
             break
         new = []
         for j, d in enumerate(view):
             if j < k:
-                if group[j].kind == "range":
+                if is_open(d):
+                    new.append(d)
+                elif group[j].kind == "range":
                     new.append(_sliced_dim(d, group[j]))
             else:
                 new.append(d)

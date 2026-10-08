@@ -1,0 +1,40 @@
+{
+  "version": "v1.0.0",
+  "constants": {
+    "k_num": 1.5,
+    "k_strings": [
+      "a",
+      "b"
+    ],
+    "k_array": [
+      10,
+      20,
+      30
+    ],
+    "k_grid": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "k_obj": {
+      "a": 1,
+      "b": 2
+    }
+  },
+  "tasks": {
+    "m1": {
+      "_type": "modelImport",
+      "location": "model.xml",
+      "language": "urn:sedml:language:sbml"
+    },
+    "c1": {
+      "_type": "calculation",
+      "math": "1 * #constants:k_grid[0, 1] + #constants:k_grid[0:2, 1][0]"
+    }
+  }
+}

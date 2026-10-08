@@ -41,10 +41,10 @@ All classes additionally inherit the optional `name`, `description`, `notes`, an
 
 ## Outputs
 
-`[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges`, plus one further dimension sized by the number of entries in `outputVariableMap`. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
+`[id]`: an `AnnotatedData` with one dimension per entry of `parameterRanges` (in order, each named by its `modelElement` and labeled by that range's values), followed by one dimension holding the `outputVariableMap` entries (labeled by their keys), followed by the dimensions of the entries' own values, if any. `[id].aggregates`: an `AnnotatedData` following `aggregateOutputVariables`, when defined.
 
 - `[id]`: **Valid**
-    - Dimensions: N-D: one dimension per entry in `parameterRanges` (each sized by that range's own number of steps, and each labeled with that range's `modelElement`), plus one further dimension sized by the number of entries in `outputVariableMap` - dimensionality grows with the number of ranges scanned.
+    - Dimensions: N-D: one dimension per entry in `parameterRanges`, in order (each sized by that range's own number of steps, named by that range's `modelElement`, and labeled by that range's values), then one dimension holding the `outputVariableMap` entries, one per key, labeled by the keys (length 0 if `outputVariableMap` is empty), then the dimensions of the entries' own values if they are not scalars - dimensionality grows with the number of ranges scanned. All entries must have the same shape, since they are stacked into one array. A dimension's name is for the reader; entries are addressed by position or label. Labels are text: the range values are written the way numbers appear in formed strings (see `StringFormation`): an integral value without a decimal point (`1`, not `1.0`), otherwise as the shortest decimal that reads back as the same number (`0.5`, `0.25`).
 - `[id].model`: **Valid**, within the loop only: the scan's `model` as modified for the current iteration, i.e. initialized with the current value of each of the `parameterRanges`. A reference to it from outside the scan's own `subTasks` breaks SEDBase-0013.
 - `[id].strings`: **Invalid**
 

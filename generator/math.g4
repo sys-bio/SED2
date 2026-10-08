@@ -98,14 +98,22 @@ fragment DIGIT : [0-9] ;
 REFERENCE
     : '#' IDENT_FRAG (':' IDENT_FRAG)* SUBACCESS_FRAG*
     ;
+// A bracket holds one or more comma-separated indices, with optional blanks
+// around each ("[0, 1]", "[ 1 ]", "[1: 2]", "[:2, 'a']"); an index is an
+// integer, a range with either end optional ("a:b", "a:", ":b", ":"), or a
+// label in single or double quotes. This mirrors the SIdRef pattern in
+// specsheets/core/Types/v1.0.0/schema.json (core Types, "Indexing").
 fragment SUBACCESS_FRAG
     : '.' IDENT_FRAG
-    | '[' INDEX_FRAG ']'
+    | '[' BLANKS INDEX_FRAG ( BLANKS ',' BLANKS INDEX_FRAG )* BLANKS ']'
     ;
 fragment INDEX_FRAG
-    : SIGNED_INT_FRAG (':' SIGNED_INT_FRAG)?
+    : SIGNED_INT_FRAG
+    | SIGNED_INT_FRAG? BLANKS ':' BLANKS SIGNED_INT_FRAG?
     | '\'' (~['\r\n])* '\''
+    | '"' (~["\r\n])* '"'
     ;
+fragment BLANKS : [ \t]* ;
 fragment SIGNED_INT_FRAG : '-'? DIGIT+ ;
 fragment IDENT_FRAG      : [A-Za-z_][A-Za-z0-9_]* ;
 

@@ -11,7 +11,7 @@
 
 Performs a calculation written in infix as the `math` attribute; its id may then be used as that calculation's result elsewhere in the document.
 
-References to `AnnotatedData` may appear within `math`, evaluated element-by-element: combining a lower-dimension value with a higher-dimension one broadcasts the lower one across the higher (e.g. `5 + [list]` adds 5 to every element; `[1D] * [2D]` multiplies each row); combining two same-dimension values requires matching keys (dictionaries) or matching lengths (lists). Allowed operations are `+ - * / ^`, parentheses, standard PEMDAS ordering, the functions allowed in SBML, and the constants allowed in SBML (`pi`, `exponentiale`, etc.).
+References to `AnnotatedData` may appear within `math`, evaluated element-by-element: combining a lower-dimension value with a higher-dimension one broadcasts the lower one across the higher (e.g. `5 + [list]` adds 5 to every element; `[1D] * [2D]` multiplies each row); combining two same-dimension values requires matching keys (dictionaries) or matching lengths (lists). A `math` string is always an expression, never a reference to a string: a `math` of just `#constants:v` is the expression consisting of that one reference (so it is that value, not the text of `v`), and `#constants:v * 2` is an expression that happens to start with one. Allowed operations are `+ - * / ^`, parentheses, standard PEMDAS ordering, the functions allowed in SBML, and the constants allowed in SBML (`pi`, `exponentiale`, etc.).
 
 ## Attributes
 
