@@ -11,6 +11,8 @@
 
 `StringFormation` takes the `concatenate` list, converts every element to a string, and concatenates them. If an element of the list is itself a list, each of its members is concatenated into a separate output string, so the overall result becomes a list of strings matching that dimension - e.g. `["n = ", [1, 2, 3]]` yields `["n = 1", "n = 2", "n = 3"]`. If multiple elements of `concatenate` are themselves lists, their corresponding elements are combined pairwise, and all such lists must have identical lengths; multi-dimensional lists produce multi-dimensional string results the same way.
 
+Elements are converted to strings as follows. A number that is integral is written without a decimal point (`3`, not `3.0`); any other number is written as the shortest decimal that reads back as the same number (`2.5`). A literal boolean is written `true` or `false`; a reference to a boolean constant is a number, so it is written `1` or `0`. A string is used as it is. These are also the rules for the way numbers appear in the strings formed by `Loop`, `Scatter` and `ParameterScan` labels.
+
 ## Attributes
 
 All classes additionally inherit the optional `name`, `description`, `notes`, and `annotations` fields from `SEDBase` - see [`core/SEDBase`](../../../core/SEDBase/v1.0.0/description.md).

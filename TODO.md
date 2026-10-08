@@ -78,3 +78,11 @@ Eventually the validator should work them out: for each entry of the attribute n
 a subTask output, a constant, another task, ...) or take the literal's shape, check that all entries have the same
 shape, and append that shape.  That would also let SEDBase-0009/-0010/-0011/-0014/-0015 judge indices on the entries'
 own dimensions, and report entries of different shapes before the document runs.
+
+## TaskParameter: a `_type` that says which parameter it is
+
+Decision: the thing that defines a TaskParameter is its `_type`.  For any parameter that the parent task does not
+already define (as an attribute of its own), the `_type` should be a KiSAO id.  Not yet in the specification: today a
+TaskParameter has only an id and a `value` (see `specsheets/*/TaskParameter`), and nothing says how an id names an
+algorithm parameter.  When this is implemented, the TaskParameter schema and description change, `taskParameters`
+gets its description, and libsed2 can expose it so that a translator can use it.

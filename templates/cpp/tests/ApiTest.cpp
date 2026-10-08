@@ -77,6 +77,30 @@ TEST(ApiTest, DocumentIsValid) {
     EXPECT_TRUE(doc->validate().empty());
 }
 
+// ---- G-005: a math field is text, with value accessors only ----------------
+// (The absence of get/set/is_math_ref is a compile-time fact in C++.)
+
+TEST(ApiTest, MathFieldHasValueAccessors) {
+    Calculation calc;
+    EXPECT_FALSE(calc.is_set_math());
+    EXPECT_THROW(calc.get_math_value(), ApiError);
+    calc.set_math_value("#constants:k_num * 2");
+    EXPECT_TRUE(calc.is_set_math());
+    EXPECT_EQ(calc.get_math_value(), "#constants:k_num * 2");
+    calc.unset_math();
+    EXPECT_FALSE(calc.is_set_math());
+}
+
+TEST(ApiTest, MathFieldThatIsOnlyAReferenceIsStillMath) {
+    auto doc = load_doc();
+    auto calc = std::make_unique<Calculation>();
+    Calculation* c = calc.get();
+    c->set_math_value("#constants:k_num");
+    doc->add_tasks("calc1", std::move(calc));
+    EXPECT_EQ(c->get_math_value(), "#constants:k_num");
+    EXPECT_TRUE(doc->validate().empty());
+}
+
 // ---- G-001: an element's own id --------------------------------------------
 
 TEST(ApiTest, IdOfTopLevelTasksAndOutputs) {

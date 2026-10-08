@@ -2908,7 +2908,15 @@ def _leaf_accessors(cls_name: str, f: Field) -> str:
     py = _pyname(f.name)
     kind = f.type.kind
     lines = []
-    if kind in _ORREF_KINDS:
+    if f.is_math and kind in _ORREF_KINDS:
+        # A math string is always an expression, never a reference to a
+        # string (Calculation description), even when it starts with '#': so
+        # there is only a value accessor, which returns the text as it is.
+        lines.append(f"    def get_{py}_value(self):\n        if {f.name!r} not in self._values: raise ApiError({py + ' is not set'!r})\n        return self._values[{f.name!r}]\n")
+        lines.append(f"    def set_{py}_value(self, value):\n        self._values[{f.name!r}] = value\n        self._orref_is_ref.pop({f.name!r}, None)\n")
+        lines.append(f"    def is_set_{py}(self):\n        return {f.name!r} in self._values\n")
+        lines.append(f"    def unset_{py}(self):\n        self._values.pop({f.name!r}, None); self._orref_is_ref.pop({f.name!r}, None)\n")
+    elif kind in _ORREF_KINDS:
         lines.append(f"    def get_{py}_value(self):\n        return self._get_orref_value({f.name!r})\n")
         lines.append(f"    def get_{py}_ref(self):\n        return self._get_orref_ref({f.name!r})\n")
         lines.append(f"    def set_{py}_value(self, value):\n        self._set_orref_value({f.name!r}, value)\n")

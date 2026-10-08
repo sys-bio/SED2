@@ -1763,7 +1763,18 @@ def _leaf_accessors_cpp(f: Field) -> str:
     kind = f.type.kind
     name_lit = _cpp_lit(f.name)
     lines = []
-    if kind in _ORREF_KINDS_CPP:
+    if f.is_math and kind in _ORREF_KINDS_CPP:
+        # A math string is always an expression, never a reference to a
+        # string (Calculation description), even when it starts with '#': so
+        # there is only a value accessor, which returns the text as it is.
+        cpp_t, get_expr, param_t, wrap = _ORREF_CPP_TYPES[kind]
+        lines.append(f"    {cpp_t} get_{ident}_value() const {{ auto it = values_.find({name_lit}); "
+                      f"if (it == values_.end()) throw ApiError(std::string({name_lit}) + \" is not set\"); "
+                      f"return it->second{get_expr}; }}")
+        lines.append(f"    void set_{ident}_value({param_t} value) {{ values_[{name_lit}] = {wrap}; or_ref_is_ref_.erase({name_lit}); }}")
+        lines.append(f"    bool is_set_{ident}() const {{ return values_.count({name_lit}) > 0; }}")
+        lines.append(f"    void unset_{ident}() {{ values_.erase({name_lit}); or_ref_is_ref_.erase({name_lit}); }}")
+    elif kind in _ORREF_KINDS_CPP:
         cpp_t, get_expr, param_t, wrap = _ORREF_CPP_TYPES[kind]
         lines.append(f"    {cpp_t} get_{ident}_value() const {{ return get_or_ref_value_node({name_lit}){get_expr}; }}")
         lines.append(f"    std::string get_{ident}_ref() const {{ return get_or_ref_ref_node({name_lit}).as<std::string>(); }}")

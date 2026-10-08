@@ -4098,7 +4098,16 @@ def _leaf_accessors_java(f: Field) -> str:
     kind = f.type.kind
     name_lit = _java_lit(f.name)
     lines = []
-    if kind in _ORREF_KINDS_JAVA:
+    if f.is_math and kind in _ORREF_KINDS_JAVA:
+        # A math string is always an expression, never a reference to a
+        # string (Calculation description), even when it starts with '#': so
+        # there is only a value accessor, which returns the text as it is.
+        java_t, get_expr, set_wrap = _ORREF_JAVA_TYPES[kind]
+        lines.append(f"    public {java_t} get{cap}Value() {{ if (!values.containsKey({name_lit})) throw new ApiError({name_lit} + \" is not set\"); return values.get({name_lit}){get_expr}; }}")
+        lines.append(f"    public void set{cap}Value({java_t} value) {{ values.put({name_lit}, {set_wrap}); orRefIsRef.remove({name_lit}); }}")
+        lines.append(f"    public boolean isSet{cap}() {{ return values.containsKey({name_lit}); }}")
+        lines.append(f"    public void unset{cap}() {{ values.remove({name_lit}); orRefIsRef.remove({name_lit}); }}")
+    elif kind in _ORREF_KINDS_JAVA:
         java_t, get_expr, set_wrap = _ORREF_JAVA_TYPES[kind]
         get_body = f"getOrRefValueNode({name_lit}){get_expr}"
         lines.append(f"    public {java_t} get{cap}Value() {{ return {get_body}; }}")
