@@ -1,3 +1,6 @@
 /UML_PNGs
 __pycache__/
 *.pyc
+
+# Our work notes and the drafts of reports about other projects' bugs: kept locally (work/INDEX.md), never committed
+work/
